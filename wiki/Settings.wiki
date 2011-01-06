@@ -1,0 +1,28 @@
+====Where settings are stores?====
+!ConEmu may stores its settings in the Windows registry (HKCU), or in the !ConEmu.xml file.
+
+====Registry====
+All settings are stored in registry in the following key:
+
+{{{[HKEY_CURRENT_USER\Software\ConEmu]}}}
+
+When You specify the [Command_Line /config] switch in the !ConEmu.exe command line settings will be stored here:
+
+{{{[HKEY_CURRENT_USER\Software\ConEmu\«configname»]}}}
+
+====!ConEmu.xml====
+You may use !ConEmu in «portable» mode, so all settings will be stored in the _!ConEmu.xml_ file, located next to the _!ConEmu.exe_. Template file _!ConEmu_Sample.xml_ is shipped with !ConEmu. You must rename it to _!ConEmu.xml_ for engaging xml-mode. You may use [Command_Line /config] switch with xml-mode too.
+
+Note. You may rename this file any time, even after !ConEmu starts and loads its settings from registry.
+
+====Main====
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMain.png" title="ConEmu settings, Main page" alt="ConEmu settings, Main page">
+
+====Features====
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFeatures.png" title="ConEmu settings, Features page" alt="ConEmu settings, Features page">
+
+====Colors====
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
+
+====Info====
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsInfo.png" title="ConEmu settings, Info page" alt="ConEmu settings, Info page">

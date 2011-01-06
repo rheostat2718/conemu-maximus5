@@ -1,0 +1,22 @@
+﻿!ConEmu may visualize all opened consoles and FAR windows (panels, editors, viewers). !ConEmu can handle up to 12 consoles and much more FAR editor (viewer ) windows.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTabs.png" title="ConEmu tabs and multiconsole" alt="ConEmu tabs">
+
+Viewer windows are framed by curly brackets. Editor windows are framed by square brackets. Modified editors marked with asterisk. Asterisk immediately appears and disappears on editor status change.
+
+{{{
+ConEmu plugin is required to get tabs for editors and viewers.
+}}}
+
+Left click on a tab will activate it, except FAR can't switch to this window (dialog is opened, macro is recorded or played, FAR menu bar is active, and so on).
+
+Right click on a tab will activate it (when it is possible) and (on succeeded activation) immediately close this tab. FAR windows will be closed by sending key sequence (F10 by default). Key sequence may be changed via registry value !TabCloseMacro. Right click on a tab, containing other console applications (cmd, powershell, etc.) brings Recreate dialog.
+
+Consoles, started under Administrator (look at Run as administrator checkbox), are marked with _Shield_ icon. If You want, !ConEmu may show " (Admin)" suffix instead of icon. You can change suffix text or completely remove it via registry value !AdminTitleSuffix.
+
+====Switching between consoles====
+You may use `Win+Number` to activate consoles from 1 to 10 and Win+F11/F12 to activate consoles 11 and 12.
+
+Win is default *!HostKey*, You may select yours convinent combination (up to 3 keys) from Win, Ctrl, Alt, Shift and Apps.
+
+By default, ConEmu internally handles Ctrl+Tab combination, which switch consoles too.

@@ -1,0 +1,39 @@
+﻿This plugin allows to view or QView pictures of miscellaneous formats directly in the *FAR Manager* window. Plugin works with pictures via subplugins (decoders).
+
+ 
+===Short list of features===
+  * Many decoders and hundreds of formats are supported
+  * Multipage and animated pictures
+  * Smooth zooming and panning
+  * Advance decoding of neighbor images
+  * Transparency and partially transparency
+
+
+===Modules in !PictureView supply===
+
+|| *Name* || *Supported extensions* ||
+|| GFL.pvd || BMP,CUR,EMF,EPS,FLC,FLI,GIF,ICO,JPG,PCX,PIC,PNG,PSD,SCR,TGA,TIF,WMF and much more ||
+|| GDI+.pvd || BMP,GIF,PNG,JPG,TIF,ICO,WMF and GDI display ||
+|| DX.pvd || DirectX display ||
+|| DJVU.pvd || DJVU ||
+|| WIC.pvd || Standard ('preinstalled' with Windows): BMP,GIF,ICO,JPEG,PNG,TIFF<br>[http://www.fastpictureviewer.com/codecs/ Codec pack]: TGA,DNG,RAF,MRW,ORF,RW2,PEF,X3F,CR2,CRW,3FR,FFF,DCR,KDC,RAW,RWL,NEF,NRW,ARW,SR2,SRF ||
+|| ICO.pvd || ICO,CUR ||
+|| WMF.pvd || EMF,WMF ||
+|| Shell.pvd || Can handle same files as Windows Explorer Thumbnails ||
+|| BMP.pvd || Just a sample decoder ||
+
+
+===Third party decoders===
+
+*homme_curieux* [http://forum.farmanager.com/viewtopic.php?p=52480#p52480 Download]
+  * in_APL.pvd   - allows to use ACDSee plugins to decode images.<br>
+  * in_GFL.pvd<br>
+  * in_UIC.pvd<br>
+
+
+*Max Rusov* [http://forum.farmanager.com/viewtopic.php?f=11&t=4774 Download]
+  * !GdiPlus.pvd - fast and smooth decoder and display.
+
+
+*!HalfElf* [http://thex.untergrund.net/pvd/ Download]
+  * theX.pvd - Works with ZX Spectrum picture files.

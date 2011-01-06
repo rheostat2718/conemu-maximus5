@@ -1,0 +1,28 @@
+﻿====Ctrl-Win-Alt-Space====
+Ctrl-Win-Alt-Space shows real console window.
+
+On some systems (Vista, i.e.) You must press Space twice.
+
+====Buffer scrolling====
+Ctrl-Up, Ctrl-Down, Ctrl-!PgUp, Ctrl-!PgDn
+
+====System menu====
+Alt-Space pops up !ConEmu [SystemMenu system menu].
+
+====Tabs switching====
+Ctrl-Tab and Ctrl-Shift-Tab
+
+In lazy switching mode (tab bar must be visible) window will not be really switched, until Ctrl is released.
+
+When lazy tab switching was started in recent mode, You may use Left and Right keys to select tabs directly.
+
+====Multiconsole====
+Win-W, Win-Q, Win-~ - this is defaults. Win-A turns buffer height on/off.
+
+You may use Win-1, ..., Win-9, Win-0, Win-F11, Win-F12 to select console by number (1 throw 12).
+
+*Confirmation of new console creation* <br>
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of new console creation" alt="ConEmu new console">
+
+*Confirmation of restarting console* <br>
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of restarting console" alt="ConEmu restart console">

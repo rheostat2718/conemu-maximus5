@@ -1,0 +1,3 @@
+﻿It may be shown on Alt-Space, or right click on windows caption, or left click on the icon in windows caption.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuSystemMenu.png" title="ConEmu system menu" alt="ConEmu system menu">

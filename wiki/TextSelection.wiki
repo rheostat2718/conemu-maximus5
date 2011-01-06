@@ -1,0 +1,18 @@
+!ConEmu allows marking console blocks and streams (like real console *Mark* menu item, or Far Manager *!AltIns* feature), copying marked text to Windows Clipboard, pasting from Clipboard to console.
+*Note*. Paste выполняется средствами консоли.
+*Note*. Копирование выполняется 'с экрана', то есть с выделением в редакторе FAR не имеет ничего общего.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreSelection.png" title="ConEmu text selection settings">
+
+    * Выделение теперь может быть 'блочным' (как в обычной консоли) или 'текстовым' (как в текстовых редакторах).
+    * В меню окна добавлены пункты 'Mark block' и 'Mark text'.
+    * Добавлена настройка клавиш мышки и модификаторов. Теперь можно указать когда разрешено выделение мышкой:
+      * Только при наличии прокрутки (Buffer only, по умолчанию), или всегда (Always).
+      * Можно указать модификатор (Alt, Shift, ...) для обоих типов выделения (Block & Text).
+      * Можно выбрать действия для правой и средней кнопки мышки (Copy/Paste).
+      * Можно настроить цвет фона и текста для выделения.
+    * Снято ограничение на флажок 'Mouse' в FAR (его можно оставлять включенным).
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuBlockSelection.png" title="ConEmu Block selection (like real console)">
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTextSelection.png" title="ConEmu Text selection (like text editors)">

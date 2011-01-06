@@ -1,0 +1,54 @@
+==About !ConEmu==
+!ConEmu-Maximus5 is a Windows console emulator, which represents multiple consoles as one customizable GUI window with various features. Basic application - joint use with [http://www.farmanager.com/download.php?l=en Far Manager] ([http://en.wikipedia.org/wiki/FAR_Manager Far in Wikipedia]). Far (File and Archive) Manager is a console program for managing files and archives in Windows operating systems.
+
+This fork grew up from [http://xs.nm.ru/ ConEmu by Zoin].
+
+
+==Description==
+!ConEmu starts a console program in hidden console window and provides an alternative customizable GUI window with various features:
+
+  * smooth window resizing;
+  * several panels in one window;
+  * tabs for editors, viewers, panels and consoles;
+  * thumbnails and tiles in Far manager;
+  * normal, maximized and full screen window graphic modes;
+  * window font anti-aliasing: standard, clear type, disabled;
+  * window fonts: family, height, width, bold, italic, etc.;
+  * using [http://code.google.com/p/conemu-maximus5/issues/detail?id=153 normal/bold/italic] fonts for different parts of console simultaneously;
+  * cursor: standard console (horisontal) or GUI (vertical);
+  * for /!BufferHeight mode: vertical scrolling using keyboard;
+  * show full output (1K+ lines) of last command in editor/viewer;
+  * drag and drop (explorer style);
+  * and more, and more... take a look at Settings dialog, !WhatsNew and Settings.reg
+
+All settings are read from the registry (multiple configurations are supported) and
+after that the command line parameters are applied. Parameters /Config and
+/!BufferHeight are only for command line. Most of settings are changed only in
+the Settings dialog, not from the command line.
+
+
+==Requirements==
+  * Windows 2000 or later.
+
+
+==Installation==
+  #. Unpack all files (from appropriate "`ConEmu.*.7z`") to the folder, containing "`far.exe`".
+
+     It's strongly recommended to use !ConEmu.x64 on 64bit systems.
+
+     Note, if You are not using FAR manager, You may unpack files to any folder.
+
+  #. Import to the registry FAR manager macroses, related to !ConEmu. Macro `*.reg` files are located in `ConEmu.Addons` directory. Each macro file (`*.reg`) has description in header. Just doubleclick choosen files in Windows Explorer to import them.
+  #. By default (started without command line params), !ConEmu runs "`far.exe`" from it's home folder. Alternatively, You may specify any root command, specifying "/Cmd <App with params>" argument in !ConEmu shortcut or command line.
+
+ 
+==Screenshots==
+<table cellspacing="4" cellpadding="0" border="0">
+<tr><td cellpadding="5">
+*FAR 2.0 + !ConEmu*, using anti-aliased font
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu.png" title="FAR Manager + ConEmu" alt="FAR + ConEmu">
+<tr height="10"><td>
+ 
+<tr><td cellpadding="5">
+*FAR 2.0 Editor + !ConEmu*, anti-aliasing disabled
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuItalic.png" title="FAR Manager + ConEmu" alt="FAR + ConEmu">

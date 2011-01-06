@@ -1,0 +1,45 @@
+﻿===!ConEmu.exe command line switches===
+
+|| *Argument* || *Description* ||
+|| /? || Show help screen ||
+|| /CT || Clear Type anti-aliasing ||
+|| /FS | /Max || (Full screen) | (Maximized) mode ||
+|| /Multi | /!NoMulti || Enable or disable multiconsole features ||
+|| /Font _fontname_ || Specify the font name ||
+|| /Size _fontsize_ || Specify the font size ||
+|| /Config _configname_ || Tells to use an existing or create a new configuration with the specified name. Each configuration keeps its own individual data in the registry or xml file (!ConEmu.xml). ||
+|| /Single || New console will be started in new tab of existing !ConEmu ||
+|| /!FontFile _fontfilename_ || Loads fonts from file for !ConEmu process ||
+|| /!BufferHeight _lines_ || May be used with cmd.exe, !PowerShell, etc. ||
+|| /Log | /Log1 | /Log2 || Used to create debug log files ||
+|| /cmd _commandline_ <br> /cmd @_commandfile_ || Command line to start. This must be the last used switch. You may use ">" and "`*`" modifiers in commandfile and /!BufferHeight argument. ||
+
+
+===Examples===
+
+1.	!ClearType is ON, using font face name "Lucida Console", font height 16. Starts FAR manager in the folder "C:\1 2".
+
+{{{
+ConEmu.exe /ct /font "Lucida Console" /size 16 /cmd far.exe "c:\1 2\"
+}}}
+
+2.	Starts with thee tabs: FAR, CMD and !PowerShell. FAR will be active console, CMD will be started under Administrator.
+
+{{{
+ConEmu.exe /cmd @startfile.txt
+}}}
+
+====Sample startfile.txt====
+{{{
+>"C:\Program Files\Far\far.exe"
+*/BufferHeight 400 cmd
+/BufferHeight 1000 powershell
+}}}
+
+===Rarely used switches===
+
+|| /debug || Show message box immediately after !ConEmu starts ||
+|| /autosetup 1 | 0 || Install or remove !ConEmu autostart with cmd.exe ||
+|| /visible || Starts with visible real console ||
+|| /detached || Starts with no console, !ConEmu is ready for attaching from another real console or FAR manager ||
+|| /attach || ... ||

@@ -1,0 +1,10 @@
+This is console part of !ConEmu. It serves all console requests.
+
+====Font in real console====
+!ConEmu use small _Lucida console_ font in real console by default, cause of this font is shipped with Windows and it is unicode (unicode font must be selected in real console to allow !ConEmu retrieve unicode characters from real console).
+
+You may specify font face name and size to the real console.
+*Warning*.
+  * This font must be preinstalled in the system.
+  * It *must* be *unicode* (means TTF).
+  * It *must* be smaller than main font (selected for !ConEmu).

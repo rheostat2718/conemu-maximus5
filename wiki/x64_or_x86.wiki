@@ -1,0 +1,11 @@
+﻿You may download x64 or x86 (32bit) !ConEmu version, depending on Your OS (it's strongly recommended to use !ConEmu.x64 on 64bit systems).
+Note, that !ConEmu.x64 works fine with FAR manager x86.
+
+Download page: http://code.google.com/p/conemu-maximus5/downloads/list
+
+64bit versions are named !ConEmu.Maximus5.??????.x64.7z and 32bit versions (x86) named !ConEmu.Maximus5.??????.7z.
+
+Each archive contains both x86 and x64 versions of !ConEmu FAR plugin:
+  * plugins\!ConEmu\conemu.dll
+  * plugins\!ConEmu\conemu.x64.dll
+So, You can simply unpack downloaded archive to the FAR folder.

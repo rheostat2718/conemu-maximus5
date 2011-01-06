@@ -1,0 +1,9 @@
+#labels Featured
+  * [RegEditor RegEditor]
+  * [FARSelector FAR Selector]
+  * [ImpEx ImpEx (PE format browser)]
+  * [PicView Picture View 2]
+  * [MMView Multimedia Viewer]
+  * [DirSync Synchronize Directory]
+  * [FileTypes FileTypes]
+  * [FarWDS FarWDS]
