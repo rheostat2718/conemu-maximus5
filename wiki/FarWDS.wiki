@@ -1,6 +1,7 @@
-﻿FarWDS for FAR1/FAR2/x86/x64
+﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=FarWDS Download (Far1/Far2 x86/x64)]
 
 ===About===
+This Far Manager plugin allows:
   * Fast and easy use of Windows Search in Far Manager, simplifying indexing settings;
   * View documents source (any file, not even found by plugin), using IFilter technology.
 

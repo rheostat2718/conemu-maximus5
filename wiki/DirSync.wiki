@@ -1,4 +1,5 @@
 ﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=Summary%3ASynchronize+Directory Download (Far2 x86)], [http://forum.farmanager.com/viewtopic.php?p=50134 Ansi version (Far1)]
+
 *Author of Ansi version: [http://forum.farmanager.com/memberlist.php?mode=viewprofile&u=4569 pepak]*
 
 ===About===
