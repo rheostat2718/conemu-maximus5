@@ -1,10 +1,8 @@
-﻿*Author: [http://forum.farmanager.com/memberlist.php?mode=viewprofile&u=4569 pepak]*
+﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=Summary%3ASynchronize+Directory Download (Far2 x86)], [http://forum.farmanager.com/viewtopic.php?p=50134 Ansi version (Far1)]
+*Author of Ansi version: [http://forum.farmanager.com/memberlist.php?mode=viewprofile&u=4569 pepak]*
 
-*Ansi version:* [http://forum.farmanager.com/viewtopic.php?p=50134 for FAR 1.7x]
-
-*Unicode version:* [http://code.google.com/p/conemu-maximus5/downloads/list?q=Summary%3ASynchronize+Directory for FAR 2.x]
-
-!DirSync is a plugin for FAR Manager that allows a user to synchronize the contents of two directories, much like "Synchronize Folders" function of Total Commander. It is heavily based on Advanced Compare plugin that comes with FAR, with several improvements:
+===About===
+!DirSync is a Far Manager plugin that allows a user to synchronize the contents of two directories, much like "Synchronize Folders" function of Total Commander. It is heavily based on Advanced Compare plugin that comes with FAR, with several improvements:
 
 - A progress is displayed for "compare by content" (useful if you compare large files on slow media, e.g. when verifying contents of DVDs)
 
@@ -14,10 +12,10 @@
 
 - When the editor is closed, the plugin offers the synchronization. You can choose "copy to left" and "copy to right", with "confirm overwrite" for each direction, or ESCape the dialog and perform no synchronization. Only lines that remained in the list at the time it was last saved will be processed.
 
-http://www.pepak.net/images/clanky/far-syncdir/syncdir1.png
+http://conemu-maximus5.googlecode.com/svn/files/DirSync/syncdir1.png
 
-http://www.pepak.net/images/clanky/far-syncdir/syncdir2.png
+http://conemu-maximus5.googlecode.com/svn/files/DirSync/syncdir2.png
 
-http://www.pepak.net/images/clanky/far-syncdir/syncdir3.png
+http://conemu-maximus5.googlecode.com/svn/files/DirSync/syncdir3.png
 
-http://www.pepak.net/images/clanky/far-syncdir/syncdir4.png
+http://conemu-maximus5.googlecode.com/svn/files/DirSync/syncdir4.png

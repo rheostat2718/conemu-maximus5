@@ -1,4 +1,7 @@
-﻿This plugin allows to view or QView pictures of miscellaneous formats directly in the *FAR Manager* window. Plugin works with pictures via subplugins (decoders).
+﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=summary:PicView2 Download (Far2 x86/x64)]
+
+===About===
+This Far Manager plugin allows to view or QView pictures of miscellaneous formats directly in the *FAR Manager* window. Plugin works with pictures via subplugins (decoders).
 
  
 ===Short list of features===

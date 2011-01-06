@@ -27,3 +27,4 @@
     * [DirSync Synchronize Directory]
     * [FileTypes FileTypes]
     * [FarWDS FarWDS]
+    * [UnInstall UnInstall]

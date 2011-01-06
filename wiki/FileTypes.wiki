@@ -1,7 +1,7 @@
-﻿!FileTypes for FAR1/FAR2/x86/x64
+﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=summary:FileTypes Download (Far1/Far2 x86/x64)]
 
 ===About===
-Fast and easy editor of windows associations
+Fast and easy editor of windows associations Far Manager plugin.
 
 ===How to use?===
 Install plugin first, then *F11 !FileTypes*, or use plugin prefix - type in command line:

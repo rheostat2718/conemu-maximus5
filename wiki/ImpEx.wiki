@@ -1,4 +1,7 @@
-﻿This is another PE browser.
+﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=summary:ImpEx Download (Far1/Far2 x86/x64)]
+
+===About===
+This is another PE browser (Far Manager plugin).
 
 Opens dll, exe, lib, obj, icl, fon and other PE files (16/32/64 bit).
 

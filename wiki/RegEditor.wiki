@@ -1,7 +1,7 @@
-﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=RegEditor Download]
+﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=summary:RegEditor Download (Far1/Far2 x86/x64)]
 
 ===About===
- This plugin allows to browse and edit Windows Registry.
+ This Far Manager plugin allows to browse and edit Windows Registry.
 
 ===Features===
   * x86/x64/Far1/Far2

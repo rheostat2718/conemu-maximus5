@@ -1,4 +1,4 @@
-﻿FAR Selector for FAR2 x86/x64
+﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=summary:Selector Download (Far2 x86/x64)]
 
 ===About===
 Данный плагин позволяет открывать папки и позиционировать курсор на файл используя одну копию Far Manager.
