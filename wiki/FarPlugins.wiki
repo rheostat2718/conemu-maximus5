@@ -1,4 +1,5 @@
 #labels Featured
+===List of Far Manager plugins (hosted on this project)===
   * [RegEditor RegEditor]
   * [FARSelector FAR Selector]
   * [ImpEx ImpEx (PE format browser)]
