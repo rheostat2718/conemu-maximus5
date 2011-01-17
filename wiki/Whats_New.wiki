@@ -1,4 +1,13 @@
 #labels Featured
+==Build 110117==
+====Bugfixes====
+  * Issue 347: Странность показа данных на закладках. 
+  * Не выполнялся батник: ver|find "6."
+====Changes====
+  * 'Press Enter to close console' -> 'Press Enter or Esc to close console'.
+  * Стрелка у кнопки '+' на toolbar показывает меню из последних 16 запущенных команд, для быстрого запуска новой консоли.
+
+
 ==Build 110115==
 ====Bugfixes====
   * Issue 350: Click right button on close icon don't work while caption is hidden.
@@ -6,7 +15,7 @@
   * Issue 353: Не работал Detach в Far (!CtrlAltTab).
   * Issue 354: "mycmd ." точка не передается команде.
 ====Changes====
-  * Issue 349: При желании, в 64-битных ОС можно использовать 64-битный ConEmuC64.
+  * Issue 349: При желании, в 64-битных ОС можно использовать 64-битный !ConEmuC64.
   * Тестируем первую версию msi-инсталлятора.
 
 
