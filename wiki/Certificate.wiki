@@ -5,7 +5,7 @@
   * Some antiviral programs ([http://www.kaspersky.com/ AVP] for example) automatically place signed programs to trusted zone.
 
 ===How to install certificate?===
-*Download [http://conemu-maximus5.googlecode.com/svn/files/Certificate/ConEmu.cer.7z Certificate] and unpack it.*
+*Download [http://conemu-maximus5.googlecode.com/svn/files/Certificate/ConEmu.cer Certificate].*
 
 *!DoubleClick on certificate file* <br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/Certificate.Win7.Ru/Step1.png" title="ConEmu. Install certificate. Step1">
