@@ -36,8 +36,6 @@ the Settings dialog, not from the command line.
 ==Installation==
   #. Unpack all files (from appropriate "`ConEmu.*.7z`") to the folder, containing "`far.exe`".
 
-     It's strongly recommended to use !ConEmu.x64 on 64bit systems.
-
      Note, if You are not using FAR manager, You may unpack files to any folder.
 
   #. Import to the registry FAR manager macroses, related to !ConEmu. Macro `*.reg` files are located in `ConEmu.Addons` directory. Each macro file (`*.reg`) has description in header. Just doubleclick choosen files in Windows Explorer to import them.
