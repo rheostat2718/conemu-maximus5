@@ -62,7 +62,7 @@ A. Плагин conemu.dll установлен?
 A. 'Правый щелчок' активирует вкладку и сразу посылает в фар кнопку F10.
    Вы можете переопредлить макрос закрытия владки в реестре:
 {{{
-[HKEY_CURRENT_USER\Software\ConEmu]
+[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
 "TabCloseMacro"="F10"
 }}}
 
@@ -70,7 +70,7 @@ A. 'Правый щелчок' активирует вкладку и сразу
 A. Это просто консольное окно не спряталось. Проверьте флажок 'Visible'
    на вкладке настроек 'Features' или значение в реестре:
 {{{
-[HKEY_CURRENT_USER\Software\ConEmu]
+[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
 "ConVisible"=hex:00
 }}}
 
@@ -148,7 +148,7 @@ A. По какой-то причине !ConEmu не обнаружил 'пане
 ====Q. По щелчку правой кнопкой мышки появляется графическое меню, а хочу текстовое.====
 A. Соответствующий макрос можно указать в реестре (или xml), например:
 {{{
-[HKEY_CURRENT_USER\Software\ConEmu]
+[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
 "RightClickMacro2"="F11 e Enter"
 }}}
    Предполагается, что для EMenu назначен hotkey 'e'.
@@ -198,7 +198,7 @@ A. Опция 'Block inactive cursor'. Альтернативная индика
 ====Q. В табах отображаются квадратики (вместо иероглифов).====
 A. По умолчанию, текст закладок отображается шрифтом "Tahoma". Выберите другой шрифт, содержащий требуемые вам символы (например "Arial Unicode MS"), внеся в реестр:
 {{{
-[HKEY_CURRENT_USER\Software\ConEmu]
+[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
 "TabFontFace"="Arial Unicode MS"
 }}}
 

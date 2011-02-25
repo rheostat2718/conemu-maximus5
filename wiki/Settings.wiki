@@ -4,7 +4,7 @@
 ====Registry====
 All settings are stored in registry in the following key:
 
-{{{[HKEY_CURRENT_USER\Software\ConEmu]}}}
+{{{[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]}}}
 
 When You specify the [Command_Line /config] switch in the !ConEmu.exe command line settings will be stored here:
 

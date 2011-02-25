@@ -26,7 +26,7 @@ You may choose right click behaviour:
 
 *Note*. _EMenu_ plugin must be installed in FAR manager. No macroses or hotkeys are required, but You may choose different way to display context menu, by specifying the macro in !ConEmu settings.
 {{{
-[HKEY_CURRENT_USER\Software\ConEmu]
+[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
 "RightClickMacro"="@F11 e Enter Enter"
 }}}
 
