@@ -1,4 +1,14 @@
 #labels Featured
+==Build 110225==
+====Bugfixes====
+  * Правки в запускаторе.
+====Changes====
+  * "ConEmuC.exe /GUIMACRO <macro command>". Возвращает errorlevel==0 и %ConEmuMacroResult% в случае успеха.
+{{{
+    Пример: "%ConEmuBaseDir%\ConEmuC.exe" /GUIMACRO WindowMinimize
+}}}
+
+
 ==Build 110224==
 ====Bugfixes====
   * В 110223 поломалось отображение длинного вывода последней команды в Far1.
@@ -80,7 +90,7 @@
   * Положено начало 'GUI-макросам'. Смысл в том, чтобы дать фару 'порулить' параметрами !ConEmu.
     Пример вызова через callplugin (Far 2):
 {{{
-$if (callplugin(0x43454D55,"IsConEmu()")==1 && env("ConEmuMacroResult")=="Yes") MsgBox("Macro", "Far started under ConEmu") $end
+$if (callplugin(0x43454D55,"IsConEmu()")<>1 && env("ConEmuMacroResult")=="Yes") MsgBox("Macro", "Far started under ConEmu") $end
 }}}
     В Far 1 (врочем, как и в Far 2) для исполнения GUI-макроса (и просмотра его результата) можно использвать меню плагина.
     Пока что поддерживаются следующие функции:

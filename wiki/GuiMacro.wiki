@@ -1,0 +1,36 @@
+
+You can execute ConEmu GUI macro from command line, for example:
+{{{
+"%ConEmuBaseDir%\ConEmuC.exe" /GUIMACRO WindowMinimize
+}}}
+Or, via Far Manager plugin:
+* F11 -> ConEmu -> Execute ConEmu macro (Far1/Far2/Far3)
+* callplugin(0x43454D55,"IsConEmu()") in the Far2
+* callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()") in the Far3
+
+Result
+CmdLine: When succeeded ConEmuC.exe set errorlevel=0 and write result to StdOut
+Plugin:  When you call plugin menu, result is show in the dialog field,
+when you use far manager macro - check environment variable 'ConEmuMacroResult'.
+$if (callplugin(0x43454D55,"IsConEmu()")<>0 && env("ConEmuMacroResult")=="Yes") MsgBox("Macro", "Far started under ConEmu") $end
+
+Available commands:
+{{{
+    IsConEmu()
+     - возвращает "Yes" если Far прицеплен к ConEmu
+    FindEditor("<FullEditFileName>"), FindViewer("<FullViewerFileName>"), FindFarWindow(<WindowType>,"<WindowTitle>")
+     - возвращает "Found:<номер консоли>", "Blocked", или "NotFound"
+    WindowMinimize() или WindowMinimize(1)
+     - свернуть окно (если "1" - то в TSA)
+    MsgBox("<Text>","<Title>","<ButtonType>")
+     - показать GUI MessageBox, вернуть нажатую кнопку ("Ok", "Cancel", "Retry", и т.п.), ButtonType из Windows SDK.
+    FontSetSize(Relative,N)
+     - изменить размер шрифта в ConEmu
+       Relative==0: N - желаемая высота шрифта
+       Relative==1: N (+-1, +-2) - увеличить/уменьшить шрифт
+       Возвращает - "OK" или "InvalidArg"
+    IsRealVisible
+     - Проверка, видима ли RealConsole, "Yes"/"No"
+    IsConsoleActive
+     - Проверка, активна ли RealConsole, "Yes"/"No"
+}}}
