@@ -1,36 +1,75 @@
+There is an easy way to control (in some way) !ConEmu window from console applications. It's a !GuiMacro.
 
-You can execute ConEmu GUI macro from command line, for example:
+===Abstract===
+You can execute !ConEmu GUI macro from command line (or batch file), i.e.:
 {{{
 "%ConEmuBaseDir%\ConEmuC.exe" /GUIMACRO WindowMinimize
 }}}
-Or, via Far Manager plugin:
-* F11 -> ConEmu -> Execute ConEmu macro (Far1/Far2/Far3)
-* callplugin(0x43454D55,"IsConEmu()") in the Far2
-* callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()") in the Far3
+Or, via Far Manager plugin (Far1/Far2/Far3 are supported):
+{{{
+F11 -> ConEmu -> Execute ConEmu macro
+}}}
+You can use Far Manager macroses to forward commands to !ConEmu GUI.
+  * callplugin(0x43454D55,"IsConEmu()") in the *Far2*
+  * callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()") in the *Far3*
 
-Result
-CmdLine: When succeeded ConEmuC.exe set errorlevel=0 and write result to StdOut
-Plugin:  When you call plugin menu, result is show in the dialog field,
-when you use far manager macro - check environment variable 'ConEmuMacroResult'.
-$if (callplugin(0x43454D55,"IsConEmu()")<>0 && env("ConEmuMacroResult")=="Yes") MsgBox("Macro", "Far started under ConEmu") $end
 
-Available commands:
+===Command line behaviour===
+When GUI macro executed successfully, ConEmuC.exe set errorlevel to 0 and write result to StdOut.
+
+===Far plugin behaviour===
+When you call plugin menu, result is show in the dialog field,
+
+When you use far manager macro - result is placed to the 'ConEmuMacroResult' environment variable.
+
+===List of functions===
 {{{
     IsConEmu()
-     - возвращает "Yes" если Far прицеплен к ConEmu
+     - returns "Yes" when console was started under !ConEmu
     FindEditor("<FullEditFileName>"), FindViewer("<FullViewerFileName>"), FindFarWindow(<WindowType>,"<WindowTitle>")
-     - возвращает "Found:<номер консоли>", "Blocked", или "NotFound"
+     - returns "Found:<номер консоли>", "Blocked", or "NotFound"
+       <WindowType> is number from Far Manager enum WINDOWINFO_TYPE
     WindowMinimize() или WindowMinimize(1)
-     - свернуть окно (если "1" - то в TSA)
+     - minimize ConEmu window ("1" means "minimize to the TSA")
     MsgBox("<Text>","<Title>","<ButtonType>")
-     - показать GUI MessageBox, вернуть нажатую кнопку ("Ok", "Cancel", "Retry", и т.п.), ButtonType из Windows SDK.
+     - Show modal GUI MessageBox, returns clicked button name ("Ok", "Cancel", "Retry", и т.п.), ButtonType is from Windows SDK.
     FontSetSize(Relative,N)
-     - изменить размер шрифта в ConEmu
-       Relative==0: N - желаемая высота шрифта
-       Relative==1: N (+-1, +-2) - увеличить/уменьшить шрифт
-       Возвращает - "OK" или "InvalidArg"
+     - change font height in the ConEmu window
+       Relative==0: N - required font height in points
+       Relative==1: N (+-1, +-2) - increase/decrease font height
+       returns - "OK", or "InvalidArg"
     IsRealVisible
-     - Проверка, видима ли RealConsole, "Yes"/"No"
+     - Check, is RealConsole visible or not, "Yes"/"No"
     IsConsoleActive
-     - Проверка, активна ли RealConsole, "Yes"/"No"
+     - Check, is RealConsole active or not, "Yes"/"No"
+}}}
+
+===Examples===
+====Far2====
+{{{
+$if (callplugin(0x43454D55,"IsConEmu()")<>0 && env("ConEmuMacroResult")=="Yes")
+  MsgBox("Macro", "Far started under ConEmu")
+$end
+}}}
+====Far3====
+{{{
+$if (callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()")<>0 && env("ConEmuMacroResult")=="Yes")
+  MsgBox("Macro", "Far started under ConEmu")
+$end
+}}}
+====Far1====
+This is most complicated, cause of 'callplugin' absence in the Far 1.x
+{{{
+F11
+$if (menu.Select("ConEmu",2)<=0) MsgBox("ConEmu","Plugin was not found in list!",1)
+  $Exit
+$end
+Enter %r="";
+$if (menu.select("~.",1)>0)
+  ~ $Text "IsConEmu()" Enter %r=Dlg.GetValue(5,0);
+$end
+Esc
+$if (%r=="Yes")
+  MsgBox("Macro", "Far started under ConEmu")
+$end
 }}}

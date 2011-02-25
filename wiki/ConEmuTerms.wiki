@@ -13,3 +13,6 @@ Pop up it by depressing Win+Alt+Space or right mouse clicking on the ConEmu wind
 ===TabMenu===
 When Tabs are shown in the ConEmu window, you may pop up menu for exact tab by right mouse clicking on this tab.
 This menu looks like SystemMenu, but does not have some window-related items.
+
+===TSA===
+Taskbar status area. It's a part of Windows taskbar next to the clock.
