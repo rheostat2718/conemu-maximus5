@@ -29,7 +29,7 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
     FindEditor("<FullEditFileName>"), FindViewer("<FullViewerFileName>"), FindFarWindow(<WindowType>,"<WindowTitle>")
      - returns "Found:<index of RealConsole>", "Blocked", or "NotFound"
        <WindowType> is number from Far Manager enum WINDOWINFO_TYPE
-    WindowMinimize() или WindowMinimize(1)
+    WindowMinimize() or WindowMinimize(1)
      - minimize ConEmu window ("1" means "minimize to the TSA")
     MsgBox("<Text>","<Title>","<ButtonType>")
      - Show modal GUI MessageBox, returns clicked button name ("Ok", "Cancel", "Retry", etc.), ButtonType is from Windows SDK.
