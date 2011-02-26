@@ -5,7 +5,7 @@ When You displeased by default !ConEmu behaviour - go to the Settings and change
 Most of settings may be changed via !ConEmu interface
 (Settings dialog popped up by Win-Alt-P or SystemMenu).
 
-Less number of settings may be changed manually via [Settings#Registry registry] or [Settings#ConEmu.xml !ConEmu.xml] file.
+Less number of settings may be changed manually via [Settings#Registry registry] or [Settings#ConEmu.xml ConEmu.xml] file.
 
 ====Where settings are stores?====
 !ConEmu may stores its settings in the Windows registry (HKCU), or in the !ConEmu.xml file.
@@ -29,7 +29,7 @@ Note. You may rename this file any time, even after !ConEmu starts and loads its
 
 ====Manual change of settings====
 So, You want to change setting, which is absent in the Settings dialog.
-List and description of each setting You may find in the _Settings-ConEmu.reg_ file.
+List and description of each setting You may find in the _Settings-!ConEmu.reg_ file.
 =====Using registry=====
 Go to Registry editor (be careful!) and change appropriate value in the !ConEmu subkeys:
   * `[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]`, when [Command_Line /config] switch is not using;
@@ -44,17 +44,25 @@ Usually, this file located net to the _ConEmuC.exe_.
 ====Features====
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFeatures.png" title="ConEmu settings, Features page" alt="ConEmu settings, Features page">
 
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreSelection.png" title="ConEmu settings, Text selection" alt="ConEmu settings, Text selection">
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreRealFont.png" title="ConEmu settings, RealConsole font" alt="ConEmu settings, RealConsole font">
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreHideCaption.png" title="ConEmu settings, Features page" alt="ConEmu settings, Hide caption details">
+
 ====Tabs====
-*TODO*
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTabs.png" title="ConEmu settings, Tabs page" alt="ConEmu settings, Tabs page">
 
 ====Colors====
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
 
 ====Views====
-*TODO* this is settings for 'Panel Views' Far Manager plugin.
+This is settings for 'Panel Views' Far Manager plugin.
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsViews.png" title="ConEmu settings, Views page" alt="ConEmu settings, Views page">
 
 ====Debug====
-*TODO* Enables advanced logging of console processes creation.
+Enables advanced logging of console processes creation.
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDebug.png" title="ConEmu settings, Debug page" alt="ConEmu settings, Debug page">
 
 ====Info====
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsInfo.png" title="ConEmu settings, Info page" alt="ConEmu settings, Info page">
