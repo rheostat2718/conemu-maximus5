@@ -1,14 +1,14 @@
 ===!RealConsole===
 As is, it is a real console window.
 It always exists, but ConEmu hide it.
-You may reveal the !RealConsole window by depressing Ctrl+Win+Alt+Space,
+You may reveal the !RealConsole window by depressing Ctrl-Win-Alt-Space,
 or selecting item 'Real console' from the SystemMenu.
 
 ===!VirtualConsole===
 It is a part of the ConEmu window, where ConEmu draws contents of the [ConEmuTerms#RealConsole RealConsole].
 
 ===SystemMenu===
-Pop up it by depressing Win+Alt+Space or right mouse clicking on the ConEmu window caption.
+Pop up it by depressing Win-Alt-Space or right mouse clicking on the ConEmu window caption.
 
 ===!TabMenu===
 When Tabs are shown in the ConEmu window, you may pop up menu for exact tab by right mouse clicking on this tab.
@@ -16,3 +16,7 @@ This menu looks like SystemMenu, but does not have some window-related items.
 
 ===TSA===
 Taskbar status area. It's a part of Windows taskbar next to the clock.
+
+===Host key===
+It's a key or combination, which is a part of [KeyboardShortcuts some hotkeys].
+Host key may be changed in the [Settings#Tabs Tabs page of the Settings dialog].
