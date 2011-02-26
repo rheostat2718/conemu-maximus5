@@ -9,7 +9,7 @@
   * Settings dialog
     * [Settings#Main Main] page
     * [Settings#Features Features] page
-      * [Settings#TextSelection TextSelection]
+      * [Settings#settings TextSelection]
       * [Settings#RealConsole_font RealConsole font]
       * [Settings#Hide_caption_details Hide caption details]
     * [Settings#Tabs Tabs] page
