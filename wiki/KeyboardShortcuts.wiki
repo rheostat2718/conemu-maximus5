@@ -1,28 +1,12 @@
-﻿====Ctrl-Win-Alt-Space====
-Ctrl-Win-Alt-Space shows [ConEmuTerms#RealConsole real console window].
+﻿===Non configurable hotkeys===
+|| Ctrl-Win-Alt-Space || Reveals or hide the [ConEmuTerms#RealConsole real console window]. On some systems (Vista, i.e.) You may press Space twice. ||
+|| Ctrl-Up, Ctrl-Down,<br>Ctrl-!PgUp, Ctrl-!PgDn || [ConEmuTerms#BufferHeight Buffer] scrolling ||
+|| Win-Alt-Space || Pops up !ConEmu [SystemMenu system menu]. ||
+|| Win-Alt-P || Displays !ConEmu [Settings Settings dialog]. ||
+|| Ctrl-Win-Enter || Maximize !ConEmu window and hide window caption (!FullScreen mode). ||
+|| Ctrl-Tab,<br>Ctrl-Shift-Tab || Tabs switching. In lazy switching mode (tab bar must be visible) window will not be really switched, until Ctrl is released. When lazy tab switching was started in recent mode, You may use Left and Right keys to select tabs directly. *Note*, tabs must be shown in the !ConEmu window. ||
 
-On some systems (Vista, i.e.) You must press Space twice.
-
-====Buffer scrolling====
-Ctrl-Up, Ctrl-Down, Ctrl-!PgUp, Ctrl-!PgDn
-
-====System menu====
-Win-Alt-Space pops up !ConEmu [SystemMenu system menu].
-
-====Settings dialog====
-Win-Alt-P opens [Settings Settings dialog].
-
-====!FullScreen mode====
-Ctrl-Win-Enter maximize !ConEmu window and hide window caption.
-
-====Tabs switching====
-Ctrl-Tab and Ctrl-Shift-Tab
-
-In lazy switching mode (tab bar must be visible) window will not be really switched, until Ctrl is released.
-
-When lazy tab switching was started in recent mode, You may use Left and Right keys to select tabs directly.
-
-====Configurable hotkeys====
+===Configurable hotkeys===
 || *Multiconsole* || ||
 || Win-W || Create new console tab. [Screenshots#Confirmation_of_new_console_creation_(Win-W) Confirmation dialog] will be displayed, when «[Settings#Tabs Create confirmation]» setting is enabled. *W* is default, [Settings#Tabs configurable]. ||
 || Win-Shift-W || Create new console tab with [Screenshots#Confirmation_of_new_console_creation_(Win-W) confirmation dialog], regardless of «[Settings#Tabs Create confirmation]» setting. *W* is default, [Settings#Tabs configurable]. ||
