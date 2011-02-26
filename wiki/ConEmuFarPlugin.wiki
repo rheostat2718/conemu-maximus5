@@ -29,7 +29,8 @@ Another way (direct) is Far Manager plugin menu (F11) («!ConEmu Panel Views» i
 You may polish Panel Views appearence via !ConEmu [Settings#Views Settings].
 
 ===!ConEmu Underlines===
-Simple background plugin, 
+Simple background plugin:
+
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFarLn.png" title="ConEmu Underlines">.
 
 ===!PanelColorer===
