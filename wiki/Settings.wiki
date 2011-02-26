@@ -57,7 +57,7 @@ Go to Registry editor (be careful!) and change appropriate value in the !ConEmu 
   * `[HKEY_CURRENT_USER\Software\ConEmu\«configname»]`, when /config switch specified in the !ConEmu command line.
 ====Using !ConEmu.xml====
 Open !ConEmu.xml file using any text editor (Far Manager, Notepad, and so on) find appropriate value and change it.
-Usually, this file located net to the _ConEmuC.exe_.
+Usually, this file is located near to the _ConEmuC.exe_.
 
 ===Main===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMain.png" title="ConEmu settings, Main page" alt="ConEmu settings, Main page">

@@ -1,15 +1,34 @@
-!ConEmu.dll provide next functionality:
+===ConEmu===
+!ConEmu.dll (or !ConEmu.x64.dll) provide next functionality:
   * Shell style Drag-and-Drop;
   * Tabs and window switching;
-  * Some plugins depends on on (!FarHints, !PictuewView, Multimedia Viewer, etc.);
-  * It shows real console, on abnormal conemu.exe termination;
+  * Some plugins depends on on ([http://code.google.com/p/far-plugins/wiki/FarHints FarHints], [http://code.google.com/p/conemu-maximus5/wiki/PicView PictuewView], [http://code.google.com/p/conemu-maximus5/wiki/MMView Multimedia Viewer], etc.);
+  * It shows real console, on abnormal !ConEmu.exe termination;
   * It attach new real console, which appears after detach (Ctrl-Alt-Tab);
   * Shows long console output;
   * and so on.
 
-!ConEmu plugin itself have no configuration dialog. All its features are available via FAR plugin menu (F11), You'll see it as «!ConEmu support».
+!ConEmu plugin itself have no configuration dialog. All its features are available
+via Far Manager plugin menu (F11), You'll see it as «!ConEmu».
 
 *!ConEmu plugin menu* <br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFarPlugin.png" title="ConEmu FAR plugin" alt="ConEmu FAR plugin">
 
 «Attach to !ConEmu» is available only in «clear» console, when You starts FAR without !ConEmu.
+
+===ConEmu Panel Views===
+Enabled thumbnails and tiles in Far Manager panels.
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuPanelViews.png" title="ConEmu Thumbnails and Tiles">
+Recommended way for Panel Views activation is Far Manager macro (look at `Thumbnails.reg` in !ConEmu folder).
+Another way (direct) is Far Manager plugin menu (F11) («!ConEmu Panel Views» item):
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFarTh.png" title="ConEmu Panel Views plugin">.
+You may polish Panel Views appearence via !ConEmu [Settings#Views Settings].
+
+===ConEmu Underlines===
+Simple background plugin, 
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFarLn.png" title="ConEmu Underlines">.
+
+===!PanelColorer===
+This «third-party» plugin, originally from [http://forum.farmanager.com/viewtopic.php?f=11&t=5702 here].
+You may download latest binary [http://filekeeper.org/download/browser.php?path=conemu/PanelColorer/ here]
+<img src="http://conemu-maximus5.googlecode.com/svn/files/PanelColorer.png" title="ConEmu & PanelColorer">.

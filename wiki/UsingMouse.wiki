@@ -17,7 +17,7 @@ Drop to command line:
   * Shift: paste with «view:» prefix
 
 
-====Right click on FAR panels====
+====Right click on Far Manager panels====
 You may choose right click behaviour:
 
   * Simple send right click to console;
@@ -29,6 +29,10 @@ You may choose right click behaviour:
 [HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
 "RightClickMacro"="@F11 e Enter Enter"
 }}}
+
+
+====Resizing Far Manager panels with mouse====
+This is simple now. Drag panels by bottom border, or by left border of the *right* panel.
 
 
 ====Left click on the tab====
