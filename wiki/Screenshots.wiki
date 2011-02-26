@@ -1,8 +1,11 @@
-﻿===!ConEmu Thumbnails & Tiles===
+﻿===!ConEmu [ConEmuFarPlugin#ConEmu_Panel_Views Thumbnails & Tiles]===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuPanelViews.png" title="ConEmu Thumbnails and Tiles">
 
 ===!ConEmu & [ConEmuFarPlugin#PanelColorer PanelColorer]===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/PanelColorer.png" title="ConEmu & PanelColorer">.
+
+===!ConEmu & [ConEmuFarPlugin#FarColorer FarColorer]===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTrueMod.png" title="ConEmu & FarColorer TrueMod">.
 
 ===!ConEmu and old (DOS) programs===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/turbo.png" title="ConEmu and old (DOS) programs">
