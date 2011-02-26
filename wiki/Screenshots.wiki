@@ -11,3 +11,9 @@
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuBoldItalic.png" title="ConEmu and FAR Colorer (GUI & RealConsole)">
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuColorerHrd.png" title="ConEmu and FAR Colorer (default.hrd)">
+
+====Confirmation of new console creation (Win-W)====
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of new console creation" alt="ConEmu new console">
+
+====Confirmation of restarting console (Win-~)====
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of restarting console" alt="ConEmu restart console">

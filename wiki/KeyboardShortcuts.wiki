@@ -24,19 +24,15 @@ When lazy tab switching was started in recent mode, You may use Left and Right k
 
 ====Configurable hotkeys====
 || *Multiconsole* || ||
-|| [KeyboardShortcuts#Confirmation_of_new_console_creation_(Win-W) Win-W] || Create new console tab. *W* is default. ||
-|| [KeyboardShortcuts#Confirmation_of_restarting_console_(Win-%7E) Win-~] || Restart current console, all applications running in the current console will be terminated, *configurable* ||
-|| Win-Q, Win-Shift-Q || Activate next/previous console tab, *configurable* ||
-|| Win-Del || Terminate current console. This hotkey is *disabled* by default! You may enable it in the [Settings Settings] ||
+|| Win-W || Create new console tab. [Screenshots#Confirmation_of_new_console_creation_(Win-W) Confirmation dialog] will be displayed, when «[Settings#Tabs Create confirmation]» setting is enabled. *W* is default, [Settings#Tabs configurable]. ||
+|| Win-Shift-W || Create new console tab with [Screenshots#Confirmation_of_new_console_creation_(Win-W) confirmation dialog], regardless of «[Settings#Tabs Create confirmation]» setting. *W* is default, [Settings#Tabs configurable]. ||
+|| [Screenshots#Confirmation_of_restarting_console_(Win-%7E) Win-~] || Restart current console, all applications running in the current console will be terminated. *~* is default, [Settings#Tabs configurable]. ||
+|| Win-Q, Win-Shift-Q || Activate next/previous console tab. *Q* is default, [Settings#Tabs configurable]. ||
+|| Win-Del || Terminate current console. This hotkey is *disabled* by default! You may enable it in the [Settings#Manual_change_of_settings !ConEmu Settings] ||
 || Win-A || *Ignored in Windows 7*. Turns [ConEmuTerms#BufferHeight BufferHeight] mode on/off. *A* is default. ||
 || Win-1, ..., Win-9, Win-0, Win-F11, Win-F12 || Select console by number (1 throw 12) ||
 || *Minimize/Restore* || ||
-|| Win-C || Minimize or Restore !ConEmu window. *W* is default, you may choose other key manually via [Settings Settings]. ||
-  * Note, *W/Q/~* are configurable in the [Settings#Tabs Tabs page of the Settings dialog].
-  * Note, *Win* is default «Host key»
-
-====Confirmation of new console creation (Win-W)====
-<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of new console creation" alt="ConEmu new console">
-
-====Confirmation of restarting console (Win-~)====
-<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of restarting console" alt="ConEmu restart console">
+|| Win-C || Minimize or Restore !ConEmu window. *C* is default, [Settings#Manual_change_of_settings configurable]. ||
+|| Win-X || Create new console tab with `cmd.exe`. *X* is default, [Settings#Manual_change_of_settings configurable]. ||
+=====Host key=====
+Note, *Win* is default «[ConEmuTerms#Host_key Host key]», keys combination is [Settings#Tabs configurable].

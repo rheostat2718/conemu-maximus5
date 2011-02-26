@@ -1,5 +1,11 @@
 ====Abstract====
+!ConEmu is highly adaptable tool and have great number of settings.
+When You displeased by default !ConEmu behaviour - go to the Settings and change them.
 
+Most of settings may be changed via !ConEmu interface
+(Settings dialog popped up by Win-Alt-P or SystemMenu).
+
+Less number of settings may be changed manually via [Settings#Registry registry] or [Settings#ConEmu.xml !ConEmu.xml] file.
 
 ====Where settings are stores?====
 !ConEmu may stores its settings in the Windows registry (HKCU), or in the !ConEmu.xml file.
@@ -14,12 +20,23 @@ When You specify the [Command_Line /config] switch in the !ConEmu.exe command li
 {{{[HKEY_CURRENT_USER\Software\ConEmu\«configname»]}}}
 
 ====!ConEmu.xml====
-You may use !ConEmu in «portable» mode, so all settings will be stored in the _!ConEmu.xml_ file, located next to the _!ConEmu.exe_. Template file _!ConEmu_Sample.xml_ is shipped with !ConEmu. You must rename it to _!ConEmu.xml_ for engaging xml-mode. You may use [Command_Line /config] switch with xml-mode too.
+You may use !ConEmu in «portable» mode, so all settings will be stored in the _!ConEmu.xml_ file,
+located next to the _ConEmuC.exe_. Template file _!ConEmu_Sample.xml_ is shipped with !ConEmu.
+You must rename it to _!ConEmu.xml_ for engaging xml-mode. You may use [Command_Line /config]
+switch with xml-mode too.
 
 Note. You may rename this file any time, even after !ConEmu starts and loads its settings from registry.
 
 ====Manual change of settings====
-Most of settings may be changed via Settings dialog.
+So, You want to change setting, which is absent in the Settings dialog.
+List and description of each setting You may find in the _Settings-ConEmu.reg_ file.
+=====Using registry=====
+Go to Registry editor (be careful!) and change appropriate value in the !ConEmu subkeys:
+  * `[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]`, when [Command_Line /config] switch is not using;
+  * `[HKEY_CURRENT_USER\Software\ConEmu\«configname»]`, when /config switch specified in the !ConEmu command line.
+=====Using !ConEmu.xml=====
+Open !ConEmu.xml file using any text editor (Far Manager, Notepad, and so on) find appropriate value and change it.
+Usually, this file located net to the _ConEmuC.exe_.
 
 ====Main====
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMain.png" title="ConEmu settings, Main page" alt="ConEmu settings, Main page">
@@ -27,8 +44,17 @@ Most of settings may be changed via Settings dialog.
 ====Features====
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFeatures.png" title="ConEmu settings, Features page" alt="ConEmu settings, Features page">
 
+====Tabs====
+*TODO*
+
 ====Colors====
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
+
+====Views====
+*TODO* this is settings for 'Panel Views' Far Manager plugin.
+
+====Debug====
+*TODO* Enables advanced logging of console processes creation.
 
 ====Info====
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsInfo.png" title="ConEmu settings, Info page" alt="ConEmu settings, Info page">
