@@ -1,7 +1,21 @@
 This is console part of !ConEmu. It serves all console requests.
 
+There are two versions - ConEmuC.exe and ConEmuC64.exe.
+
+In the 32-bit operation systems only ConEmuC.exe (and !ConEmuHk.dll library) is used.
+
+64-bit systems are more complicated, so both versions must exists in the !ConEmu folder.
+ConEmuC.exe is used, when You run 32bit applications from started console,
+ConEmuC64.exe (and ConEmuHk64.dll) for 64bit applications.
+
+Root console process will be ConEmuC.exe, when You are using !ConEmu.exe,
+and ConEmuC64.exe, when You are using ConEmu64.exe.
+
 ====Font in real console====
-!ConEmu use small _Lucida console_ font in real console by default, cause of this font is shipped with Windows and it is unicode (unicode font must be selected in real console to allow !ConEmu retrieve unicode characters from real console).
+!ConEmu use small _Lucida console_ font in real console by default,
+cause of this font is shipped with Windows and it is unicode
+(unicode font must be selected in real console to allow !ConEmu
+retrieve unicode characters from real console).
 
 You may specify font face name and size to the real console.
 *Warning*.
