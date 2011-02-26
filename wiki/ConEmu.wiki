@@ -43,6 +43,11 @@ the Settings dialog, not from the command line.
 ==Screenshots==
 <table cellspacing="4" cellpadding="0" border="0">
 <tr><td cellpadding="5">
+*FAR 2.0 + !ConEmu Thumbnails & Tiles*
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuPanelViews.png" title="ConEmu Thumbnails and Tiles">
+<tr height="10"><td>
+
+<tr><td cellpadding="5">
 *FAR 2.0 + !ConEmu*, using anti-aliased font
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu.png" title="FAR Manager + ConEmu" alt="FAR + ConEmu">
 <tr height="10"><td>
