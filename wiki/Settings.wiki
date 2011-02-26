@@ -2,10 +2,10 @@
   * [Settings#Abstract Abstract]
   * [Settings#Where_settings_are_stores%3F Where settings are stores?]
     * [Settings#Registry Registry]
-    * [Settings#ConEmu%2Exml ConEmu.xml]
+    * [Settings#ConEmu_%2Exml ConEmu.xml]
   * [Settings#Manual_change_of_settings Manual change of settings]
     * [Settings#Using_registry Using registry]
-    * [Settings#Using_ConEmu%2Exml Using ConEmu.xml]
+    * [Settings#Using_ConEmu_%2Exml Using ConEmu.xml]
   * Settings dialog
     * [Settings#Main Main] page
     * [Settings#Features Features] page
