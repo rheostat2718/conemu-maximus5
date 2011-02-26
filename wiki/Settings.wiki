@@ -65,7 +65,7 @@ Usually, this file located net to the _ConEmuC.exe_.
 ===Features===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFeatures.png" title="ConEmu settings, Features page" alt="ConEmu settings, Features page">
 
-====[TextSelection TextSelection]====
+====[TextSelection TextSelection] settings====
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreSelection.png" title="ConEmu settings, Text selection" alt="ConEmu settings, Text selection">
 
 ====!RealConsole font====
