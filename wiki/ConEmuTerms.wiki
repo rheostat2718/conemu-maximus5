@@ -29,3 +29,11 @@ Buffer height of the [ConEmuTerms#RealConsole RealConsole] window may be much lo
 than height of the visible area. !ConEmu shows scrollbar (automatically or persistent)
 when !BufferHeight is enabled. On systems prior to Windows 7 you may switch !BufferHeight
 mode by [KeyboardShortcuts#Configurable_hotkeys Win-A] hotkey.
+
+===[Tabs Tab]===
+When [Settings#Tabs tabs are visible], each tab represents one «window».
+Each window may be [ConEmuTerms#RealConsole RealConsole] (running any console application),
+or Far Manager editor/viewer.
+
+When several editors/viewers are opened in Far Manager - first tab represents panels,
+and rightwards tabs represents editor/viewer windows.

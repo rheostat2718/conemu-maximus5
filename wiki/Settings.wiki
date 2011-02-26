@@ -1,19 +1,23 @@
-===Contents
+===Contents===
   * [Settings#Abstract Abstract]
   * [Settings#Where_settings_are_stores%3F Where settings are stores?]
     * [Settings#Registry Registry]
-    * [Settings#ConEmu.xml ConEmu.xml]
+    * [Settings#ConEmu%2Exml ConEmu.xml]
   * [Settings#Manual_change_of_settings Manual change of settings]
     * [Settings#Using_registry Using registry]
-    * [Settings#Using_ConEmu.xml Using ConEmu.xml]
-  * [Settings#Main Main]
-  * [Settings#Features Features]
-  * [Settings#Tabs Tabs]
-  * [Settings#Colors Colors]
-  * [Settings#Views Views]
-  * [Settings#Debug Debug]
-  * [Settings#Info Info]
-  * [Settings#Alphabetical Alphabetical]
+    * [Settings#Using_ConEmu%2Exml Using ConEmu.xml]
+  * Settings dialog
+    * [Settings#Main Main] page
+    * [Settings#Features Features] page
+      * [Settings#TextSelection TextSelection]
+      * [Settings#RealConsole_font RealConsole font]
+      * [Settings#Hide_caption_details Hide caption details]
+    * [Settings#Tabs Tabs] page
+    * [Settings#Colors Colors] page
+    * [Settings#Views Views] page
+    * [Settings#Debug Debug] page
+    * [Settings#Info Info] page
+  * [Settings#Alphabetical List of settings]
 
 ===Abstract===
 !ConEmu is highly adaptable tool and have great number of settings.
@@ -61,10 +65,13 @@ Usually, this file located net to the _ConEmuC.exe_.
 ===Features===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFeatures.png" title="ConEmu settings, Features page" alt="ConEmu settings, Features page">
 
+====[TextSelection TextSelection]====
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreSelection.png" title="ConEmu settings, Text selection" alt="ConEmu settings, Text selection">
 
+====RealConsole font====
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreRealFont.png" title="ConEmu settings, RealConsole font" alt="ConEmu settings, RealConsole font">
 
+====Hide caption details====
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreHideCaption.png" title="ConEmu settings, Features page" alt="ConEmu settings, Hide caption details">
 
 ===Tabs===
@@ -132,7 +139,7 @@ Enables advanced logging of console processes creation.
 || cbVisible || Show real console on startup ||
 || cbNewConfirm || Confirm new console creation.<br>You may change cmd line for it, or turn on 'Run as...' feature.<br>Even if unchecked, You may hold 'Shift' to display dialog. ||
 || cbDragImage || Create and display overlay transparent snapshoot of files are dragged ||
-|| cbAutoRegFonts || Search, register for process, and use first *.ttf file in conemu folder ||
+|| cbAutoRegFonts || Search, register for process, and use first `*.ttf` file in conemu folder ||
 || cbDebugSteps || Show some debug information in ConEmu title<br>I.e. plugin communication steps. ||
 || hkCloseConsole || Hotkey for recreating (or closing)<br>active console ||
 || bRealConsoleSettings || You may change font face and size in the Real console. Console restart required. ||
@@ -178,7 +185,7 @@ Enables advanced logging of console processes creation.
 || bHideCaptionSettings || Choose frame width, appearance and disappearance delays ||
 || tHideCaptionAlwaysFrame || While caption and frame are hidden, ConEmu may keep small part of frame (in pixels) around console part. Default is 1 pixel. ||
 || tHideCaptionAlwaysDelay || Delay in milliseconds, for Caption and Frame appearance ||
-    tHideCaptionAlwaysDissapear 
+|| tHideCaptionAlwaysDissapear || ||
 || bResetSettings || Reset all settings to defaults ||
 || bReloadSettings || Reload all settings from registry/xml ||
 || cbHandleFarDetach || Automatic attach to ConEmu new Far manager console, created on detach (CtrlAltTab) ||
