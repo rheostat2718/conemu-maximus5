@@ -1,4 +1,4 @@
-===ConEmu===
+===!ConEmu===
 !ConEmu.dll (or !ConEmu.x64.dll) provide next functionality:
   * Shell style Drag-and-Drop;
   * Tabs and window switching;
@@ -16,19 +16,25 @@ via Far Manager plugin menu (F11), You'll see it as «!ConEmu».
 
 «Attach to !ConEmu» is available only in «clear» console, when You starts FAR without !ConEmu.
 
-===ConEmu Panel Views===
-Enabled thumbnails and tiles in Far Manager panels.
+===!ConEmu Panel Views===
+Enables thumbnails and tiles in Far Manager panels.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuPanelViews.png" title="ConEmu Thumbnails and Tiles">
+
 Recommended way for Panel Views activation is Far Manager macro (look at `Thumbnails.reg` in !ConEmu folder).
+
 Another way (direct) is Far Manager plugin menu (F11) («!ConEmu Panel Views» item):
+
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFarTh.png" title="ConEmu Panel Views plugin">.
+
 You may polish Panel Views appearence via !ConEmu [Settings#Views Settings].
 
-===ConEmu Underlines===
+===!ConEmu Underlines===
 Simple background plugin, 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFarLn.png" title="ConEmu Underlines">.
 
 ===!PanelColorer===
 This «third-party» plugin, originally from [http://forum.farmanager.com/viewtopic.php?f=11&t=5702 here].
+
 You may download latest binary [http://filekeeper.org/download/browser.php?path=conemu/PanelColorer/ here]
+
 <img src="http://conemu-maximus5.googlecode.com/svn/files/PanelColorer.png" title="ConEmu & PanelColorer">.
