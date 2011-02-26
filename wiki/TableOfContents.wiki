@@ -14,7 +14,7 @@
     * [Fonts Fonts]
     * [Progress Operation progress]
     * [ConEmuC ConEmuC]
-    * [ConEmuFarPlugin Far/ConEmu plugin]
+    * [ConEmuFarPlugin Far & ConEmu plugins]
     * [GuiMacro GUI Macroses]
     * [ConEmuTerms ConEmu Terms]
     * [Screenshots More screenshots]

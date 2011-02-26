@@ -1,3 +1,11 @@
+Several Far Manager plugins works in the !ConEmu only,
+others provides advanced features in the !ConEmu:
+  * [ConEmuFarPlugin#ConEmu ConEmu] (main connection between Far and !ConEmu)
+  * [ConEmuFarPlugin#ConEmu_Panel_Views ConEmu Panel Views]
+  * [ConEmuFarPlugin#ConEmu_Underlines ConEmu Underlines]
+  * [ConEmuFarPlugin#PanelColorer PanelColorer]
+  * [ConEmuFarPlugin#FarColorer FarColorer]
+
 ===!ConEmu===
 !ConEmu.dll (or !ConEmu.x64.dll) provide next functionality:
   * Shell style Drag-and-Drop;
@@ -40,7 +48,7 @@ You may download latest binary [http://filekeeper.org/download/browser.php?path=
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/PanelColorer.png" title="ConEmu & PanelColorer">.
 
-===Colorer===
+===!FarColorer===
 This [http://colorer.sourceforge.net/farplugin.html plugin] works in plain Far Manager too,
 but when You choose [http://forum.farmanager.com/viewtopic.php?p=1041#p1041 Far TrueMod]
 and run it under !ConEmu - You got full true colors in Far editor
