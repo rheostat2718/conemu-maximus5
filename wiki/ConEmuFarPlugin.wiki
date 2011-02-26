@@ -34,8 +34,18 @@ Simple background plugin:
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFarLn.png" title="ConEmu Underlines">.
 
 ===!PanelColorer===
-This «third-party» plugin, originally from [http://forum.farmanager.com/viewtopic.php?f=11&t=5702 here].
+This «third-party» background plugin is originally from [http://forum.farmanager.com/viewtopic.php?f=11&t=5702 here].
 
 You may download latest binary [http://filekeeper.org/download/browser.php?path=conemu/PanelColorer/ here]
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/PanelColorer.png" title="ConEmu & PanelColorer">.
+
+===Colorer===
+This [http://colorer.sourceforge.net/farplugin.html plugin] works in plain Far Manager too,
+but when You choose [http://forum.farmanager.com/viewtopic.php?p=1041#p1041 Far TrueMod]
+and run it under !ConEmu - You got full true colors in Far editor
+instead of standard 16 (or 32 with [Settings#Colors Extend foreground colors] option) console colors.
+
+*Note*, You must enable [Settings#Colors Colorer TrueMod support] option.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTrueMod.png" title="ConEmu & FarColorer TrueMod">.
