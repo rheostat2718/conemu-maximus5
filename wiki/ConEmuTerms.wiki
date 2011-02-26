@@ -20,3 +20,9 @@ Taskbar status area. It's a part of Windows taskbar next to the clock.
 ===Host key===
 It's a key or combination, which is a part of [KeyboardShortcuts some hotkeys].
 Host key may be changed in the [Settings#Tabs Tabs page of the Settings dialog].
+
+===BufferHeight===
+Buffer height of the [ConEmuTerms#RealConsole RealConsole] window may be much longer,
+than height of the visible area. !ConEmu shows scrollbar (automatically or persistent)
+when !BufferHeight is enabled. On systems prior to Windows 7 you may switch !BufferHeight
+mode by Win-A hotkey.
