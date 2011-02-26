@@ -25,7 +25,7 @@ When lazy tab switching was started in recent mode, You may use Left and Right k
 ====Configurable hotkeys====
 || *Multiconsole* || ||
 || [KeyboardShortcuts#Confirmation_of_new_console_creation_(Win-W) Win-W] || Create new console tab. *W* is default. ||
-|| [KeyboardShortcuts#Confirmation_of_restarting_console_(Win-~) Win-~] || Restart current console, all applications running in the current console will be terminated, *configurable* ||
+|| [KeyboardShortcuts#Confirmation_of_restarting_console_(Win-%7E) Win-~] || Restart current console, all applications running in the current console will be terminated, *configurable* ||
 || Win-Q, Win-Shift-Q || Activate next/previous console tab, *configurable* ||
 || Win-Del || Terminate current console. This hotkey is *disabled* by default! You may enable it in the [Settings Settings] ||
 || Win-A || *Ignored in Windows 7*. Turns [ConEmuTerms#BufferHeight BufferHeight] mode on/off. *A* is default. ||
