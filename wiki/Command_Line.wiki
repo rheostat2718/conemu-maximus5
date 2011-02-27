@@ -12,9 +12,9 @@
 || /!FontFile _fontfilename_ || Loads fonts from file for !ConEmu process ||
 || /!BufferHeight _lines_ || May be used with cmd.exe, !PowerShell, etc. ||
 || /Log | /Log1 | /Log2 || Used to create debug log files ||
-|| /GUIMACRO _macro_ || Execute [GuiMacro ConEmu GUI Macro] ||
 || /cmd _commandline_ <br> /cmd @_commandfile_ || Command line to start. This must be the last used switch. You may use ">" and "`*`" modifiers in commandfile and /!BufferHeight argument. ||
 
+ConEmuC.exe command line switches are described [ConEmuC#ConEmuC_.exe_command_line_switches here].
 
 ===Examples===
 

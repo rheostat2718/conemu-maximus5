@@ -22,6 +22,8 @@ It's a key or combination, which is a part of [KeyboardShortcuts#Configurable_ho
 
 Host key may be changed in the [Settings#Tabs Tabs page of the Settings dialog].
 
+You may select yours convinent combination (up to 3 keys) from Win, Ctrl, Alt, Shift and Apps.
+
 Host keys examples: Win, !CtrlAltShift, !CtrlApps, and so on...
 
 ===!BufferHeight===

@@ -228,3 +228,4 @@ Enables advanced logging of console processes creation.
 || cbBgAllowPlugin || Enable background Far plugins (i.e. Panel Colorer), 3d state means - don't draw in viewer/editor ||
 || cbAlwaysShowTrayIcon || Always show ConEmu icon in the Taskbar Status Area (TSA) ||
 || cbAlwaysShowScrollbar || Always show scrollbar on the right edge of window<br>3d state means - autoshow on scroll ||
+|| Use !ConEmuHk injects || Allow injecting !ConEmuHk.dll (ConEmuHk64.dll) in every process of !ConEmu console window ||

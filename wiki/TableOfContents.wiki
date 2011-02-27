@@ -3,7 +3,8 @@
 ==Contents==
   * [ConEmu ConEmu]
     * [x64_or_x86 x64 or x86]
-    * [Command_Line Command line]
+    * [Command_Line Command line (ConEmu.exe)]
+    * [ConEmuC ConEmuC]
     * [Certificate What is «Certificate»?]
     * [Settings Settings]
     * [Tabs Tabs]
@@ -13,7 +14,6 @@
     * [TextSelection Text selection]
     * [Fonts Fonts]
     * [Progress Operation progress]
-    * [ConEmuC ConEmuC]
     * [ConEmuFarPlugin Far & ConEmu plugins]
     * [GuiMacro GUI Macroses]
     * [ConEmuTerms ConEmu Terms]
