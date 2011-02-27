@@ -11,14 +11,14 @@ ConEmuC.exe is used, when You run 32bit applications from started console,
 Root console process will be ConEmuC.exe, when You are using !ConEmu.exe,
 and !ConEmuC64.exe, when You are using !ConEmu64.exe.
 
-===!ConEmuC.exe command line switches===
+===ConEmuC.exe command line switches===
 
 || || *Usage* ||
 || || `ConEmuC /?`<br>Show help screen ||
 || || `ConEmuC [switches] [/U | /A] /C «command line, passed to %%COMSPEC%%»` ||
 || || `ConEmuC [switches] /ROOT «program with arguments, far.exe for example»` ||
 || || `ConEmuC /ATTACH /NOCMD` ||
-|| || `ConEmuC /GUIMACRO «ConEmu GUI macro command»`<br>Execute [GuiMacro ConEmu GUI Macro] ||
+|| || `ConEmuC /GUIMACRO «`[GuiMacro ConEmu GUI Macrocommand]`»` ||
 || || *Switches* ||
 || `/[NO]CONFIRM` || `[`don't`]` confirm closing console on program termination ||
 || `/ATTACH` || auto attach to !ConEmu GUI ||
