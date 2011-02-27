@@ -14,7 +14,7 @@
 || /Log | /Log1 | /Log2 || Used to create debug log files ||
 || /cmd _commandline_ <br> /cmd @_commandfile_ || Command line to start. This must be the last used switch. You may use ">" and "`*`" modifiers in commandfile and /!BufferHeight argument. ||
 
-ConEmuC.exe command line switches are described [ConEmuC#ConEmuC_.exe_command_line_switches here].
+ConEmuC.exe command line switches are described [ConEmuC#ConEmuC.exe_command_line_switches here].
 
 ===Examples===
 
