@@ -10,6 +10,8 @@
 ===!ConEmu and old (DOS) programs===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/turbo.png" title="ConEmu and old (DOS) programs">
 
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuDosBox.png" title="ConEmu and old (DOS) games">
+
 ===!ConEmu with caption hidden===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/HideCaption.png" title="ConEmu with caption hidden">
 

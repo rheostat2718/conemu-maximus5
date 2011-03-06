@@ -16,6 +16,7 @@
     * [Progress Operation progress]
     * [ConEmuFarPlugin Far & ConEmu plugins]
     * [GuiMacro GUI Macroses]
+    * [DosBox DOS applications (DosBox)]
     * [ConEmuTerms ConEmu Terms]
     * [Screenshots More screenshots]
     * [ConEmuFAQ_Ru FAQ (russian)]
