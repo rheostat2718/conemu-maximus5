@@ -8,7 +8,7 @@
   * Экспериментально. Для планируемой поддержки возможности горизонтальной прокрутки !ConEmu отрисовывает только видимую область [ConEmuTerms#RealConsole RealConsole].
   * Разрешено сохранение опции 'Use !ConEmuHk injects'. По умолчанию - включена.
   * Два новых файла в поставке (ConEmuCD.dll и ConEmuCD64.dll). В них вынесен код сервера консоли, чтобы разгрузить !ConEmuHk.dll/!ConEmuHk64.dll.
-  * Интеграция с !DosBox. Теперь можно запускать старые Dos-приложения в 64-битных ОС прямо из Far или батников.
+  * Интеграция с DosBox. Теперь можно запускать старые DOS-приложения в 64-битных ОС прямо из Far или батников.
     * DosBox брать здесь: http://www.dosbox.com (!DirectLink: http://sourceforge.net/projects/dosbox/files/dosbox/0.74/DOSBox0.74-win32-installer.exe/download )
     * Ставить сюда: %!ConEmuBaseDir%\!DosBox
     * Создать (или переименовать) файл конфигурации: %!ConEmuBaseDir%\!DosBox\!DosBox.conf

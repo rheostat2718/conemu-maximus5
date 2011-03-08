@@ -25,19 +25,21 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
 ===List of functions===
 {{{
     IsConEmu
-     - returns "Yes" when console was started under !ConEmu
+     - Returns "Yes" when console was started under !ConEmu
     FindEditor("<FullEditFileName>"), FindViewer("<FullViewerFileName>"), FindFarWindow(<WindowType>,"<WindowTitle>")
-     - returns "Found:<index of RealConsole>", "Blocked", or "NotFound"
+     - Returns "Found:<index of RealConsole>", "Blocked", or "NotFound"
        <WindowType> is number from Far Manager enum WINDOWINFO_TYPE
     WindowMinimize() or WindowMinimize(1)
-     - minimize ConEmu window ("1" means "minimize to the TSA")
-    MsgBox("<Text>","<Title>","<ButtonType>")
-     - Show modal GUI MessageBox, returns clicked button name ("Ok", "Cancel", "Retry", etc.), ButtonType is from Windows SDK.
+     - Minimize ConEmu window ("1" means "minimize to the TSA")
+    MsgBox("<Text>","<Title>",<ButtonType>)
+     - Show modal GUI MessageBox, returns clicked button name ("Ok", "Cancel", "Retry", etc.), ButtonType (number) is from Windows SDK.
     FontSetSize(Relative,N)
-     - change font height in the ConEmu window
+     - Change font height in the ConEmu window
        Relative==0: N - required font height in points
        Relative==1: N (+-1, +-2) - increase/decrease font height
        returns - "OK", or "InvalidArg"
+    FontSetName("<FontFaceName>"[,FontHeight[,FontWidth]])
+     - Change font face name and (optionally) height/width.
     IsRealVisible
      - Check, is RealConsole visible or not, "Yes"/"No"
     IsConsoleActive
