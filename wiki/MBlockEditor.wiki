@@ -1,13 +1,11 @@
 ﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=summary:MBlockEditor Download (Far1/Far2/Far3 x86/x64)]
 
 ===About===
-Плагин предназначен для сдвига выделенного фрагмента текста в редакторе
-вправо-влево, для комментирования текста (`//` например) и обратно.
+This plugin can tabify/untabify/comment/uncomment selected text (or currentline) if Far Editor.
 
-Табулирование работает и при отсутствии выделения - в этом случае сдвигается
-текущая строка.
+Block (i.e. "`//`") and Stream (i.e. "`/* ... */`") comments are supported.
 
-Комментирование можно настроить отдельно по расширениям файлов
-(пример настройки смотреть в Comment.reg).
-Поддерживаются "блочные" (пример - "`//`") и "потоковые" (пример "`/* ... */`") комментарии.
-Для каждого расширения можно настроить несколько допустимых типов комментирования (например, в .php - `//`, `#`, `/*...*/`, `<!-- -->`). В этом случае при комментировании может быть показано меню (отключается в настройке).
+You may set up comment sequences for each editing file extension.
+
+One file extension may contains more than one comment type (i.e. `.php` allows `//` and `#` Block comments).
+When you ask plugin to comment such file - selection menu will be shown.
