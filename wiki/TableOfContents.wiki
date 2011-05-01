@@ -24,6 +24,7 @@
   * [FarPlugins FAR Manager plugins]
     * [DirSync Synchronize Directory]
     * [FARSelector FAR Selector]
+    * [Far3Wrapper FAR2->Far3 wrapper]
     * [FarWDS FarWDS]
     * [FileTypes FileTypes]
     * [ImpEx ImpEx (PE format browser)]

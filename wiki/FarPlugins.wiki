@@ -2,6 +2,7 @@
 ===List of Far Manager plugins (hosted on this project)===
   * [DirSync Synchronize Directory]
   * [FARSelector FAR Selector]
+  * [Far3Wrapper FAR2->Far3 wrapper]
   * [FarWDS FarWDS]
   * [FileTypes FileTypes]
   * [ImpEx ImpEx (PE format browser)]
