@@ -1,6 +1,6 @@
 #labels Featured
 ===List of Far Manager plugins (hosted on this project)===
-  * [DirSync Synchronize Directory]
+  * [ClipFixer ClipFixer]
   * [FARSelector FAR Selector]
   * [Far3Wrapper FAR2->Far3 wrapper]
   * [FarWDS FarWDS]
@@ -10,4 +10,5 @@
   * [MMView Multimedia Viewer]
   * [PicView Picture View 2]
   * [RegEditor RegEditor]
+  * [DirSync Synchronize Directory]
   * [UnInstall UnInstall]
