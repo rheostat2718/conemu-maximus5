@@ -16,7 +16,7 @@
 || Win-A || *Ignored in Windows 7*. Turns [ConEmuTerms#BufferHeight BufferHeight] mode on/off. *A* is default. ||
 || Win-1, ..., Win-9, Win-0,<br>Win-F11, Win-F12 || Select console tab by number (1 throw 12) ||
 || *Minimize/Restore* || ||
-|| Win-C || Minimize or Restore !ConEmu window. *C* is default, [Settings#Manual_change_of_settings configurable]. ||
+|| Win-C || Minimize or Restore !ConEmu window. *C* is default, [Settings#Manual_change_of_settings configurable]. This is *global* hotkey, it works even !ConEmu has no focus. ||
 || Win-X || Create new console tab with `cmd.exe`. *X* is default, [Settings#Manual_change_of_settings configurable]. ||
 
 ====Host key====

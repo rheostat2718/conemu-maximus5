@@ -20,6 +20,7 @@ This fork grew up from [http://xs.nm.ru/ ConEmu by Zoin].
   * cursor: standard console (horisontal) or GUI (vertical);
   * for /!BufferHeight mode: vertical scrolling using keyboard;
   * show full output (1K+ lines) of last command in editor/viewer;
+  * customizable right click behaviour (long click opens context menu);
   * drag and drop (explorer style);
   * and more, and more... take a look at Settings dialog, !WhatsNew and Settings.reg
 

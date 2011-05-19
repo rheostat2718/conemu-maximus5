@@ -1,4 +1,4 @@
-===!RealConsole===
+ï»¿===!RealConsole===
 As is, it is a real console window.
 It always exists, but ConEmu hide it.
 You may reveal the !RealConsole window by depressing Ctrl-Win-Alt-Space,
@@ -28,12 +28,12 @@ Host keys examples: Win, !CtrlAltShift, !CtrlApps, and so on...
 
 ===!BufferHeight===
 Buffer height of the [ConEmuTerms#RealConsole RealConsole] window may be much longer,
-than height of the visible area. !ConEmu shows scrollbar (automatically or persistent)
+than height of the visible area. !ConEmu shows scrollbar (automatic or persistent)
 when !BufferHeight is enabled. On systems prior to Windows 7 you may switch !BufferHeight
 mode by [KeyboardShortcuts#Configurable_hotkeys Win-A] hotkey.
 
 ===[Tabs Tab]===
-When [Settings#Tabs tabs are visible], each tab represents one «window».
+When [Settings#Tabs tabs are visible], each tab represents one Â«windowÂ».
 Each window may be [ConEmuTerms#RealConsole RealConsole] (running any console application),
 or Far Manager editor/viewer.
 
