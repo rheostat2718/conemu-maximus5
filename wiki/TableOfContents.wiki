@@ -1,4 +1,4 @@
-﻿#labels Featured
+#labels Featured
 #sidebar
 ==Contents==
   * [ConEmu ConEmu]
@@ -22,12 +22,15 @@
     * [ConEmuFAQ_Ru FAQ (russian)]
     * [Whats_New Whats new (russian)]
   * [FarPlugins FAR Manager plugins]
-    * [RegEditor RegEditor]
+    * [ClipFixer ClipFixer]
     * [FARSelector FAR Selector]
-    * [ImpEx ImpEx (PE format browser)]
-    * [PicView Picture View 2]
-    * [MMView Multimedia Viewer]
-    * [DirSync Synchronize Directory]
-    * [FileTypes FileTypes]
+    * [Far3Wrapper FAR2->Far3 wrapper]
     * [FarWDS FarWDS]
+    * [FileTypes FileTypes]
+    * [ImpEx ImpEx (PE format browser)]
+    * [MBlockEditor MBlockEditor]
+    * [MMView Multimedia Viewer]
+    * [PicView Picture View 2]
+    * [RegEditor RegEditor]
+    * [DirSync Synchronize Directory]
     * [UnInstall UnInstall]
