@@ -49,6 +49,11 @@ the Settings dialog, not from the command line.
 <tr height="10"><td>
 
 <tr><td cellpadding="5">
+*FAR 3.0 + !ConEmu (simple console mode)*<br>
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuVanilla.png" title="ConEmu (simple console mode)">
+<tr height="10"><td>
+
+<tr><td cellpadding="5">
 *FAR 2.0 + !ConEmu*, using anti-aliased font<br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu.png" title="FAR Manager + ConEmu" alt="FAR + ConEmu">
 <tr height="10"><td>
