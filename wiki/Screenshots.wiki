@@ -7,7 +7,7 @@
 ===!ConEmu & [ConEmuFarPlugin#PanelColorer PanelColorer]===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/PanelColorer.png" title="ConEmu & PanelColorer">.
 
-===!ConEmu & [ConEmuFarPlugin#FarColorer FarColorer]===
+===!ConEmu & [ConEmuFarPlugin#FarColorer FarColorer truemod]===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTrueMod.png" title="ConEmu & FarColorer TrueMod">.
 
 ===!ConEmu and old (DOS) programs===
