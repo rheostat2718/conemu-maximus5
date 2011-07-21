@@ -1,11 +1,16 @@
 #labels Featured
+==Build 110721==
+====Bugfixes====
+  * В версии 110720 в некоторых случаях Far аварийно завершался.
+
+
 ==Build 110720==
   * Плагины не будут работать в Far3 выше 2102.
 ====Bugfixes====
   * Не работал перехват WinAPI в плагинах, загруженых через Far3wrap.
 ====Changes====
   * В Thumbnails & Tiles учитывается многострочная статусная область панелей.
-  * Добавлен файл !ConEmu\Far3_reg\Thumbnails_KeyBar.xml
+  * Добавлен файл !ConEmu\Far3_reg\Thumbnails_!KeyBar.xml
 
 
 ==Build 110712==
