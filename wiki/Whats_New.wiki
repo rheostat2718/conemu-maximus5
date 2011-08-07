@@ -1,11 +1,20 @@
 #labels Featured
+==Build 110807==
+====Bugfixes====
+  * После Attach (например из плагина) окно консоли не скрывалось.
+  * Issue 418: Не работал макрос FAR_AutoAttach.reg в Far2.
+====Changes====
+  * В меню 'Debug' (системное или контекстное меню таба) добавлен пункт 'Debug active process'.
+  * В поставку добавлены !ExtendedConsole.dll и ExtendedConsole64.dll - поддержка 24bit цветов и Bold/Italic/Underline в Far3.
+
+
 ==Build 110805==
 ====Bugfixes====
-  * Отрисовка TrueMod в 'far /w'.
+  * Отрисовка !TrueMod в 'far /w'.
   * Умеем восстанавливать разрушенное другими программами системное меню.
-  * Issue 387, Issue 397: Диагностика ошибок - отсутствие необходимых 'ConEmuC.exe' или 'ConEmuC64.exe'.
-  * Issue 414: Поломался аттач после детача по CtrlAltTab.
-  * Issue 416: Настройка "DownShowHiddenMessage". Иконка из TSA автоматически убирается, если окно опять стало видимым.
+  * Issue 387, Issue 397: Диагностика ошибок - отсутствие необходимых 'ConEmuC.exe' или '!ConEmuC64.exe'.
+  * Issue 414: Поломался аттач после детача по !CtrlAltTab.
+  * Issue 416: Настройка "!DownShowHiddenMessage". Иконка из TSA автоматически убирается, если окно опять стало видимым.
   * Issue 417: Исправлен глюк Far плагина 'Color Picker'.
 
 
