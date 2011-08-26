@@ -10,6 +10,7 @@ You may call plugin from Plugin menu (F11), too.
 Plugin may be called by:
   # Command line prefix `"ImpEx:<PE_file>"`
   # Plugin menu, item "!ImpEx"
+  # Like any archive, by !CtrlPgDn or Enter
 
 
 ===UPX and other packers===

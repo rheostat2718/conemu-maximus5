@@ -1,10 +1,15 @@
 #labels Featured
+==Build 110826==
+====Changes====
+  * Far3 build 2174.
+
+
 ==Build 110824==
 ====Bugfixes====
   * В некоторых случаях, при отображении меню (!RightClick 4 context menu) гасились панели.
 ====Changes====
   * Far3 build 2159.
-  * Issue 422: Настройка 'DisableMouse'. Через реестр/xml можно отключить посылку мышиных событий в консоль. Некоторые опции ('Resize panels by mouse', 'Select text with mouse', и т.п.) отключаются отдельно.
+  * Issue 422: Настройка '!DisableMouse'. Через реестр/xml можно отключить посылку мышиных событий в консоль. Некоторые опции ('Resize panels by mouse', 'Select text with mouse', и т.п.) отключаются отдельно.
 
 
 ==Build 110811==

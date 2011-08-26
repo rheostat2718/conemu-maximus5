@@ -11,12 +11,14 @@ This fork grew up from [http://xs.nm.ru/ ConEmu by Zoin].
 
   * smooth window resizing;
   * several panels in one window;
+  * easy run old DOS applications (games) in Windows 7 or 64bit OS;
   * tabs for editors, viewers, panels and consoles;
   * thumbnails and tiles in Far manager;
   * normal, maximized and full screen window graphic modes;
   * window font anti-aliasing: standard, clear type, disabled;
   * window fonts: family, height, width, bold, italic, etc.;
   * using [http://code.google.com/p/conemu-maximus5/issues/detail?id=153 normal/bold/italic] fonts for different parts of console simultaneously;
+  * using 24bit colors in Far3;
   * cursor: standard console (horisontal) or GUI (vertical);
   * for /!BufferHeight mode: vertical scrolling using keyboard;
   * show full output (1K+ lines) of last command in editor/viewer;
