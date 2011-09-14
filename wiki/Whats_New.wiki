@@ -1,4 +1,15 @@
 #labels Featured
+==Build 110914==
+====Bugfixes====
+  * DosBox не запускался, если !ConEmu установлен в 'Program Files' (путь к DosBox содержал пробелы).
+  * После нескольких вызовов окна настроек в списке шрифтов задваивались шрифты вида '[Raster Fonts 8x12]'.
+====Changes====
+  * Issue 425, Issue 426: Режим 'Auto' для правой и средней кнопок мыши, копирование - если выделен текст, иначе - вставка.
+  * Minor changes in hookset (32<->64bit).
+  * !ExtendedConsole: немного улучшено отображение цветов в !RealConsole.
+  * Far3 build 2194.
+
+
 ==Build 110903==
 ====Bugfixes====
   * Far3 build 2184.
