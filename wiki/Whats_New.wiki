@@ -1,4 +1,13 @@
 #labels Featured
+==Build 110924==
+====Bugfixes====
+  * Issue 158: !ConEmu !PanelViews в некоторых случаях конфликтовал с плагином !PanelTabs (не реагировал на клавиатуру и мышь).
+====Changes====
+  * Опция "!MainTimerInactiveElapse" - периодичность обновления неактивной консоли.
+  * Плагин '!ConEmu Underlines' теперь умеет подсвечивать панели черезстрочными полосами.
+  * Добавлен новый плагин '!ConEmu Background' аналог неподдерживаемого [ConEmuFarPlugin#PanelColorer PanelColorer].
+
+
 ==Build 110914==
 ====Bugfixes====
   * Issue 427: После !AltEnter, !AltEnter некорректно сохранялся текущий размер окна при выходе.
