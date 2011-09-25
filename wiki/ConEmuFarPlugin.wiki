@@ -3,6 +3,7 @@ others provides advanced features in the !ConEmu:
   * [ConEmuFarPlugin#ConEmu ConEmu] (main connection between Far and !ConEmu)
   * [ConEmuFarPlugin#ConEmu_Panel_Views ConEmu Panel Views]
   * [ConEmuFarPlugin#ConEmu_Underlines ConEmu Underlines]
+  * [ConEmuFarPlugin#ConEmu_Background ConEmu Background]
   * [ConEmuFarPlugin#PanelColorer PanelColorer]
   * [ConEmuFarPlugin#FarColorer FarColorer]
 
@@ -41,12 +42,16 @@ Simple background plugin:
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFarLn.png" title="ConEmu Underlines">.
 
+===!ConEmu Background===
+This plugin colorize Far panels, display mnemonic picture (drive, network, and so on), and progress bar
+of used drive space at status line area. !ConEmu Background can be customized via Background.xml configuration file.
+This is «native» analog of [ConEmuFarPlugin#PanelColorer PanelColorer] plugin.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/PanelColorer.png" title="ConEmu Background">.
 ===!PanelColorer===
 This «third-party» background plugin is originally from [http://forum.farmanager.com/viewtopic.php?f=11&t=5702 here].
 
 You may download latest binary [http://filekeeper.org/download/browser.php?path=conemu/PanelColorer/ here]
-
-<img src="http://conemu-maximus5.googlecode.com/svn/files/PanelColorer.png" title="ConEmu & PanelColorer">.
 
 ===!FarColorer===
 This [http://colorer.sourceforge.net/farplugin.html plugin] works in plain Far Manager too,

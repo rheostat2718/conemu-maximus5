@@ -1,4 +1,11 @@
 #labels Featured
+==Build 110925==
+====Bugfixes====
+  * Плагины '!ConEmu Background' и плагин '!ConEmu Underlines' не работали в Far 1.7x.
+====Changes====
+  * Настройка плагина '!ConEmu Background'. Можно задать полный путь к xml файлу, например "%FARHOME%\Background.xml".
+
+
 ==Build 110924==
 ====Bugfixes====
   * Issue 158: !ConEmu !PanelViews в некоторых случаях конфликтовал с плагином !PanelTabs (не реагировал на клавиатуру и мышь).
