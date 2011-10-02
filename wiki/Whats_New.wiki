@@ -1,4 +1,11 @@
 #labels Featured
+==Build 110926==
+====Changes====
+  * Пункт меню 'Terminate' и кнопка 'Terminate' в 'Recreate dialog' отображает подтверждение с выбором: закрыть консоль 'крестиком' или убить активный процесс (!TerminateProcess).
+  * Упрощена настройка Background. В поле 'Replace color indexes' можно указать '*', тогда будет краситься только фон панелей Far manager.
+  * Far3 build 2204.
+
+
 ==Build 110925==
 ====Bugfixes====
   * Плагины '!ConEmu Background' и плагин '!ConEmu Underlines' не работали в Far 1.7x.
