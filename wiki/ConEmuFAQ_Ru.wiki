@@ -1,11 +1,11 @@
 ====Содержание====
-  * [ConEmuFAQ_Ru#О_главном]
-  * [ConEmuFAQ_Ru#Дистрибутив Дистрибутив]
-  * [ConEmuFAQ_Ru#x64_issues x64 issues]
-  * [ConEmuFAQ_Ru#Настройка Настройка]
-  * [ConEmuFAQ_Ru#Far_Manager Far Manager]
-  * [ConEmuFAQ_Ru#Windows_Vista Windows Vista]
-  * [ConEmuFAQ_Ru#Аварийные_завершения Аварийные завершения]
+  * О главном
+  * Дистрибутив
+  * x64 issues
+  * Настройка
+  * Far Manager
+  * Windows Vista
+  * Аварийные завершения
 
 ===О главном===
 
