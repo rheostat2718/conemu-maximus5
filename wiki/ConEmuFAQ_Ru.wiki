@@ -1,5 +1,5 @@
 ====Содержание====
-  * [О_главном О главном]
+  * [ConEmuFAQ_Ru#О_главном]
   * [ConEmuFAQ_Ru#Дистрибутив Дистрибутив]
   * [ConEmuFAQ_Ru#x64_issues x64 issues]
   * [ConEmuFAQ_Ru#Настройка Настройка]
