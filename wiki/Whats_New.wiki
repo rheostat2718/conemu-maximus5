@@ -1,4 +1,10 @@
 #labels Featured
+==Build 111101==
+====Changes====
+  * В 111019 поломался !TrueMod в Far2.
+  * Продолжение GUI приложений во вкладках.
+
+
 ==Build 111031==
 ====Changes====
   * Issue 443: Jpeg and PNG in Background image.
