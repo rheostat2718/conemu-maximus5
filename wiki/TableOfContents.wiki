@@ -19,6 +19,7 @@
     * [DosBox DOS applications (DosBox)]
     * [ConEmuTerms ConEmu Terms]
     * [Screenshots More screenshots]
+    * [PVSStudio PVS-Studio]
     * [ConEmuFAQ_Ru FAQ (russian)]
     * [Whats_New Whats new (russian)]
   * [FarPlugins FAR Manager plugins]
