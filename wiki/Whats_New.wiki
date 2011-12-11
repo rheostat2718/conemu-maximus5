@@ -1,5 +1,12 @@
 #labels Featured
-==Build 111120==
+==Build 111211==
+  * Продолжение GUI приложений во вкладках.
+  * !ConEmu64 & Far x86: при выходе из Far могло появляться сообщение 'Press Enter or Esc to close console'.
+  * Issue 462: !ConEmu 111206 & right click.
+  * Issue 461: При максимизации внутренняя консоль не максимизируется.
+
+
+==Build 111206==
   * Продолжение GUI приложений во вкладках.
   * Sources: класс CRealConsole разделен на два объекта.
   * Правки в запускаторе.
