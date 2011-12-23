@@ -3,14 +3,14 @@
 ===About===
 This plugin allows using of Far2 plugin under Far3.
 
-1. Rename original (Far2) plugin file (i.e. calcU.dll -> calcU.dl_).
+1. Unpack distribution contents to %FARHOME% directory.
 
-2. Copy !Far3Wrap.dll (or !Far3Wrap64.dll) to plugin folder (near calcU.dl_).
+2. Copy Loader.dll (Loader64.dll using Far3 x64) to the directory, containing Far2 plugin binary (i.e. where colorer.dll located).
 
-3. (optionally) Rename !Far3Wrap.dll to more obvious name (i.e. calcU.dll).
+3. (optionally) Rename Far2 plugin binary (i.e. colorer.dll -> colorer.dl_).
 
-4. Create wrapper ini file. It must match exactly with wrapper file name, renamed on step 3, or '!Far3Wrap' originally (i.e. calcU.ini).
+4. (optionally) Rename Loader.dll to more obvious name (i.e. colorer3.dll).
 
-*WARNING* You must create unique GUIDs in each ini wrapper file.
+5. (optionally) Create wrapper ini file. It must match exactly with wrapper file name, renamed on step 3 (i.e. colorer3.ini). !!!WARNING!!! You must create unique GUIDs in each ini wrapper file.
 
 Sample wrapper ini files are included in distribution.
