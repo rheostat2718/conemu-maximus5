@@ -44,20 +44,28 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
      - Check, is RealConsole visible or not, "Yes"/"No"
     IsConsoleActive
      - Check, is RealConsole active or not, "Yes"/"No"
+    Shell("<Verb>","<File>"[,"<Parms>"[,"<Dir>"[,<ShowCmd>]]])
+     - Verb can be "open", "print" and so on, or special value "new_console", which starts File in the new tab of ConEmu window.
 }}}
 
 ===Examples===
 ====Far2====
 {{{
-$if (callplugin(0x43454D55,"IsConEmu()")<>0 && env("ConEmuMacroResult")=="Yes")
+$if (callplugin(0x43454D55,"IsConEmu()")!=0 && env("ConEmuMacroResult")=="Yes")
   MsgBox("Macro", "Far started under ConEmu")
 $end
 }}}
 ====Far3====
 {{{
-$if (callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()")<>0 && env("ConEmuMacroResult")=="Yes")
+$if (callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()")!=0 && env("ConEmuMacroResult")=="Yes")
   MsgBox("Macro", "Far started under ConEmu")
 $end
+}}}
+{{{
+callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"open\",\""+env("FARHOME")+"\\Encyclopedia\\FarEncyclopedia.ru.chm\")")
+}}}
+{{{
+callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"new_console\",\""+env("FARHOME")+"\\far.exe\")")
 }}}
 ====Far1====
 This is most complicated, cause of 'callplugin' absence in the Far 1.x
@@ -75,3 +83,4 @@ $if (%r=="Yes")
   MsgBox("Macro", "Far started under ConEmu")
 $end
 }}}
+
