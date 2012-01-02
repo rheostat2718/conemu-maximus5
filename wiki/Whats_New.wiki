@@ -21,7 +21,7 @@
 
 ==Build 111220==
   * Улучшен детектор прогресса в консоли.
-  * GuiMacro. Новая функция: Shell("<Verb>","<File>"[,"<Parms>"[,"<Dir>"[,<ShowCmd>]]])
+  * GuiMacro. Новая функция: `Shell("<Verb>","<File>"[,"<Parms>"[,"<Dir>"[,<ShowCmd>]]])`
 {{{
     Verb - "open", "print", и т.п. или специальный "new_console"
     Примеры (для диалога ConEmu GUI Macro):
