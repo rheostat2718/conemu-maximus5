@@ -6,7 +6,7 @@
   * При запуске в новой конфигурации вместо нескольких диалогов отображается один общий диалог 'быстрой настройки'.
   * Параметр '-new_console' не запускал во вкладке GUI приложения.
   * В системное меню добавлены пункты 'Visit home page' и 'Report a bug' (Win+Alt+Space или клик по иконке в заголовке !ConEmu).
-  * Еще немного FAQ-ConEmu.txt
+  * Еще немного FAQ-!ConEmu.txt
   * Issue 465, Issue 466: Правки в !ConEmuHk.
   * Часть настроек с вкладки 'Features' перенесена в новую 'Far Manager'.
   * На вкладке настроек 'Far Manager' добавлены поля для макросов. Вернуть макрос 'по умолчанию' можно очистив поле макроса.
@@ -15,7 +15,7 @@
 
 
 ==Build 120101==
-  * Same as build 120102. May be used for AutoUpdate testing.
+  * Same as build 120102. May be used for !AutoUpdate testing.
 
 
 
@@ -40,14 +40,14 @@
   * Issue 462: !ConEmu 111206 & right click.
   * Issue 461: При максимизации внутренняя консоль не максимизируется.
   * Расширены возможности запуска новой консоли: `-new_console[:bh[N]caru[:user:pwd]]`
-    * b - Create background tab
-    * h<height> - пример, h0 - отключить буфер, h9999 - включить буфер в 9999 строк
-    * n - отключить "Press Enter or Esc to close console"
-    * c - принудительно включить "Press Enter or Esc to close console"
-    * a - !RunAs shell verb (as admin on Vista+, login/password in Win2k and WinXP)
-    * r - Run as restricted user
-    * u - ConEmu choose user dialog
-    * u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST OPTION
+    * `b` - Create background tab
+    * `h<height>` - пример, h0 - отключить буфер, h9999 - включить буфер в 9999 строк
+    * `n` - отключить "Press Enter or Esc to close console"
+    * `c` - принудительно включить "Press Enter or Esc to close console"
+    * `a` - !RunAs shell verb (as admin on Vista+, login/password in Win2k and WinXP)
+    * `r` - Run as restricted user
+    * `u` - ConEmu choose user dialog
+    * `u:<user>:<pwd>` - specify user/pwd in args, MUST BE LAST OPTION
 
 
 ==Build 111206==
@@ -130,7 +130,7 @@
 		1 - вернуть окно отрисовки
 		0 - если в !ConEmu - вернуть окно отрисовки, иначе - вернуть окно консоли
 }}}
-  * Еще немного FAQ-ConEmu.txt
+  * Еще немного FAQ-!ConEmu.txt
 
 
 ==Build 111024==
@@ -146,7 +146,7 @@
   * Issue 423: При просмотре картинок (!PicView и т.п.) временно отключается альфа-прозрачность.
   * Макросы в Far могли не выполняться, пока мышкой не дернешь над консолью.
   * !ConEmu падал, если все консольные процессы завершались пока было открыто окно 'Recreate console'.
-  * Обновлен FAQ-ConEmu.txt
+  * Обновлен FAQ-!ConEmu.txt
 
 
 ==Build 111019==
