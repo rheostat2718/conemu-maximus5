@@ -1,4 +1,4 @@
-<font size="6">Содержание</font>
+<font size="4">Содержание</font>
 <wiki:toc max_depth="3" /> 
 
 ==О главном==
