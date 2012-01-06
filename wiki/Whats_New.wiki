@@ -1,4 +1,9 @@
 #labels Featured
+==Build 120105b==
+  * Issue 295: Улучшена отрисовка диалогов при использовании пропорциональных шрифтов.
+  * !AutoUpdate. Перед запуском обновления (после закрытия окна !ConEmu) выполняется проверка отсутствия других запущенных экземпляров !ConEmu.
+
+
 ==Build 120105==
   * Issue 461: В некоторых случаях !ConEmu падал при закрытии GUI приложения во вкладке.
   * Issue 469: YAC (Yet Another Completion) doesn't work. Для !GetConsoleWindow (возвращающего окно отрисовки) !GetClassName перехватывается и возвращает "!ConsoleWindowClass".
