@@ -1,5 +1,6 @@
 ﻿#labels Featured
 ===Why to use certificate?===
+  * You can check integrity of !ConEmu executable files.
   * Avoid Windows !SmartScreen prevention of unrecognized program from starting (Installer).
   * Vista and Windows7 «User account control» confirmation will be more friendly.<br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/Certificate.Win7.Ru/Result.png" title="ConEmu. UAC confirmation">
