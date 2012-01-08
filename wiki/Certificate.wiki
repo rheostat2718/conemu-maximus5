@@ -53,7 +53,7 @@
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/Certificate.Win8.En/Mmc6.png" title="ConEmu. Install certificate. Step6">
 
-<img src="http://conemu-maximus5.googlecode.com/svn/files/Certificate.Win8.En/Step5.png" title="ConEmu. Install certificate. Step7">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/Certificate.Win8.En/Step4.png" title="ConEmu. Install certificate. Step7">
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/Certificate.Win8.En/Step5.png" title="ConEmu. Install certificate. Step8">
 
