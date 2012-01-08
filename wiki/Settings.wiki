@@ -72,7 +72,13 @@ Usually, this file is located near to the _ConEmuC.exe_.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreRealFont.png" title="ConEmu settings, RealConsole font" alt="ConEmu settings, RealConsole font">
 
 ====Hide caption details====
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreHideCaption.png" title="ConEmu settings, Features page" alt="ConEmu settings, Hide caption details">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreHideCaption.png" title="ConEmu settings, Hide caption details" alt="ConEmu settings, Hide caption details">
+
+===Far Manager===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFarManager.png" title="ConEmu settings, Far Manager page" alt="ConEmu settings, Far Manager page">
+
+===Keys===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsKeys.png.png" title="ConEmu settings, Keys page" alt="ConEmu settings, Keys page">
 
 ===Tabs===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTabs.png" title="ConEmu settings, Tabs page" alt="ConEmu settings, Tabs page">
@@ -87,6 +93,9 @@ This is settings for 'Panel Views' Far Manager plugin.
 ===Debug===
 Enables advanced logging of console processes creation.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDebug.png" title="ConEmu settings, Debug page" alt="ConEmu settings, Debug page">
+
+===Automatic update===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsUpdate.png" title="ConEmu settings, Update page" alt="ConEmu settings, Update page">
 
 ===Info===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsInfo.png" title="ConEmu settings, Info page" alt="ConEmu settings, Info page">
