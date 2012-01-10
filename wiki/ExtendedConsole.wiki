@@ -1,0 +1,3 @@
+!ConEmu implements extended console feature. This is new in Far Manager 3.x. When !ExtendedConsole.dll (ExtendedConsole64.dll) located in Far.exe folder, and checkbox [Settings#Colors Colorer TrueMod support] console program acquires 16M colors for text drawing and bold/italic/underline type faces.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ExtendedConsole.png" title="Console text and background colors">

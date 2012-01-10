@@ -1,4 +1,17 @@
 #labels Featured
+==Build 120110==
+  * Зарегистрирован аккаунт в твиттере :) http://twitter.com/ConEmuMaximus5
+  * Автообновление: описано в FAQ-!ConEmu.txt
+  * Автообновление: ошибки скачивания 'version.ini' отображаются только при вызове из меню 'Help' -> 'Check for updates'.
+  * Подтверждение перед Detach.
+  * В 'Settings' -> 'Tabs' добавлена настройка шрифта табов.
+  * Внутренние изменения. Окна !VirtualConsoleClassBack и !VirtualConsoleClassScroll более не используются.
+  * Не работало отключение флажка 'Long console output'.
+  * При запуске команд из Far Manager можно использовать параметр "-cur_console:h[N]". "h[N]" аналогичен параметру в "-new_console" но команда будет запущена в текущей а не новой консоли.
+  * Issue 474: !ConEmu not accepting mouse wheel input when mouse coords are negative.
+  * Issue 476: New checkbox 'Settings'->'Tabs'->'Far windows'.
+
+
 ==Build 120105c==
   * Issue 295: Улучшена отрисовка диалогов при использовании пропорциональных шрифтов.
   * !AutoUpdate. Перед запуском обновления (после закрытия окна !ConEmu) выполняется проверка отсутствия других запущенных экземпляров !ConEmu.
