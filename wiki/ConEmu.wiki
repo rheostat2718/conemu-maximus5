@@ -1,17 +1,14 @@
-==About !ConEmu==
+==About !ConEmu <g:plusone size="medium" href="http://code.google.com/p/conemu-maximus5/"></g:plusone>==
 !ConEmu-Maximus5 is a Windows console emulator with tabs, which represents multiple consoles as one customizable GUI window with various features. Basic application - joint use with [http://www.farmanager.com/download.php?l=en Far Manager] ([http://en.wikipedia.org/wiki/FAR_Manager Far in Wikipedia]). Far (File and Archive) Manager is a console program for managing files and archives in Windows operating systems.
 
 <table cellpadding="0" cellspacing="0" border="0">
 <tr>
-	<td height="25" width="200" valign="bottom" rowspan="2"><font size="3">*Download*</font></td>
-	<td height="9" width="90"></td>
-	<td width="300" height="60" rowspan="3"><wiki:gadget url="http://hosting.gmodules.com/ig/gadgets/file/105726654954270975870/tweet_button.xml" height="25" width="150" border="0" up_Tweet_text="Download ConEmu for free! Customizable Windows console emulator with tabs" up_Tweet_URL="http://code.google.com/p/conemu-maximus5/" up_Twitter_user="ConEmuMaximus5" up_Tweet_count="horizontal"/></td>
+  <td height="25" width="240" valign="bottom"><font size="3">*Download*</font></td>
+  <td height="25" width="150" rowspan="2" valign="center"><wiki:gadget width="150" height="25" border="0" url="http://hosting.gmodules.com/ig/gadgets/file/110509162544058635853/steegle-google-sites-facebook-like-button.xml" up_url="http://code.google.com/p/conemu-maximus5/" up_layout="button_count" up_width="150" /></td>
+  <td width="120" height="60" rowspan="2" valign="center"><wiki:gadget url="http://hosting.gmodules.com/ig/gadgets/file/105726654954270975870/tweet_button.xml" height="25" width="150" border="0" up_Tweet_text="Download ConEmu for free! Customizable Windows console emulator with tabs" up_Tweet_URL="http://code.google.com/p/conemu-maximus5/" up_Twitter_user="ConEmuMaximus5" up_Tweet_count="horizontal"/></td>
 </tr>
 <tr>
-  <td height="25" width="90" rowspan="2"><g:plusone size="medium" href="http://code.google.com/p/conemu-maximus5/"></g:plusone></td>
-</tr>
-<tr>
-  <td height="25" width="200" valign="top">[http://code.google.com/p/conemu-maximus5/downloads/list Latest version], [http://code.google.com/p/conemu-maximus5/downloads/list?q=label:Featured+summary:Maximus5 Stable version]</td>
+  <td height="25" width="240" valign="top">[http://code.google.com/p/conemu-maximus5/downloads/list Latest version], [http://code.google.com/p/conemu-maximus5/downloads/list?q=label:Featured+summary:Maximus5 Stable version]</td>
 </tr>
 </table>
 
