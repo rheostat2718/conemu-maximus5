@@ -4,7 +4,7 @@
   * Правки детектора панелей.
   * Отладочная опция: System menu -> Debug -> Load screen dump.
   * Windows 7: Overlay icon 'Shield' on taskbar for elevated tabs.
-  * Far 3 build 2381: Исправим безобразие с !RightClick :) при включенных 'Right selection fix' и 'RightClick 4 EMenu'.
+  * Far 3 build 2381: Исправим безобразие с !RightClick :) при включенных 'Right selection fix' и '!RightClick 4 EMenu'.
   * При ошибках запуска корневой команды ConEmuC.exe отображает текущую директорию (`Can't create process, ErrCode, Current directory, Command to be executed`).
   * Issue 477: 'Ломка' шрифта в диалоговых окнах.
   * Issue 478: Отображение рамок с растровыми шрифтами при отключенном 'Fix Far borders'.
