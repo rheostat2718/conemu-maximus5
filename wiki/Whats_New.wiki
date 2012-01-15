@@ -1,5 +1,13 @@
 #labels Featured
 ==Build 120115==
+2012.01.15a
+  * Параметр "`-cur_console[:n]`" можно указать после "`ConEmu.exe /cmd`" чтобы отключить 'Press Enter or Esc to close console'. Пример для !UserMenu в Far 3.x, открывает файл под курсором в hiew, запущенном в новом экземпляре !ConEmu.
+{{{
+macro:post $If (Apanel.Folder || Apanel.Plugin && !!(APanel.OPIFlags & 0x20)) msgbox("Warning!!","Panel or current item type disallows Hiew execution",0) $Else print(@"conemu.exe /config hiew /cmd T:\Utils\Files\Hiew32\hiew32.exe -cur_console:n ") CtrlF Enter $End
+}}}
+
+
+==Build 120115==
   * Detach GUI окон.
   * Правки детектора панелей.
   * Отладочная опция: System menu -> Debug -> Load screen dump.
