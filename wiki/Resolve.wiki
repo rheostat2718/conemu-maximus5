@@ -1,41 +1,49 @@
-﻿[http://conemu-maximus5.googlecode.com/files/Resolve.1.0.7z Download (Far2/Far3 x86/x64)]
+﻿[http://conemu-maximus5.googlecode.com/files/Resolve.1.1.7z Download (Far2/Far3 x86/x64)]
 
 ===About===
 Resolve plugin for Far Manager 2.x and 3.x
 
 This plugin may be useful for developers, performs two functions:
 
-1. 'Error lookup' analog - show Windows error description by error code
+1. 'Error lookup' analog - for Windows error code shows name, description, severity/facility, and so on...
 {{{
-╔═════════════════ CPP Resolve ══════════════════╗
-║                                                ║
-║ Expr:  2                                      ↓║
-║                       [ Resolve ]  [ ErrLook ] ║
-╟────                                           ─╢
-║       ╔═════════════ Resolve ═════════════╗    ║
-║ Typ   ║ ErrCode=0x00000002 (2)            ║    ║
-║ Val   ║                                   ║    ║
-║       ║ Не удается найти указанный файл.  ║    ║
-╚════   ║                                   ║   ═╝
-        ╟───────────────────────────────────╢
-        ║              { OK }               ║
-        ╚═══════════════════════════════════╝
+╔══════════════════ CPP Resolve ══════════════════╗
+║                                                 ║
+║ Expr:   0xC0000022                             ↓║
+║ Source: ntdll.dll                              ↓║
+║                       [ Resolve ]  [ ErrLook ]  ║
+╟─ ╔════════════════ Resolve ═════════════════╗ ──╢
+║  ║ Name=STATUS_ACCESS_DENIED                ║   ║
+║ T║ Err=0xC0000022, Dec=-1073741790, Word=34 ║   ║
+║ V║ SEVERITY_ERROR, FACILITY_NULL            ║   ║
+║  ║                                          ║   ║
+╚══║ {Access Denied}                          ║═══╝
+   ║ A process has requested access to an ob… ║                                                               
+   ║                                          ║
+   ╟──────────────────────────────────────────╢
+   ║                  { OK }                  ║
+   ╚══════════════════════════════════════════╝
 }}}
 
 2. 'Resolve' - show Windows API macro value, i.e. values of WM_SIZE, CFSTR_FILECONTENTS and so on...
 {{{
-╔═════════════════ CPP Resolve ══════════════════╗
-║                                                ║
-║ Expr:  CFSTR_FILECONTENTS                     ↓║
-║                       [ Resolve ]  [ ErrLook ] ║
-╟────────────────────────────────────────────────╢
-║                                                ║
-║ Type:  char const [13]                         ║
-║ Value: FileContents                            ║
-║        [ 1 Copy ]  [ 2 Copy # ]  [ 3 Copy /* ] ║
-╚════════════════════════════════════════════════╝
+╔══════════════════ CPP Resolve ══════════════════╗
+║                                                 ║
+║ Expr:   CFSTR_FILECONTENTS                     ↓║
+║ Source:                                        ↓║
+║                       [ Resolve ]  [ ErrLook ]  ║
+╟─────────────────────────────────────────────────╢
+║                                                 ║
+║ Type:   char const [13]                         ║
+║ Value:  FileContents                            ║
+║         [ 1 Copy ]  [ 2 Copy # ]  [ 3 Copy /* ] ║
+╚═════════════════════════════════════════════════╝
 }}}
 
 Plugin defaults assumes Visual Studio 9.0 and SDK 7.0.
+
 All PATH`s, INCLUDE`s and LIB`s may be changes in plugin settings.
+
 'Resolve' function requires 'cl.exe' and 'link.exe'.
+
+By Enter depress plugin choose function (Resolve/ErrLook) automatically.
