@@ -46,4 +46,4 @@ All PATH`s, INCLUDE`s and LIB`s may be changes in plugin settings.
 
 'Resolve' function requires 'cl.exe' and 'link.exe'.
 
-By Enter depress plugin choose function (Resolve/ErrLook) automatically.
+By Enter depress plugin choose function (Resolve/!ErrLook) automatically.

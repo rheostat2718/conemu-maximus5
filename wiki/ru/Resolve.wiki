@@ -46,4 +46,4 @@ Resolve plugin for Far Manager 2.x and 3.x
 
 Для функции 'Resolve' требуются 'cl.exe' и 'link.exe'.
 
-При нажатии Enter функция (Resolve/ErrLook) выбирается автоматически.
+При нажатии Enter функция (Resolve/!ErrLook) выбирается автоматически.
