@@ -36,3 +36,4 @@
     * [RegEditor RegEditor]
     * [DirSync Synchronize Directory]
     * [UnInstall UnInstall]
+    * [Resolve Resolve]
