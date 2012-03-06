@@ -21,7 +21,7 @@
     * [ConEmuTerms ConEmu Terms]
     * [Screenshots More screenshots]
     * [PVSStudio PVS-Studio]
-    * [ConEmuFAQ_Ru FAQ (russian)]
+    * [ConEmuFAQ FAQ (russian)]
     * [Whats_New Whats new (russian)]
   * [FarPlugins FAR Manager plugins]
     * [ClipFixer ClipFixer]
