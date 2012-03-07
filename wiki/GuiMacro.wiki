@@ -23,7 +23,7 @@ When you call plugin menu, result is show in the dialog field,
 When you use far manager macro - result is placed to the '!ConEmuMacroResult' environment variable.
 
 ===List of functions===
-<code language="txt">
+{{{
     IsConEmu
      - Returns "Yes" when console was started under !ConEmu
     FindEditor("<FullEditFileName>"), FindViewer("<FullViewerFileName>"), FindFarWindow(<WindowType>,"<WindowTitle>")
@@ -51,7 +51,7 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
        Examples: Shell("open","cmd.exe","/k")
                  Shell("","","cmd.exe /k -new_console:b"),
                  Shell("new_console:b","","cmd.exe /k")
-</code>
+}}}
 
 ===Examples===
 ====Far2====
