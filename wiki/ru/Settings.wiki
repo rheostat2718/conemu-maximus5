@@ -61,7 +61,7 @@
 ==Ссылки на документацию==
   * [http://conemu.narod.ru/settings.html#Screenshots Скриншоты с русскими подсказками (начало)]
   * [http://code.google.com/p/conemu-maximus5/wiki/Command_Line Параметры командной строки, запуск при старте нескольких вкладок]
-  * [http://code.google.com/p/conemu-maximus5/wiki/ConEmuFAQ_Ru ЧаВо (на русском)]
+  * [http://code.google.com/p/conemu-maximus5/wiki/ConEmuFAQ ЧаВо (на русском)]
   * [http://code.google.com/p/conemu-maximus5/wiki/TableOfContents Остальная документация]
 
 ==Where settings are stores?==
