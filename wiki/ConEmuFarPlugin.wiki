@@ -55,7 +55,7 @@ You may download latest binary [http://filekeeper.org/download/browser.php?path=
 
 ===!FarColorer===
 This [http://colorer.sourceforge.net/farplugin.html plugin] works in plain Far Manager too,
-but when You choose [www.farmanager.com/download.php Far 3.x]
+but when You choose [http://www.farmanager.com/download.php Far 3.x]
 or [http://forum.farmanager.com/viewtopic.php?p=1041#p1041 Far TrueMod 2.x]
 and run it under !ConEmu - You got full true colors in the console (Far editor only in Far !TrueMod 2.x)
 instead of standard 16 (or 32 with [Settings#Colors Extend foreground colors] option) console colors.

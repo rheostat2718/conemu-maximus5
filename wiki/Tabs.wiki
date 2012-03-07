@@ -4,7 +4,7 @@
 
 Viewer windows are framed by curly brackets. Editor windows are framed by square brackets. Modified editors marked with asterisk. Asterisk immediately appears and disappears on editor status change.
 
-*Note: ConEmu plugin is required to get tabs for editors and viewers.*
+*Note: !ConEmu plugin is required to get tabs for editors and viewers.*
 
 Left click on a tab will activate it, except FAR can't switch to this window (dialog is opened, macro is recorded or played, FAR menu bar is active, and so on).
 
@@ -17,4 +17,4 @@ You may use `Win-Number` to activate consoles from 1 to 10 and Win-F11/F12 to ac
 
 Win is default [ConEmuTerms#Host_key HostKey], You may select yours convinent combination (up to 3 keys) from Win, Ctrl, Alt, Shift and Apps.
 
-By default, ConEmu [Settings#Tabs internally handles Ctrl+Tab] combination, which switch consoles too.
+By default, !ConEmu [Settings#Tabs internally handles Ctrl+Tab] combination, which switch consoles too.
