@@ -1,3 +1,5 @@
+<wiki:toc max_depth="4" /> 
+
 ===Common===
 ====Text selection and clipboard====
 !ConEmu allows marking console blocks and streams, copying marked text to Windows Clipboard, pasting from Clipboard to console. [TextSelection Read more...]
@@ -64,3 +66,13 @@ You may choose right click behaviour:
 ====Resizing Far Manager panels with mouse====
 This is simple now. Drag panels by bottom border, or by left border of the *right* panel.
 Option [Settings#Features Resize panels by mouse] must be checked.
+
+====Hyperlinks and compiler errors====
+!ConEmu can highlight hyperlinks (e.g. `http://www.farmanager.com`) and compiler errors (e.g. `FarCtrl.pas(1002,49) Error: Identifier not found...`).
+
+Turn on checkbox «Highlight and goto» and choose appropriate modifier (e.g. «Left Ctrl») on the [Settings#settings TextSelection] page.
+So, when you hold selected modifier (e.g. «Left Ctrl») !ConEmu will underlines hyperlinks/errors detected under mouse cursor.
+!LeftClick (with modifier) will open it:
+  * hyperlinks - in the default browser
+  * e-mails - in the default Mail program
+  * compiler errors - in the Far editor, positioned on row and column of the error
