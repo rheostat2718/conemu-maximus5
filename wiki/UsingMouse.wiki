@@ -76,3 +76,8 @@ So, when you hold selected modifier (e.g. «Left Ctrl») !ConEmu will underlines
   * hyperlinks - in the default browser
   * e-mails - in the default Mail program
   * compiler errors - in the Far editor, positioned on row and column of the error
+
+====Right click on !KeyBar====
+RClick on !KeyBar pop up menu with F-key with possible modifiers. E.g., when you RClick on `7Search` in the Far Editor you can choose Ctrl-F7 to run Replace dialog.
+
+*Note*. When you choose such menu item, !ConEmu post «real» keypress to console. So, macro will be executed, when there is one associated with this keypress.
