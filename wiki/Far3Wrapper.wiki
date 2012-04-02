@@ -1,4 +1,4 @@
-﻿[http://conemu-maximus5.googlecode.com/files/Far3Wrap.1.29.b2462.7z Download (Far3 x86/x64)]
+﻿[http://code.google.com/p/conemu-maximus5/downloads/list?can=2&q=far3wrap Download (Far3 x86/x64)]
 
 ===About===
 This plugin allows using of Far2 plugin under Far3.
