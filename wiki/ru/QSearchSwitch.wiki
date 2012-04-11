@@ -11,8 +11,8 @@
 появится первый символ - Alt можно отпускать.
 
 ===Установка===
-* Развернуть в папку `%FARHOME%\Plugins\QSearchSwitch`
-* Перезапустить Far Manager
+  * Развернуть в папку `%FARHOME%\Plugins\QSearchSwitch`
+  * Перезапустить Far Manager
 
 ===Минимальные требования===
 Far Manager 3.0 build 2591 или выше

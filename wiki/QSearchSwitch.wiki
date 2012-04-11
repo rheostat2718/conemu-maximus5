@@ -11,8 +11,8 @@ If you want to type in Far CommandLine - press Alt+«letter». After first symbo
 you may release Alt.
 
 ===Installation===
-* Unpack to `%FARHOME%\Plugins\QSearchSwitch` folder
-* Restart Far Manager
+  * Unpack to `%FARHOME%\Plugins\QSearchSwitch` folder
+  * Restart Far Manager
 
 ===Requirements===
 Far Manager 3.0 build 2591 or higher
