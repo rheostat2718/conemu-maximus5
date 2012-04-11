@@ -1,4 +1,4 @@
-﻿[code.google.com/p/conemu-maximus5/downloads/list?can=2&q=QSearchSwitch Download (Far3 x86/x64)]
+﻿[http://code.google.com/p/conemu-maximus5/downloads/list?can=2&q=QSearchSwitch Download (Far3 x86/x64)]
 
 ===Описание===
 Плагин QSearchSwitch для Far Manager 3.x
