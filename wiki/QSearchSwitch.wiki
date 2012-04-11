@@ -1,0 +1,18 @@
+﻿[code.google.com/p/conemu-maximus5/downloads/list?can=2&q=QSearchSwitch Download (Far3 x86/x64)]
+
+===About===
+QSearchSwitch plugin for Far Manager 3.x
+
+Some users want to QSearch in panels without holding Alt key.
+
+This mini-plugin invert Alt behaviour, when you type letters QSearch appears.
+
+If you want to type in Far CommandLine - press Alt+«letter». After first symbol (when CommandLine is not empty)
+you may release Alt.
+
+===Installation===
+* Unpack to `%FARHOME%\Plugins\QSearchSwitch` folder
+* Restart Far Manager
+
+===Requirements===
+Far Manager 3.0 build 2591 or higher

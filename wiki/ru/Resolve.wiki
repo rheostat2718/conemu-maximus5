@@ -1,6 +1,6 @@
-﻿[http://conemu-maximus5.googlecode.com/files/Resolve.1.1.7z Download (Far2/Far3 x86/x64)]
+﻿[code.google.com/p/conemu-maximus5/downloads/list?can=2&q=Resolve Download (Far2/Far3 x86/x64)]
 
-===About===
+===Описание===
 Resolve plugin for Far Manager 2.x and 3.x
 
 Плагин может быть полезен для разработчиков, умеет 2 функции:
