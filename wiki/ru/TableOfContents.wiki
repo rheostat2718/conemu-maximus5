@@ -33,7 +33,6 @@
     * [MBlockEditor MBlockEditor]
     * [MMView Multimedia Viewer]
     * [PicView Picture View 2]
-    * [QSearchSwitch QSearchSwitch]
     * [RegEditor RegEditor]
     * [DirSync Synchronize Directory]
     * [UnInstall UnInstall]
