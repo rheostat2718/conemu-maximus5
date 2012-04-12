@@ -38,3 +38,4 @@
     * [Resolve Resolve]
     * [DirSync Synchronize Directory]
     * [UnInstall UnInstall]
+  * [http://code.google.com/p/conemu-maximus5/w/list?can=2&q= Все wiki страницы]
