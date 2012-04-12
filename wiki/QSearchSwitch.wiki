@@ -15,4 +15,6 @@ you may release Alt.
   * Restart Far Manager
 
 ===Requirements===
-Far Manager 3.0 build 2591 or higher
+Far Manager 3.0 build 2591 or higher. Far3bis recommended.
+
+At least, Far must be compiled with MANTIS_0001687 define.
