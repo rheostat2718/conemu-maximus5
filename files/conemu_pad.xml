@@ -72,7 +72,25 @@
 			<Char_Desc_80>ConEmu-Maximus5 is a Windows console emulator with tabs.</Char_Desc_80>
 			<Char_Desc_250>ConEmu-Maximus5 is a Windows console emulator with tabs, which represents multiple consoles as one customizable GUI window with various features. Basic application - joint use with Far Manager.</Char_Desc_250>
 			<Char_Desc_450>ConEmu-Maximus5 is a Windows console emulator with tabs, which represents multiple consoles as one customizable GUI window with various features. Basic application - joint use with Far Manager. Far (File and Archive) Manager is a console program for managing files and archives in Windows operating systems.</Char_Desc_450>
-			<Char_Desc_2000 />
+			<Char_Desc_2000>ConEmu-Maximus5 is a Windows console emulator with tabs, which represents multiple consoles as one customizable GUI window with various features. Basic application - joint use with Far Manager. Far (File and Archive) Manager is a console program for managing files and archives in Windows operating systems.
+
+ConEmu starts a console program in hidden console window and provides an alternative customizable GUI window with various features:
+
+* smooth window resizing;
+* several panels in one window;
+* easy run old DOS applications (games) in Windows 7 or 64bit OS;
+* tabs for editors, viewers, panels and consoles;
+* thumbnails and tiles in FAR manager;
+* normal, maximized and full screen window graphic modes;
+* window font anti-aliasing: standard, clear type, disabled;
+* window fonts: family, height, width, bold, italic, etc.;
+* using normal/bold/italic fonts for different parts of console simultaneously;
+* cursor: standard console (horisontal) or GUI (vertical);
+* for /BufferHeight mode: vertical scrolling using keyboard;
+* show full output (1K+ lines) of last command in editor/viewer;
+* customizable right click behaviour (long click opens context menu);
+* drag and drop (explorer style);
+* and more, and more..</Char_Desc_2000>
 		</English>
 	</Program_Descriptions>
 	<Web_Info>
