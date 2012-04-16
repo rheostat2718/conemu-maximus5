@@ -1,5 +1,14 @@
-﻿===!ConEmu (simple console mode)===
+﻿===Far, cmd, Notepad and PUTTY started in !ConEmu===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAero.png" title="Far, cmd, Notepad and PUTTY started in ConEmu">
+
+===!ConEmu Alpha transparency===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTransparency.png" title="ConEmu Alpha transparency">
+
+===!ConEmu (simple console mode)===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuVanilla.png" title="ConEmu (simple console mode)">
+
+===!ConEmu (console text selection)===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTextSelection2.png" title="Console text selection in ConEmu">
 
 ===!ConEmu [ConEmuFarPlugin#ConEmu_Panel_Views Thumbnails & Tiles]===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuPanelViews2.png" title="ConEmu Thumbnails and Tiles">
@@ -7,7 +16,7 @@
 ===!ConEmu & [ConEmuFarPlugin#PanelColorer PanelColorer]===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/PanelColorer.png" title="ConEmu & PanelColorer">.
 
-===!ConEmu & [ConEmuFarPlugin#FarColorer FarColorer truemod]===
+===!ConEmu & [ConEmuFarPlugin#FarColorer FarColorer] (Far 3.x)===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTrueMod.png" title="ConEmu & FarColorer TrueMod">.
 
 ===!ConEmu and old (DOS) programs===
@@ -21,7 +30,7 @@
 ===!ConEmu in Desktop mode===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/DesktopMode.png" title="ConEmu in Desktop mode">
 
-===!ConEmu and [http://forum.farmanager.com/viewtopic.php?f=11&t=4778 FAR Colorer]===
+===!ConEmu and [http://forum.farmanager.com/viewtopic.php?f=11&t=4778 FarColorer] (Far 2.x)===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuBoldItalic.png" title="ConEmu and FAR Colorer (GUI & RealConsole)">
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuColorerHrd.png" title="ConEmu and FAR Colorer (default.hrd)">
