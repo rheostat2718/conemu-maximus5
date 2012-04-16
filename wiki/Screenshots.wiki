@@ -2,7 +2,7 @@
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuVanilla.png" title="ConEmu (simple console mode)">
 
 ===!ConEmu [ConEmuFarPlugin#ConEmu_Panel_Views Thumbnails & Tiles]===
-<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuPanelViews.png" title="ConEmu Thumbnails and Tiles">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuPanelViews2.png" title="ConEmu Thumbnails and Tiles">
 
 ===!ConEmu & [ConEmuFarPlugin#PanelColorer PanelColorer]===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/PanelColorer.png" title="ConEmu & PanelColorer">.
