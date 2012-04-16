@@ -12,6 +12,8 @@
 </tr>
 </table>
 
+[Awards ConEmu Awards]
+
 This fork grew up from [http://xs.nm.ru/ ConEmu by Zoin].
 
 Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&topic=38078&glp forum.ru-board.com] :)

@@ -23,6 +23,7 @@
     * [PVSStudio PVS-Studio]
     * [ConEmuFAQ FAQ (russian)]
     * [Whats_New Whats new (russian)]
+    * [Awards ConEmu Awards]
   * [FarPlugins FAR Manager plugins]
     * [ClipFixer ClipFixer]
     * [FARSelector FAR Selector]
