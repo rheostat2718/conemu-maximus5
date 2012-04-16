@@ -34,7 +34,7 @@
 	</Company_Info>
 	<Program_Info>
 		<Program_Name>ConEmu</Program_Name>
-		<Program_Version>120414</Program_Version>
+		<Program_Version>120416</Program_Version>
 		<Program_Release_Month>04</Program_Release_Month>
 		<Program_Release_Day>16</Program_Release_Day>
 		<Program_Release_Year>2012</Program_Release_Year>
@@ -102,7 +102,7 @@ ConEmu starts a console program in hidden console window and provides an alterna
 			<Application_XML_File_URL />
 		</Application_URLs>
 		<Download_URLs>
-			<Primary_Download_URL>http://conemu-maximus5.googlecode.com/files/ConEmuSetup.120414d.exe</Primary_Download_URL>
+			<Primary_Download_URL>http://conemu-maximus5.googlecode.com/files/ConEmuSetup.120416.exe</Primary_Download_URL>
 			<Secondary_Download_URL>http://code.google.com/p/conemu-maximus5/downloads/list</Secondary_Download_URL>
 			<Additional_Download_URL_1 />
 			<Additional_Download_URL_2 />
