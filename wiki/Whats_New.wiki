@@ -8,15 +8,15 @@
   * After Far3 build 2576 was broken macros containing $Text. E.g. 'long right-click'.
   * GUI Apps in tabs: "Notepad" in Win-W don't works.
   * Removed a small delay before switching tabs (editor/viewer) via !ConEmu.
-  * Issue 516 : When you click on the taskbar to minimize ConEmu, Win-Number was not turned off.
+  * Issue 516 : When you click on the taskbar to minimize !ConEmu, Win-Number was not turned off.
   * Issue 518 : If the Far 'hangs', then when you try to access it (switching tabs, etc.) !ConEmu hang for a while.
   * Issue 521 : Editor/Viewer tabs disappearing.
   * Issue 248 : Added ability to save / load custom color palette. Сolor palette contains 32 (16+16) colors and setting 'Extend foreground colors'. Named palettes are stored in the "Colors" subkey of reg/xml settings.
   * Issue 445 : Added ability to create custom 'Tasks'. In fact, this is an alias to run one or more applications in new tabs !ConEmu. May be configured in 'Tasks' page of 'Settings' dialog, and stored in "Tasks" subkey subkey of reg/xml settings. 'Task' may be used (for example of the {Shells}):
-    * when you start by specifying the properties of the shortcut: "ConEmu.exe / cmd {Shells}";
+    * when you start by specifying the properties of the shortcut: "!ConEmu.exe / cmd {Shells}";
     * specifying {Shells} in the 'Command line' page 'Main' of 'Settings' dialog;
-    * when you create a new console interface ConEmu (`+` on the toolbar, a list of Recreate-dialog);
-    * from the command line (cmd.exe): "%ConEmuBaseDir%\ConEmuC.exe" / c {Shells} -new_console.
+    * when you create a new console interface !ConEmu (`+` on the toolbar, a list of Recreate-dialog);
+    * from the command line (cmd.exe): "%!ConEmuBaseDir%\ConEmuC.exe" / c {Shells} -new_console.
     * from the command line (far.exe): conemu:run:{Shells} -new_console 
   * Minor fix in debug switch "/ detached".
   * Vista+: When the console is set detache acceptable to the user font size. 

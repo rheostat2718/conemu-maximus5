@@ -21,7 +21,7 @@
     * [ConEmuTerms ConEmu Terms]
     * [Screenshots More screenshots]
     * [PVSStudio PVS-Studio]
-    * [ConEmuFAQ FAQ (russian)]
+    * [ConEmuFAQ FAQ]
     * [Whats_New Whats new]
     * [Awards ConEmu Awards]
   * [FarPlugins FAR Manager plugins]
