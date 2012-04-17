@@ -70,26 +70,32 @@
 			<Keywords>windows console emulator tabs farmanager</Keywords>
 			<Char_Desc_45>Windows console emulator with tabs</Char_Desc_45>
 			<Char_Desc_80>ConEmu-Maximus5 is a Windows console emulator with tabs.</Char_Desc_80>
-			<Char_Desc_250>ConEmu-Maximus5 is a Windows console emulator with tabs, which represents multiple consoles as one customizable GUI window with various features. Basic application - joint use with Far Manager.</Char_Desc_250>
-			<Char_Desc_450>ConEmu-Maximus5 is a Windows console emulator with tabs, which represents multiple consoles as one customizable GUI window with various features. Basic application - joint use with Far Manager. Far (File and Archive) Manager is a console program for managing files and archives in Windows operating systems.</Char_Desc_450>
+			<Char_Desc_250>ConEmu-Maximus5 is a Windows console emulator with tabs, which represents multiple consoles and simple GUI applications as one customizable GUI window with various features. Basic application - joint use with Far Manager.</Char_Desc_250>
+			<Char_Desc_450>ConEmu-Maximus5 is a Windows console emulator with tabs, which represents multiple consoles and simple GUI applications as one customizable GUI window with various features. Basic application - joint use with Far Manager. Far (File and Archive) Manager is a console program for managing files and archives in Windows operating systems.</Char_Desc_450>
 			<Char_Desc_2000>ConEmu-Maximus5 is a Windows console emulator with tabs, which represents multiple consoles as one customizable GUI window with various features. Basic application - joint use with Far Manager. Far (File and Archive) Manager is a console program for managing files and archives in Windows operating systems.
 
 ConEmu starts a console program in hidden console window and provides an alternative customizable GUI window with various features:
 
-* smooth window resizing;
-* several panels in one window;
-* easy run old DOS applications (games) in Windows 7 or 64bit OS;
+* smooth and friendly window resizing;
 * tabs for editors, viewers, panels and consoles;
-* thumbnails and tiles in FAR manager;
+* run simple GUI apps in tabs;
+* easy run old DOS applications (games) in Windows 7 or 64bit OS;
+* thumbnails and tiles in Far Manager;
 * normal, maximized and full screen window graphic modes;
 * window font anti-aliasing: standard, clear type, disabled;
 * window fonts: family, height, width, bold, italic, etc.;
 * using normal/bold/italic fonts for different parts of console simultaneously;
+* using 24bit colors in Far Manager 3.x;
 * cursor: standard console (horisontal) or GUI (vertical);
-* for /BufferHeight mode: vertical scrolling using keyboard;
+* optional settings (e.g. pallette) for selected applications;
+* for BufferHeight mode: vertical scrolling using keyboard;
 * show full output (1K+ lines) of last command in editor/viewer;
-* customizable right click behaviour (long click opens context menu);
-* drag and drop (explorer style);
+* customizable Far Manager right click behaviour (long click opens context menu);
+* drag and drop (explorer style) of files and folders in Far Manager;
+* BDF fonts limited support;
+* user friendly text and block selection;
+* transparency and desktop mode;
+* customizable starting tabs;
 * and more, and more..</Char_Desc_2000>
 		</English>
 	</Program_Descriptions>
@@ -97,14 +103,14 @@ ConEmu starts a console program in hidden console window and provides an alterna
 		<Application_URLs>
 			<Application_Info_URL>http://code.google.com/p/conemu-maximus5/wiki/ConEmu?tm=6</Application_Info_URL>
 			<Application_Order_URL />
-			<Application_Screenshot_URL>http://code.google.com/p/conemu-maximus5/wiki/Screenshots</Application_Screenshot_URL>
+			<Application_Screenshot_URL>http://conemu-maximus5.googlecode.com/svn/files/ConEmuTransparency.png</Application_Screenshot_URL>
 			<Application_Icon_URL>http://code.google.com/p/conemu-maximus5/logo?cct=1325686428</Application_Icon_URL>
-			<Application_XML_File_URL />
+			<Application_XML_File_URL>http://conemu-maximus5.googlecode.com/svn/files/conemu_pad.xml</Application_XML_File_URL>
 		</Application_URLs>
 		<Download_URLs>
 			<Primary_Download_URL>http://conemu-maximus5.googlecode.com/files/ConEmuSetup.120416.exe</Primary_Download_URL>
-			<Secondary_Download_URL>http://code.google.com/p/conemu-maximus5/downloads/list</Secondary_Download_URL>
-			<Additional_Download_URL_1 />
+			<Secondary_Download_URL>http://conemu-maximus5.googlecode.com/files/ConEmu.120416.7z</Secondary_Download_URL>
+			<Additional_Download_URL_1>http://code.google.com/p/conemu-maximus5/downloads/list</Additional_Download_URL_1>
 			<Additional_Download_URL_2 />
 		</Download_URLs>
 	</Web_Info>
