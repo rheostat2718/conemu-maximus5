@@ -1,6 +1,17 @@
 #labels Featured
+==Build 120418==
+  * Hyperlinks to file/line does not works in buffer consoles.
+  * Some speed up of command execution.
+
+
+==Build 120417==
+  * Issue 511: bdf-fonts may be used for Fix Far boders.
+  * Issue 523: Edit->Mark fails on scrolled consoles.
+
+
 ==Build 120416==
   * Some settings (Palette, Cursor, Extend Fonts) may be changed separately by application name and Elevation flag. Page 'App distinct' of 'Settings' window. Separate settings will be stored in "Apps" subkey of reg/xml settings.
+
 
 ==Build 120414==
   * Checkbox 'Long console output' was not checked in 'Settings' dialog.
@@ -21,8 +32,10 @@
   * Minor fix in debug switch "/ detached".
   * Vista+: When the console is set detache acceptable to the user font size. 
 
+
 ==Build 120408==
   * !ConEmu was mentioned on http://jpsoft.com/blogs/2012/04/windows-console-replacements-part-6-take-command-and-conemu/
 
-==Build 120401==
-[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FWhats_New%3Fshow%3Dcontent Rest of WhatsNew autotranslated]
+
+==Rest of the log==
+[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FWhats_New%3Fshow%3Dcontent WhatsNew autotranslated]
