@@ -15,6 +15,14 @@ you may release Alt.
   * Restart Far Manager
 
 ===Requirements===
-Far Manager 3.0 build 2591 or higher. Far3bis recommended.
+  * Far Manager 3.0 build 2628 bis or higher
+  * Far3bis required cause of API change: http://bugs.farmanager.com/view.php?id=1687
 
-At least, Far must be compiled with MANTIS_0001687 define.
+===Configuration===
+Use Plugin.Call("9d5d070e-42f3-4a10-82e3-b3c74830705b",Cmd) to control plugin, where Cmd is bitmask
+{{{
+  0x01 - switch (enable/disable)
+  0x02 - enable
+  0x04 - disable
+  0x10 - save pluin settings
+}}}
