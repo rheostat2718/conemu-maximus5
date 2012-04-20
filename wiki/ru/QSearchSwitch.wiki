@@ -15,8 +15,8 @@
   * Перезапустить Far Manager
 
 ===Минимальные требования===
-  * Far Manager 3.0 build 2628 bis или higher
-  * Far3bis требуется из-за изменений в API: http://bugs.farmanager.com/view.php?id=1687
+  * Far Manager 3.0 build 2630 bis или выше
+  * Far3bis требуется, ибо http://bugs.farmanager.com/view.php?id=1687
 
 ===Настройка===
 Макрофункцией Plugin.Call("9d5d070e-42f3-4a10-82e3-b3c74830705b",Cmd) можно включать/отключать плагин, Cmd - битовая маска
@@ -25,4 +25,9 @@
   0x02 - включить
   0x04 - выключить
   0x10 - запомнить изменения
+}}}
+
+Пример в файле `EnableDisable.farconfig`, импортировать который можно командой:
+{{{
+far /import EnableDisable.farconfig
 }}}

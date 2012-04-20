@@ -15,8 +15,8 @@ you may release Alt.
   * Restart Far Manager
 
 ===Requirements===
-  * Far Manager 3.0 build 2628 bis or higher
-  * Far3bis required cause of API change: http://bugs.farmanager.com/view.php?id=1687
+  * Far Manager 3.0 build 2630 bis or higher
+  * Far3bis required cause of http://bugs.farmanager.com/view.php?id=1687
 
 ===Configuration===
 Use Plugin.Call("9d5d070e-42f3-4a10-82e3-b3c74830705b",Cmd) to control plugin, where Cmd is bitmask
@@ -24,5 +24,10 @@ Use Plugin.Call("9d5d070e-42f3-4a10-82e3-b3c74830705b",Cmd) to control plugin, w
   0x01 - switch (enable/disable)
   0x02 - enable
   0x04 - disable
-  0x10 - save pluin settings
+  0x10 - save plugin settings
+}}}
+
+Look for example in `EnableDisable.farconfig`, import this file with command:
+{{{
+far /import EnableDisable.farconfig
 }}}
