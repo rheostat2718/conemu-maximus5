@@ -1,4 +1,11 @@
 #labels Featured
+==Build 120422==
+  * *Warning*. Changes in command processor using.
+  * New page '!ComSpec' in 'Settings' dialog. 'Long console output' was moved here.
+  * On '!ComSpec' page located used command processor settings. Default is autoselection of tcc.exe (if installed) and cmd.exe. You can force used processor (x32/x64) in 64-bit OS. Default is the same as OS (x64 cmd.exe in Windows x64).
+  * Option 'Leave on close' revealed on 'Tabs' page.
+
+
 ==Build 120418==
   * Hyperlinks to file/line does not works in buffer consoles.
   * Some speed up of command execution.
