@@ -1,4 +1,11 @@
 #labels Featured
+==Build 120422==
+  * Issue 527: Bugfixes in panel detector.
+  * Incorrect window placement on startup when 'Hide caption' and 'Maximized' in shortcut properties.
+  * Old width/height appears in 'Settings' dialog after 'Apply' depressed.
+  * Buttons +/-/Up/Down does not work on 'App distinct' page.
+
+
 ==Build 120421==
   * *Warning*. Changes in command processor using.
   * New page '!ComSpec' in 'Settings' dialog. 'Long console output' was moved here.
