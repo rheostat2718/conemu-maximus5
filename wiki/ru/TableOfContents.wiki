@@ -17,6 +17,7 @@
     * [Progress Прогресс операций]
     * [ConEmuFarPlugin Плагины Far & ConEmu]
     * [GuiMacro GUI макросы]
+    * [FarMacro Far макросы]
     * [DosBox DOS приложения (DosBox)]
     * [ConEmuTerms Термины]
     * [Screenshots Скриншоты]

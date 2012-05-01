@@ -11,7 +11,7 @@ F11 -> ConEmu -> Execute ConEmu macro
 }}}
 Also, you can use Far Manager macros to forward commands for !ConEmu GUI.
   * callplugin(0x43454D55,"!IsConEmu()") in the *Far2*
-  * callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","!IsConEmu()") in the *Far3*
+  * callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","!IsConEmu()") or Plugin.Call("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","!IsConEmu()") in the *Far3*
 
 
 ===Command line behaviour===
