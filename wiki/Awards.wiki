@@ -1,4 +1,11 @@
 #labels Featured
+===Please, vote for !ConEmu===
+<a href="http://alternativeto.net/software/conemu/">alternativeTo</a>,
+<a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml">Softpedia</a>, and
+<a href="http://www.softpedia.com/get/PORTABLE-SOFTWARE/System/System-Enhancements/ConEmu-Portable.shtml">portable version</a>,
+<a href="http://www.sofotex.com/ConEmu-download_L125596.html">Sofotex</a>
+
+===Awards===
 <a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml"><img border="0" src="http://s1.softpedia-static.com/base_img/softpedia_free_award_f.gif"/></a>
 <a href='http://www.findmysoft.com'><img src='http://www.findmysoft.com/ConEmu_award2.png' alt='FindMysoft.com - Fast and free software download directory'/></a>
 <a href='http://www.sofotex.com/'><img src='http://www.sofotex.com/img/sofotex_sm1.gif' alt='SofoTex.com - Software downloads'/></a>
