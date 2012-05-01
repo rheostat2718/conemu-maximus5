@@ -1,7 +1,7 @@
 #labels Featured
 ===Please, vote for !ConEmu===
 <a href="http://alternativeto.net/software/conemu/">alternativeTo</a>,
-<a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml">Softpedia</a>, and
+<a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml">Softpedia</a>,
 <a href="http://www.softpedia.com/get/PORTABLE-SOFTWARE/System/System-Enhancements/ConEmu-Portable.shtml">portable version</a>,
 <a href="http://www.sofotex.com/ConEmu-download_L125596.html">Sofotex</a>
 
