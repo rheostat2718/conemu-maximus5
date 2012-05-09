@@ -1,33 +1,55 @@
 #labels Featured
+Проголосуйте за !ConEmu, если не жалко :)
+http://code.google.com/p/conemu-maximus5/wiki/Awards
 
----------------
+`*****************`
+«!ExtendedConsole.dll» и «!ExtendedConsole64.dll» теперь лежат в подпапке !ConEmu! Удалите старые файлы самостоятельно, если вы не использовали инсталлятор.
+`*****************`
 
-  * Warning! «!ExtendedConsole.dll» and «ExtendedConsole64.dll» now in !ConEmu subfolder!
-
----------------
-
-  * Чтобы в корне не маячили и не мешали фару при работе вне !ConEmu - !ExtendedConsole пененесен в подпапку.
-  * Полностью переделана обработка HotKeys.
-    * Понятия «HostKey» больше нет.
+==Build 120508==
+  * Issue 65: Для корректной работы приложений, использующих !SetConsoleActiveScreenBuffer (telnet.exe и т.п.) требуется включить флажок «Inject !ConEmuHk».
+  * Чтобы в корне не маячили и не мешали фару при работе вне ConEmu - !ExtendedConsole пененесен в подпапку.
+  * Полностью переделана обработка !HotKeys.
+    * Понятия «!HostKey» больше нет.
     * Для всех (почти) клавиш можно назначить собственный модификатор.
     * Исключение - системные комбинации, активация консоли по номеру (общий модификатор) и управление размером окна (общий модификатор).
-    * Теперь можно использовать «клавиши» WheelUp, WheelDown, WheelLeft, WheelRight (колесо мышки).
-  * Теперь можно настроить до 32-х GUI Macro, привязав их к HotKeys.
-    По умолчанию, CtrlWheelUp/CtrlWheelDown меняет размер шрифта.
-  * В префиксе "!ConEmu:run:" теперь можно использовать переменные окружения. Например, для файлов "`*.cpp,*.hpp`" настроить такую ассоциацию (e.g. AltF4):
+    * Теперь можно использовать «клавиши» !WheelUp, !WheelDown, !WheelLeft, !WheelRight (колесо мышки).
+  * Теперь можно настроить до 32-х GUI Macro, привязав их к !HotKeys. По умолчанию, !CtrlWheelUp/!CtrlWheelDown меняет размер шрифта.
+  * В префиксе "`ConEmu:run:" теперь можно использовать переменные окружения. Например, для файлов "`*.cpp,*.hpp`" настроить такую ассоциацию (e.g. AltF4):
 {{{
-ConEmu:Run:"%FARHOME%\Tools\Notepad++\notepad++.exe" -new_console "!\!.!"
+    ConEmu:Run:"%FARHOME%\Tools\Notepad++\notepad++.exe" -new_console "!\!.!"
 }}}
   * Опциональное подтверждение закрытия консоли из !ConEmu (Features -> Confirm close console).
-  * Portable: Рядом с !ConEmu.exe можно положить файлы MsXml3.dll и MsXml3r.dll чтобы не возникало проблем с xml-конфигурацией в Live сборках и в Win2k. Регистрировать MsXml3.dll не нужно. Рекомендуется брать файлы MsXml3.dll и MsXml3r.dll из Windows XP.
+  * Portable: Рядом с !ConEmu.exe можно положить файлы MsXml3.dll и MsXml3r.dll чтобы не возникало проблем с xml-конфигурацией в Live сборках и в Win2k. Регистрировать MsXml3.dll не нужно. Рекомендуется брать файлы MsXml3.dll и MsXml3r.dll из Windows XP (в них меньше зависимостей).
   * Немного доработано пересоздание консоли.
   * Не срабатывал Shift для пунктов меню 'Restart', 'Restart as', 'New console'.
   * Меню (системное или для таба) всегда всплывает при RClick на табах.
   * GUI Apps in tabs: теперь работает пункт меню 'Attach...'
-  * GUI Macro: "`Tab(<Cmd>[,<Parm>])`"
-    TODO: Description coming
+  * GUI Macro: `Tab(<Cmd>[,<Parm>])`
+{{{
+    <Cmd>=0 - show/hide tabs
+    <Cmd>=1 - commit lazy changes
+    <Cmd>=2 - switch next (eq. CtrlTab)
+    <Cmd>=3 - switch prev (eq. CtrlShiftTab)
+    <Cmd>=4 - switch tab direct (no recent mode), Parm=(1,-1)
+    <Cmd>=5 - switch tab recent, Parm=(1,-1)
+    <Cmd>=6 - switch console direct (no recent mode), Parm=(1,-1)
+    <Cmd>=7 - activate console by number, Parm=(1-based console index)
+    <Cmd>=8 - show tabs list menu (indiffirent Far/Not Far)
+}}}
+  * GUI Macro: `Paste(<Cmd>[,"<Text>"])`
+{{{
+    <Cmd>=0 - paste all lines, <Cmd>=1 - paste first line
+    When <Text> is omitted - paste from Windows clipboard, otherwise - paste specified text.
+}}}
   * Keyboard: 'Show opened tabs list (does not work in Far - use macro instead)'. Default - F12.
-  * !ConEmu plugin: команда в меню плагина - 'Show all tabs list', макрос '!ConEmu.TabList.fml'
+  * !ConEmu plugin: команда в меню плагина - 'Show all tabs list', макрос 'ConEmu.TabList.fml'
+  * Issue 530: Ошибка в цветах Thumbnails/Tiles при включенном «Optional marking character».
+  * Вкладка настроек 'Text selection' переименована в 'Mark & Paste'.
+  * Для консольных приложений (кроме Far) ConEmu теперь может самостоятельно обрабатывать вставку текста из буфера обмена. По умолчанию, Ctrl+V вставляет первую строку содержимого буфера, а Shift+Ins вставляет текст полностью (генерируя нажатия <Enter> для перевода строк). Можно настроить подтверждение вставки многострочного текста (при вставке нескольких строк из буфера в ком.строку cmd.exe нажатия <Enter> могут привести к нежелательному исполнению команд). Можно настроить подтверждение вставки длинного текста (по умолчанию 200 символов).
+  * На вкладках 'Mark & Paste' и 'App distinct' добавлена настройка вставки из буфера обмена.
+  * В 64-битных OS при запуске в новой вкладке "cmd" учитывается настройка битности желаемого !ComSpec.
+  * Меню таба отображается по Apps+Space (раньше было Win+Apps).
 
 
 ==Build 120422==
