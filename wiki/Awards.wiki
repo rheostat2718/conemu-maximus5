@@ -19,4 +19,4 @@
 <a href="http://www.bestsoftware4download.com/" target="_blank"><img src="http://www.bestsoftware4download.com/images/BS4D_award5.png" alt="Best Software 4 Download" border="0"/></a>
 </wiki:comment>
 <a href="http://www.bestvistadownloads.com/" target="_blank"><img src="http://www.bestvistadownloads.com/templates/BVD/images/award_5.gif" alt="Best Vista Download" border="0"/></a>
-<wiki:gadget url="http://www.ohloh.net/p/376210/widgets/project_users.xml?style=gray" up_style="gray" height="100" border="0"/>
+<wiki:gadget url="http://www.ohloh.net/p/376210/widgets/project_users.xml" height="100" border="0"/>
