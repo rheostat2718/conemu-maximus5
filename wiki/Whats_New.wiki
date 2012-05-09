@@ -10,9 +10,10 @@ Delete old files from old locations, if you are not using installer.
 }}}
 
 
-==Build 120509==
+==Build 120509a==
   * Issue 534: !ConEmuSetup: Bugfix in default path display.
   * Find text in consoles. Hotkey Apps+F or Edit -> Find text.
+  * Telnet and 'Sleep in background' bugfix.
 
 
 ==Build 120508==
