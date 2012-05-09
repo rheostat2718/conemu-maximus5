@@ -2,12 +2,16 @@
 Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
-`*****************`
-«!ExtendedConsole.dll» and «!ExtendedConsole64.dll» now in !ConEmu subfolder! Delete old files from old locations, if you are not using installer.
-`*****************`
+{{{
+*****************
+«ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder!
+Delete old files from old locations, if you are not using installer.
+*****************
+}}}
+
 
 ==Build 120509==
-  * Issue 534: ConEmuSetup: Bugfix in default path display.
+  * Issue 534: !ConEmuSetup: Bugfix in default path display.
   * Find text in consoles. Hotkey Apps+F or Edit -> Find text.
 
 
