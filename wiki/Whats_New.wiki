@@ -10,6 +10,12 @@ Delete old files from old locations, if you are not using installer.
 }}}
 
 
+==Build 120510==
+  * !ConEmu internal paste locks clipboard (Shift+Ins, Ctrl+V).
+  * Far macro sample: ConEmu\Far1_reg\TabList.reg
+  * !AnsiCon raise exception in cmd/tcc.
+
+
 ==Build 120509a==
   * Issue 534: !ConEmuSetup: Bugfix in default path display.
   * Find text in consoles. Hotkey Apps+F or Edit -> Find text.
