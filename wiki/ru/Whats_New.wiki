@@ -10,6 +10,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 }}}
 
 
+==Build 120510==
+  * !ConEmu блокировал Clipboard при вставке (Shift+Ins, Ctrl+V).
+  * Пример макроса: ConEmu\Far1_reg\TabList.reg
+  * !AnsiCon вызывал падение в cmd/tcc.
+
+
 ==Build 120509a==
   * Issue 534: !ConEmuSetup: Строка с путем по умолчанию для 64 битной версии выводится сразу после 32 битной.
   * Поиск текста в консоли. Hotkey Apps+F или Edit -> Find text.

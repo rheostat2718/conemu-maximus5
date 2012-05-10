@@ -50,8 +50,9 @@ This is «native» analog of [ConEmuFarPlugin#PanelColorer PanelColorer] plugin.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/PanelColorer.png" title="ConEmu Background">.
 ===!PanelColorer===
 This «third-party» background plugin is originally from [http://forum.farmanager.com/viewtopic.php?f=11&t=5702 here].
-
+<wiki:comment>
 You may download latest binary [http://filekeeper.org/download/browser.php?path=conemu/PanelColorer/ here]
+</wiki:comment>
 
 ===!FarColorer===
 This [http://colorer.sourceforge.net/farplugin.html plugin] works in plain Far Manager too,
