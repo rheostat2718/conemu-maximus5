@@ -10,6 +10,20 @@ Delete old files from old locations, if you are not using installer.
 }}}
 
 
+==Build 120513==
+  * 'Ignore console cursor size' instead of not worked 'Ignore telnet cursor size'. Option exists in 'App distinct' also.
+  * Fixed unworked option 'Send Alt+Space to console' (page 'Keys').
+  * Checkbox 'Run as adminstrator' was ignored in create new console dialog, when starting Task.
+  * Issue 532: Option 'Show TSA balloon' (affects automatic mode only).
+  * Issue 537: !WinRar option check before updating: [HKCU\Software\WinRAR\Extraction\Profile] "!UnpToSubfolders"
+  * Issue 538: Wrong icons in Thumbnails/Tiles modes in root of archive.
+  * Issue 539: Wrong drawing of Thumbnails/Tiles over QView (Ctrl+Q) and Info (Ctrl+L) panels.
+  * Shell Drop allowed to Far editor and dialogs. Drop as pasting dragged file path names.
+  * Once more 'Sleep in background' bugfix. 
+  * 'Command line' option moved to new 'Startup' page of 'Settings' dialog.
+  * New items 'New console dialog' and 'Setup tasks' in popup menu (`[+]` button on toolbar).
+
+
 ==Build 120510==
   * !ConEmu internal paste locks clipboard (Shift+Ins, Ctrl+V).
   * Far macro sample: ConEmu\Far1_reg\TabList.reg
