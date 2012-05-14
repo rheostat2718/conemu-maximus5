@@ -10,6 +10,13 @@ Delete old files from old locations, if you are not using installer.
 }}}
 
 
+==Build 120514==
+  * Issue 543, Issue 544: Fixing bugs of unlucky version :)
+  * Issue 56: Catch focus on drag over.
+  * Drag&Drop: Menu on drop in Far command line.
+  * Drag&Drop: Internal changes in overlay image.
+
+
 ==Build 120513==
   * 'Ignore console cursor size' instead of not worked 'Ignore telnet cursor size'. Option exists in 'App distinct' also.
   * Fixed unworked option 'Send Alt+Space to console' (page 'Keys').
