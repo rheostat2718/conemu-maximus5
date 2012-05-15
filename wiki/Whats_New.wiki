@@ -10,6 +10,20 @@ Delete old files from old locations, if you are not using installer.
 }}}
 
 
+==Build 120515==
+  * 'App distinct' loading was broken in previous build.
+  * Maximum number of allowed consoles is 30 now.
+  * Only active console 'button' is shown on toolbar. Left click on active console button pop up all opened tabs menu.
+  * Console activation with numbers.
+    * Win+F11 and Win+F12 not used.
+    * When console count less then 11'th - behaviour as before.
+    * Otherwise - one-number and two-number activations are allowed. Example:
+    * «Win(down) 1 5» - activates 15'th console;
+    * «Win(down) 1 Win(up)» - activates 1'th console.
+  * Once more 'Sleep in background' bugfix.
+  * Issue 541: Incorrect RClick file selection in !PanelViews.
+
+
 ==Build 120514==
   * Issue 543, Issue 544: Fixing bugs of unlucky version :)
   * Issue 56: Catch focus on drag over.
@@ -26,7 +40,7 @@ Delete old files from old locations, if you are not using installer.
   * Issue 538: Wrong icons in Thumbnails/Tiles modes in root of archive.
   * Issue 539: Wrong drawing of Thumbnails/Tiles over QView (Ctrl+Q) and Info (Ctrl+L) panels.
   * Shell Drop allowed to Far editor and dialogs. Drop as pasting dragged file path names.
-  * Once more 'Sleep in background' bugfix. 
+  * Once more 'Sleep in background' bugfix.
   * 'Command line' option moved to new 'Startup' page of 'Settings' dialog.
   * New items 'New console dialog' and 'Setup tasks' in popup menu (`[+]` button on toolbar).
 
