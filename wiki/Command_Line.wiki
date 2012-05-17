@@ -8,7 +8,7 @@
 || /Icon _file_ || Take icon from file (exe, dll, ico) ||
 || /Multi | /!NoMulti || Enable or disable multiconsole features ||
 || /Single || New console will be started in new tab of existing !ConEmu ||
-|| /NoUpdate || Disable automatic checking for updates on startup ||
+|| /!NoUpdate || Disable automatic checking for updates on startup ||
 || /CT[0|1] || Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - clear type ||
 || /Font _fontname_ || Specify the font name ||
 || /Size _fontsize_ || Specify the font size ||
