@@ -1,13 +1,11 @@
 ﻿!ConEmu is distributes as msi package «`ConEmuSetup.*.exe`», or archive named «`ConEmu.*.7z`».
-The archive contains x86 version of !ConEmu.exe,
-and both (x86 and x64) versions of ConEmuC.exe and !ConEmuHk.dll.
-Theese files are the essential part of the product.
-Msi installer (`ConEmuSetup.*.exe`) also contains x64 version of !ConEmu.exe.
+Both of them contains x86 (aka x32) and x64 versions of all !ConEmu binaries.
 
-The archive and the installer contains both x86 and x64 versions of !ConEmu FAR plugins
+Also, the archive and the installer contains both x86 and x64 versions of !ConEmu FAR plugins
 («`Plugins\ConEmu\ConEmu.dll`» and «`Plugins\ConEmu\ConEmu.x64.dll`» for example).
 
 So, You can simply unpack downloaded archive or install !ConEmu to the
-[http://www.farmanager.com/download.php?l=en Far Manager] folder.
+[http://www.farmanager.com/download.php?l=en Far Manager] folder
+or any other folder, if you are not using Far Manager..
 
 Download page: http://code.google.com/p/conemu-maximus5/downloads/list
