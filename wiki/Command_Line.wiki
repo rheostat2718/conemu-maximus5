@@ -2,17 +2,21 @@
 
 || *Argument* || *Description* ||
 || /? || Show help screen ||
-|| /CT || Clear Type anti-aliasing ||
-|| /FS | /Max || (Full screen) | (Maximized) mode ||
+|| /Config _configname_ || Tells to use an existing or create a new configuration with the specified name. Each configuration keeps its own individual data in the registry or xml file (!ConEmu.xml). ||
+|| /FS | /Max | /Min || (Full screen), (Maximized) or (Minimized) mode ||
+|| /TSA || Override (enable) minimize to taskbar status area ||
+|| /Icon _file_ || Take icon from file (exe, dll, ico) ||
 || /Multi | /!NoMulti || Enable or disable multiconsole features ||
+|| /Single || New console will be started in new tab of existing !ConEmu ||
+|| /NoUpdate || Disable automatic checking for updates on startup ||
+|| /CT[0|1] || Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - clear type ||
 || /Font _fontname_ || Specify the font name ||
 || /Size _fontsize_ || Specify the font size ||
-|| /Config _configname_ || Tells to use an existing or create a new configuration with the specified name. Each configuration keeps its own individual data in the registry or xml file (!ConEmu.xml). ||
-|| /Single || New console will be started in new tab of existing !ConEmu ||
 || /!FontFile _fontfilename_ || Loads fonts from file for !ConEmu process ||
-|| /!BufferHeight _lines_ || May be used with cmd.exe, !PowerShell, etc. ||
+|| /!BufferHeight _lines_ || Set console buffer height. May be used with cmd.exe, !PowerShell, etc. ||
 || /Log | /Log1 | /Log2 || Used to create debug log files ||
-|| /cmd _commandline_ <br> /cmd @_cmdfile_ <br> /cmd _{taskname}_ || Command line to start. This must be the last used switch. You may use ">" and "`*`" modifiers in cmdfile and /!BufferHeight argument. <br> _taskname_ is one of the tasks specified on the 'Tasks' page of 'Settings' dialog. ||
+|| -new_console <br> -cur_console || This *special* switches may be specified after */cmd* switch. Read more about [NewConsole -new_console and -cur_console] switches ||
+|| /cmd _commandline_ <br> /cmd @_taskfile_ <br> /cmd _{taskname}_ || Command line to start. This must be the last used switch (excepting -new_console and -cur_console). You may use ">" and "`*`" modifiers in cmdfile and /!BufferHeight argument. <br> _taskname_ is one of the tasks specified on the 'Tasks' page of 'Settings' dialog. ||
 
 ConEmuC.exe command line switches are described [ConEmuC#ConEmuC.exe_command_line_switches here].
 
@@ -32,6 +36,10 @@ ConEmu.exe /cmd @startfile.txt
 or
 {{{
 ConEmu.exe /cmd {taskname}
+}}}
+
+3.  Starts continuous operation minimized in taskbar status area (TSA), use icon from "cmd.exe".
+{{{
 }}}
 
 ====Sample startfile.txt or contents of {taskname}====

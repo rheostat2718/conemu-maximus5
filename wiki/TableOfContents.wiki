@@ -5,6 +5,7 @@
     * [x64_or_x86 x64 or x86]
     * [Command_Line Command line (ConEmu.exe)]
     * [ConEmuC ConEmuC]
+    * [NewConsole -new_console switch]
     * [Certificate What is «Certificate»?]
     * [Settings Settings]
     * [ExtendedConsole ExtendedConsole]
