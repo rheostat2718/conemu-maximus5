@@ -1,4 +1,6 @@
-﻿==ANSI X3.64 and Xterm 256 colors===
+﻿<font size="4">ANSI X3.64 and Xterm 256 colors</font>
+<wiki:toc max_depth="3" /> 
+
 В !ConEmu 120520d появилась поддержка [http://en.wikipedia.org/wiki/ANSI_X3.64 ANSI X3.64] и его расширения [http://www.frexx.de/xterm-256-notes/ xterm 256 color mode].
 
 Новая опция «ANSI X3.64 / 256color» на вкладке «Features», по умолчанию включена.
