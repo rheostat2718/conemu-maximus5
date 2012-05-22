@@ -9,6 +9,7 @@
     * [Certificate What is «Certificate»?]
     * [Settings Settings]
     * [ExtendedConsole ExtendedConsole]
+    * [AnsiEscapeCodes ANSI escape codes]
     * [Tabs Tabs]
     * [SystemMenu System menu]
     * [KeyboardShortcuts Keyboard shortcuts]

@@ -10,6 +10,30 @@ Delete old files from old locations, if you are not using installer.
 }}}
 
 
+  * ConEmu is mentioned in Wikipedia: http://en.wikipedia.org/wiki/Comparison_of_file_managers#cite_ref-20
+  * Issue 551: Updater, Failure to create a valid unpack command line for downloaded 7z package.
+  * Новые ключи ConEmu.exe
+{{{
+    /min - запустить свернутым;
+    /tsa - сворачивать в TSA (чтобы свернуть в TSA при запуске используйте вместе с /min);
+    /icon "<file>" - откуда брать иконку, <file> может быть exe, dll или ico;
+    /noupdate - отключить автоматическую проверку обновления при старте.
+}}}
+  * Обновлен диалог 'About'.
+  * New shortcut 'Win+N': Show create new console popup menu.
+  * Исключение при уменьшении размера шрифта в Maximized режиме.
+  * Добавлены три системных палитры: Standard VGA, Terminal.app, xterm.
+  * Правки в Injects.
+  * Новая опция '[AnsiEscapeCodes ANSI X3.64 / 256color]' на вкладке 'Features'. Адресуется консоль целиком (с прокруткой),
+но Xterm 256color влияет только на 'рабочую' область (нижняя часть консоли, если есть прокрутка).
+Чтобы работало - должен быть включен 'Inject ConEmuHk'.
+Если кажется, что 256color не работает - включить флажок 'Colorer TrueMod support', проверить
+выключен ли буфер/прокрутка (например "256colors2.pl -cur_console:h0"), или прокрутить консоль
+в самый низ ("echo [9999;1H")
+  * Fast configuration dialog incorrect size, when ConEmu starts maximized (shortcut property).
+  * Исправлена некорректная отрисовка при включении флажка 'Auto' на вкладке 'Main' в Maximized режиме.
+
+
 ==Build 120515==
   * 'App distinct' loading was broken in previous build.
   * Maximum number of allowed consoles is 30 now.
