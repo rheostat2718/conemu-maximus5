@@ -45,7 +45,7 @@ WriteConsoleOutputCharacterA и WriteConsoleOutputCharacterW.
 || ESC [ _lines_ S || Scroll screen (whole buffer) up by _lines_. New lines are added at the bottom. ||
 || ESC [ _lines_ T || Scroll screen (whole buffer) down by _lines_. New lines are added at the top. ||
 || ESC [ _row_ ; _col_ f || Set cursor position (same as H). The values _row_ and _col_ are 1-based. ||
-|| ESC [ _n1_ ; _n2_ ; _n3 m || Set attributes (see below). ||
+|| ESC [ _a_ ; _b_ ; _c_ m || Set attributes (see below). ||
 || ESC [ s || Save cursor position (can not be nested) ||
 || ESC [ u || Restore cursor position ||
 TODO: list is incomplete yet
