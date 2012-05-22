@@ -1,8 +1,9 @@
 ﻿<font size="4">ANSI X3.64 and Xterm 256 colors</font>
-<wiki:toc max_depth="3" /> 
-
 В !ConEmu 120520d появилась поддержка [http://en.wikipedia.org/wiki/ANSI_X3.64 ANSI X3.64] и его расширения [http://www.frexx.de/xterm-256-notes/ xterm 256 color mode].
 
+<wiki:toc max_depth="3" /> 
+
+=Описание=
 Новая опция «ANSI X3.64 / 256color» на вкладке «Features», по умолчанию включена.
 Адресуется консоль целиком (с прокруткой),
 но xterm 256 color влияет только на «рабочую» область (нижняя часть консоли, если есть прокрутка).
@@ -28,10 +29,10 @@ cmd /c type "Colors-256.ans"
 Вывод текста с текущими расширенными атрибутами (xterm 256 color) возможен также функциями
 WriteConsoleOutputCharacterA и WriteConsoleOutputCharacterW.
 
-==Примеры==
+=Примеры=
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAnsi.png" title="ANSI X3.64 and Xterm 256 colors in ConEmu">
 
-===Standard ANSI color map===
+==Standard ANSI color map==
 {{{
 System colors (Standard console 16 colors):
 ^[[0;30;40m  ^[[0;30;41m  ^[[0;30;42m  ^[[0;30;43m  ^[[0;30;44m  ^[[0;30;45m  ^[[0;30;46m  ^[[0;30;47m  ^[[0m
@@ -39,7 +40,7 @@ System colors (Standard console 16 colors):
 }}}
 *Warning* Перед использованием «^[» нужно заменить на ESC код (символ с кодом \x1B).
 
-===Xterm 256 color map===
+==Xterm 256 color map==
 {{{
 ^[[9999S^[[9999;1HSystem colors (0..15 from xterm palette):
 ^[[48;5;0m  ^[[48;5;1m  ^[[48;5;2m  ^[[48;5;3m  ^[[48;5;4m  ^[[48;5;5m  ^[[48;5;6m  ^[[48;5;7m  ^[[0m
