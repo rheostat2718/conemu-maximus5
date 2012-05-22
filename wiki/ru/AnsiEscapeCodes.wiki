@@ -1,4 +1,5 @@
-﻿<font size="4">ANSI X3.64 and Xterm 256 colors</font>
+﻿<font size="5">*ANSI X3.64 and Xterm 256 colors*</font>
+
 В !ConEmu 120520d появилась поддержка [http://en.wikipedia.org/wiki/ANSI_X3.64 ANSI X3.64] и его расширения [http://www.frexx.de/xterm-256-notes/ xterm 256 color mode].
 
 <wiki:toc max_depth="3" /> 
@@ -28,6 +29,32 @@ cmd /c type "Colors-256.ans"
 }}}
 Вывод текста с текущими расширенными атрибутами (xterm 256 color) возможен также функциями
 WriteConsoleOutputCharacterA и WriteConsoleOutputCharacterW.
+
+=Список поддерживаемых кодов=
+==CSI (Control Sequence Initiator) codes==
+|| ESC [ _lines_ A || Moves cursor up by _lines_ lines (1 by default) ||
+|| ESC [ _lines_ B || Moves cursor down by _lines_ lines (1 by default) ||
+|| ESC [ _cols_ C || Moves cursor rightward by _cols_ columns (1 by default) ||
+|| ESC [ _cols_ D || Moves cursor leftward by _cols_ columns (1 by default) ||
+|| ESC [ _lines_ E || Moves cursor to beginning of the line, _lines_ (default 1) lines down. ||
+|| ESC [ _lines_ F || Moves cursor to beginning of the line, _lines_ (default 1) lines up. ||
+|| ESC [ _col_ G || Moves the cursor to column _col_ (absolute, 1-based). ||
+|| ESC [ _row_ ; _col_ H || Set cursor position. The values _row_ and _col_ are 1-based. ||
+|| ESC [ _n_ J || Erase display. When _n_ is 0 or missing: from cursor to end of display). When _n_ is 1: erase from start to cursor. When _n_ is 2: erase whole display *and* moves cursor to upper-left corner. ||
+|| ESC [ _n_ K || Erase line. When _n_ is 0 or missing: from cursor to end of line. When _n_ is 1: erase from start of line to cursor. When _n_ is 2: erase whole line *and* moves cursor to first column. ||
+|| ESC [ _lines_ S || Scroll screen (whole buffer) up by _lines_. New lines are added at the bottom. ||
+|| ESC [ _lines_ T || Scroll screen (whole buffer) down by _lines_. New lines are added at the top. ||
+|| ESC [ _row_ ; _col_ f || Set cursor position (same as H). The values _row_ and _col_ are 1-based. ||
+|| ESC [ _n1_ ; _n2_ ; _n3 m || Set attributes (see below). ||
+|| ESC [ s || Save cursor position (can not be nested) ||
+|| ESC [ u || Restore cursor position ||
+TODO: list is incomplete yet
+
+===SGR (Select Graphic Rendition) parameters===
+TODO: list is incomplete yet
+
+==OSC (Operating system command) codes==
+TODO: list is incomplete yet
 
 =Примеры=
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAnsi.png" title="ANSI X3.64 and Xterm 256 colors in ConEmu">

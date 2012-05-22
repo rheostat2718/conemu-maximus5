@@ -31,6 +31,7 @@ cmd /c type "Colors-256.ans"
 WriteConsoleOutputCharacterA и WriteConsoleOutputCharacterW.
 
 =Список поддерживаемых кодов=
+==CSI (Control Sequence Initiator) codes==
 || ESC [ _lines_ A || Moves cursor up by _lines_ lines (1 by default) ||
 || ESC [ _lines_ B || Moves cursor down by _lines_ lines (1 by default) ||
 || ESC [ _cols_ C || Moves cursor rightward by _cols_ columns (1 by default) ||
@@ -45,10 +46,15 @@ WriteConsoleOutputCharacterA и WriteConsoleOutputCharacterW.
 || ESC [ _lines_ T || Scroll screen (whole buffer) down by _lines_. New lines are added at the top. ||
 || ESC [ _row_ ; _col_ f || Set cursor position (same as H). The values _row_ and _col_ are 1-based. ||
 || ESC [ _n1_ ; _n2_ ; _n3 m || Set attributes (see below). ||
-|| ESC [  ||  ||
-|| ESC [  ||  ||
 || ESC [ s || Save cursor position (can not be nested) ||
 || ESC [ u || Restore cursor position ||
+TODO: list is incomplete yet
+
+===SGR (Select Graphic Rendition) parameters===
+TODO: list is incomplete yet
+
+==OSC (Operating system command) codes==
+TODO: list is incomplete yet
 
 =Примеры=
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAnsi.png" title="ANSI X3.64 and Xterm 256 colors in ConEmu">
