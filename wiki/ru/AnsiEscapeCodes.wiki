@@ -88,7 +88,7 @@ System colors (Standard console 16 colors):
 }}}
 *Warning* Перед использованием «^[» нужно заменить на ESC код (символ с кодом \x1B).
 
-==SixteenColors.net==
+==sixteencolors.net==
 Большой архив [http://en.wikipedia.org/wiki/ANSI_art ANSI арта]: http://sixteencolors.net/
 
 Скачать файл ans, и выполнить в консоли !ConEmu, например `type TK-FREES.ANS`. Посмотреть и пролистать предыдущий вывод можно перейдя в альтернативный режим - Win+A.
