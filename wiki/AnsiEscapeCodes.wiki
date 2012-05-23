@@ -61,7 +61,7 @@ TODO: list is incomplete yet
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAnsi.png" title="ANSI X3.64 and Xterm 256 colors in ConEmu">
 
 ===Xterm 256 color map===
-ConEmu\Addons\AnsiColors256.ans
+Пример из файла: `ConEmu\Addons\AnsiColors256.ans`.
 {{{
 ^[[9999S^[[9999;1HSystem colors (0..15 from xterm palette):
 ^[[48;5;0m  ^[[48;5;1m  ^[[48;5;2m  ^[[48;5;3m  ^[[48;5;4m  ^[[48;5;5m  ^[[48;5;6m  ^[[48;5;7m  ^[[0m
@@ -80,7 +80,7 @@ Grayscale ramp (232..255 from xterm palette):
 *Warning* Перед использованием «^[» нужно заменить на ESC код (символ с кодом \x1B).
 
 ===Standard ANSI color map===
-ConEmu\Addons\AnsiColors16.ans
+Пример из файла: `ConEmu\Addons\AnsiColors16.ans`.
 {{{
 System colors (Standard console 16 colors):
 ^[[0;30;40m  ^[[0;30;41m  ^[[0;30;42m  ^[[0;30;43m  ^[[0;30;44m  ^[[0;30;45m  ^[[0;30;46m  ^[[0;30;47m  ^[[0m
@@ -88,3 +88,9 @@ System colors (Standard console 16 colors):
 }}}
 *Warning* Перед использованием «^[» нужно заменить на ESC код (символ с кодом \x1B).
 
+==SixteenColors.net==
+Большой архив [http://en.wikipedia.org/wiki/ANSI_art ANSI арта]: http://sixteencolors.net/
+
+Скачать файл ans, и выполнить в консоли !ConEmu, например `type TK-FREES.ANS`. Посмотреть и пролистать предыдущий вывод можно перейдя в альтернативный режим - Win+A.
+
+*Note* Многие арты расчитаны на ширину консоли в *80* символов.
