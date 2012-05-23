@@ -104,3 +104,6 @@ nmake | sed -e "s/.*\bERR.*/^[[1;31;40m&^[[0m/i" -e "s/.*\bWARN.*/^[[1;36;40m&^[
 type "Errors.log" | sed -e "s/.*\bERR.*/^[[1;31;40m&^[[0m/i" -e "s/.*\bWARN.*/^[[1;36;40m&^[[0m/i"
 }}}
 *Warning* Перед использованием «^[» нужно заменить на ESC код (символ с кодом \x1B).
+
+==Progressbar в cmd-файлах==
+[http://code.google.com/p/conemu-maximus5/issues/attachmentText?id=554&aid=5540007000&name=test_bar.cmd&token=X1cvdOQjxnWPTGqFCrzyH1M0DCs%3A1337810139732 test_bar.cmd] @Artyom.Vorobets

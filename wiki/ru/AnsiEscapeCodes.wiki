@@ -94,3 +94,16 @@ System colors (Standard console 16 colors):
 Скачать файл ans, и выполнить в консоли !ConEmu, например `type TK-FREES.ANS`. Посмотреть и пролистать предыдущий вывод можно перейдя в альтернативный режим - Win+A.
 
 *Note* Многие арты расчитаны на ширину консоли в *80* символов.
+
+==Подсветка ошибок компиляции
+{{{
+nmake | sed -e "s/.*\bERR.*/^[[1;31;40m&^[[0m/i" -e "s/.*\bWARN.*/^[[1;36;40m&^[[0m/i"
+}}}
+или
+{{{
+type "Errors.log" | sed -e "s/.*\bERR.*/^[[1;31;40m&^[[0m/i" -e "s/.*\bWARN.*/^[[1;36;40m&^[[0m/i"
+}}}
+*Warning* Перед использованием «^[» нужно заменить на ESC код (символ с кодом \x1B).
+
+==Progressbar в cmd-файлах==
+[http://code.google.com/p/conemu-maximus5/issues/attachmentText?id=554&aid=5540007000&name=test_bar.cmd&token=X1cvdOQjxnWPTGqFCrzyH1M0DCs%3A1337810139732 test_bar.cmd] @Artyom.Vorobets
