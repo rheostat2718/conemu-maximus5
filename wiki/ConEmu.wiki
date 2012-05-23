@@ -33,6 +33,7 @@ Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&top
   * window fonts: family, height, width, bold, italic, etc.;
   * using [http://code.google.com/p/conemu-maximus5/issues/detail?id=153 normal/bold/italic] fonts for different parts of console simultaneously;
   * using 24bit colors in Far Manager 3.x;
+  * [AnsiEscapeCodes ANSI X3.64 and Xterm 256 colors];
   * cursor: standard console (horisontal) or GUI (vertical);
   * optional settings (e.g. pallette) for selected applications;
   * for !BufferHeight mode: vertical scrolling using keyboard;
