@@ -10,6 +10,16 @@ Delete old files from old locations, if you are not using installer.
 }}}
 
 
+==Build 120524==
+  * 'Settings' -> 'Mark & Paste' -> 'Freeze console before selection'.
+  * 'Find test' -> 'Freeze console'.
+  * Lags in !ConEmu plugin.
+
+
+==Build 120523a==
+  * Issue 554: Исправлена обработка `^[#G` (ANSI X3.64).
+
+
 ==Build 120523==
   * Из системного меню убран пункт 'Auto scroll'. Если нужно поставить консоль 'на паузу' - Win+A (альтернативный буфер).
   * Ctrl+Win+Alt+Enter - принудительная активация !ConEmu в !FullScreen. Как и Win+C, настраиваемый хоткей срабатывает из любого приложения.
