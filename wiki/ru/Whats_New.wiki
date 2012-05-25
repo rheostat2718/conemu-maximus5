@@ -10,7 +10,8 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 }}}
 
 
-==Build 120524==
+==Build 120524a==
+  * ConEmuC.exe/ConEmuC64.exe sets console text attributes to 7 on startup.
   * 'Settings' -> 'Mark & Paste' -> 'Freeze console before selection'.
   * 'Find test' -> 'Freeze console'.
   * Lags in !ConEmu plugin.
