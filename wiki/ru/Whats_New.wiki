@@ -10,6 +10,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 }}}
 
 
+  * Создана страничка на [http://www.facebook.com/ConEmu.Maximus5 Facebook]. Пока «в разработке».
+
+
 ==Build 120524a==
   * ConEmuC.exe/ConEmuC64.exe sets console text attributes to 7 on startup.
   * 'Settings' -> 'Mark & Paste' -> 'Freeze console before selection'.

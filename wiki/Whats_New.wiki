@@ -10,6 +10,9 @@ Delete old files from old locations, if you are not using installer.
 }}}
 
 
+  * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created. «Under development» for a while.
+
+
 ==Build 120524a==
   * ConEmuC.exe/ConEmuC64.exe sets console text attributes to 7 on startup.
   * 'Settings' -> 'Mark & Paste' -> 'Freeze console before selection'.
