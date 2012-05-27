@@ -13,6 +13,20 @@ Delete old files from old locations, if you are not using installer.
   * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created. «Under development» for a while.
 
 
+==Build 120527==
+  * Mouse events was not sent to console apps (except Far), when scrolling is on.
+  * 'Settings' -> 'Features' -> 'Mouse options' -> 'Enable mouse'. Enabled by default. May be disabled to forbid sending mouse event to console. However, when disabled, you still can use mouse for selecting and pasting text.
+  * New transparency option - !ColorKey. However, 'UserScreen transparency' is still more useful for Far Manager.
+  * Win+G - new hotkey for 'Attach...' system menu item.
+  * Status Bar. Enabled by default. Font, color and column list (any of 20-th) are configurable in 'Settings' -> 'Status bar'.
+  You may show/hide column from status bar popup menu, too.
+  Column descriptions displayed, while hover mouse over it.
+  Some columns process left clicks:
+    * columns 'CAPS'/'NUM'/'SCRL' - switching;
+    * column 'Active VCon' - active console selection popup menu (same as from toolbar);
+    * column 'Transparency' - changing on the fly (100%..40%, UserScreen, ColorKey).
+
+
 ==Build 120524a==
   * ConEmuC.exe/ConEmuC64.exe sets console text attributes to 7 on startup.
   * 'Settings' -> 'Mark & Paste' -> 'Freeze console before selection'.
@@ -55,7 +69,7 @@ Delete old files from old locations, if you are not using installer.
   * Minor changes in ConEmuC.exe.
 
 
-==Build 120520==
+==120520==
   * ConEmu is mentioned in Wikipedia: http://en.wikipedia.org/wiki/Comparison_of_file_managers#cite_ref-20
 
 
