@@ -25,7 +25,7 @@ Delete old files from old locations, if you are not using installer.
 
 
 ==Build 120524a==
-  * ConEmuC.exe/ConEmuC64.exe sets console text attributes to 7 on startup.
+  * ConEmuC.exe/!ConEmuC64.exe sets console text attributes to 7 on startup.
   * 'Settings' -> 'Mark & Paste' -> 'Freeze console before selection'.
   * 'Find test' -> 'Freeze console'.
   * Lags in !ConEmu plugin.
