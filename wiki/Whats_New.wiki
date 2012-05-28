@@ -13,6 +13,11 @@ Delete old files from old locations, if you are not using installer.
   * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created. «Under development» for a while.
 
 
+==Build 120527a==
+  * Window mode changes (Normal/Maximized/Full screen) was not saved, if button 'Apply' was not clicked before 'Save settings'.
+  * Fixed Status bar setup menu hints.
+
+
 ==Build 120527==
   * Mouse events was not sent to console apps (except Far), when scrolling is on.
   * 'Settings' -> 'Features' -> 'Mouse options' -> 'Enable mouse'. Enabled by default. May be disabled to forbid sending mouse event to console. However, when disabled, you still can use mouse for selecting and pasting text.
