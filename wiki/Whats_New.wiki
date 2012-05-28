@@ -19,6 +19,7 @@ Delete old files from old locations, if you are not using installer.
 
 
 ==Build 120527==
+  * Current accelerators are shown in system and tab menu.
   * Mouse events was not sent to console apps (except Far), when scrolling is on.
   * 'Settings' -> 'Features' -> 'Mouse options' -> 'Enable mouse'. Enabled by default. May be disabled to forbid sending mouse event to console. However, when disabled, you still can use mouse for selecting and pasting text.
   * New transparency option - !ColorKey. However, '!UserScreen transparency' is still more useful for Far Manager.
