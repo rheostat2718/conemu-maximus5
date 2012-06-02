@@ -4,7 +4,7 @@
 <wiki:comment>
 ==Contents==
   * [Settings#Abstract Abstract]
-  * [Settings#Where_settings_are_stores%3F Where settings are stores?]
+  * [Settings#Where_settings_are_stored%3F Where settings are stored?]
     * [Settings#Registry Registry]
     * [Settings#ConEmu_%2Exml ConEmu.xml]
   * [Settings#Manual_change_of_settings Manual change of settings]
@@ -33,8 +33,8 @@ Most of settings may be changed via !ConEmu interface
 
 Less number of settings may be changed manually via [Settings#Registry registry] or [Settings#ConEmu.xml ConEmu.xml] file.
 
-==Where settings are stores?==
-!ConEmu may stores its settings in the Windows registry (HKCU), or in the !ConEmu.xml file.
+==Where settings are stored?==
+!ConEmu may store its settings in the Windows registry (HKCU), or in the !ConEmu.xml file.
 
 ===Registry===
 All settings are stored in registry in the following key:

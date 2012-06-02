@@ -13,6 +13,23 @@ Delete old files from old locations, if you are not using installer.
   * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created. «Under development» for a while.
 
 
+==Build 120602==
+  * Internal interprocess communication changes.
+  * Windows 7 or higher. Jump list supported, !ConEmu may add its 'Predefined tasks' and commands from history into the Windows 'Tasks' section. Jump list population take up some time, so, button 'Update Now!' was added to the 'Tasks' page of the 'Settings' dialog.
+  * !ConEmu.exe: command line argument /title "Template". Fixed text will be shown in !ConEmu window title, instead of active console title. You may use environment variables in "Template".  * Диалог 'Create new console': в системном меню добавлен пункт 'Reset command history...'.
+  * Win+H: Make screenshot of active !ConEmu window.
+  * Tabs: Separate tab templates for Panels (Far) and other console applications.
+  * Tabs: You may specify word list, excluded from the title of consoles (with exception of Far). Tired of the 'Administrator:' prefix of the consoles, runned as Administrator (Win7).
+  * Take away lags while closing !ConEmu.
+  * Sometimes, Shell-dialogs (starting files, EMenu items) does not appears in front of !ConEmu.
+  * Minor change in (isMonitorConsoleLang == 2).
+  * 'Fade when inactive' affects Status bar.
+  * Command line, specified by '/cmd' argument (!ConEmu.exe) will be added to the history.
+  * Issue 561: Sometimes, !ConEmuHk64.dll cause exception in the console application.
+  * Issue 564: Mouse events does not sent to Far, when 'Inject !ConEmuHk' is off.
+  * Changes in close tabs confirmation. Single dialog for all console, when closing !ConEmu by «clicking on the cross».
+
+
 ==Build 120527a==
   * Window mode changes (Normal/Maximized/Full screen) was not saved, if button 'Apply' was not clicked before 'Save settings'.
   * Fixed Status bar setup menu hints.
