@@ -16,7 +16,7 @@ Delete old files from old locations, if you are not using installer.
 ==Build 120603==
   * Internal interprocess communication changes.
   * Status bar. New column '!ConEmu GUI PID'.
-  * Issue 566: Hotkey <<None>> is not unique.
+  * Issue 566: Hotkey `<<None>>` is not unique.
   * 'Settings'-> 'Tasks' -> '!ConEmu arguments for Jump list'. You may specify here additional arguments for !ConEmu.exe, when starting from taskbar (Jump list). E.g.: `/icon "cmd.exe"`.
 
 

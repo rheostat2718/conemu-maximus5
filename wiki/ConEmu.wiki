@@ -28,6 +28,7 @@ Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&top
   * smooth and friendly window resizing;
   * tabs for editors, viewers, panels and consoles;
   * run simple GUI apps in tabs;
+  * Windows 7 [Windows7Taskbar#Customizable_Jump_list Jump lists] and [Progress Progress] on taskbar;
   * easy run old [DosBox DOS applications] (games) in Windows 7 or 64bit OS;
   * thumbnails and tiles in Far Manager;
   * normal, maximized and full screen window graphic modes;
