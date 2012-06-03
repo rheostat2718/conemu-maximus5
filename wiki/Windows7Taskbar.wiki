@@ -1,4 +1,4 @@
-ConEmu supports Windows 7 taskbar features.
+!ConEmu supports Windows 7 taskbar features.
 
 *Customizable Jump list* <br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuJumpList.png" title="ConEmu Jump list in Windows7" alt="ConEmu Jump list in Windows7">

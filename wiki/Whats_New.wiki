@@ -13,6 +13,13 @@ Delete old files from old locations, if you are not using installer.
   * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created. «Under development» for a while.
 
 
+==Build 120603==
+  * Internal interprocess communication changes.
+  * Status bar. New column '!ConEmu GUI PID'.
+  * Issue 566: Hotkey <<None>> is not unique.
+  * 'Settings'-> 'Tasks' -> '!ConEmu arguments for Jump list'. You may specify here additional arguments for !ConEmu.exe, when starting from taskbar (Jump list). E.g.: `/icon "cmd.exe"`.
+
+
 ==Build 120602==
   * Internal interprocess communication changes.
   * Windows 7 or higher. Jump list supported, !ConEmu may add its 'Predefined tasks' and commands from history into the Windows 'Tasks' section. Jump list population take up some time, so, button 'Update Now!' was added to the 'Tasks' page of the 'Settings' dialog.
