@@ -17,6 +17,7 @@
     * [TextSelection Работа с текстом]
     * [Fonts Шрифты]
     * [Progress Прогресс операций]
+    * [Windows7Taskbar Панель задач Windows 7]
     * [ConEmuFarPlugin Плагины Far & ConEmu]
     * [GuiMacro GUI макросы]
     * [FarMacro Far макросы]

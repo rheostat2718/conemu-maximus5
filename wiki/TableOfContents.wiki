@@ -17,6 +17,7 @@
     * [TextSelection Text selection]
     * [Fonts Fonts]
     * [Progress Operation progress]
+    * [Windows7Taskbar Windows 7 taskbar]
     * [ConEmuFarPlugin Far & ConEmu plugins]
     * [GuiMacro GUI Macros]
     * [FarMacro Far Macros]
