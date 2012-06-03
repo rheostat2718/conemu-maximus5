@@ -1,7 +1,9 @@
 !ConEmu supports Windows 7 taskbar features.
 
-*Customizable Jump list* <br>
+===Customizable Jump list===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuJumpList.png" title="ConEmu Jump list in Windows7" alt="ConEmu Jump list in Windows7">
 
-*Progress on Windows7 taskbar* <br>
+You can set up them from «Tasks» page of «Settings» dialog.
+
+===[Progress Progress] on Windows7 taskbar===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuProgress.png" title="ConEmu progress in Windows7" alt="ConEmu progress in Windows7">
