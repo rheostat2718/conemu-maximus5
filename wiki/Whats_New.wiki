@@ -13,6 +13,13 @@ Delete old files from old locations, if you are not using installer.
   * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created. «Under development» for a while.
 
 
+==Build 120604==
+  * Error «Can't free hooks in module ...» в !ConEmuHk.dll
+  * Issue 557: Assertion в RealBuffer.cpp
+  * Issue 568: First call of 'View console output' (Far plugin) opens viewer in dump-mode
+  * Sometimes, exception occures in Far after execution of console command
+
+
 ==Build 120603==
   * Internal interprocess communication changes.
   * Status bar. New column '!ConEmu GUI PID'.
