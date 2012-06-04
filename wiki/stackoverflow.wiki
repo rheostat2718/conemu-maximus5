@@ -1,4 +1,4 @@
-This is a template for stackoverflow Open Source Advertising
+This is a template for stackoverflow [http://meta.stackoverflow.com/a/134414/187198 Open Source Advertising]
 {{{
 [![Windows console emulator with tabs][1]][2]
 
