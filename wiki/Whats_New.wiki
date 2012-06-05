@@ -13,6 +13,11 @@ Delete old files from old locations, if you are not using installer.
   * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created. «Under development» for a while.
 
 
+==120605==
+  * An answer was posted on [http://stackoverflow.com/questions/60950/is-there-a-better-windows-console-window/10904494#10904494 stackoverflow.com]. Q: Is there a better Windows Console Window.
+  * Advertising application on [http://meta.stackoverflow.com/questions/132988/open-source-advertising-sidebar-2012/134414#134414 meta.stackoverflow.com].
+
+
 ==Build 120604==
   * Error «Can't free hooks in module ...» в !ConEmuHk.dll
   * Issue 557: Assertion в RealBuffer.cpp
