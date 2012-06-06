@@ -23,6 +23,7 @@ When you call plugin menu, result is show in the dialog field,
 When you use far manager macro - result is placed to the '!ConEmuMacroResult' environment variable.
 
 ===List of functions===
+<wiki:comment> !!! add same functions to "src\ConEmu\About.h" !!! </wiki:comment>
 {{{
     FindEditor("<FullEditFileName>"), FindViewer("<FullViewerFileName>"), FindFarWindow(<WindowType>,"<WindowTitle>")
      - Returns "Found:<index of RealConsole>", "Blocked", or "NotFound"
@@ -49,10 +50,10 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
        Cmd==1: paste first line
     Shell("<Verb>","<File>"[,"<Parms>"[,"<Dir>"[,<ShowCmd>]]])
      - Verb can be "open", "print" and so on, or special value "new_console",
-       which starts File in the new tab of ConEmu window.
-       Examples: Shell("open","cmd.exe","/k")
-                 Shell("","","cmd.exe /k -new_console:b"),
-                 Shell("new_console:b","","cmd.exe /k")
+       which starts File in the new tab of ConEmu window. Examples:
+         Shell("open","cmd.exe","/k")
+         Shell("","","cmd.exe /k -new_console:b"),
+         Shell("new_console:b","","cmd.exe /k")
     Tab(<Cmd>[,<Parm>])
      - Control ConEmu tabs
        Cmd==0 - show/hide tabs
