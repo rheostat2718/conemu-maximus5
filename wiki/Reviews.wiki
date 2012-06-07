@@ -1,2 +1,13 @@
 #labels Featured
 
+http://stackoverflow.com/a/10904494/1405560
+
+https://sourceforge.net/projects/conemu/reviews/
+
+http://www.softpedia.com/progViewOpinions/ConEmu-151121,.html
+
+http://jpsoft.com/blogs/2012/04/windows-console-replacements-part-6-take-command-and-conemu/
+
+http://user1.cooler-online.ru/blog/11782.html
+
+http://vozerov.wordpress.com/2010/12/27/far-manager/
