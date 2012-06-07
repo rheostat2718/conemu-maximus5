@@ -1,4 +1,4 @@
-=Launching applications in !ConEmu=
+﻿=Launching applications in !ConEmu=
 
 ==Create new console dialog==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of new console creation" alt="ConEmu new console">
@@ -7,3 +7,15 @@ This dialog may be opened from:
   * Keyboard (Win+W by default)
   * <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAddBtn.png" title="Toolbar" alt="Toolbar">
   * <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAddSys.png" title="System menu" alt="System menu">
+
+==Create new tab from existing one==
+Use [NewConsole -new_console] switch while executing command.
+For example, if you want to start PuTTY in new !ConEmu tab,
+type in command prompt (cmd.exe started in !ConEmu tab)
+«`putty -new_console`» and it will be launched in the new tab of !ConEmu.
+-new_console works even in batch files.
+
+*Note*. Option «Inject !ConEmuHk» must be turned on (Settings -> Features).
+
+==Attach existing console or GUI application==
+Choose «Attach...» from [SystemMenu system menu].
