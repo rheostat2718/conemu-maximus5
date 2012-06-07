@@ -11,7 +11,7 @@
       * [Command_Line Command line]
       * [ConEmuC ConEmuC]
       * [NewConsole -new_console switch]
-      * [DosBox DOS applications (DosBox)]
+      * [DosBox DOS applications]
     * Settings
       * [Settings Settings]
       * [Fonts Fonts]
