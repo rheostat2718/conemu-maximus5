@@ -13,12 +13,20 @@ Some portions of code must be optimized or totally rewritten :(
 ==Tab groups and themes==
 Issue 294, Issue 194.
 
+==Advertising==
+I think, !ConEmu is stable enough and competitive with other console emulators.
+
 ==Virtual console buffer==
 In the current version, maximum buffer height (output history) is limited with 9999 lines (Windows console limit).
+
 I want to eliminate this limitation :)
 
 Also, restricting real console buffer to visible rect only greatly increase speed of command execution
-(e.g. `dir /s c:\windows`).
+(e.g. «`dir /s c:\windows`»).
 
 ==Horizontal scrolling==
 Some programs use not only vertical, but horizontal console buffer. I think, support of it will be useful.
+
+==Far Manager related==
+===Icons in standard Far panels===
+Thumbnails and Tiles already works, but they are !ConEmu windows which overlaps standard panels.
