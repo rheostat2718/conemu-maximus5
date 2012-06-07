@@ -1,2 +1,9 @@
+=Launching applications in !ConEmu=
 
+==Create new console dialog==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of new console creation" alt="ConEmu new console">
+
+This dialog may be opened from:
+  * Keyboard (Win+W by default)
+  * <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAddBtn.png" title="Toolbar" alt="Toolbar">
+  * <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAddSys.png" title="System menu" alt="System menu">
