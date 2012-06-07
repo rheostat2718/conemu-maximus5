@@ -12,7 +12,11 @@ This dialog may be opened from:
 Use [NewConsole -new_console] switch while executing command.
 For example, if you want to start PuTTY in new !ConEmu tab,
 type in command prompt (cmd.exe started in !ConEmu tab)
-«`putty -new_console`» and it will be launched in the new tab of !ConEmu.
+{{{
+putty -new_console
+}}}
+and it will be launched in the new tab of !ConEmu.
+
 -new_console works even in batch files.
 
 *Note*. Option «Inject !ConEmuHk» must be turned on (Settings -> Features).
