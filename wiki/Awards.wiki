@@ -2,10 +2,11 @@
 ===Please, vote for !ConEmu===
 <a href="http://stackoverflow.com/a/10904494/1405560">!StackOverflow answer</a> and
 <a href="http://meta.stackoverflow.com/a/134414/187198">adverising sidebar</a>,
+
 <a href="http://alternativeto.net/software/conemu/">alternativeTo</a>,
 <a href="https://sourceforge.net/projects/conemu/reviews/">!SourceForge</a>,
-
 <a href="http://www.facebook.com/ConEmu.Maximus5">Facebook</a>,
+
 <a href="http://www.ohloh.net/stack_entries/new?project_id=conemu-maximus5&ref=sample">Ohloh</a>,
 <a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml">Softpedia</a>,
 <a href="http://www.softpedia.com/get/PORTABLE-SOFTWARE/System/System-Enhancements/ConEmu-Portable.shtml">portable version</a>,
