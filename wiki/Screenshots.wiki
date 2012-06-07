@@ -4,6 +4,15 @@
 ===!ConEmu Alpha transparency===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTransparency.png" title="ConEmu Alpha transparency">
 
+===Fonts===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFontClearType.png" title="ConEmu with ClearType enabled">
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFontStandard.png" title="ConEmu with standard Anti-aliasing">
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFontNon.png" title="ConEmu with Anti-aliasing disabled">
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFontRaster.png" title="ConEmu with Raster font">
+
 ===!ConEmu (simple console mode)===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuVanilla.png" title="ConEmu (simple console mode)">
 
@@ -12,6 +21,15 @@
 
 ===ANSI X3.64 and xterm 256 colors in !ConEmu===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAnsi.png" title="ANSI X3.64 and Xterm 256 colors in ConEmu">
+
+===Customizable Jump list===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuJumpList.png" title="ConEmu Jump list in Windows7" alt="ConEmu Jump list in Windows7">
+
+===[Progress Progress] on Windows7 taskbar===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuProgress.png" title="ConEmu progress in Windows7" alt="ConEmu progress in Windows7">
+
+===!ConEmu system menu (right click on window caption)===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuSystemMenu.png" title="ConEmu system menu" alt="ConEmu system menu">
 
 ===!ConEmu [ConEmuFarPlugin#ConEmu_Panel_Views Thumbnails & Tiles]===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuPanelViews2.png" title="ConEmu Thumbnails and Tiles">

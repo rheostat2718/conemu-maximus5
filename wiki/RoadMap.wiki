@@ -1,7 +1,7 @@
-#labels Featured
+ï»¿#labels Featured
 =!ConEmu road map=
 
-Any help appreciated.
+Any help will be very much appreciated
 
 ==Documentation==
 Unfortunately, I don't have enough time for maintaning documentation and screenshots.
@@ -22,7 +22,7 @@ In the current version, maximum buffer height (output history) is limited with 9
 I want to eliminate this limitation :)
 
 Also, restricting real console buffer to visible rect only greatly increase speed of command execution
-(e.g. «`dir /s c:\windows`»).
+(e.g. Â«`dir /s c:\windows`Â»).
 
 ==Horizontal scrolling==
 Some programs use not only vertical, but horizontal console buffer. I think, support of it will be useful.

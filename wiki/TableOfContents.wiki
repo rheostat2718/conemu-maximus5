@@ -2,19 +2,23 @@
 #sidebar
 ==Contents==
   * [ConEmu ConEmu]
-    * [x64_or_x86 x64 or x86]
-    * [Command_Line Command line (ConEmu.exe)]
-    * [ConEmuC ConEmuC]
-    * [NewConsole -new_console switch]
-    * [Certificate What is «Certificate»?]
+    * General
+      * [x64_or_x86 x64 or x86]
+      * [Certificate What is «Certificate»?]
+    * Launch apps
+      * [Command_Line Command line (ConEmu.exe)]
+      * [ConEmuC ConEmuC]
+      * [NewConsole -new_console switch]
     * [Settings Settings]
-    * [ExtendedConsole ExtendedConsole]
-    * [AnsiEscapeCodes ANSI X3.64 / 256 color]
-    * [Tabs Tabs]
-    * [SystemMenu System menu]
-    * [KeyboardShortcuts Keyboard shortcuts]
-    * [UsingMouse Using mouse]
-    * [TextSelection Text selection]
+    * Features
+      * [ExtendedConsole ExtendedConsole]
+      * [AnsiEscapeCodes ANSI X3.64 / 256 color]
+    * Controls
+      * [Tabs Tabs]
+      * [SystemMenu System menu]
+      * [KeyboardShortcuts Keyboard shortcuts]
+      * [UsingMouse Using mouse]
+      * [TextSelection Text selection]
     * [Fonts Fonts]
     * [Progress Operation progress]
     * [Windows7Taskbar Windows 7 taskbar]
@@ -27,8 +31,10 @@
     * [PVSStudio PVS-Studio]
     * [ConEmuFAQ FAQ]
     * [Whats_New Whats new]
-    * [RoadMap ConEmu road map]
-    * [Awards ConEmu Awards]
+    * Extras
+      * [RoadMap ConEmu road map]
+      * [Awards ConEmu Awards]
+      * [Reviews ConEmu Reviews]
   * [FarPlugins FAR Manager plugins]
     * [ClipFixer ClipFixer]
     * [FARSelector FAR Selector]
