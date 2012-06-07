@@ -20,6 +20,10 @@ This fork grew up from [http://xs.nm.ru/ ConEmu by Zoin].
 
 Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&topic=38078&glp forum.ru-board.com] :)
 
+
+==[TableOfContents Table of contents], [Whats_New What's new], [ConEmuFAQ FAQ (russian)], [Screenshots Screenshots], [Reviews Reviews]==
+
+
 ==Description==
 !ConEmu starts a console program in hidden console window and provides an alternative customizable GUI window with various features:
 
@@ -55,9 +59,6 @@ the Settings dialog, not from the command line.
 
 ==Requirements==
   * Windows 2000 or later.
-
-
-==[TableOfContents Table of contents], [Whats_New What's new], [ConEmuFAQ FAQ (russian)]==
 
 
 ==Installation==

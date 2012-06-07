@@ -60,4 +60,4 @@
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of new console creation" alt="ConEmu new console">
 
 ====Confirmation of restarting console (Win-~)====
-<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of restarting console" alt="ConEmu restart console">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuReCreate.png" title="ConEmu confirmation of restarting console" alt="ConEmu restart console">
