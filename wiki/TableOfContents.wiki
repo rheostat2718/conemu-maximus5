@@ -1,8 +1,9 @@
 #labels Featured
 #sidebar
 ==Contents==
-  * [ConEmu ConEmu]
+  * !ConEmu
     * General
+      * [ConEmu ConEmu]
       * [x64_or_x86 x64 or x86]
       * [Certificate What is «Certificate»?]
       * [ConEmuTerms ConEmu Terms]
@@ -26,7 +27,7 @@
       * [KeyboardShortcuts Keyboard shortcuts]
       * [UsingMouse Using mouse]
       * [TextSelection Text selection]
-    * [GuiMacro GUI Macros]
+      * [GuiMacro GUI Macros]
     * Far Manager
       * [ConEmuFarPlugin Far & ConEmu plugins]
       * [FarMacro Far Macros]
