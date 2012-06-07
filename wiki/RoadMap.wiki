@@ -14,7 +14,7 @@ Some portions of code must be optimized or totally rewritten :(
 Issue 294, Issue 194.
 
 ==Advertising==
-I think, !ConEmu is stable enough and competitive with other console emulators.
+I hope, !ConEmu is stable enough and competitive with other console emulators.
 
 ==Virtual console buffer==
 In the current version, maximum buffer height (output history) is limited with 9999 lines (Windows console limit).
