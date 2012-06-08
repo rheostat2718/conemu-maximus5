@@ -7,3 +7,34 @@ minimize !ConEmu to taskbar status area (hide from screen).
 
 ==run console app from GUI app==
 console app will starts in new !ConEmu tab.
+
+==creating single-file portable !ConEmu==
+will be clarified, !WinRar required
+{{{
+@echo off
+cd /d "%~dp0"
+
+set cever=
+if not "%~1"=="" set cever=.%~1
+set inc_List=
+set exc_List=
+
+echo Setup=ConEmu.exe>ConEmuPortableRarInfo.txt
+echo Silent=1 1>>ConEmuPortableRarInfo.txt
+echo Overwrite=1 1>>ConEmuPortableRarInfo.txt
+if "%~1"=="" echo TempMode>>ConEmuPortableRarInfo.txt
+if not "%~1"=="" echo TempMode=Run ConEmu %~1 portable?, ConEmu %~1 1>>ConEmuPortableRarInfo.txt
+
+cd Release
+
+set inc_List=%inc_List% ConEmu.exe ConEmu\ConEmuC.exe ConEmu\ConEmuCD.dll ConEmu\ConEmuHk.dll
+set inc_List=%inc_List% ConEmu\ConEmuC64.exe ConEmu\ConEmuCD64.dll ConEmu\ConEmuHk64.dll
+set inc_List=%inc_List% ..\Portable_Test\*.*
+
+if exist "..\ConEmuPortable%cever%.exe" del "..\ConEmuPortable%cever%.exe"
+
+rar a -r -ep1 -sfxDefault.sfx -z..\ConEmuPortableRarInfo.txt "..\ConEmuPortable%cever%.exe"   %inc_List% %exc_List%
+if errorlevel 1 pause & goto :EOF
+
+call T:\VCProject\FarPlugin\ConEmu\ConEmu-key\sign_any.bat "..\ConEmuPortable%cever%.exe"
+}}}
