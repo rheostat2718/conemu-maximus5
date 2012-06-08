@@ -38,6 +38,7 @@
       * [Awards ConEmu Awards]
       * [Reviews ConEmu Reviews]
       * [RoadMap ConEmu Road Map]
+      * [TipsAndTweaks Tips and Tweaks]
       * [PVSStudio PVS-Studio]
   * [FarPlugins FAR Manager plugins]
     * [ClipFixer ClipFixer]
