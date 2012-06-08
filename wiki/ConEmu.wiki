@@ -70,6 +70,15 @@ the Settings dialog, not from the command line.
   #. By default (started without command line params), !ConEmu runs "`far.exe`" from it's home folder, or "cmd.exe"/"tcc.exe" if Far Manager not found. Alternatively, You may specify any root command, specifying "[Command_Line /Cmd <App with params>]" argument in !ConEmu shortcut or command line. 
 
 ==Screenshots==
+*!ConEmu Alpha transparency*<br>
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTransparency.png" title="ConEmu Alpha transparency">
+<br><br> 
+
+*!ConEmu Thumbnails & Tiles + FAR 2.0*<br>
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuPanelViews2.png" title="FAR + ConEmu Thumbnails and Tiles">
+<br><br> 
+
+<wiki:comment>
 <table cellspacing="4" cellpadding="0" border="0">
 <tr><td cellpadding="5">
 *FAR 2.0 + !ConEmu Thumbnails & Tiles*<br>
@@ -89,5 +98,6 @@ the Settings dialog, not from the command line.
 <tr><td cellpadding="5">
 *FAR 2.0 Editor + !ConEmu*, anti-aliasing disabled<br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuItalic.png" title="FAR Manager + ConEmu" alt="FAR + ConEmu">
+</wiki:comment>
 
 [Screenshots More screenshots]

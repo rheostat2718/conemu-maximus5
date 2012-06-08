@@ -40,6 +40,9 @@
 ===!ConEmu & [ConEmuFarPlugin#FarColorer FarColorer] (Far 3.x)===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTrueMod.png" title="ConEmu & FarColorer TrueMod">.
 
+===Far 2.0 Editor + !ConEmu, anti-aliasing disabled===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuItalic.png" title="Far Manager + ConEmu" alt="Far + ConEmu">
+
 ===!ConEmu and old (DOS) programs===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/turbo.png" title="ConEmu and old (DOS) programs">
 

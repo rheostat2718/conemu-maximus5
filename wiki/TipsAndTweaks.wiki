@@ -1,1 +1,9 @@
 Page is under construction
+
+=Did you know that=
+
+==right click on the cross==
+minimize !ConEmu to taskbar status area (hide from screen).
+
+==run console app from GUI app==
+console app will starts in new !ConEmu tab.

@@ -1,6 +1,8 @@
 ﻿=Launching applications in !ConEmu=
 
 ==Create new console dialog==
+How to start application (tcc, powershell, far, putty) in !ConEmu tab?
+
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of new console creation" alt="ConEmu new console">
 
 This dialog may be opened from:
