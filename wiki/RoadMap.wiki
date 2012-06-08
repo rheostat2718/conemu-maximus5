@@ -39,3 +39,12 @@ Some programs use not only vertical, but horizontal console buffer. I think, sup
 ==Far Manager related==
 ===Icons in standard Far panels===
 Thumbnails and Tiles already works, but they are !ConEmu windows which overlaps standard panels.
+
+==Configurable panels and toolbars==
+Something like what is in TCMD or TC.
+
+==IME support==
+Yes, !ConEmu already can use IME in the floating window. It will be good to use IME «inplace».
+
+==RTL languages==
+RTL is beyond my comprehension :) If RTL users think !ConEmu may be better - let me know.
