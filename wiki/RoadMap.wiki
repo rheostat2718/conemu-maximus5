@@ -1,8 +1,7 @@
 ﻿#labels Featured
-<font size="6">!ConEmu road map</font>
+<font size="5">!ConEmu road map</font>
+Any help will be very much appreciated!
 <wiki:toc max_depth="3" /> 
-
-Any help will be very much appreciated
 
 ==Documentation==
 Unfortunately, I don't have enough time for maintaning documentation and screenshots.
