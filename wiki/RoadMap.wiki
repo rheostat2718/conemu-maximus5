@@ -10,6 +10,13 @@ Also, my english is not very well :)
 ==Optimization==
 Some portions of code must be optimized or totally rewritten :(
 
+==Portable registry==
+!ConEmu can store itself settings in xml file already.
+However, it is possible to hook registry functions, so any (console or GUI) application,
+started in !ConEmu tab become portable.
+
+This portion of code exists but not perfect. So, it is disable in release versions.
+
 ==Tab groups and themes==
 Issue 294, Issue 194.
 
