@@ -6,7 +6,7 @@ Any help will be very much appreciated!
 <wiki:toc max_depth="3" /> 
 
 ==Documentation==
-Unfortunately, I don't have enough time for maintaning documentation and screenshots.
+Unfortunately, I don't have enough time for maintaining documentation and screenshots.
 Also, my english is not very well :)
 
 ==Optimization==
