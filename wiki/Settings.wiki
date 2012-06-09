@@ -213,7 +213,7 @@ Enables advanced logging of console processes creation.
 || tPerfRender || Average duration of rendering text to memory DC ||
 || tPerfBlt || Average duration of blit operation<br>from memory DC to screen DC ||
 || tPerfInterval || Average counts of reads real console data per second ||
-|| cbUseWinNumber || Enables switching of tabs (12 consoles) by their numbers (1,2,...,9.0,F11,F12). «Host-key» is «Win» key, by default. ||
+|| cbUseWinNumber || Enables switching of tabs (30 consoles) by their numbers (1,2,...,9,0). «Host-key» is «Win» key, by default. ||
 || cbInstallKeybHooks || Allows «Host-key»+Number in Vista, Windows 7, or higher<br>3d state - confirm on startup ||
 || cbSafeFarClose || Try to close Far Manager softly, instead of closing console window ||
 || cbIgnoreTelnetCursorSize || Always show normal cursor in telnet ||
