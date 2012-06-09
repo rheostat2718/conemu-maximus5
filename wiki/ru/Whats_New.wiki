@@ -13,7 +13,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * Создана страничка на [http://www.facebook.com/ConEmu.Maximus5 Facebook]. Пока «в разработке».
 
 
-==120608==
+==Build 120608==
   * Добавлена страничка: http://code.google.com/p/conemu-maximus5/wiki/RoadMap
   * В некоторых случаях по краям консоли оставался мусор.
   * Уточнение подтверждения закрытия консоли.

@@ -13,7 +13,13 @@ Delete old files from old locations, if you are not using installer.
   * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created. «Under development» for a while.
 
 
-==120608==
+==Long time ago?==
+Lifehacker published the article about Console, PowerCmd, Take Command and Mintty. Unfortunately, ConEmu again was not mentioned :(
+All my tries to post comment and mail to article author was ignored :(
+http://lifehacker.com/5857540/the-best-terminal-emulator-for-windows
+
+
+==Build 120608==
   * New wiki page: http://code.google.com/p/conemu-maximus5/wiki/RoadMap
   * Some drawing artifacts may appears on window edges in Maximized and Fullscreen modes.
   * Refinement of consoles closing confirmation.
