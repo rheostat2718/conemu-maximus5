@@ -49,6 +49,7 @@ Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&top
   * user friendly text and block selection;
   * transparency and desktop mode;
   * customizable starting tabs;
+  * configurable and clickable status bar;
   * and more, and more... take a look at Settings dialog, !WhatsNew and Settings.reg
 
 All settings are read from the registry (multiple named configurations are supported) and
