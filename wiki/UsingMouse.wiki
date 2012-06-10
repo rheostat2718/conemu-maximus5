@@ -1,36 +1,40 @@
 <wiki:toc max_depth="4" /> 
 
-===Common===
-====Text selection and clipboard====
+=Common=
+==Text selection and clipboard==
 !ConEmu allows marking console blocks and streams, copying marked text to Windows Clipboard, pasting from Clipboard to console. [TextSelection Read more...]
 
 
-====Left click on the tab====
-!ConEmu tries to activate corresponding FAR window.
+==Left click on the tab==
+!ConEmu tries to activate corresponding Far window.
 This may fails when:
   * Dialog is opens;
   * Modal editor/viewer is open and !ConEmu does not detect this;
   * Macro is recording/playing.
 
 
-====Right click on the tab====
+==Right click on the tab==
 When You right clicking on the Tab:
   * Tab will be activated;
   * Popup menu will be shown.
 
 
-====Middle click or Ctrl+Right click on the tab====
+==Middle click or Ctrl+Right click on the tab==
 When You right clicking on the Tab:
-  * FAR panels, editor or viewer - !ConEmu sends F10 key to console (You may redefine macro);
+  * Far panels, editor or viewer - !ConEmu sends F10 key to console (You may redefine macro);
   * Other programs - !ConEmu shows dialog with Restart/Terminate/Cancel buttons (same pressing Win-~).
 
 
-====Right click on Cross button====
-Right clicking on the Cross button (window title) will minimize !ConEmu window to the tray.
+==Right click on Cross button==
+Right clicking on the Cross button (window title) will minimize !ConEmu window to the taskbar status area (hide window from screen).
 
 
-===Far Manager related===
-====Drag-n-Drop====
+==Double click on left or right window edges==
+Stretch the window to the width of the monitor.
+
+
+=Far Manager related=
+==Drag-n-Drop==
 You may use dragging either with left or right mouse button.
 
 On the [Settings#Features Features] page You may choose modifier (i.e. LeftCtrl or RightAlt)
@@ -48,14 +52,14 @@ Drop to command line:
   * Shift: paste with «view:» prefix
 
 
-====Right click on Far Manager panels====
+==Right click on Far Manager panels==
 You may choose right click behaviour:
 
   * Simple send right click to console;
   * Show context menu (via EMenu plugin);
   * Short click means simple right click, long click (depress, wait a while, release) means context menu.
 
-*Note*. _EMenu_ plugin must be installed in FAR manager. No macroses or hotkeys are required, but You may choose different way to display context menu, by specifying the macro in !ConEmu settings.
+*Note*. _EMenu_ plugin must be installed in Far Manager. No macroses or hotkeys are required, but You may choose different way to display context menu, by specifying the macro in !ConEmu settings.
 {{{
 [HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
 ;; This example assume 'e' hotkey for EMenu plugin
@@ -63,11 +67,11 @@ You may choose right click behaviour:
 }}}
 
 
-====Resizing Far Manager panels with mouse====
+==Resizing Far Manager panels with mouse==
 This is simple now. Drag panels by bottom border, or by left border of the *right* panel.
 Option [Settings#Features Resize panels by mouse] must be checked.
 
-====Hyperlinks and compiler errors====
+==Hyperlinks and compiler errors==
 !ConEmu can highlight hyperlinks (e.g. `http://www.farmanager.com`) and compiler errors (e.g. `FarCtrl.pas(1002,49) Error: Identifier not found...`).
 
 Turn on checkbox «Highlight and goto» and choose appropriate modifier (e.g. «Left Ctrl») on the [Settings#settings TextSelection] page.
@@ -77,7 +81,7 @@ So, when you hold selected modifier (e.g. «Left Ctrl») !ConEmu will underlines
   * e-mails - in the default Mail program
   * compiler errors - in the Far editor, positioned on row and column of the error
 
-====Right click on !KeyBar====
+==Right click on !KeyBar==
 RClick on !KeyBar pop up menu with F-key with possible modifiers. E.g., when you RClick on `7Search` in the Far Editor you can choose Ctrl-F7 to run Replace dialog.
 
 *Note*. When you choose such menu item, !ConEmu post «real» keypress to console. So, macro will be executed, when there is one associated with this keypress.
