@@ -54,6 +54,10 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
          Shell("open","cmd.exe","/k")
          Shell("","","cmd.exe /k -new_console:b"),
          Shell("new_console:b","","cmd.exe /k")
+    Status(0[,<Parm>])
+     - Show/Hide status bar, Parm=1 - Show, Parm=2 - Hide
+    Status(1[,"<Text>"])
+     - Set status bar text
     Tab(<Cmd>[,<Parm>])
      - Control ConEmu tabs
        Cmd==0 - show/hide tabs

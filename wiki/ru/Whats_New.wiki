@@ -10,7 +10,22 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 }}}
 
 
-  * Создана страничка на [http://www.facebook.com/ConEmu.Maximus5 Facebook]. Пока «в разработке».
+  * Создана страничка на [http://www.facebook.com/ConEmu.Maximus5 Facebook].
+
+
+==Build 120609==
+  * Коррекция Injects для Windows 8 RC.
+  * Issue 571: В диалоге подтверждения создания консоли добавлен флажок «New window». Если указывается «Another user», то под выбранным аккаунтом запускается сам !ConEmu.exe! При желании, можно назначить отдельный хоткей для открытия диалога с включенным флажком.
+  * В некоторых случаях по краям консоли оставался мусор.
+  * Уточнение снятия скриншотов (режимы Maximized/Fullscreen).
+  * Не работал Attach GUI приложений.
+  * При перемещении мышкой бегунка полосы прокрутки - не обновлялось положение курсора.
+
+
+==Long time ago?==
+Lifehacker published the article about Console, PowerCmd, Take Command and Mintty. Unfortunately, ConEmu again was not mentioned :(
+All my tries to post comment and mail to article author was ignored :(
+http://lifehacker.com/5857540/the-best-terminal-emulator-for-windows
 
 
 ==Build 120608==

@@ -10,7 +10,16 @@ Delete old files from old locations, if you are not using installer.
 }}}
 
 
-  * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created. «Under development» for a while.
+  * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created.
+
+
+==Build 120609==
+  * Injects code was rewritten (new ASLR in Windows 8 RC x64).
+  * Issue 571: Check box «New window» in creation confirmation dialog. If you choose «Another user» - !ConEmu itself will be started under choosen account. You may set separate hotkey for dialog with check box turned on.
+  * Some drawing artifacts may appears on window edges in Maximized and Fullscreen modes.
+  * Refinement of screenshots (Maximized/Fullscreen window modes).
+  * Attach did not works for GUI applications (notepad, PuTTY, ...)
+  * Cursor was not moved in console, while dragging scrollbar thumbtack.
 
 
 ==Long time ago?==
@@ -21,7 +30,6 @@ http://lifehacker.com/5857540/the-best-terminal-emulator-for-windows
 
 ==Build 120608==
   * New wiki page: http://code.google.com/p/conemu-maximus5/wiki/RoadMap
-  * Some drawing artifacts may appears on window edges in Maximized and Fullscreen modes.
   * Refinement of consoles closing confirmation.
   * GuiMacro: !WindowFullscreen, !WindowMaximize, !WindowMode, Status.
   * Keys: Always on Top, Show/hide status bar (Apps+S), Show/hide tab bar (Apps+T), About (Win+Alt+A).
