@@ -70,7 +70,9 @@ the Settings dialog, not from the command line.
   #. By default (started without command line params), !ConEmu runs "`far.exe`" from it's home folder, or "cmd.exe"/"tcc.exe" if Far Manager not found. Alternatively, You may specify any root command, specifying "[Command_Line /Cmd <App with params>]" argument in !ConEmu shortcut or command line. 
 
 ==Screenshots==
+<wiki:comment>
 *!ConEmu Alpha transparency*<br>
+</wiki:comment>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTransparency.png" title="ConEmu Alpha transparency">
 <br><br> 
 
