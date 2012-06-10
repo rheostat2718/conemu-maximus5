@@ -2,7 +2,7 @@
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAero.png" title="Far, cmd, Notepad and PUTTY started in ConEmu">
 
 ===!ConEmu Alpha transparency===
-<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTransparency.png" title="ConEmu Alpha transparency">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTransparency2.png" title="ConEmu Alpha transparency">
 
 ===Fonts===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFontClearType.png" title="ConEmu with ClearType enabled">
