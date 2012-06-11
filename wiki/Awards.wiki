@@ -16,7 +16,7 @@
 ===!StackOverflow Open Source Advertising: Sidebar 2012===
 <table><tr><td width="230">
 <a href="http://meta.stackoverflow.com/a/134414/187198"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012.png" title="Open Source Advertising - Sidebar - 2012"/></a>
-</td><td>
+</td><td width="300" valign="top">
 This adverising was posted to Meta !StackOverflow,
 however it requires a minimum score threshold (at least 6)
 before it will be served up and shown on Stack Overflow.
