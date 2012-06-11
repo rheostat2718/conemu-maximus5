@@ -22,6 +22,9 @@
 ===ANSI X3.64 and xterm 256 colors in !ConEmu===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAnsi.png" title="ANSI X3.64 and Xterm 256 colors in ConEmu">
 
+===Color prompt in !ConEmu (another ANSI x3.64)===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuColorPrompt.png" title="Color prompt in ConEmu, another ANSI x3.64">
+
 ===Customizable Jump list===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuJumpList.png" title="ConEmu Jump list in Windows7" alt="ConEmu Jump list in Windows7">
 
