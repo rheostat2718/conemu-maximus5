@@ -13,6 +13,10 @@ Delete old files from old locations, if you are not using installer.
   * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created.
 
 
+==120611==
+  * [http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx Article] in Scott Hanselman blog :)
+
+
 ==Build 120609==
   * Injects code was rewritten (new ASLR in Windows 8 RC x64).
   * Issue 571: Check box «New window» in creation confirmation dialog. If you choose «Another user» - !ConEmu itself will be started under choosen account. You may set separate hotkey for dialog with check box turned on.

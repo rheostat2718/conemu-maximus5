@@ -1,5 +1,7 @@
 #labels Featured
 
+http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx
+
 http://stackoverflow.com/a/10904494/1405560
 
 https://sourceforge.net/projects/conemu/reviews/

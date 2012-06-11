@@ -13,6 +13,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * Создана страничка на [http://www.facebook.com/ConEmu.Maximus5 Facebook].
 
 
+==120611==
+  * [http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx Статься] в блоге Scott Hanselman :)
+
+
 ==Build 120609==
   * Коррекция Injects для Windows 8 RC.
   * Issue 571: В диалоге подтверждения создания консоли добавлен флажок «New window». Если указывается «Another user», то под выбранным аккаунтом запускается сам !ConEmu.exe! При желании, можно назначить отдельный хоткей для открытия диалога с включенным флажком.
