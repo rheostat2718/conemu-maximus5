@@ -1,4 +1,6 @@
 ==About !ConEmu <g:plusone size="medium" href="http://code.google.com/p/conemu-maximus5/"/>==
+<table cellpadding="0" cellspacing="0" border="0">
+<tr><td valign="top">
 !ConEmu-Maximus5 is a Windows console emulator with tabs, which represents multiple consoles and simple GUI applications as one customizable GUI window with various features. Basic application - joint use with [http://www.farmanager.com/download.php?l=en Far Manager] ([http://en.wikipedia.org/wiki/FAR_Manager Far in Wikipedia]). Far (File and Archive) Manager is a console program for managing files and archives in Windows operating systems.
 
 [Awards Please, vote for ConEmu]
@@ -19,6 +21,10 @@
 This fork grew up from [http://xs.nm.ru/ ConEmu by Zoin].
 
 Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&topic=38078&glp forum.ru-board.com] :)
+
+</td><td width="230">
+<a href="http://code.google.com/p/conemu-maximus5/wiki/Awards"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012.png" title="Open Source Advertising - Sidebar - 2012"/></a>
+</td></tr></table>
 
 
 ==[TableOfContents Table of contents], [Whats_New What's new], [ConEmuFAQ FAQ (russian)], [Screenshots Screenshots], [Reviews Reviews]==
