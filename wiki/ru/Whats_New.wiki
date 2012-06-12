@@ -14,7 +14,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 ==120611==
-  * [http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx Статься] в блоге Scott Hanselman :)
+  * [http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx Статья] в блоге Scott Hanselman :)
 
 
 ==Build 120609==
