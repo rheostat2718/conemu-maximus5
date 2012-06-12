@@ -78,6 +78,10 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
        Cmd==6 - switch console direct (no recent mode), Parm=(1,-1)
        Cmd==7 - activate console by number, Parm=(1-based console index)
        Cmd==8 - show tabs list menu (indiffirent Far/Not Far)
+    Task(Index[,"Dir"])
+     - start task with 1-based index
+    Task("Name"[,"Dir"])
+     - start task with specified name
     WindowFullscreen()
      - Switch fullscreen window mode
        returns previous window mode

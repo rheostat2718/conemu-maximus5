@@ -27,8 +27,8 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 {{{
     Paste(2[,"<Text>"]) - paste all lines, without confirmations
     Paste(3[,"<Text>"]) - paste first line, without confirmations
-    Task(Index) - start task with 1-based index
-    Task("Name") - start task with specified name
+    Task(Index[,"Dir"]) - start task with 1-based index
+    Task("Name"[,"Dir"]) - start task with specified name
 }}}
   * В диалоге настроек для !GuiMacro (вкладка Keys) работают "\\", "\r", "\n", "\t". Теперь можно задать что-то вроде «Paste(2,"exit\n")» для выхода из cmd.exe
 

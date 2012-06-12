@@ -27,8 +27,8 @@ Delete old files from old locations, if you are not using installer.
 {{{
     Paste(2[,"<Text>"]) - paste all lines, without confirmations
     Paste(3[,"<Text>"]) - paste first line, without confirmations
-    Task(Index) - start task with 1-based index
-    Task("Name") - start task with specified name
+    Task(Index[,"Dir"]) - start task with 1-based index
+    Task("Name"[,"Dir"]) - start task with specified name
 }}}
   * !GuiMacro. On «Keys» page for «Macro» now works "\\", "\r", "\n", "\t". You can set smth like this «Paste(2,"exit\n")» for closing cmd.exe
 
