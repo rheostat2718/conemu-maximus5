@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <key name="Software">
 	<key name="ConEmu">
-		<key name=".Vanilla" modified="2012-06-12 01:19:20">
+		<key name=".Vanilla" modified="2012-06-12 13:38:59">
 			<value name="KeyboardHooks" type="hex" data="01"/>
 			<value name="UseInjects" type="hex" data="01"/>
 			<value name="Update.CheckOnStartup" type="hex" data="00"/>
@@ -69,7 +69,7 @@
 			<value name="StartFarEditors" type="hex" data="00"/>
 			<value name="StoreTaskbarkTasks" type="hex" data="00"/>
 			<value name="StoreTaskbarCommands" type="hex" data="00"/>
-			<value name="CmdLineHistory" type="multi"/>
+			<value name="CmdLineHistory" type="multi"><line data="c:\windows\syswow64\cmd.exe"/><line data="c:\windows\syswow64.exe"/></value>
 			<value name="Multi" type="hex" data="01"/>
 			<value name="Multi.CloseConfirm" type="hex" data="00"/>
 			<value name="Multi.NewConfirm" type="hex" data="01"/>
@@ -103,8 +103,8 @@
 			<value name="ColorKeyValue" type="dword" data="00010101"/>
 			<value name="WindowMode" type="dword" data="0000051f"/>
 			<value name="HideCaption" type="hex" data="00"/>
-			<value name="HideCaptionAlways" type="hex" data="01"/>
-			<value name="HideCaptionAlwaysFrame" type="hex" data="01"/>
+			<value name="HideCaptionAlways" type="hex" data="00"/>
+			<value name="HideCaptionAlwaysFrame" type="hex" data="00"/>
 			<value name="HideCaptionAlwaysDelay" type="dword" data="000007d0"/>
 			<value name="HideCaptionAlwaysDisappear" type="dword" data="000007d0"/>
 			<value name="DownShowHiddenMessage" type="hex" data="00"/>
@@ -148,7 +148,7 @@
 			<value name="SendPrintScrn" type="hex" data="00"/>
 			<value name="SendCtrlEsc" type="hex" data="00"/>
 			<value name="SendAltF9" type="hex" data="00"/>
-			<value name="Min2Tray" type="hex" data="00"/>
+			<value name="Min2Tray" type="hex" data="01"/>
 			<value name="AlwaysShowTrayIcon" type="hex" data="00"/>
 			<value name="SafeFarClose" type="hex" data="01"/>
 			<value name="SafeFarCloseMacro" type="string" data=""/>
@@ -184,8 +184,8 @@
 			<value name="StatusBar.Hide.ScrL" type="hex" data="00"/>
 			<value name="StatusBar.Hide.Lang" type="hex" data="01"/>
 			<value name="StatusBar.Hide.WPos" type="hex" data="01"/>
-			<value name="StatusBar.Hide.WSize" type="hex" data="01"/>
-			<value name="StatusBar.Hide.WClient" type="hex" data="01"/>
+			<value name="StatusBar.Hide.WSize" type="hex" data="00"/>
+			<value name="StatusBar.Hide.WClient" type="hex" data="00"/>
 			<value name="StatusBar.Hide.WWork" type="hex" data="01"/>
 			<value name="StatusBar.Hide.ABuf" type="hex" data="00"/>
 			<value name="StatusBar.Hide.CPos" type="hex" data="00"/>
@@ -198,7 +198,7 @@
 			<value name="StatusBar.Hide.ConEmuPID" type="hex" data="01"/>
 			<value name="StatusBar.Hide.Srv" type="hex" data="00"/>
 			<value name="StatusBar.Hide.Transparency" type="hex" data="00"/>
-			<value name="Tabs" type="hex" data="00"/>
+			<value name="Tabs" type="hex" data="02"/>
 			<value name="TabSelf" type="hex" data="01"/>
 			<value name="TabLazy" type="hex" data="01"/>
 			<value name="TabRecent" type="hex" data="01"/>
@@ -224,11 +224,11 @@
 			<value name="TryToCenter" type="hex" data="00"/>
 			<value name="ShowScrollbar" type="hex" data="02"/>
 			<value name="IconID" type="dword" data="00000001"/>
-			<value name="ConWnd Width" type="dword" data="0000007f"/>
-			<value name="ConWnd Height" type="dword" data="0000000f"/>
+			<value name="ConWnd Width" type="dword" data="00000080"/>
+			<value name="ConWnd Height" type="dword" data="0000000e"/>
 			<value name="16bit Height" type="dword" data="00000000"/>
-			<value name="ConWnd X" type="dword" data="fffffffd"/>
-			<value name="ConWnd Y" type="dword" data="00000000"/>
+			<value name="ConWnd X" type="dword" data="fffffff8"/>
+			<value name="ConWnd Y" type="dword" data="ffffffe2"/>
 			<value name="Cascaded" type="hex" data="00"/>
 			<value name="AutoSaveSizePos" type="hex" data="00"/>
 			<value name="MainTimerElapse" type="dword" data="0000000a"/>
@@ -287,7 +287,7 @@
 			<value name="Update.PostUpdateCmd" type="string" data="echo Last successful update&gt;ConEmuUpdate.info &amp;&amp; date /t&gt;&gt;ConEmuUpdate.info &amp;&amp; time /t&gt;&gt;ConEmuUpdate.info"/>
 			<value name="Multi.Modifier" type="dword" data="0000005b"/>
 			<value name="Multi.ArrowsModifier" type="dword" data="0000005b"/>
-			<value name="MinimizeRestore" type="dword" data="00005bc0"/>
+			<value name="MinimizeRestore" type="dword" data="808080c0"/>
 			<value name="ForcedFullScreen" type="dword" data="12115b0d"/>
 			<value name="Multi.NewConsole" type="dword" data="00005b57"/>
 			<value name="Multi.NewConsoleShift" type="dword" data="00105b57"/>
@@ -383,12 +383,13 @@
 			<value name="FarGotoEditorVk" type="hex" data="a2"/>
 			<value name="DndLKey" type="hex" data="00"/>
 			<value name="DndRKey" type="hex" data="a2"/>
-				<key name="Tasks" modified="2012-06-12 01:19:20">
+				<key name="Tasks" modified="2012-06-12 13:38:59">
 				<value name="Count" type="dword" data="00000000"/>
 			</key>
-				<key name="Apps" modified="2012-06-12 01:19:20">
+				<key name="Apps" modified="2012-06-12 13:38:59">
 				<value name="Count" type="dword" data="00000000"/>
 			</key>
+			<value name="QuakeStyle" type="hex" data="01"/>
 		</key>
 	</key>
 </key>
