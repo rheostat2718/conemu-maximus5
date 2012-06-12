@@ -14,16 +14,12 @@ Delete old files from old locations, if you are not using installer.
 
 
 ==Build 120612==
-  * В поставку добавлен пример «!ColorPrompt.cmd». Запустите его в cmd.exe или tcc.exe для смены цвета текста command prompt на желтый.
-  * Новые аргументы для !ConEmu.exe - /!ShowHide и /!ShowHideTSA.
-    Если !ConEmu не запущено - запускает (с возможно указанным /cmd ...),
-    если окно !ConEmu уже открыто - сворачивает его или прячет в TSA.
-    Действие похоже на глобально регистрируемый хоткей (Win+C), но этот хоткей не сработает,
-    если !ConEmu не был запущен. А с ключами - можно настроить ярлык на рабочем столе.
-  * Аргумент !ConEmu.exe: /dir "Folder". Аналог Working folder, задаваемый в свойствах ярлыка.
-  * Параметр «Quake style slide down» на вкладке «Features». Пример настройки в «!ConEmu\!ConEmu_Tilda.xml».
+  * Sample «!ColorPrompt.cmd» added to distribution. Run it in cmd.exe or tcc.exe for change command prompt text color to yellow.
+  * New !ComEmu.exe arguments - /!ShowHide and /!ShowHideTSA. When !ConEmu not started (yet) - starts it (with possible /cmd ... argument), when !ConEmu window exists - minimize it or hide to TSA. Similar to global hotkey Win+C, but hotkey will not works, if !ConEmu was not started yet. These keys may be used for shortcut on desktop.
+  * New !ConEmu.exe argument - /dir "Folder". Same as «Working folder» in shortcut properties.
+  * Switch «Quake style slide down» on the «Features» page. Sample settings in «!ConEmu\!ConEmu_Tilda.xml».
   * Issue 576: Trap when updating Jump Lists/Task while history is empty.
-  * Не работал Copy из альтернативной консоли (Win+A).
+  * Copy to clipboard does not works from alternative console (Win+A).
   * Issue 584: App distinct color palette not working.
   * Issue 576: !ConEmu.exe /updatejumplist.
   * When Maximized, check/uncheck «Hide caption always» losed caption.
@@ -32,8 +28,7 @@ Delete old files from old locations, if you are not using installer.
     Paste(2[,"<Text>"]) - paste all lines, without confirmations
     Paste(3[,"<Text>"]) - paste first line, without confirmations
 }}}
-  * В диалоге настроек для !GuiMacro (вкладка Keys) работают "\\", "\r", "\n", "\t".
-    Теперь можно задать что-то вроде «Paste(2,"exit\n")» для выхода из cmd.exe
+  * !GuiMacro. On «Keys» page for «Macro» now works "\\", "\r", "\n", "\t". You can set smth like this «Paste(2,"exit\n")» for closing cmd.exe
 
 
 ==120611==
