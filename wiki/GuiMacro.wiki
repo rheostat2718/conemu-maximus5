@@ -1,4 +1,5 @@
-There is an easy way to control (a little) !ConEmu window from console applications. It's a !GuiMacro.
+There is an easy way to control (a little) !ConEmu window from console applications or additional hotkeys.
+It's a !GuiMacro.
 
 ===Abstract===
 You can execute !ConEmu GUI macro from command line (or batch file), i.e.:
@@ -25,7 +26,9 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
 ===List of functions===
 <wiki:comment> !!! add same functions to "src\ConEmu\About.h" !!! </wiki:comment>
 {{{
-    FindEditor("<FullEditFileName>"), FindViewer("<FullViewerFileName>"), FindFarWindow(<WindowType>,"<WindowTitle>")
+    FindEditor("<FullEditFileName>"),
+    FindViewer("<FullViewerFileName>"),
+    FindFarWindow(<WindowType>,"<WindowTitle>")
      - Returns "Found:<index of RealConsole>", "Blocked", or "NotFound"
        <WindowType> is number from Far Manager enum WINDOWINFO_TYPE
     FontSetName("<FontFaceName>"[,FontHeight[,FontWidth]])
@@ -42,10 +45,12 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
     IsRealVisible
      - Check, is RealConsole visible or not, "Yes"/"No"
     MsgBox("<Text>","<Title>",<ButtonType>)
-     - Show modal GUI MessageBox, returns clicked button name ("Ok", "Cancel", "Retry", etc.),
+     - Show modal GUI MessageBox, returns clicked button name
+       ("Ok", "Cancel", "Retry", etc.),
        ButtonType (number) is from Windows SDK.
     Paste(<Cmd>[,"<Text>"])
-     - When <Text> is omitted - paste from Windows clipboard, otherwise - paste specified text
+     - When <Text> is omitted - paste from Windows clipboard,
+       otherwise - paste specified text
        Cmd==0: paste all lines
        Cmd==1: paste first line
     Shell("<Verb>","<File>"[,"<Parms>"[,"<Dir>"[,<ShowCmd>]]])
@@ -69,8 +74,17 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
        Cmd==6 - switch console direct (no recent mode), Parm=(1,-1)
        Cmd==7 - activate console by number, Parm=(1-based console index)
        Cmd==8 - show tabs list menu (indiffirent Far/Not Far)
+    WindowFullscreen()
+     - Switch fullscreen window mode
+       returns previous window mode
+    WindowMaximize()
+     - Switch maximized window mode
+       returns previous window mode
     WindowMinimize() or WindowMinimize(1)
      - Minimize ConEmu window ("1" means "minimize to the TSA")
+    WindowMode([\"<Mode>\"])\r\n" \
+     - Returns or set current window mode
+       "NOR", "MAX", "FS", "MIN", "TSA"
 }}}
 
 ===Examples===
