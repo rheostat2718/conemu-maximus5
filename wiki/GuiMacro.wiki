@@ -55,6 +55,8 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
        otherwise - paste specified text
        Cmd==0: paste all lines
        Cmd==1: paste first line
+       Cmd==2: paste all lines, without confirmations
+       Cmd==3: paste first line, without confirmations
     Shell("<Verb>","<File>"[,"<Parms>"[,"<Dir>"[,<ShowCmd>]]])
      - Verb can be "open", "print" and so on, or special value "new_console",
        which starts File in the new tab of ConEmu window. Examples:
