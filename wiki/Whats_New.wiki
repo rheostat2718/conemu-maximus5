@@ -15,7 +15,7 @@ Delete old files from old locations, if you are not using installer.
 
 ==Build 120612==
   * Sample «!ColorPrompt.cmd» added to distribution. Run it in cmd.exe or tcc.exe for change command prompt text color to yellow.
-  * New !ComEmu.exe arguments - /!ShowHide and /!ShowHideTSA. When !ConEmu not started (yet) - starts it (with possible /cmd ... argument), when !ConEmu window exists - minimize it or hide to TSA. Similar to global hotkey Win+C, but hotkey will not works, if !ConEmu was not started yet. These keys may be used for shortcut on desktop.
+  * New !ComEmu.exe arguments - /!ShowHide and /ShowHideTSA. When !ConEmu not started (yet) - starts it (with possible /cmd ... argument), when !ConEmu window exists - minimize it or hide to TSA. Similar to global hotkey Win+C, but hotkey will not works, if !ConEmu was not started yet. These keys may be used for shortcut on desktop.
   * New !ConEmu.exe argument - /dir "Folder". Same as «Working folder» in shortcut properties.
   * Switch «Quake style slide down» on the «Features» page. Sample settings in «!ConEmu\!ConEmu_Tilda.xml».
   * Issue 576: Trap when updating Jump Lists/Task while history is empty.
@@ -27,6 +27,8 @@ Delete old files from old locations, if you are not using installer.
 {{{
     Paste(2[,"<Text>"]) - paste all lines, without confirmations
     Paste(3[,"<Text>"]) - paste first line, without confirmations
+    Task(Index) - start task with 1-based index
+    Task("Name") - start task with specified name
 }}}
   * !GuiMacro. On «Keys» page for «Macro» now works "\\", "\r", "\n", "\t". You can set smth like this «Paste(2,"exit\n")» for closing cmd.exe
 
