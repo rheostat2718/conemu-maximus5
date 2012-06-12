@@ -1,9 +1,9 @@
-There is an easy way to control (a little) !ConEmu window from console applications or additional hotkeys.
+ï»¿There is an easy way to control (a little) !ConEmu window from console applications or additional hotkeys.
 It's a !GuiMacro.
 
 ===Abstract===
 You can execute !ConEmu GUI macro from:
-  * !ConEmu hotkey - set up «Macro 01» … «Macro 32» on «Keys» page of «Settings» dialog.
+  * !ConEmu hotkey - set up Â«Macro 01Â» â€¦ Â«Macro 32Â» on Â«KeysÂ» page of Â«SettingsÂ» dialog.
   * command line (or batch file), i.e.:
 {{{
 "%ConEmuBaseDir%\ConEmuC.exe" /GUIMACRO WindowMinimize
