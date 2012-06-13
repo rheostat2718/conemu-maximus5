@@ -13,6 +13,15 @@ Delete old files from old locations, if you are not using installer.
   * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created.
 
 
+==Build 120613==
+  * After deleting Task choosed for Startup, !ConEmu stop starting.
+  * 120612: Executing command with "-new_console" argument (from existing tab) cause !ConEmu minimizing.
+  * Tab menu (Rename tab) and Apps+R. Only panels can be renamed in Far (as yet).
+  * !UpRight option for background image.
+  * Issue 590: Ctrl+C/Ctrl+Break fixes.
+  * Some Quake style improvements.
+
+
 ==Build 120612==
   * Sample «!ColorPrompt.cmd» added to distribution. Run it in cmd.exe or tcc.exe for change command prompt text color to yellow.
   * New !ComEmu.exe arguments - /!ShowHide and /ShowHideTSA. When !ConEmu not started (yet) - starts it (with possible /cmd ... argument), when !ConEmu window exists - minimize it or hide to TSA. Similar to global hotkey Win+C, but hotkey will not works, if !ConEmu was not started yet. These keys may be used for shortcut on desktop.
