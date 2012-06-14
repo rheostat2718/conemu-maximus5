@@ -13,6 +13,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * Создана страничка на [http://www.facebook.com/ConEmu.Maximus5 Facebook].
 
 
+==Build 120614==
+  * Для фоновой картинки добавлены опции DownLeft и DownRight.
+  * Issue 577: Chinese font display error on Chinese Win XP.
+  * Issue 587: Right click gives an error box.
+
+
 ==Build 120613==
   * При удалении задачи, назначенной в Startup, !ConEmu переставал запускаться.
   * 120612: При выполнении команды с "-new_console" !ConEmu минимизировался.

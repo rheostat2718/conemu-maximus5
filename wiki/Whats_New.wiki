@@ -13,6 +13,12 @@ Delete old files from old locations, if you are not using installer.
   * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created.
 
 
+==Build 120614==
+  * !DownLeft and !DownRight options for background image.
+  * Issue 577: Chinese font display error on Chinese Win XP.
+  * Issue 587: Right click gives an error box.
+
+
 ==Build 120613==
   * After deleting Task choosed for Startup, !ConEmu stop starting.
   * 120612: Executing command with "-new_console" argument (from existing tab) cause !ConEmu minimizing.
