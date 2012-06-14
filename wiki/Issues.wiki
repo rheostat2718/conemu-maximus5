@@ -1,6 +1,9 @@
 =Welcome to !ConEmu bugtracker=
 
-  * ==[http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-id View active issues]==
-  * ==[http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=&sort=-id View all (active + fixed) issues]==
-  * ==[http://code.google.com/p/conemu-maximus5/issues/entry Report a bug]==
-  * ==[http://code.google.com/p/conemu-maximus5/issues/entry?template=Concept Make a suggestion]==
+==View existing issues==
+  * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-id Active issues], [http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-modified sorted by date]===
+  * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=&sort=-id All (active + fixed) issues]===
+
+==Create new issue==
+  * ===[http://code.google.com/p/conemu-maximus5/issues/entry Report a bug]===
+  * ===[http://code.google.com/p/conemu-maximus5/issues/entry?template=Concept Make a suggestion]===
