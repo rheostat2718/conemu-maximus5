@@ -1,6 +1,8 @@
 =Far Manager=
 
-Far is my favorite shell...
+Far is my favorite shell. It is not only file/archive management,
+it is powerful editor, huge number of plugins, macro engine.
+
 
 ==Download==
 I'm using Far 3.0 x86 version (my primary OS is Win 7 x64).
@@ -21,6 +23,10 @@ There thousands of plugins written for many years. There many sources, where you
   * [http://code.google.com/p/conemu-maximus5/wiki/FarPlugins Regeditor, Picture View, ImpEx (PE browser), Far3wrap and others]
   * [http://code.google.com/p/far-plugins/ MacroLib, Unicode CharMap, Visual Compare, and others]
   * [http://code.google.com/p/far-macro-library/wiki/Common?wl=en Macros repository]
+  * [http://sourceforge.net/projects/far-observer/ Observer multi-forma (msi/pst/iso/mime/pdb) browser]
+  * [http://code.google.com/p/farplug-alvls/ farplug-alvls]
+  * [http://code.google.com/p/farplugs/ Hexitor (Hex editor), Media Info, Image Info, SQLiteDB, Disk menu and others]
+  * [https://code.google.com/p/evil-programmers/ Many plugin sources]
 
 ==Help, FAQ, Documentation==
 Unfortunately for non-Russian speaking users, most of resources are on russian.
