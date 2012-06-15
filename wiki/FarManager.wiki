@@ -1,4 +1,6 @@
-﻿<font size="5"><b>Far Manager</b></font>
+﻿Page still under development. If you can help with writing, have questions or suggestions - leave comments here :)
+
+<font size="5"><b>Far Manager</b></font>
 
 Far is my favorite shell. It is not only file/archive management,
 it is powerful editor, huge number of plugins, powerful macro engine.
@@ -12,6 +14,8 @@ it is powerful editor, huge number of plugins, powerful macro engine.
   * x64 (64-bit binaries) it requires 64-bit OS.
   
 And yes, plugins compiled for x86 does not works in x64 Far Manager and vice versa. You owe to use appropriate plugin versions.
+
+Most developers creates binaries with obvious names.
 
 This is the general mistake of new users. They install x64 Far Manager and try to use x86 versions of plugins.
 So, they asks «Why plugin does not appears in the list?»
@@ -79,9 +83,9 @@ To make Far Manager load new plugins you may:
 
 ==Examples==
   #. You have downloaded [https://sourceforge.net/projects/colorer/files/FAR%20Colorer/ FarColorer_far3_1.0.3.10.7z] (syntax hilighting in editor). This archive already contans root folder «FarColorer». So, just unpack 7z package to «Plugins» and restart far. Note, this 7z package contains both x86 and x64 versions of !FarColorer.
-  #. You have downloaded [http://code.google.com/p/conemu-maximus5/wiki/RegEditor RegEdit3.1.1.36.2580.7z]. This package does not have root folder, so create and unpack package files to «Plugins\RegEdit». Note, this 7z package contains both x86 and x64 versions of plugin.
+  #. You have downloaded [http://code.google.com/p/conemu-maximus5/wiki/RegEditor RegEdit3.1.1.36.2580.7z]. This package does not have root folder, so create and unpack package files to «Plugins\!RegEdit». Note, this 7z package contains both x86 and x64 versions of plugin.
   #. You have downloaded [http://code.google.com/p/conemu-maximus5/wiki/ImpEx ImpEx.0.8.10.7z] (PE file browser). You owe to use [http://code.google.com/p/conemu-maximus5/wiki/Far3Wrapper Far3wrap] with Far 3.x. So:
-    * Unpack ImpEx.0.8.10.7z to «Plugins\!ImpEx»
+    * Unpack !ImpEx.0.8.10.7z to «Plugins\!ImpEx»
 
 ==Main plugins sources==
   * [http://forum.farmanager.com/viewforum.php?f=11 Plugin announces (russian)]
@@ -98,7 +102,7 @@ To make Far Manager load new plugins you may:
   * [http://code.google.com/p/farplugs/ Hexitor (Hex editor), Media Info, Image Info, SQLiteDB, Disk menu and others]
   * [https://code.google.com/p/evil-programmers/ Many plugin sources]
 
-=Help, FAQ, Documentation=
+=3. Help, FAQ, Documentation=
 Unfortunately for non-Russian speaking users, most of resources are on russian.
 However, you may use google translate, or ask competent users, for example, on
 [http://forum.farmanager.com/index.php official forum]. Or, may be on
