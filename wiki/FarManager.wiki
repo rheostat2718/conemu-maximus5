@@ -6,10 +6,21 @@ it is powerful editor, huge number of plugins, powerful macro engine.
 <wiki:toc max_depth="3" /> 
 
 =First of all=
-There are two platforms (?): x86 (32-bit binaries) and x64 (64-bit binaries). And yes, plugins compiled for x86
-does not works in x64 Far Manager and vice versa. You owe to use appropriate plugin versions.
 
-There are three (already) branches of Far Manager.
+==There are two platforms (?)==
+  * x86 (32-bit binaries) it works everywhere, beginning from Windows 2000 SP4 with one hotfix.
+  * x64 (64-bit binaries) it requires 64-bit OS.
+  
+And yes, plugins compiled for x86 does not works in x64 Far Manager and vice versa. You owe to use appropriate plugin versions.
+
+This is the general mistake of new users. They install x64 Far Manager and try to use x86 versions of plugins.
+So, they asks «Why plugin does not appears in the list?»
+
+IMHO, there is no considerable difference between them, but not every plugin has x64 version.
+
+I'm using Far 3.0 x86 version (my primary OS is Win 7 x64).
+
+==There are three (already) branches of Far Manager==
   * 1.x (closed) oldschool version. It is ANSI (OEM to be more precise),
 so it can't deal with unicode characters out of system OEM codetable.
 However, some users believe «the best the enemy of good» and do not switch to newer versions.
@@ -24,10 +35,9 @@ but due to API break can't work with «old» unicode plugins (from Far 2.x).
 However! There is [http://code.google.com/p/conemu-maximus5/wiki/Far3Wrapper external plugin wrapper].
 Through it you can use many plugins from Far 2.x.
 
-=Download=
-I'm using Far 3.0 x86 version (my primary OS is Win 7 x64).
-
-  #. Download Full version from [http://www.farmanager.com/download.php?l=en official site]
+=1. Installation=
+  #. Download Full version from [http://www.farmanager.com/download.php?l=en official site].
+Does not matter whatever you use
   #. (Optionally) update binary files with my [http://code.google.com/p/conemu-maximus5/downloads/list Far3bis].
   #. Install plugins to your's mind. Install - means unpack plugin binaries to subfolder of Far Manager.
 
@@ -37,6 +47,7 @@ There thousands of plugins written for many years. There many sources, where you
 ==Main sources==
   * [http://forum.farmanager.com/viewforum.php?f=11 Plugin announces (russian)]
   * [http://plugring.farmanager.com/index.php?l=en PlugRing (rarely updated, old plugins)]
+  * [http://forum.farmanager.com/viewtopic.php?f=5&t=4590 Plugin dashboard 1], [http://forum.farmanager.com/viewtopic.php?f=5&t=3478 dashboard 2].
 
 ==Developer sites==
   * [http://colorer.sourceforge.net/farplugin.html Colorer (syntax hilighting in Editor, even in truecolor)]
