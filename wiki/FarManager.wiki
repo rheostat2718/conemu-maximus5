@@ -1,4 +1,5 @@
-﻿Page still under development. If you can help with writing, have questions or suggestions - leave comments here :)
+﻿#labels Featured
+Page still under development. If you can help with writing, have questions or suggestions - leave comments here :)
 
 <font size="5"><b>Far Manager</b></font>
 
