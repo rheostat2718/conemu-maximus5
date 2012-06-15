@@ -1,0 +1,8 @@
+=Far Manager=
+
+==Download==
+I'm using Far 3.0 x86 version (my primary OS is Win 7 x64).
+
+  #. Download Full version from [http://www.farmanager.com/download.php?l=en official site]
+  #. (Optionally) update binary files with my [http://code.google.com/p/conemu-maximus5/downloads/list Far3bis].
+  #. Install plugins to your's mind. Install - means unpack plugin binaries to subfolder of Far Manager.
