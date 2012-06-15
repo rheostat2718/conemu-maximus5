@@ -39,9 +39,12 @@ Through it you can use many plugins from Far 2.x.
   * *Panels*. This is most common type. Examples:
     * Miscellaneous archives: Arclite, [http://forum.farmanager.com/viewtopic.php?f=11&t=4643 Observer], [http://www.farmanager.com/files/Far175b2634.x86.20110203.7z MultiArc] (from Far 1.7x) - these are the basic
     * Remote access: Network, Pocket and Phone, [http://forum.farmanager.com/viewtopic.php?p=81676#p81676 Shell extension], [http://forum.farmanager.com/viewtopic.php?f=11&t=6316 SFTP/SCP/FTP/FTPS/WebDAV], [http://code.google.com/p/conemu-maximus5/wiki/RegEditor Registry] and so on
-  * *C0 panel plugins*. These plugins works in panels, but does not emulates virtual file system. They provide data for special «С0» column:
+  * *C0 panel plugins*. These plugins works in panels, but does not emulates virtual file system. They provide data for special «С0» column for real file system:
     * ver_c0 - show versions for PE files (exe, dll, sys, ocx, ...)
-    * svn_c0 - 
+    * svn_c0 - revision and status, only svn 1.6.x
+    * pdf_c0, html_c0 - show title of document
+    * mp3_c0 - artist/title for MP3 files (ID1)
+    * diz_c0 - descript.ion, files.bbs, etc.
   * *Modal*. In most cases these plugins executes some specific action. Examples:
     * Uninstall - display list of installed applications and allows Modify/Repair/Uninstall. This is the same as Windows Uninstall but much faster and support fast filtering
     * HexEditors - as is :)
