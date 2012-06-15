@@ -135,9 +135,10 @@ Look on keybar press modifiers (Alt/Ctrl/Shift) and you'll see function keys act
 =5. Automation=
 One of most powerful options of Far Manager are Macros. There are two styles of Macro
   * Sequence of recorded keypresses. This is very useful, when you need to repeat multiple times one routine operation, or for simplifying access to most useful operations.
-    * Press Ctrl+. (Ctrl and Dot on main keyboard) to start recording (red «R» lights in upper-left corner)
-    * Press keys, the sequence (Ctrl+O, for example)
-    * Press Ctrl+. again, recording stopped, Far show small dialog «Press the desired key». 
-      * Some «keys» may be selected only from drop-down list. For example, choose «Esc» from there.
+    * For example, how to create oldschool keymapping - Esc turns panels on/off.
+      * Press Ctrl+. (Ctrl and Dot on main keyboard) to start recording (red «R» lights in upper-left corner)
+      * Press keys, the sequence (Ctrl+O, for example)
+      * Press Ctrl+. again, recording stopped, Far show small dialog «Press the desired key». 
+        * Some «keys» may be selected only from drop-down list. For example, choose «Esc» from there.
       * Press «Enter» to confirm key selection.
   * Scripts, written on [http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fapi.farmanager.com%2Fru2%2Fmacro%2Fmacrocmd%2Findex.html Macro language]
