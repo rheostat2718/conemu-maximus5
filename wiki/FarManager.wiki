@@ -1,9 +1,27 @@
-<font size="5"><b>Far Manager</b></font>
+﻿<font size="5"><b>Far Manager</b></font>
 <wiki:toc max_depth="3" /> 
 
 Far is my favorite shell. It is not only file/archive management,
 it is powerful editor, huge number of plugins, macro engine.
 
+=First of all=
+There are two platforms (?): x86 (32-bit binaries) and x64 (64-bit binaries). And yes, plugins compiled for x86
+does not works in x64 Far Manager and vice versa. You owe to use appropriate plugin versions.
+
+There are three (already) branches of Far Manager.
+  * 1.x (closed) oldschool version. It is ANSI (OEM to be more precise),
+so it can't deal with unicode characters out of system OEM codetable.
+However, some users believe «the best the enemy of good» and do not switch to newer versions.
+All settings are stored in registry `HKEY_CURRENT_USER\Software\Far`.
+  * 2.x (closed). General difference - unicode support (file system, editor, viewer).
+There was API break, but 2.x natively supports most of 1.x plugins via internal plugin wrapper.
+All settings are stored in registry `HKEY_CURRENT_USER\Software\Far2`.
+  * 3.x (curren). General difference - Far Manager settings and native (3.x) plugins settings are stored in SQLiteDB.
+API was completely redesigned (and not stable for current day). Many bugfixes and improvements.
+Far 3.x can still deal with ANSI plugins (from Far 1.x),
+but due to API break can't work with «old» unicode plugins (from Far 2.x).
+However! There is [http://code.google.com/p/conemu-maximus5/wiki/Far3Wrapper external plugin wrapper].
+Through it you can use many plugins from Far 2.x.
 
 =Download=
 I'm using Far 3.0 x86 version (my primary OS is Win 7 x64).
