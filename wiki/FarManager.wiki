@@ -35,15 +35,34 @@ but due to API break can't work with «old» unicode plugins (from Far 2.x).
 However! There is [http://code.google.com/p/conemu-maximus5/wiki/Far3Wrapper external plugin wrapper].
 Through it you can use many plugins from Far 2.x.
 
+==There are several types of plugins==
+  * *Panels*. This is most common type. Examples:
+    * Miscellaneous archives: Arclite, [http://forum.farmanager.com/viewtopic.php?f=11&t=4643 Observer], [http://www.farmanager.com/files/Far175b2634.x86.20110203.7z MultiArc] (from Far 1.7x) - these are the basic
+    * Remote access: Network, Pocket and Phone, [http://forum.farmanager.com/viewtopic.php?p=81676#p81676 Shell extension], [http://forum.farmanager.com/viewtopic.php?f=11&t=6316 SFTP/SCP/FTP/FTPS/WebDAV], [http://code.google.com/p/conemu-maximus5/wiki/RegEditor Registry] and so on
+  * *C0 panel plugins*. These plugins works in panels, but does not emulates virtual file system. They provide data for special «С0» column:
+    * ver_c0 - show versions for PE files (exe, dll, sys, ocx, ...)
+    * svn_c0 - 
+  * *Modal*. In most cases these plugins executes some specific action. Examples:
+    * Uninstall - display list of installed applications and allows Modify/Repair/Uninstall. This is the same as Windows Uninstall but much faster and support fast filtering
+    * HexEditors - as is :)
+    * Bulk file renamers
+    * Picture viewers, Audio/Video players, yes, it is possible in console :)
+    * Unicode CharMap
+  * *Editor related*
+    * Searching, sorting, filtering, line wrapping, syntax hilighting...
+  * *Non categorized*. These plugins can't be placed in specific category, for example
+    * Regular Expression Search - it work in Editor and panels
+
+
 =1. Installation=
   #. Download Full version from [http://www.farmanager.com/download.php?l=en official site]. Does not matter whatever you use - msi installer or 7z package.
-  #. (Optionally) update binary files with my [http://code.google.com/p/conemu-maximus5/downloads/list Far3bis]. List of improvements [http://conemu-maximus5.googlecode.com/svn/trunk/Far3bis/unicode_far/bis_changelog here]. In breaf - improvements of plugin manager (AltShiftF9), optimization of C0 column, !MacroLib support.
+  #. (Optionally) update binary files with my [http://code.google.com/p/conemu-maximus5/downloads/list Far3bis]. List of improvements [http://conemu-maximus5.googlecode.com/svn/trunk/Far3bis/unicode_far/bis_changelog here]. In breaf - improvements of plugin manager (!AltShiftF9), optimization of C0 column, !MacroLib support.
 
 After installing (unpacking) Far Manager you have such directory structure (by example of Far 3.x)
-||.\Far.exe<br>.\FarEng.hlf<br>.\FarEng.lng||General Far Manager files - executable, help, language data||
-||Addons||Sample color schemes, tweaks, macros||
-||Documentation\eng||Some useful information, on english :)||
-||Plugins||Here, in subfolders, plugins are located||
+||.\Far.exe<br>.\!FarEng.hlf<br>.\!FarEng.lng||General Far Manager files - executable, help, language data||
+||.\Addons||Sample color schemes, tweaks, macros||
+||.\Documentation\eng||Some useful information, on english :)||
+||.\Plugins||Here, in subfolders, plugins are located||
 
 =2. Install plugins to your's mind=
 Installing choosen plugin (in most cases) means create subfolder in «Plugins» and unpack plugin distribution to this folder.
