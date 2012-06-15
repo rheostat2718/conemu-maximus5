@@ -36,10 +36,23 @@ However! There is [http://code.google.com/p/conemu-maximus5/wiki/Far3Wrapper ext
 Through it you can use many plugins from Far 2.x.
 
 =1. Installation=
-  #. Download Full version from [http://www.farmanager.com/download.php?l=en official site].
-Does not matter whatever you use
-  #. (Optionally) update binary files with my [http://code.google.com/p/conemu-maximus5/downloads/list Far3bis].
-  #. Install plugins to your's mind. Install - means unpack plugin binaries to subfolder of Far Manager.
+  #. Download Full version from [http://www.farmanager.com/download.php?l=en official site]. Does not matter whatever you use - msi installer or 7z package.
+  #. (Optionally) update binary files with my [http://code.google.com/p/conemu-maximus5/downloads/list Far3bis]. List of improvements [http://conemu-maximus5.googlecode.com/svn/trunk/Far3bis/unicode_far/bis_changelog here]. In breaf - improvements of plugin manager (AltShiftF9), optimization of C0 column, !MacroLib support.
+
+After installing (unpacking) Far Manager you have such directory structure (by example of Far 3.x)
+||.\Far.exe<br>.\FarEng.hlf<br>.\FarEng.lng||General Far Manager files - executable, help, language data||
+||Addons||Sample color schemes, tweaks, macros||
+||Documentation\eng||Some useful information, on english :)||
+||Plugins||Here, in subfolders, plugins are located||
+
+=2. Install plugins to your's mind=
+Installing choosen plugin (in most cases) means create subfolder in «Plugins» and unpack plugin distribution to this folder.
+
+==Examples==
+  #. You have downloaded [https://sourceforge.net/projects/colorer/files/FAR%20Colorer/ FarColorer_far3_1.0.3.10.7z] (syntax hilighting in editor). This archive already contans root folder «FarColorer». So, just unpack 7z package to «Plugins» and restart far. Note, this 7z package contains both x86 and x64 versions of !FarColorer.
+  #. You have downloaded [http://code.google.com/p/conemu-maximus5/wiki/RegEditor RegEdit3.1.1.36.2580.7z]. This package does not have root folder, so create and unpack package files to «Plugins\RegEdit». Note, this 7z package contains both x86 and x64 versions of plugin.
+  #. You have downloaded [http://code.google.com/p/conemu-maximus5/wiki/ImpEx ImpEx.0.8.10.7z] (PE file browser). You owe to use [http://code.google.com/p/conemu-maximus5/wiki/Far3Wrapper Far3wrap] with Far 3.x. So:
+    * Unpack ImpEx.0.8.10.7z to «Plugins\!ImpEx»
 
 =Plugins=
 There thousands of plugins written for many years. There many sources, where you can download them.
