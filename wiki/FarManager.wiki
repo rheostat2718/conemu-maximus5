@@ -1,8 +1,32 @@
 =Far Manager=
 
+Far is my favorite shell...
+
 ==Download==
 I'm using Far 3.0 x86 version (my primary OS is Win 7 x64).
 
   #. Download Full version from [http://www.farmanager.com/download.php?l=en official site]
   #. (Optionally) update binary files with my [http://code.google.com/p/conemu-maximus5/downloads/list Far3bis].
   #. Install plugins to your's mind. Install - means unpack plugin binaries to subfolder of Far Manager.
+
+==Plugins==
+There thousands of plugins written for many years. There many sources, where you can download them.
+
+===Main sources===
+  * [http://forum.farmanager.com/viewforum.php?f=11 Plugin announces (russian)]
+  * [http://plugring.farmanager.com/index.php?l=en PlugRing (rarely updated, old plugins)]
+
+===Developer sites===
+  * [http://colorer.sourceforge.net/farplugin.html Colorer (syntax hilighting in Editor, even in truecolor)]
+  * [http://code.google.com/p/conemu-maximus5/wiki/FarPlugins Regeditor, Picture View, ImpEx (PE browser), Far3wrap and others]
+  * [http://code.google.com/p/far-plugins/ MacroLib, Unicode CharMap, Visual Compare, and others]
+  * [http://code.google.com/p/far-macro-library/wiki/Common?wl=en Macros repository]
+
+==Help, FAQ, Documentation==
+Unfortunately for non-Russian speaking users, most of resources are on russian.
+However, you may use google translate, or ask competent users, for example, on
+[http://forum.farmanager.com/index.php official forum]. Or, may be on
+[http://superuser.com/questions/tagged/far-manager SuperUser]? :)
+
+  * [http://forum.farmanager.com/viewtopic.php?t=5207 Far 3.0 FAQ (russian)]
+  * [http://www.farmanager.com/opensource.php?l=en Links for plugin developers]
