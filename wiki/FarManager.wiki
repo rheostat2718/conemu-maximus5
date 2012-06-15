@@ -1,8 +1,9 @@
 ﻿<font size="5"><b>Far Manager</b></font>
-<wiki:toc max_depth="3" /> 
 
 Far is my favorite shell. It is not only file/archive management,
-it is powerful editor, huge number of plugins, macro engine.
+it is powerful editor, huge number of plugins, powerful macro engine.
+
+<wiki:toc max_depth="3" /> 
 
 =First of all=
 There are two platforms (?): x86 (32-bit binaries) and x64 (64-bit binaries). And yes, plugins compiled for x86
