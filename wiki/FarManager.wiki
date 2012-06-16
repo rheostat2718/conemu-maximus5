@@ -51,7 +51,7 @@ Through it you can use many plugins from Far 2.x.
     * mp3_c0 - artist/title for MP3 files (ID1)
     * diz_c0 - descript.ion, files.bbs, etc.
   * *Modal*. In most cases these plugins executes some specific action. Examples:
-    * Uninstall - display list of installed applications and allows Modify/Repair/Uninstall. This is the same as Windows Uninstall but much faster and support fast filtering
+    * Uninstall - display list of installed applications and allows Modify/Repair/Uninstall. This is the same as Windows «Uninstall or change a program» but much faster and support fast filtering.
     * !HexEditors - as is :)
     * Bulk file renamers
     * Picture viewers, Audio/Video players, yes, it is possible in console :)
