@@ -34,7 +34,7 @@ All settings are stored in registry `HKEY_CURRENT_USER\Software\Far`.
 There was API break, but 2.x natively supports most of 1.x plugins via internal plugin wrapper.
 All settings are stored in registry `HKEY_CURRENT_USER\Software\Far2`.
   * 3.x (curren). General difference - Far Manager settings and native (3.x) plugins settings are stored in SQLiteDB.
-API was completely redesigned (and not stable for current day). Many bugfixes and improvements.
+API was completely redesigned (and is not stable for current day). Many bugfixes and improvements.
 Far 3.x can still deal with ANSI plugins (from Far 1.x),
 but due to API break can't work with «old» unicode plugins (from Far 2.x).
 However! There is [http://code.google.com/p/conemu-maximus5/wiki/Far3Wrapper external plugin wrapper].
@@ -117,6 +117,9 @@ Far have oldschool and intuitive NC-like interface :)
 
 Look on keybar press modifiers (Alt/Ctrl/Shift) and you'll see function keys actions. Most useful are (in panels)
 ||F1||Yes! Read it first. BTW, FarEng.hlf is a simple text file, you can open it in any editor.||
+||ShiftF1||Create new archive from selected files||
+||ShiftF2||Extract files from selected archive||
+||!CtrlPgDn||In most cases it is like as Enter, but generally, !CtrlPgDn forces enter into archive, but it 'execution'. Compare behavior for `*.exe` files||
 ||F2||Configurable multilevel user menu||
 ||F3, F4||File viwer and editor||
 ||F5, F6||Rename or move. Use ShiftF5 or ShiftF6 to copy/rename single file/folder under cursor||
