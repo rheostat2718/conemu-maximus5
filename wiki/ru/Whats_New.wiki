@@ -10,7 +10,8 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 }}}
 
 
-  * Создана страничка на [http://www.facebook.com/ConEmu.Maximus5 Facebook].
+==120616==
+  * Заявка на Ads: [http://meta.superuser.com/a/5023/139371 meta.superuser.com], please !UpVote.
 
 
 ==Build 120614==
@@ -139,6 +140,10 @@ http://lifehacker.com/5857540/the-best-terminal-emulator-for-windows
   * 'Settings' -> 'Mark & Paste' -> 'Freeze console before selection'.
   * 'Find test' -> 'Freeze console'.
   * Lags in !ConEmu plugin.
+
+
+==120524==
+  * Создана страничка на [http://www.facebook.com/ConEmu.Maximus5 Facebook].
 
 
 ==Build 120523a==

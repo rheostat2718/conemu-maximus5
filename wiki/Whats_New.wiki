@@ -10,7 +10,8 @@ Delete old files from old locations, if you are not using installer.
 }}}
 
 
-  * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created.
+==120616==
+  * Advertising application on [http://meta.superuser.com/a/5023/139371 meta.superuser.com], please !UpVote it.
 
 
 ==Build 120614==
@@ -137,6 +138,10 @@ http://lifehacker.com/5857540/the-best-terminal-emulator-for-windows
   * 'Settings' -> 'Mark & Paste' -> 'Freeze console before selection'.
   * 'Find test' -> 'Freeze console'.
   * Lags in !ConEmu plugin.
+
+
+==120524==
+  * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created.
 
 
 ==Build 120523a==
