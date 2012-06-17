@@ -73,7 +73,7 @@ the Settings dialog, not from the command line.
 
 
 ==Installation==
-  #. Unpack all files (from appropriate "`ConEmu.*.7z`") to the folder, containing "`far.exe`", or install "`ConEmuSetup.*.exe`" package.
+  #. Unpack all files (from appropriate "`ConEmuPack.*.7z`") to the folder, containing "`far.exe`", or install "`ConEmuSetup.*.exe`" package.
     * If You *are* using Far Manager, please ensure that plugins ("`Plugins\ConEmu\ConEmu.dll`" etc.) are installed to Far Manager folder.
     * If You are *not* using Far Manager, You may unpack files to any folder and may delete "`Plugins`" subfolder.
     * *Warning*, cause of frequent breaks of Far 3 API, it's strongly recommended to use latest *developer* build, when you are using Far 3.

@@ -1,4 +1,4 @@
-﻿!ConEmu is distributes as msi package «`ConEmuSetup.*.exe`», or archive named «`ConEmu.*.7z`».
+﻿!ConEmu is distributes as msi package «`ConEmuSetup.*.exe`», or archive named «`ConEmuPack.*.7z`».
 Both of them contains x86 (aka x32) and x64 versions of all !ConEmu binaries.
 
 Also, the archive and the installer contains both x86 and x64 versions of !ConEmu FAR plugins

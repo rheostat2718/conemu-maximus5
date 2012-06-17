@@ -10,8 +10,19 @@ Delete old files from old locations, if you are not using installer.
 }}}
 
 
-==120616==
   * Advertising application on [http://meta.superuser.com/a/5023/139371 meta.superuser.com], please !UpVote it.
+
+
+==Build 120617==
+  * 'Quake style slide down' third state - auto hide on lose focus.
+  * Do not catch focus when starting with argument "/min".
+  * Issue 599: 'Auto copy' on 'Mark & Paste' - copy selected text immediately on left mouse button up (when selecting with mouse).
+  * Issue 599, Issue 570: Small lags removed, when pastings long text from clipboard.
+  * 'Main' settings page redesigned.
+  * Chinese (DBCS) improvments.
+  * Some Wine related fixes, but still not working ;)
+  * Message balloon is shown in TSA when registering global hotkey (Minimize/Restore) failed.
+  * New default for Minimize/Restore - Win+Shift+C.
 
 
 ==Build 120614==
