@@ -31,7 +31,9 @@ While you create new tab from !ConEmu GUI interface, «-new_console» and «-cur
 
 *Examples*
 {{{
-  dir "-new_console:bh9999c" c:\ /s
-  vim.exe -new_console:nh0 c:\sources\1.cpp
+  "%ConEmuBaseDir%\ConEmuC.exe" /c dir "-new_console:bh9999c" c:\ /s
+  "%ConEmuBaseDir%\ConEmuC.exe" /c vim.exe -new_console:nh0 c:\sources\1.cpp
   hiew.exe -cur_console:h0 c:\tools\far.exe
+  putty -new_console
 }}}
+*Note*. You may omit `"%ConEmuBaseDir%\ConEmuC.exe" /c ` when starting command from Far Manager.
