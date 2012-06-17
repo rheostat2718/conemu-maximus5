@@ -14,17 +14,18 @@
 
 
 ===!StackOverflow Open Source Advertising: Sidebar 2012===
-<table><tr><td width="230">
-<a href="http://meta.stackoverflow.com/a/134414/187198"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012.png" title="Open Source Advertising - Sidebar - 2012"/></a>
-</td>
+<table><tr>
 <td width="230">
 <a href="http://meta.superuser.com/a/5023/139371"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012U.png" title="Community Promotion Ads - 2012"/></a>
+</td>
+<td width="230">
+<a href="http://meta.stackoverflow.com/a/134414/187198"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012.png" title="Open Source Advertising - Sidebar - 2012"/></a>
 </td>
 <td width="400" valign="top">
 This adverising was posted to Meta !StackOverflow,<br/>
 it requires a minimum score threshold (at least 6)<br/>
-before it will be served up and shown on Stack Overflow.<br/>
-Please, !UpVote them.
+before it will be served up and shown on the site.<br/>
+Please, !UpVote them!
 </td></tr></table>
 
 
