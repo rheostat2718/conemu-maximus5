@@ -1,7 +1,7 @@
 #labels Featured
 ===Please, vote for !ConEmu===
 <a href="http://stackoverflow.com/a/10904494/1405560">!StackOverflow answer</a> and
-<a href="http://meta.stackoverflow.com/a/134414/187198">adverising sidebar</a>,
+<a href="http://meta.superuser.com/a/5023/139371">adverising sidebar</a>,
 
 <a href="http://alternativeto.net/software/conemu/">alternativeTo</a>,
 <a href="https://sourceforge.net/projects/conemu/reviews/">!SourceForge</a>,
