@@ -13,6 +13,16 @@ Delete old files from old locations, if you are not using installer.
   * Advertising application on [http://meta.superuser.com/a/5023/139371 meta.superuser.com], please !UpVote it.
 
 
+==Build 120618==
+  * Issue 582: Change cursor position with mouse click (cmd, powershell, tcc/le, ...)
+
+
+==Build 120617a==
+  * Small lag removed when activating (restoring) !ConEmu with Far 3.
+  * Putty does not received mouse wheel events.
+  * GUI applications fix (broken in 120617).
+
+
 ==Build 120617==
   * 'Quake style slide down' third state - auto hide on lose focus.
   * Do not catch focus when starting with argument "/min".
