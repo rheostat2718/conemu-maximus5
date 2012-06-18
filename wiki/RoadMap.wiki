@@ -21,6 +21,9 @@ This portion of code exists but not perfect. So, it is disable in release versio
 
 ==Tab groups and themes==
 Issue 294, Issue 194.
+  * Tabs and toolbar themes
+  * Tabs reordering
+  * Tab groups (multiple visible consoles)
 
 ==Advertising==
 I hope, !ConEmu is stable enough and competitive with other console emulators.
