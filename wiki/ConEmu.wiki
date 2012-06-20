@@ -27,7 +27,7 @@ This fork grew up from [http://xs.nm.ru/ ConEmu by Zoin].
 Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&topic=38078&glp forum.ru-board.com] :)
 
 </td><td width="230" valign="top">
-<a href="http://code.google.com/p/conemu-maximus5/wiki/Awards"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012.png" title="Open Source Advertising - Sidebar - 2012"/></a>
+<a href="http://code.google.com/p/conemu-maximus5/wiki/Awards"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012SO.png" title="Open Source Advertising - Sidebar - 2012"/></a>
 </td></tr></table>
 
 

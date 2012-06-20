@@ -1,18 +1,4 @@
 #labels Featured
-===Please, vote for !ConEmu===
-<a href="http://stackoverflow.com/a/10904494/1405560">!StackOverflow answer</a> and
-<a href="http://meta.superuser.com/a/5023/139371">adverising sidebar</a>,
-
-<a href="http://alternativeto.net/software/conemu/">alternativeTo</a>,
-<a href="https://sourceforge.net/projects/conemu/reviews/">!SourceForge</a>,
-<a href="http://www.facebook.com/ConEmu.Maximus5">Facebook</a>,
-
-<a href="http://www.ohloh.net/stack_entries/new?project_id=conemu-maximus5&ref=sample">Ohloh</a>,
-<a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml">Softpedia</a>,
-<a href="http://www.softpedia.com/get/PORTABLE-SOFTWARE/System/System-Enhancements/ConEmu-Portable.shtml">portable version</a>,
-<a href="http://www.sofotex.com/ConEmu-download_L125596.html">Sofotex</a>.
-
-
 ===!StackOverflow Open Source Advertising: Sidebar 2012===
 <table><tr>
 <td width="230">
@@ -27,6 +13,25 @@ it requires a minimum score threshold (at least 6)<br/>
 before it will be served up and shown on the site.<br/>
 Please, !UpVote them!
 </td></tr></table>
+
+
+===!StackOverflow.com and !SuperUser.com answers===
+<a href="http://stackoverflow.com/a/10904494/1405560">Answer 1 (SO)</a>,
+<a href="http://superuser.com/a/436027/139371">answer 2 (SU)</a>,
+<a href="http://superuser.com/a/439469/139371">answer 3 (SU)</a>.
+<wiki:comment>
+<a href="http://meta.superuser.com/a/5023/139371">adverising sidebar</a>,
+</wiki:comment>
+
+===Please, vote for !ConEmu===
+<a href="http://alternativeto.net/software/conemu/">alternativeTo</a>,
+<a href="https://sourceforge.net/projects/conemu/reviews/">!SourceForge</a>,
+<a href="http://www.facebook.com/ConEmu.Maximus5">Facebook</a>,
+
+<a href="http://www.ohloh.net/stack_entries/new?project_id=conemu-maximus5&ref=sample">Ohloh</a>,
+<a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml">Softpedia</a>,
+<a href="http://www.softpedia.com/get/PORTABLE-SOFTWARE/System/System-Enhancements/ConEmu-Portable.shtml">portable version</a>,
+<a href="http://www.sofotex.com/ConEmu-download_L125596.html">Sofotex</a>.
 
 
 ===Awards===
