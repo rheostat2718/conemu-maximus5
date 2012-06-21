@@ -1,11 +1,11 @@
 ==About !ConEmu <g:plusone size="medium" href="http://code.google.com/p/conemu-maximus5/"/>==
 <table cellpadding="0" cellspacing="0" border="0">
 <tr><td valign="top">
-!ConEmu-Maximus5 is a Windows console emulator with tabs, which represents multiple consoles and simple GUI applications as one customizable GUI window with various features.
+!ConEmu-Maximus5 is a Windows console emulator with tabs, which presents multiple consoles and simple GUI applications as one customizable GUI window with various features.
 
-Initially, the program was designed to work with [http://www.farmanager.com/download.php?l=en Far Manager] ([http://en.wikipedia.org/wiki/FAR_Manager FAR in Wikipedia]), my favorite shell replacement - file and archive management, command history and completion, powerful editor.
+Initially, the program was created as a companion to [http://www.farmanager.com/download.php?l=en Far Manager] ([http://en.wikipedia.org/wiki/FAR_Manager FAR in Wikipedia]), my favorite shell replacement - file and archive management, command history and completion, powerful editor.
 
-But !ConEmu can be used with any other console application or simple GUI tools (like PuTTY for example). !ConEmu is a live project, open to [http://code.google.com/p/conemu-maximus5/issues/list suggestions].
+Today, !ConEmu can be used with any other console application or simple GUI tools (like PuTTY for example). !ConEmu is an active project, open to [http://code.google.com/p/conemu-maximus5/issues/list suggestions].
 
 [Awards Please, vote for ConEmu]
 
@@ -35,37 +35,36 @@ Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&top
 
 
 ==Description==
-!ConEmu starts a console program in hidden console window and provides an alternative customizable GUI window with various features:
+!ConEmu starts a console program in a hidden console window, and provides an alternative customizable GUI window with various features:
 
   * smooth and friendly window resizing;
   * tabs for editors, viewers, panels and consoles;
   * run simple GUI apps in tabs;
-  * Windows 7 [Windows7Taskbar#Customizable_Jump_list Jump lists] and [Progress Progress] on taskbar;
-  * easy run old [DosBox DOS applications] (games) in Windows 7 or 64bit OS;
+  * Windows 7 [Windows7Taskbar#Customizable_Jump_list Jump Lists] and [Progress] on Taskbar buttons;
+  * easily run old [DosBox DOS applications] (games) in Windows 7 or 64-bit OS;
   * thumbnails and tiles in Far Manager;
-  * normal, maximized and full screen window graphic modes;
-  * window font anti-aliasing: standard, clear type, disabled;
+  * normal, maximized and full screen graphical window modes;
+  * window font anti-aliasing: standard, !ClearType, disabled;
   * window fonts: family, height, width, bold, italic, etc.;
-  * using [http://code.google.com/p/conemu-maximus5/issues/detail?id=153 normal/bold/italic] fonts for different parts of console simultaneously;
-  * using 24bit colors in Far Manager 3.x;
+  * using [http://code.google.com/p/conemu-maximus5/issues/detail?id=153 normal/bold/italic] fonts for different parts of the console simultaneously;
+  * using 24-bit colors in Far Manager 3.x;
   * [AnsiEscapeCodes ANSI X3.64 and Xterm 256 colors];
-  * cursor: standard console (horisontal) or GUI (vertical);
-  * optional settings (e.g. pallette) for selected applications;
-  * for !BufferHeight mode: vertical scrolling using keyboard;
-  * show full output (1K+ lines) of last command in editor/viewer;
+  * cursor: standard console (horizontal) or GUI (vertical);
+  * optional per-application settings (e.g. palette);
+  * vertical console buffer scrolling using the keyboard (!BufferHeight mode);
+  * show full output (1K+ lines) of last command in Far Manager's editor/viewer;
   * customizable Far Manager right click behaviour (long click opens context menu);
   * drag and drop (explorer style) of files and folders in Far Manager;
-  * BDF fonts limited support;
+  * limited support of BDF fonts;
   * user friendly text and block selection;
   * transparency and desktop mode;
   * customizable starting tabs;
   * configurable and clickable status bar;
-  * and more, and more... take a look at Settings dialog, !WhatsNew and Settings.reg
+  * and more, and more... take a look at the Settings dialog, [Whats_New What's New page] and Settings.reg
 
-All settings are read from the registry (multiple named configurations are supported) and
-after that the command line parameters are applied. Parameters /Config and
-/!BufferHeight are only for command line. Most of settings are changed only in
-the Settings dialog, not from the command line.
+All settings are read from the registry (multiple named configurations are supported), after which the command line parameters are applied.
+Parameters /Config and /!BufferHeight can only be specified on the command line.
+Most settings are configured using the Settings dialog, not from the command line.
 
 
 ==Requirements==
@@ -73,12 +72,12 @@ the Settings dialog, not from the command line.
 
 
 ==Installation==
-  #. Unpack all files (from appropriate "`ConEmuPack.*.7z`") to the folder, containing "`far.exe`", or install "`ConEmuSetup.*.exe`" package.
-    * If You *are* using Far Manager, please ensure that plugins ("`Plugins\ConEmu\ConEmu.dll`" etc.) are installed to Far Manager folder.
-    * If You are *not* using Far Manager, You may unpack files to any folder and may delete "`Plugins`" subfolder.
-    * *Warning*, cause of frequent breaks of Far 3 API, it's strongly recommended to use latest *developer* build, when you are using Far 3.
-  #. Import Far Manager macroses, related to !ConEmu. Macro files are located in !ConEmu.Addons directory. Each macro file has description in header.
-  #. By default (started without command line params), !ConEmu runs "`far.exe`" from it's home folder, or "cmd.exe"/"tcc.exe" if Far Manager not found. Alternatively, You may specify any root command, specifying "[Command_Line /Cmd <App with params>]" argument in !ConEmu shortcut or command line. 
+  #. Unpack all files (from appropriate "`ConEmuPack.*.7z`" archive) to the folder, containing "`far.exe`", or install the "`ConEmuSetup.*.exe`" package.
+    * If You *are* using Far Manager, please ensure that !ConEmu plugins ("`Plugins\ConEmu\ConEmu.dll`" etc.) are installed to Far Manager's Plugins folder.
+    * If You are *not* using Far Manager, You may unpack the files to any folder, and delete the "`Plugins`" subfolder.
+    * *Warning*: because of frequent non-backwards-compatible API changes in Far 3, it is strongly recommended to use the latest *developer* build when using !ConEmu with Far 3.
+  #. Import !ConEmu's macros into Far Manager. Macro files are located in the !ConEmu.Addons directory. Each macro file has a description in its header.
+  #. By default (when started without command-line parameters), !ConEmu runs "`far.exe`" from its home folder, or "cmd.exe"/"tcc.exe" if Far Manager was not found. Alternatively, You may indicate any root command by specifying a "[Command_Line /Cmd <App with params>]" argument in !ConEmu's shortcut or command line. 
 
 ==Screenshots==
 <wiki:comment>
