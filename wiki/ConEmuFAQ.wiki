@@ -12,7 +12,7 @@
 ==General==
 
 ===Q. I found a bug, what should I do?===
-A. First, make sure that the bug doesn't occur without !ConEmu (e.g. running FAR directly, not via !ConEmu). Next, make sure that the bug wasn't fixed [http://code.google.com/p/conemu-maximus5/downloads/list in the latest !ConEmu version]. If the bug persists, [http://code.google.com/p/conemu-maximus5/issues/list file a thoroughly detailed issue].
+A. First, make sure that the bug doesn't occur without !ConEmu (e.g. running FAR directly, not via !ConEmu). Next, make sure that the bug wasn't fixed [http://code.google.com/p/conemu-maximus5/downloads/list in the latest ConEmu version]. If the bug persists, [http://code.google.com/p/conemu-maximus5/issues/list file a thoroughly detailed issue].
 
 
 ===Q. What about !ConMan, alternative console, etc.?===
@@ -21,7 +21,7 @@ A. Everything is built into !ConEmu, except better ;) The flag '!MultiCon' shoul
 ===Q. What is the purpose of !ConEmu.cer (digital certificate)?===
 A. For validation of the integrity of !ConEmu's executable files.
 
-A. Windows SmartScreen blocks execption of files (Installer) from "unverified publishers".
+A. Windows SmartScreen blocks execution of files (Installer) from "unverified publishers".
 
 A. If the certificate is imported into the list of trusted root certificates (for the user, machine or domain), launching !ConEmu "As Administrator" (Vista & Win7) will display a less scary warning (program name + "verified publisher: !ConEmu-Maximus5" instead of the scary "unverified publisher" window).
 
@@ -66,24 +66,23 @@ A. Additional launch options are available: `-new_console[:bh[N]caru[:user:pwd]]
    * `u:<user>:<pwd>` - specify user/pwd in args. MUST BE THE LAST OPTION.
 *Example:* «`"%ConEmuBaseDir%\ConEmuC.exe" /c dir "-new_console:bh9999c" c:\ /s`». Note that when launching from Far Manager, «`"%ConEmuBaseDir%\ConEmuC.exe" /c `» can be omitted.
 
-A. For 
-Для удобства использования в Far можно установить макрос на !ShiftEnter (см. примеры в дистрибутиве).
+A. For comfort, when using Far, one can configure a macro bound to !ShiftEnter (see example in the distribution package).
 
-A. Обратите также внимание на параметр `-cur_console:h[N]` которым можно управлять включением длинного вывода команд или приложений при запуске их из [ConEmuFAQ#Far_Manager Far Manager].
+A. Pay attention to the parameter `-cur_console:h[N]`, which allows controlling long output of commands or applications when running them from [ConEmuFAQ#Far_Manager Far Manager].
 
-===Q. Какие переменные окружения устанавливает !ConEmu?===
-A. `ConEmuDir` - папка, содержащая !ConEmu.exe; `ConEmuBaseDir` - папка, содержащая ConEmuC.exe; `ConEmuArgs` - аргументы, с которыми был запущен !ConEmu.exe; `ConEmuHWND` - дескриптор дескриптор окна виртуальной консоли (дочернее окно !ConEmu).
+===Q. Which environment variables does !ConEmu set?===
+A. `ConEmuDir` - folder, containing !ConEmu.exe; `ConEmuBaseDir` - folder, containing ConEmuC.exe; `ConEmuArgs` - arguments specified to !ConEmu.exe; `ConEmuHWND` - virtual console window handle (child window of !ConEmu).
 
-===Q. Запущенная программа ничего не выводит на экран.===
-A. Некоторые программы работают с альтернативным буфером консоли, например telnet.exe, запущенный без параметров. Историю можно посмотреть здесь: [http://code.google.com/p/conemu-maximus5/issues/detail?id=65 Issue 65]. Проблема исправлена в сборке 120504, должен быть включен флажок «Inject ConEmuHk». В предыдущих версиях !ConEmu можно было отобразить (!CtrlWinAltSpace) окно реальной консоли и временно поработать с ним.
+===Q. Launched program outputs nothing.===
+A. Certain programs work with the console's alternative buffer - e.g. telnet.exe, launched without parameters. A history of tis issue can be read here: [http://code.google.com/p/conemu-maximus5/issues/detail?id=65 Issue 65]. The problem is fixed in version 120504 (the «Inject ConEmuHk» flag must be set). In previous versions, the workaround was to show the real console (!CtrlWinAltSpace), and temporarily work with it.
 
-A. В результате какого-то бага в !ShellExecuteEx, на некоторых OS, консольный процесс запускался с некорректным дескриптором буфера вывода. Для исправления ошибки должен быть включен флажок «Inject !ConEmuHk». Если ошибка не исправляется - создайте новый [http://code.google.com/p/conemu-maximus5/issues/entry Issue] с подробным описанием проблемы и приложите отладочный лог запускаемой программы: «Settings -> Debug -> Shell and processes».
+A. As a result of a !ShellExecuteEx bug, on certain operating systems the console process was launched with an incorrect output buffer handle. To fix the problem, the «Inject !ConEmuHk» flag must be set. If the problem persists - create a new [http://code.google.com/p/conemu-maximus5/issues/entry Issue] with a detailed description of the problem, and attach the debug log of the launched program: «Settings -> Debug -> Shell and processes».
 
-===Q. Программа не работает в режиме «Long console output».===
-A. Некоторые программы не умеют корректно работать с длинным консольным буфером. Например bview, Aurora, и т.п. Есть несколько вариантов решения:
-  * Открывать программу в новой вкладке !ConEmu при отключенной прокрутке. Например: "bview.exe -new_console:h"
-  * Указать, что прокрутку включать не нужно. Например: "ac.exe -cur_console:h"
-  * Или можно вообще отключить 'Long console output' на вкладке 'Tabs' окна 'Settings', если длинный вывод команд вам вообще не нужен
+===Q. A program does not work in «Long console output» mode.===
+A. Certain programs don't work correctly with a long console buffer. Some examples are bview, Aurora, and others. There are multiple solutions:
+  * Open the program in a new !ConEmu tab with scrolling disabled. Example: "bview.exe -new_console:h"
+  * Indicate that scrolling should not be enabled. Example: "ac.exe -cur_console:h"
+  * Alternatively, entirely disable 'Long console output' in the 'Tabs' page of the 'Settings' dialog, if long console output is not required.
 
 
 
