@@ -1,4 +1,364 @@
 <font size="4">Contents</font>
+
+=[http://translate.google.com/translate?hl=en&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FConEmuFAQ%3Fshow%3Dcontent%26wl%3Den FAQ (autotranslated)]=
+
+----------------------------------------------------------------------
+
+=Translation (work in progress)=
+
+<font size="4">Contents</font>
 <wiki:toc max_depth="3" /> 
 
-[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FConEmuFAQ%3Fshow%3Dcontent FAQ (autotranslated)]
+==General==
+
+===Q. I found a bug, what should I do?===
+A. First, make sure that the bug doesn't occur without !ConEmu (e.g. running FAR directly, not via !ConEmu). Next, make sure that the bug wasn't fixed [http://code.google.com/p/conemu-maximus5/downloads/list in the latest !ConEmu version]. If the bug persists, [http://code.google.com/p/conemu-maximus5/issues/list file a thoroughly detailed issue].
+
+
+===Q. What about !ConMan, alternative console, etc.?===
+A. Everything is built into !ConEmu, except better ;) The flag '!MultiCon' should be enabled. Furthermore, using !ConMan with !ConEmu is NOT RECOMMENDED. A new console can be created using a keyboard shortcut (Win-W by default), as well as adding -new_console to the executed command. The current console can be closed or restarted (Win-~). The long output of a console command or program can be opened in Far's editor/viewer (Ctrl-O). Switching between consoles can be done with Win-Q. Switching between consoles and tabs can be done with Ctrl-Tab.
+
+===Q. What is the purpose of !ConEmu.cer (digital certificate)?===
+A. For validation of the integrity of !ConEmu's executable files.
+
+A. Windows SmartScreen blocks execption of files (Installer) from "unverified publishers".
+
+A. If the certificate is imported into the list of trusted root certificates (for the user, machine or domain), launching !ConEmu "As Administrator" (Vista & Win7) will display a less scary warning (program name + "verified publisher: !ConEmu-Maximus5" instead of the scary "unverified publisher" window).
+
+A. If the certificate is imported into the list of trusted root certificates, certain antivirus software (e.g. KIS) will consider the program as "trusted".
+
+===Q. How to import the certificate to the list of trusted root certificates?===
+A. In Vista+ one can simply open the certificate file, and click the "Install certificate" button.
+
+A. Via MMC -> Certificates snap-in.
+
+A. Using the utility !CertMgr from the Windows SDK:
+{{{
+   "C:\Program Files\Microsoft SDKs\Windows\v7.0\Bin\CertMgr" -add -c ConEmu.cer -s root
+}}}
+
+A. For details, see here: [Certificate Certificate installation]
+
+===Q. Not all characters (hieroglyphs, ellipses, copyright symbols etc.) are displayed===
+A. For some reason, !ConEmu failed to change the font of the real console. Select 'Debug' → 'Properties' from !ConEmu's system menu, and on the 'Font' tab choose a !TrueType font.
+
+A. A missing or non-Unicode font was specified in !ConEmu's settings (Settings-!ConEmu.reg, '!ConsoleFontName' parameter).
+
+===Q. Is it possible to run a GUI application in a !ConEmu tab?===
+A. Yes, with certain GUI applications. Example: Putty, Notepad, and others.
+
+===Q. How to launch an application in a new !ConEmu tab?===
+A. Indicate the application in the 'Create new console' field of the new console creation dialog. This dialog can be opened by using the 'New console...' item from !ConEmu's system menu, or by using the corresponding keyboard shortcut (Win-W or Win-Shift-W by default).
+
+A. A new tab can be opened from an existing tab (e.g. from Far) by adding a '-new_console' parameter to the application's command line. Example: `putty.exe -new_console`.
+
+===Q. How to use the '-new_console' parameter?===
+A. The setting 'Inject !ConEmuHk' must be enabled in !ConEmu's configuration. Afterwards, if !ConEmu sees the '-new_console' parameter in a launched application's command line, it is removed from the command line, and the application/command is ran in a new !ConEmu tab.
+
+A. Additional launch options are available: `-new_console[:bh[N]caru[:user:pwd]]`
+   * `b` - Create background tab
+   * `h<height>` - Set buffer height: e.g., h0 - disable buffer, h9999 - enable buffer with 9999 lines
+   * `n` - Disable 'Press Enter or Esc to close console' message
+   * `c` - Explicitly enable 'Press Enter or Esc to close console' (default)
+   * `a` - !RunAs shell verb (as Admin on Vista+, login/password in Win2k and WinXP)
+   * `r` - Run as restricted user
+   * `u` - Open !ConEmu choose user dialog
+   * `u:<user>:<pwd>` - specify user/pwd in args. MUST BE THE LAST OPTION.
+*Example:* «`"%ConEmuBaseDir%\ConEmuC.exe" /c dir "-new_console:bh9999c" c:\ /s`». Note that when launching from Far Manager, «`"%ConEmuBaseDir%\ConEmuC.exe" /c `» can be omitted.
+
+A. For 
+Для удобства использования в Far можно установить макрос на !ShiftEnter (см. примеры в дистрибутиве).
+
+A. Обратите также внимание на параметр `-cur_console:h[N]` которым можно управлять включением длинного вывода команд или приложений при запуске их из [ConEmuFAQ#Far_Manager Far Manager].
+
+===Q. Какие переменные окружения устанавливает !ConEmu?===
+A. `ConEmuDir` - папка, содержащая !ConEmu.exe; `ConEmuBaseDir` - папка, содержащая ConEmuC.exe; `ConEmuArgs` - аргументы, с которыми был запущен !ConEmu.exe; `ConEmuHWND` - дескриптор дескриптор окна виртуальной консоли (дочернее окно !ConEmu).
+
+===Q. Запущенная программа ничего не выводит на экран.===
+A. Некоторые программы работают с альтернативным буфером консоли, например telnet.exe, запущенный без параметров. Историю можно посмотреть здесь: [http://code.google.com/p/conemu-maximus5/issues/detail?id=65 Issue 65]. Проблема исправлена в сборке 120504, должен быть включен флажок «Inject ConEmuHk». В предыдущих версиях !ConEmu можно было отобразить (!CtrlWinAltSpace) окно реальной консоли и временно поработать с ним.
+
+A. В результате какого-то бага в !ShellExecuteEx, на некоторых OS, консольный процесс запускался с некорректным дескриптором буфера вывода. Для исправления ошибки должен быть включен флажок «Inject !ConEmuHk». Если ошибка не исправляется - создайте новый [http://code.google.com/p/conemu-maximus5/issues/entry Issue] с подробным описанием проблемы и приложите отладочный лог запускаемой программы: «Settings -> Debug -> Shell and processes».
+
+===Q. Программа не работает в режиме «Long console output».===
+A. Некоторые программы не умеют корректно работать с длинным консольным буфером. Например bview, Aurora, и т.п. Есть несколько вариантов решения:
+  * Открывать программу в новой вкладке !ConEmu при отключенной прокрутке. Например: "bview.exe -new_console:h"
+  * Указать, что прокрутку включать не нужно. Например: "ac.exe -cur_console:h"
+  * Или можно вообще отключить 'Long console output' на вкладке 'Tabs' окна 'Settings', если длинный вывод команд вам вообще не нужен
+
+
+
+==Дистрибутив==
+
+===Q. Зачем нужен инсталлятор «`ConEmuSetup.*.exe`»?===
+A. Использовать exe-инсталлятор рекомендуется на компьютерах с включенным UAC (Vista и выше) если вы хотите установить !ConEmu в «Program Files».
+
+A. Инсталлятор также содержит некоторые дополнительный файлы, например !KeyEvents.exe.
+
+===Q. Для чего нужен файл ConEmuC.exe (!ConEmuC64.exe)?===
+A. Это 'консольная' часть !ConEmu. Через него графическая оболочка получает всю информацию о консоли. Этот процесс управляет автоматическим увеличением высоты буфера консоли при запуске команд/приложений. При запуске 'новой' консоли (Shift-Enter в FAR) прицепляет ее к !ConEmu.
+
+===Q. Для чего нужен Far-плагин !ConEmu.dll (!ConEmu.x64.dll)?===
+A. Это модуль, обеспечивающий связь между Far Manager и !ConEmu.
+  * Без него не работают некоторые расширенные возможности (табы, Drag'n'Drop).
+  * Без него не включается !TrueColor в Far 3.x.
+  * Без него не будут работать некоторые другие плагины (!FarHints например).
+  * Показывает скрытую консоль с FAR-ом, если случилось несчастье и !ConEmu упал.
+  * После детача консоли (Ctrl-Alt-Tab) запускает новый !ConEmu для новой консоли.
+  * Необходим для работы с длинным буфером вывода консольных приложений.
+  * Для работы мышки в «far /w» (System\!WindowMode=1).
+
+===Q. Для чего нужен файл !ConEmuHk.dll (!ConEmuHk64.dll)===
+A. Это модуль, внедряемый в приложения, запускаемые в !ConEmu. Необходим для реализации некоторых опций, а также исправляет многие проблемы, проявляющиеся как в !ConEmu, так и без него.
+  * всплывание GUI-диалогов (без него они окажутся позади !ConEmu);
+  * корректную работу GUI-EMenu (без !ConEmuHk`*`.dll оно не закрывается);
+  * обеспечивает работу флажков "No zone check", "Ascii sort...", "Hourglass if not responding";
+  * обеспечивает работу параметра "-new_console";
+  * лечит проблемы !ShellExecute (когда вывод батников не всегда виден в консоли);
+  * лечит зависания chcp;
+  * обеспечивает мониторинг "Shell and processes";
+  * внедрение GUI приожений во вкладку !ConEmu, и т.п.
+
+===Q. Для чего нужен файл !ExtendedConsole.dll (!ExtendedConsole64.dll)?===
+A. Это поддержка расширенной консоли в Far 3.x, должен располагаться в каталоге с файлом Far.exe. При его наличии и включении флажка «!TrueMod support» в Far можно настроить любые !TrueColor цвета и стили (bold/italic/underline).
+
+
+
+==Portable-версия==
+===Q. Может ли !ConEmu быть портабельным?===
+A. Да. Для включения портабельности настроек !ConEmu достаточно создать _пустой_ файл «!ConEmu.xml» рядом с ConEmuC.exe или с !ConEmu.exe. Создать файл можно после загрузки !ConEmu, в этом случае в XML можно сохранить настройки, загруженные из реестра.
+
+===Q. При попытке использования «!ConEmu.xml» появляется ошибка «XML setting file can not be used!»===
+A. Собственно, в полном тексте этой ошибки все написано. В реестре не зарегистрирован интерфейс IID_IXMLDOMDocument. Чтобы его не регистрировать, можно рядом с ConEmuC.exe или с !ConEmu.exe положить файлы «msxml3.dll» и «msxml3r.dll». Файлы лучше брать из Windows XP - в них меньше зависимостей и они будут работать в Windows 2000.
+
+===Q. Может ли !ConEmu делать портабельными запускаемые в нем консольные приложения?===
+A. Этот функционал в стадии разработки, планируется полный перехват работы с реестром запускаемых в !ConEmu приложений.
+
+
+
+==Обновление==
+===Q. Умеет ли !ConEmu обновляться автоматически?===
+A. Да. !ConEmu может проверять наличие новых версий при запуске, ежечасно или по запросу пользователя (SystemMenu -> Help -> Check for updates).
+
+===Q. Какие возможности у автоматического обновления?===
+A. Вы можете настроить обновление так, как вам хочется.
+  * Возможна работа через Proxy.
+  * Можно проверять наличие как «стабильных» так и «alpha» сборок.
+  * При обнаружении новой версии можно отображать запрос на загрузку, а можно загружать пакет (архив или инсталлятор) сразу.
+  * Если !ConEmu был установлен через инсталлятор, то при совпадении пути установки с путем запущенного !ConEmu.exe (или !ConEmu64.exe) обновление производится через пакет «`ConEmuSetup.*.exe`».
+  * В других случаях обновление производится из 7-zip архива.
+  * Для обновления через архив на компьютере должен быть установлен архиватор ([http://www.7-zip.org/ 7-Zip] или [http://www.rarlab.com/ WinRar]).
+  * По умолчанию пакеты скачиваются в %TEMP% и удаляются после установки.
+  * Но, вы можете указать любую папку, в которую нужно скачивать пакеты обновления. Их можно не удалять после установки.
+  * Команда установки выполняется из временного cmd-файла, выполяемого в папке с !ConEmu.exe. cmd-файл создается в %TEMP%.
+    * Команда инсталлятора по умолчанию: `"%1" /p:%3 /qr`. Запускает соответствующий (x86/x64) msi-пакет с ключом `/qr` (обновление «без вопросов»).
+    * Команда архиватора по умолчанию: `<архиватор> x -y "%1"`. Вместо `<архиватор>` указывается полный путь к любому архиватору, поддерживающему распаковку 7-Zip архивов: [http://www.7-zip.org/ 7zg.exe, 7z.exe], [http://www.rarlab.com/ Unrar.exe, WinRar.exe], и т.п.
+  * Запуск cmd-файла со скриптом обновления (если пользователь согласился на обновление) выполняется после закрытия окна !ConEmu (закрытия всех вкладок).
+  * Перед запуском cmd-файла выполняется проверка отсутствия других открытых окон !ConEmu.
+  * После успешного обновления вы можете выполнить любую команду или скрипт (через cmd.exe). Например, вы можете скопировать новые файлы в другие папки, если на вашем компьютере установлено несколько копий !ConEmu. По умолчанию, в папке с !ConEmu.exe создается файл !ConEmuUpdate.info с информацией о дате и времени последнего обновления.
+  * Информацию о новых версиях !ConEmu получает по [http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/version.ini этому адресу]. В случае необходимости (например, централизованное обновление компьютеров в сети?) адрес можно изменить через reg/xml (поле "Update.!VerLocation").
+
+
+
+==x64 issues==
+
+===Q. Зачем нужны файлы ConEmuC.exe, ConEmuCD.dll и !ConEmuHk.dll в 64битных ОС?===
+A. Эти файлы необходимы для запуска 32битных приложений, а также для работы 32битной версии !ConEmu.exe. Наверняка в какой-то момент вам окажется необходимо запустить 32битную консольную программу. Без этих файлов это не получится. В принципе, можно пользоваться 64битной версией !ConEmu64.exe, которая доступна в дистрибутиве «`ConEmuSetup.*.exe`», она запускает !ConEmuC64.exe в качестве корневого консольного процесса.
+
+===Q. Зачем нужны файлы !ConEmuC64.exe, ConEmuCD64.dll и !ConEmuHk64.dll в 32битной версии !ConEmu?===
+A. Эти файлы необходимы для запуска 64битных приложений в 64битных ОС.
+
+===Q. При запуске команд start, echo (и прочих команд cmd.exe) на 64битной ОС возникает ошибка вида "File not found. Cannot execute. start".===
+A. Скорее всего вы удалили необходимый файл !ConEmuC64.exe и сопутствующие !ConEmuHk64.dll, ConEmuCD64.dll.
+
+===Q. При попытке запуска (из Far Manager) возникает системная ошибка вида: «Ошибка при запуске приложения (0xc0000142). Для выхода из приложения нажмите кнопку "OK".»===
+A. Причина пока не найдена, какая-то проблема в Windows. Причем, ошибка возникает не только в !ConEmu, но и в 'чистой' консоли. Для восстановления нормальной работы нужно перезапустить консоль (например через Win-~).
+
+===Q. Что происходит с переменными окружения в 64битных OS?===
+A. !ConEmu не управляет переменными окружения.
+
+
+
+==Настройка==
+
+===Q. Можно ли запустить !ConEmu так, чтобы в нем сразу было открыто несколько вкладок: Far, CMD, !PowerShell?===
+A. Можно. Для этого используйте командный файл запуска. Например *startup.txt*:
+{{{
+>E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\far.exe
+*/BufferHeight 400 cmd
+/BufferHeight 1000 powershell
+}}}
+и запускайте !ConEmu так:
+{{{
+conemu.exe /cmd @startfile.txt
+}}}
+В файле каждая строка соответсвует запускаемой команде.
+Допустимо указание в строке параметра /!BufferHeight для установки высоты консольного буфера.
+Если в начале строки стоит "`>`" - эта консоль будет активной после завершения запуска.
+Если в начале строки стоит "`*`" - эта консоль будет запущена под администратором.
+
+===Q. Двоятся окна Far Manager.===
+A. Это просто консольное окно не спряталось. Проверьте флажок 'Visible' на вкладке 'Features' окна 'Settings' или значение в реестре:
+{{{
+[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
+"ConVisible"=hex:00
+}}}
+
+===Q. Как настроить растровый шрифт?===
+A. Это шрифт Terminal. Например консольный '8 x 12' это 'Terminal 12 x 8' в !ConEmu, '12 x 16' -> 'Terminal 16 x 12', и т.п.
+   Внимание: В поле 'Charset' необходимо выбрать 'OEM'.
+   Лично мне нравится 'Fixedsys 16 x 8', которого в обычной консоли нет.
+
+A. В списке шрифтов можно сразу выбрать, например, `[Raster Fonts 8x12]`.
+
+===Q. Почему горизонтальные рамки отображаются пунктиром/прерывисто?===
+A. В некоторых шрифтах ширина соответствующих символов псевдографики оказывается
+меньше заявленной средней ширины символов шрифта, а именно на него ориентируется
+!ConEmu при автоматическом выборе размеров шрифта рамок.
+Чтобы избавиться от пунктира, включите флажок «Fix Far borders» и увеличьте ширину
+шрифта для рамок. Поля имени и ширины шрифта дл рамок расположены под флажком
+«Fix Far borders» на вкладке 'Main' окна 'Settings'.
+
+
+
+==Far Manager==
+
+===Q. Почему не работают табы (вкладки)?===
+A. Плагин !ConEmu.dll (!ConEmu.x64.dll) установлен?
+
+A. При использовании инсталлятора плагин !ConEmu.dll мог быть установлен в неправильную папку, нужно ставить в подпапку Plugins для Far.exe. Инсталлятор мог не найти папку Far.exe, если Far был установлен не через msi. Проще всего сделать Uninstall для !ConEmu и установить его заново, но убедиться, что для элемента 'Far Manager plugins' указана корректная папка.
+
+A. Флажок 'Enable Tabs' в настройке включен? Если флажок в 'третьем состоянии' табы появляются только после открытия редактора/вьювера.
+
+===Q. Почему не работает (плагин) Drag-n-Drop?===
+A. «Shell style Drag and Drop» встроен в !ConEmu и настраивается на вкладке 'Far Manager' окна 'Settings'. !ConEmu умеет вытаскивать файлы «наружу» в другие приложения (проводник, GIMP, и т.п.) и принимать файлы внутрь (на панели и командную строку) из других приложений. Для корректной работы «Shell style Drag and Drop» в Far должен быть установлен плагин !ConEmu.dll (!ConEmu.x64.dll). !ConEmu может драгать файлы как левой (флажок LDrag) так и правой (RDrag) кнопками мышки. Опционально можно назначить модификатор, например драгать файлы левой кнопкой только при удерживаемом LCtrl.
+
+A. Скриншоты и некоторые пояснения можно посмотреть/почитать здесь: Issue 527.
+
+A. Плагин (сторонний) Drag-n-Drop не поддерживался, не поддерживается и поддерживаться не будет, т.к. эта функциональность встроена в !ConEmu.
+
+===Q. Как закрыть таб (редактор/вьювер/фар) мышкой?===
+A. При удерживании Ctrl 'правый щелчок' мышки активирует таб и сразу посылает в Far Manager макрос закрытия. Вы можете переопредлить макрос на вкладке 'Far Manager' окна 'Settings', поле 'Close tab'.
+
+A. Без удерживания Ctrl 'правый щелчок' мышки активирует таб и отображает контекстное меню, в котором можно выбрать пункт 'Close'.
+
+===Q. В Far не передаются нажатия кнопок мышки, колесо.===
+A. Проверьте настройку Far -> Interface settings -> `[x]` Mouse.
+
+A. Если Far работает в режиме «far /w» (System\!WindowMode=1) то необходимо наличие плагина !ConEmu.dll (!ConEmu.x64.dll), иначе !ConEmu будет считать что сейчас работает обычное консольное приложение типа cmd.exe в которое событие мышки посылать не нужно.
+
+===Q. Почему не работает плагин !FarHints?===
+A. Его необходимо обновить (версия 1.0.15 и выше) и он требует наличия плагина !ConEmu.dll (!ConEmu.x64.dll).
+
+===Q. В какой-то момент перестают работать табы, Drag-n-Drop,...===
+A. Посмотрите на вкладку 'Info' окна 'Settings'. Скорее всего не включен статус 'Far' или 'Panels'. Учтите, что для D&D необходим плагин !ConEmu.dll (!ConEmu.x64.dll).
+
+===Q. По щелчку правой кнопкой мышки не появляется контекстное меню для файла/папки.===
+A. Не включен флажок '!RightClick 4 context menu'? Если флажок в 3-м состоянии - меню появляется после 'долгого' клика, дождитесь пока замкнется кружок вокруг курсора мышки.
+
+A. По какой-то причине !ConEmu не обнаружил 'панели' в Far. Может быть не установлен плагин !ConEmu.dll (!ConEmu.x64.dll)? Если все-таки установлен - присылайте скриншоты !ConEmu, вкладки 'Info' окна 'Settings' и файл 'Dump screen...' (системное меню !ConEmu -> Debug -> Dump screen...).
+
+===Q. По щелчку правой кнопкой мышки появляется графическое меню, а хочу текстовое.===
+A. Соответствующий макрос можно указать на вкладке 'Far Manager' окна 'Settings'. Например: `F11 e Enter 2`. Предполагается, что для EMenu назначен hotkey 'e'.
+
+
+
+==Windows Vista==
+
+===Q. В Windows Vista не срабатывает комбинация Ctrl-Win-Alt-Space для показа !RealConsole.===
+A. Почему-то первое наатие пробела вистой иногда 'проглатывается'. Не отпуская Ctrl-Win-Alt нажмите пробел еще раз.
+
+===Q. В Windows Vista зависают другие консольные процессы.===
+A. "Виноват" процесс !ConIme.exe. Вроде бы он служит для ввода иероглифов (китай и т.п.). Зачем он нужен, если ввод теперь идет в графическом окне? Нужно запретить его автозапуск или вообще переименовать этот файл, например в '!ConIme.ex1' (видимо это возможно только в безопасном режиме).
+Запретить автозапуск: Внесите в реестр и перезагрузитесь
+{{{
+[HKEY_CURRENT_USER\Console]
+"LoadConIme"=dword:00000000
+}}}
+
+
+
+==Аварийные завершения==
+
+===Q. При завершении консольной программы возникает ошибка вида: Access violation at address 6F78DE5B in module '!ConEmuHk.dll'. Read of address 0071004E===
+A. Возможная причина - эта консольная программа порушила свою таблицу импортов. Решение - обратиться к ее разработчику. Для более точного вердикта "кто виноват" можно прислать мне минидамп.
+
+===Q. Far зависает при выходе?===
+A. Ни одного Issue на эту тему еще не было создано. Тем не менее, если Far завис при выходе, сделайте дампы памяти процессов Far.exe, ConEmuC`*`.exe и !ConEmu`*`.exe. Как это сделать смотрите ниже. Заархивировать и прислать файлы разработчику. Для создания правильного дампа 32битного приложения в 64битной ОС нужно использовать !ConEmu.
+
+===Q. Как создать дамп памяти приложения?===
+A. Windows XP и выше.
+   Запустить `"ConEmuC.exe /DEBUGPID=ИД_Процесса"` и в появившемся окне нажать Ctrl-Break. Вам будет предложено сформировать дамп памяти процесса. `ИД_Процесса` можно посмотреть в Диспетчер задач Windows. Если процесс 64битный - запускать нужно "!ConEmuC64.exe".
+
+A. Windows 7 и выше.
+   _Внимание! Этот метод допустим только для процессов той же битности, что и OS. То есть создать корректный дамп для 32битного процесса в 64битной OS не получится. Открыть Диспетчер задач Windows, перейти на вкладку 'Процессы' и в контекстном меню выбрать пункт 'Создать файл дампа памяти'._
+
+A. Дампы памяти умеет создавать утилита 'Process Explorer', но _с ее помощью создать корректный дамп для 32битного процесса в 64битной OS также не получится_.
+
+===Q. Что означает: ConEmuC: !CreateFile(CONOUT$) failed, !ErrCode=0x00000005===
+A. Запускаемая программа создала и установила в консоли собственный буфер,    созданный как `CreateConsoleScreenBuffer(..., 0/*No sharing*/, ...)`. Просите автора программы создавать буфер корректно, а не только для себя:
+{{{
+(GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,...)
+}}}
+
+
+
+==Unsorted==
+
+===Q. Как сворачивать !ConEmu в трей (в иконку рядом с часами)?===
+A. Щелкнуть правой кнопкой по крестику в заголовке. Можно также включить флажок 'Auto minimize to TSA' в настройке. Тогда сворачивание в трей будет происходить автоматически при минимизации.
+
+===Q. Зачем !ConEmu меняет шрифт у реальной консоли?===
+A. В реальной консоли должен быть выбран !TrueType шрифт, иначе в !ConEmu вместо юникодных символов (иероглифы, троеточие, копирайты, и пр.) будут отображаться знаки вопроса ('?'). Так устроена консоль Windows.
+
+A. Размер шрифта в реальной консоли должен быть меньше, чем !ConEmu, иначе будет невозможно увеличить размер !ConEmu (в символах) более того размера, который разрешен в Windows для текущего консольного шрифта.
+
+===Q. Почему-то отображается только часть консоли; консоль отображается сдвинутой; не отображается вообще.===
+
+A. В настройке (Settings-!ConEmu.reg) указан слишком большой консольный шрифт.
+
+A. Возможно, выбрана слишком большая ширина окна (в символах).
+
+A. Возможно, по какой-то причине !ConEmu не смог сменить шрифт у реальной консоли. Выберите пункт системного меню окна !ConEmu 'Properties' и на закладке 'Шрифт' выберите !TrueType шрифт и наименьший размер.
+
+===Q. Почему исчезает окно быстрого поиска в панелях при переключении языка?===
+A. Так получилось. ФАР убирает окно поиска при потере и получении фокуса. Включите флажок 'Skip focus events' на вкладке 'Features' окна 'Settings'.
+
+===Q. Почему нет кнопок мультиконсоли на панели инструментов?===
+A. Включите флажок '!MultiCon' в настройке, или ключ /Multi в командной строке.
+
+===Q. Зависает (в заголовке !ConEmu отображается '...Waiting for result (10 sec)') через некоторое время в FAR появляется меню плагинов (или вызывается какой-то другой плагин).===
+A. По какой-то причине !ConEmu не смог определить, что Far не отвечает на запросы пользователя (выполняется команда, ожидание, и т.п.).
+
+===Q. Почему не отображается 'Background image'?===
+A. По умолчанию, выбранным изображением замещаются только цвета фона #0 и #1 (обычно это черный и синий). В вашей настройке цвета могут быть другими, для явного указания замещаемых цветов можно использовать параметр "bgImageColors".
+
+A. Если флажок 'Background image (bmp)' в третьем состоянии - картинка отображается только в панелях.
+
+A. Если флажок 'Background image (bmp)' включен и файл картинки выбран - проверьте значение 'Darkening'. Возможно там указан 0.
+
+===Q. Зачем нужно подтверждение 'Press Enter to close console...' отображаемое перед закрытием консоли после завершения всех программ в ней?===
+A. Если консоль будет сразу закрываться - вы не увидите ни результата выполнения команды, ни сообщений о возможных ошибках в аргументах.
+
+===Q. Как отключить 'Press Enter to close console...'?===
+A. Подтверждение закрытия отключается автоматически после того как:
+  * корневая консольная программа проработает более 10 секунд, или
+  * запускается FAR, как корневой процесс, и в нем загружен плагин !ConEmu.
+
+A. При запуске команды можно добавить параметр `-new_console:n`.
+
+===Q. Запускается FAR, плагин установлен, но все равно появляется 'Press Enter to close console...'?===
+A. Возможно, в качестве корневого процесса запустился на FAR, а cmd.exe. Проверьте список процессов на вкладке 'Info' окна 'Settings'. Причина - некорректная командная строка (аргумент /cmd в !ConEmu), возможна ошибка в некорректных кавычках.
+
+===Q. Почему Shift-Enter в панелях запускает новое окно с реальной консолью, а не в новой вкладке?===
+A. Отсутсвует макрос на Shift-Enter или макросы запрещены.
+
+A. Shift-Enter нажат во время 'быстрого поиска' (в этом случае требуется расширенный макрос для макрообласти 'Dialog').
+
+===Q. Почему в консоли отображается прямоугольник (рамка) вместо курсора?===
+A. Опция 'Block inactive cursor'. Альтернативная индикация, что фокус не в консоли.
+
+===Q. В табах отображаются квадратики (вместо иероглифов).===
+A. По умолчанию, текст закладок отображается шрифтом "Tahoma". Выберите другой шрифт, содержащий требуемые вам символы (например "Arial Unicode MS") на вкладке 'Tabs' окна 'Settings'.
+
+===Q. Для консоли !ConEmu не всплывает перевод !GoldenDict===
+A. Скачайте и установите патч для !GoldenDict [http://code.google.com/p/conemu-maximus5/issues/detail?id=517#c3 отсюда].
