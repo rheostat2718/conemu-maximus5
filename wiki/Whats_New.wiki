@@ -4,13 +4,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 {{{
 *****************
-«ExtendedConsole.dll» and «ExtendedConsole64.dll» now in ConEmu subfolder!
-Delete old files from old locations, if you are not using installer.
+«ExtendedConsole.dll» and «ExtendedConsole64.dll» are now in the ConEmu subfolder!
+Delete old files from old locations if you are not using the installer.
 *****************
 }}}
 
 
-  * Advertising application on [http://meta.superuser.com/a/5023/139371 meta.superuser.com], please !UpVote it.
+  * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
 
 
 ==Build 120618==
@@ -27,76 +27,75 @@ Delete old files from old locations, if you are not using installer.
   * 'Quake style slide down' third state - auto hide on lose focus.
   * Do not catch focus when starting with argument "/min".
   * Issue 599: 'Auto copy' on 'Mark & Paste' - copy selected text immediately on left mouse button up (when selecting with mouse).
-  * Issue 599, Issue 570: Small lags removed, when pastings long text from clipboard.
+  * Issue 599, Issue 570: Small lags removed when pasting large amounts of text from clipboard.
   * 'Main' settings page redesigned.
-  * Chinese (DBCS) improvments.
+  * Chinese (DBCS) improvements.
   * Some Wine related fixes, but still not working ;)
-  * Message balloon is shown in TSA when registering global hotkey (Minimize/Restore) failed.
+  * Message balloon is shown in TSA when registration of global hotkey (Minimize/Restore) failed.
   * New default for Minimize/Restore - Win+Shift+C.
 
 
 ==Build 120614==
-  * !DownLeft and !DownRight options for background image.
+  * !DownLeft and !DownRight options for background image alignment.
   * Issue 577: Chinese font display error on Chinese Win XP.
   * Issue 587: Right click gives an error box.
 
 
 ==Build 120613==
-  * After deleting Task choosed for Startup, !ConEmu stop starting.
-  * 120612: Executing command with "-new_console" argument (from existing tab) cause !ConEmu minimizing.
-  * Tab menu (Rename tab) and Apps+R. Only panels can be renamed in Far (as yet).
-  * !UpRight option for background image.
+  * After deleting Task chosen for Startup, !ConEmu stopped starting.
+  * 120612: Executing a command with "-new_console" argument (from an existing tab) caused !ConEmu to minimize.
+  * Tab menu (Rename tab) and Apps+R. Only panels can be renamed in Far (as of yet).
+  * !UpRight option for background image alignment.
   * Issue 590: Ctrl+C/Ctrl+Break fixes.
   * Some Quake style improvements.
 
 
 ==Build 120612==
   * Sample «!ColorPrompt.cmd» added to distribution. Run it in cmd.exe or tcc.exe for change command prompt text color to yellow.
-  * New !ComEmu.exe arguments - /!ShowHide and /ShowHideTSA. When !ConEmu not started (yet) - starts it (with possible /cmd ... argument), when !ConEmu window exists - minimize it or hide to TSA. Similar to global hotkey Win+C, but hotkey will not works, if !ConEmu was not started yet. These keys may be used for shortcut on desktop.
+  * New !ComEmu.exe arguments - /!ShowHide and /ShowHideTSA. When !ConEmu is not yet started - starts it (with optional /cmd ... argument), when !ConEmu window exists - minimize it or hide to TSA. Similar to global hotkey Win+C, but hotkey wouldn't work if !ConEmu was not been started yet. These keys may be used for a desktop shortcut.
   * New !ConEmu.exe argument - /dir "Folder". Same as «Working folder» in shortcut properties.
-  * Switch «Quake style slide down» on the «Features» page. Sample settings in «!ConEmu\!ConEmu_Tilde.xml». Something like [http://tech-bytes.co.uk/2008/05/23/a-quake-style-console-for-your-gnome-desktop/ this]. Rename sample «ConEmu_Tilde.xml» to «!ConEmu.xml», run ConEmu on startup with /min switch, and !ConEmu will slide down/up by Tilde key. 
+  * Added «Quake style slide down» switch on the «Features» page. Sample settings are in «!ConEmu\!ConEmu_Tilde.xml» (something like [http://tech-bytes.co.uk/2008/05/23/a-quake-style-console-for-your-gnome-desktop/ this]). Rename sample «ConEmu_Tilde.xml» to «!ConEmu.xml», run ConEmu on startup with /min switch, and !ConEmu will slide down/up by Tilde key.
   * Issue 576: Trap when updating Jump Lists/Task while history is empty.
-  * Copy to clipboard does not works from alternative console (Win+A).
+  * Copy to clipboard did not work from alternative console (Win+A).
   * Issue 584: App distinct color palette not working.
   * Issue 576: !ConEmu.exe /updatejumplist.
-  * When Maximized, check/uncheck «Hide caption always» losed caption.
-  * !GuiMacro.
+  * When Maximized, checking/unchecking «Hide caption always» lost caption.
+  * !GuiMacro additions:
 {{{
-    Paste(2[,"<Text>"]) - paste all lines, without confirmations
-    Paste(3[,"<Text>"]) - paste first line, without confirmations
-    Task(Index[,"Dir"]) - start task with 1-based index
-    Task("Name"[,"Dir"]) - start task with specified name
+    Paste(2[,"<Text>"]) - paste all lines without confirmation
+    Paste(3[,"<Text>"]) - paste first line without confirmation
+    Task(Index[,"Dir"]) - start task by 1-based index
+    Task("Name"[,"Dir"]) - start task with the specified name
 }}}
-  * !GuiMacro. On «Keys» page for «Macro» now works "\\", "\r", "\n", "\t". You can set smth like this «Paste(2,"exit\n")» for closing cmd.exe
+  * !GuiMacro: The "Macro" setting on the «Keys» page now supports "\\", "\r", "\n", "\t" escape sequences. Example: «Paste(2,"exit\n")» will close cmd.exe.
 
 
 ==120611==
-  * [http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx Article] in Scott Hanselman blog :)
+  * [http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx Article] in Scott Hanselman's blog :)
 
 
 ==Build 120609==
   * Injects code was rewritten (new ASLR in Windows 8 RC x64).
-  * Issue 571: Check box «New window» in creation confirmation dialog. If you choose «Another user» - !ConEmu itself will be started under choosen account. You may set separate hotkey for dialog with check box turned on.
+  * Issue 571: Added «New window» check box in the creation confirmation dialog. If you choose «Another user», !ConEmu itself will be started under the chosen account. You may set a separate hotkey for the dialog with the check box turned on.
   * Some drawing artifacts may appears on window edges in Maximized and Fullscreen modes.
   * Refinement of screenshots (Maximized/Fullscreen window modes).
-  * Attach did not works for GUI applications (notepad, PuTTY, ...)
-  * Cursor was not moved in console, while dragging scrollbar thumbtack.
+  * Attaching did not work for GUI applications (notepad, PuTTY, ...)
+  * The cursor was not moved in the console while dragging the scrollbar thumb area.
 
 
 ==Long time ago?==
-Lifehacker published the article about Console, PowerCmd, Take Command and Mintty. Unfortunately, ConEmu again was not mentioned :(
-All my tries to post comment and mail to article author was ignored :(
-http://lifehacker.com/5857540/the-best-terminal-emulator-for-windows
+Lifehacker published [http://lifehacker.com/5857540/the-best-terminal-emulator-for-windows an article about Console, PowerCmd, Take Command and Mintty]. Unfortunately, ConEmu, once again, was not mentioned :(
+All my attempts to post comments and contact the article author were ignored :(
 
 
 ==Build 120608==
   * New wiki page: http://code.google.com/p/conemu-maximus5/wiki/RoadMap
-  * Refinement of consoles closing confirmation.
+  * Refinement of console closing confirmation.
   * GuiMacro: !WindowFullscreen, !WindowMaximize, !WindowMode, Status.
   * Keys: Always on Top, Show/hide status bar (Apps+S), Show/hide tab bar (Apps+T), About (Win+Alt+A).
   * About: Pages added width arguments of ConEmuC, -new_console and GuiMacro.
-  * External editor startup line in the «Mark & Paste» page. By default: `far.exe /e%1:%2 "%3"`. '%1' - row, '%2' column, '%3' - filename.
-  * Refinement of screenshot creation (Win+H). New Win+Shift+H - entire monitor rectangle screenshot.
+  * Added external editor startup line option in the «Mark & Paste» page. By default: `far.exe /e%1:%2 "%3"`. '%1' - row, '%2' column, '%3' - filename.
+  * Refinement of screenshot creation (Win+H). New Win+Shift+H - entire monitor area screenshot.
   * Issue 570: Pasting into iPython (in fact, any console app except Far) does not work as expected.
   * Issue 558: Some more color anomalies.
 
@@ -107,23 +106,24 @@ http://lifehacker.com/5857540/the-best-terminal-emulator-for-windows
 
 
 ==Build 120604==
-  * Error «Can't free hooks in module ...» в !ConEmuHk.dll
+  * Error «Can't free hooks in module ...» in !ConEmuHk.dll
   * Issue 557: Assertion в RealBuffer.cpp
   * Issue 568: First call of 'View console output' (Far plugin) opens viewer in dump-mode
-  * Sometimes, exception occures in Far after execution of console command
+  * Fixed occasional exception in Far after execution of console command
 
 
 ==Build 120603==
   * Internal interprocess communication changes.
-  * Status bar. New column '!ConEmu GUI PID'.
+  * Status bar: New column '!ConEmu GUI PID'.
   * Issue 566: Hotkey `<<None>>` is not unique.
   * 'Settings'-> 'Tasks' -> '!ConEmu arguments for Jump list'. You may specify here additional arguments for !ConEmu.exe, when starting from taskbar (Jump list). E.g.: `/icon "cmd.exe"`.
 
 
 ==Build 120602==
   * Internal interprocess communication changes.
-  * Windows 7 or higher. Jump list supported, !ConEmu may add its 'Predefined tasks' and commands from history into the Windows 'Tasks' section. Jump list population take up some time, so, button 'Update Now!' was added to the 'Tasks' page of the 'Settings' dialog.
-  * !ConEmu.exe: command line argument /title "Template". Fixed text will be shown in !ConEmu window title, instead of active console title. You may use environment variables in "Template".  * Диалог 'Create new console': в системном меню добавлен пункт 'Reset command history...'.
+  * Windows 7 or higher. Jump list support: !ConEmu may add its 'Predefined tasks' and commands from its history into the Windows 'Tasks' section. Jump list population takes some time, therefore the button 'Update Now!' was added to the 'Tasks' page of the 'Settings' dialog.
+  * !ConEmu.exe: Added command line argument /title "Template". The specified text will be shown in !ConEmu's window title instead of the active console's title. You may use environment variables in the "Template" string.
+  * 'Create new console' dialog: Added 'Reset command history...' item to the system menu.
   * Win+H: Make screenshot of active !ConEmu window.
   * Tabs: Separate tab templates for Panels (Far) and other console applications.
   * Tabs: You may specify word list, excluded from the title of consoles (with exception of Far). Tired of the 'Administrator:' prefix of the consoles, runned as Administrator (Win7).
@@ -166,37 +166,37 @@ http://lifehacker.com/5857540/the-best-terminal-emulator-for-windows
 
 
 ==Build 120523a==
-  * Issue 554: Исправлена обработка `^[#G` (ANSI X3.64).
+  * Issue 554: Fixed handling of `^[#G` (ANSI X3.64).
 
 
 ==Build 120523==
-  * Из системного меню убран пункт 'Auto scroll'. Если нужно поставить консоль 'на паузу' - Win+A (альтернативный буфер).
-  * Ctrl+Win+Alt+Enter - принудительная активация !ConEmu в !FullScreen. Как и Win+C, настраиваемый хоткей срабатывает из любого приложения.
-  * Win+Shift+Del - Terminate активного процесса текущей консоли.
-  * Добавлена переменная окружения "ConEmuANSI". Принимает значения "ON" или "OFF".
-  * Issue 554: Ошибки позиционирования курсора и вывода текста (ANSI X3.64).
-  * Issue 553: Откат прокрутки консоли.
+  * 'Auto scroll' item removed from the system menu. If the console must be paused - use - Win+A (alternative buffer).
+  * Ctrl+Win+Alt+Enter - forced activation of !ConEmu in !FullScreen. Like Win+C, the configurable hotkey will work regardless of the active application.
+  * Win+Shift+Del - Terminate the active process in the current console.
+  * The "ConEmuANSI" environment variable was added. Possible values are "ON" and "OFF".
+  * Issue 554: Cursor positioning and text output errors (ANSI X3.64).
+  * Issue 553: Console scrolling rollback.
 
 
 ==Build 120522==
-  * Новая опция «[AnsiEscapeCodes ANSI X3.64 / 256color]» на вкладке «Features». Адресуется консоль целиком (с прокруткой), но Xterm 256color влияет только на «рабочую» область (нижняя часть консоли, если есть прокрутка). Чтобы работало - должен быть включен «Inject !ConEmuHk». Если кажется, что 256color не работает - включить флажок «Colorer !TrueMod support», проверить выключен ли буфер/прокрутка. Например: "`256colors2.pl -cur_console:h0`". Или прокрутить консоль в самый низ: "`echo ^[[9999;1H`" (replace «^[» to real ESC symbol (char with code \x1B)). Два примера: `ConEmu\Addons\AnsiColors16.ans` и `ConEmu\Addons\AnsiColors256.ans`.
-  * Win+A - альтернативный буфер, кнопка на тулбаре - черный квадратик. При выполнении в Far Manager - показывает вывод последней команды. Иначе - замораживает текущее состояние всех консоли (весь буфер, с прокруткой). Закрыть альтернативную консоль - повторным Win+A или Esc.
-  * Win+S - включение/отключение прокрутки (!BufferHeight). Игнорируется в Win7. Кнопка на тулбаре - вертикальные стрелки.
+  * New option: «[AnsiEscapeCodes ANSI X3.64 / 256color]» («Features» tab). The entire console's area is used (incl. scroll buffer), however Xterm 256color only applies to the "working" area (lowest part of the console, when using the scroll buffer). The option "Inject !ConEmuHk" must be enabled as well. If 256color does not seem to work, enable the «Colorer !TrueMod support» flag, and check that buffer/scrolling is disabled. Example: "`256colors2.pl -cur_console:h0`". Or, to scroll the console to the bottom: "`echo ^[[9999;1H`" (replace «^[» with the real ESC symbol (char with code \x1B)). Two examples are included in `ConEmu\Addons\AnsiColors16.ans` and `ConEmu\Addons\AnsiColors256.ans`.
+  * Win+A - alternative buffer (toolbar button - black square). When used in Far Manager, it displays the output of the last command. Otherwise, freezes the current state of the console (incl. scroll buffer). The alternative console can be closed by a repeated Win+A or Esc.
+  * Win+S - enable/disable scroll buffer (!BufferHeight). Ignored in Win7. Toolbar button - vertical arrows.
   * Win+N - Show create new console popup menu.
   * Issue 551: Updater, Invalid unpack command line, while using environment variables.
-  * Новые ключи !ConEmu.exe
+  * New !ConEmu.exe command-line options:
 {{{
-    /min - запустить свернутым;
-    /tsa - сворачивать в TSA (чтобы свернуть в TSA при запуске используйте вместе с /min);
-    /icon "<file>" - откуда брать иконку, <file> может быть exe, dll или ico;
-    /noupdate - отключить автоматическую проверку обновления при старте.
+    /min - run minimized;
+    /tsa - minimize to tray (to minimize to TSA on start, use with /min);
+    /icon "<file>" - use icon from <file> (<file> can be exe, dll or ico);
+    /noupdate - disable automatic update check on start.
 }}}
-  * Обновлен диалог 'About'.
-  * Исключение при уменьшении размера шрифта в Maximized режиме.
-  * Добавлены три системных палитры: Standard VGA, Terminal.app, xterm.
-  * Правки в Injects.
-  * Fast configuration dialog incorrect size, when !ConEmu starts maximized (shortcut property).
-  * Исправлена некорректная отрисовка при включении флажка 'Auto' на вкладке 'Main' в Maximized режиме.
+  * 'About' dialog updated.
+  * Fixed exception when lowering font size in Maximized window mode.
+  * Added three system palettes: Standard VGA, Terminal.app, xterm.
+  * Injects fixes.
+  * Fixed incorrect size of fast configuration dialog when !ConEmu starts maximized (shortcut property).
+  * Fixed incorrect rendering when the flag 'Auto' on the 'Main' tab was enabled in Maximized window mode.
   * Minor changes in ConEmuC.exe.
 
 
@@ -349,5 +349,5 @@ http://lifehacker.com/5857540/the-best-terminal-emulator-for-windows
   * !ConEmu was mentioned on http://jpsoft.com/blogs/2012/04/windows-console-replacements-part-6-take-command-and-conemu/
 
 
-==Rest of the log==
+==Older entries==
 [http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FWhats_New%3Fshow%3Dcontent WhatsNew autotranslated]
