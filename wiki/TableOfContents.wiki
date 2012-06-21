@@ -28,6 +28,7 @@
       * [UsingMouse Using mouse]
       * [TextSelection Text selection]
       * [GuiMacro GUI Macros]
+      * [TabletPC Far and touchscreen]
     * Far Manager
       * [ConEmuFarPlugin Far & ConEmu plugins]
       * [FarMacro Far Macros]

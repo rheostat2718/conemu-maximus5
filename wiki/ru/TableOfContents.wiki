@@ -28,6 +28,7 @@
       * [UsingMouse Мышь]
       * [TextSelection Работа с текстом]
       * [GuiMacro GUI макросы]
+      * [TabletPC Far и тачскрин]
     * Far Manager
       * [ConEmuFarPlugin Плагины Far & ConEmu]
       * [FarMacro Far макросы]
