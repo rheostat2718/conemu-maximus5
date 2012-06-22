@@ -17,7 +17,7 @@ Some portions of code must be optimized or totally rewritten :(
 However, it is possible to hook registry functions, so any (console or GUI) application,
 started in !ConEmu tab become portable.
 
-This portion of code exists but not perfect. So, it is disable in release versions.
+This portion of code exists but not perfect. So, it is disabled in release versions.
 
 ==Tab groups and themes==
 Issue 294, Issue 194.
