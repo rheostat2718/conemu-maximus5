@@ -93,7 +93,7 @@ Usually, this file is located near to the _ConEmuC.exe_.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFarManager.png" title="ConEmu settings, Far Manager page" alt="ConEmu settings, Far Manager page">
 
 ==Keys==
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsKeys.png.png" title="ConEmu settings, Keys page" alt="ConEmu settings, Keys page">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsKeys.png" title="ConEmu settings, Keys page" alt="ConEmu settings, Keys page">
 
 ==Tabs==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTabs.png" title="ConEmu settings, Tabs page" alt="ConEmu settings, Tabs page">
