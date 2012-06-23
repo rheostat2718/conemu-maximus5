@@ -1,37 +1,40 @@
 #labels Featured
-A kick ass terminal is exactly what Windows needs. I'm not talking about PowerShell, which many agree is crazy powerful, but rather the Terminal itself. We want tabs, we want control, we want better full screen, we want themes, we want more.
+A kick ass terminal is exactly what Windows needs. I'm not talking about !PowerShell, which many agree is crazy powerful, but rather the Terminal itself. We want tabs, we want control, we want better full screen, we want themes, we want more.
 
-While I love Console2, I think I'm ready to switch as I've just been turned on a NEW contender in the Windows Console Wars. It's ConEmu and it's insane (in a good way.) It's also actively developed.
+While I love Console2, I think I'm ready to switch as I've just been turned on a NEW contender in the Windows Console Wars. It's !ConEmu and it's insane (in a good way.) It's also actively developed.
 
-I haven't even begun to scratch the surface as ConEmu is one of those applications that is so configurable that you can become lost in the flexibility.
+I haven't even begun to scratch the surface as !ConEmu is one of those applications that is so configurable that you can become lost in the flexibility.
 
-Read full [http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx Scott Hanselman's article]
-
-----
-As a long-time user of Console 2, I switched to ConEmu recently and have not looked back. This is so much better than anything that has come before it almost defies belief. Plus is is being rapidly developed (thanks Maximus!) with juicy new features appearing often enough to make it feel exciting. If you've not tried this, do it now. I have no hesitation in recommending it as the best console emulator on Windows.
-
-Charles Roper. Read more on [http://stackoverflow.com/a/10904494/1405560 stackoverflow.com]
+*Scott Hanselman*. Read [http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx full article]
 
 ----
-I found out about ConEmu from Hanselman's post. ConEmu is the best terminal application for Windows!
+As a long-time user of Console 2, I switched to !ConEmu recently and have not looked back. This is so much better than anything that has come before it almost defies belief. Plus is is being rapidly developed (thanks Maximus!) with juicy new features appearing often enough to make it feel exciting. If you've not tried this, do it now. I have no hesitation in recommending it as the best console emulator on Windows.
 
-Ashwin. Read more on [http://meta.stackoverflow.com/a/134414/187198 meta.stackoverflow.com]
+*Charles Roper*. Read more on [http://stackoverflow.com/a/10904494/1405560 stackoverflow.com]
+
+----
+I found out about !ConEmu from Hanselman's post. !ConEmu is the best terminal application for Windows!
+
+*Ashwin*. Read more on [http://meta.stackoverflow.com/a/134414/187198 meta.stackoverflow.com]
 
 ----
 Very convenient tool to run console apps. The best ever integration with Far Manager (including both stable 2.0 version and new 3.0). For those who use Far on daily basis this is MUST HAVE tool.
 
-Sergiy Yakovyn. Read more on [https://sourceforge.net/projects/conemu/reviews/ sourceforge.net]
+*Sergiy Yakovyn*. Read more on [https://sourceforge.net/projects/conemu/reviews/ sourceforge.net]
 
 ----
 That masterpiece brings so much cool features to the Far manager... The most important are one window for other Far, drag'nd'drop,colors and some other less noticable but not less important features
 
-drweb86, on [http://www.softpedia.com/progViewOpinions/ConEmu-151121,.html www.softpedia.com]
+*drweb86*, on [http://www.softpedia.com/progViewOpinions/ConEmu-151121,.html www.softpedia.com]
 
 ----
-http://jpsoft.com/blogs/2012/04/windows-console-replacements-part-6-take-command-and-conemu/
+[http://jpsoft.com/blogs/2012/04/windows-console-replacements-part-6-take-command-and-conemu/ Windows Console Replacements, Part 6 – Take Command and ConEmu] by jpsoft
 
-http://user1.cooler-online.ru/blog/11782.html
+----
+!ConEmu review on [http://user1.cooler-online.ru/blog/11782.html cooler-online.ru]
 
-http://vozerov.wordpress.com/2010/12/27/far-manager/
+----
+Far Manager and !ConEmu. Read on [http://vozerov.wordpress.com/2010/12/27/far-manager/ vozerov.wordpress.com]
 
-http://www.rozrobka.com/blog/tools/1418.html
+----
+!ConEmu review on [http://www.rozrobka.com/blog/tools/1418.html www.rozrobka.com]
