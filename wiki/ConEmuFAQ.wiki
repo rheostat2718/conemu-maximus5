@@ -86,98 +86,100 @@ A. Certain programs don't work correctly with a long console buffer. Some exampl
 
 
 
-==Дистрибутив==
+==Distribution package==
 
-===Q. Зачем нужен инсталлятор «`ConEmuSetup.*.exe`»?===
-A. Использовать exe-инсталлятор рекомендуется на компьютерах с включенным UAC (Vista и выше) если вы хотите установить !ConEmu в «Program Files».
+===Q. What is the purpose of «`ConEmuSetup.*.exe`»?===
+A. Using the installer is recommended on computers with UAC enabled (Vista and higher), if you intend to install !ConEmu to "Program Files".
 
-A. Инсталлятор также содержит некоторые дополнительный файлы, например !KeyEvents.exe.
+A. The installer also contains some additional files, e.g. !KeyEvents.exe.
 
-===Q. Для чего нужен файл ConEmuC.exe (!ConEmuC64.exe)?===
-A. Это 'консольная' часть !ConEmu. Через него графическая оболочка получает всю информацию о консоли. Этот процесс управляет автоматическим увеличением высоты буфера консоли при запуске команд/приложений. При запуске 'новой' консоли (Shift-Enter в FAR) прицепляет ее к !ConEmu.
+===Q. What is the purpose of ConEmuC.exe (!ConEmuC64.exe)?===
+A. This is the "console" component of !ConEmu. It communicates information from the real console to the graphical shell (!ConEmu.exe). This process also controls automatic buffer resizing when running commands/applications, and attaching "new" consoles (Shift-Enter in FAR) to !ConEmu.
 
-===Q. Для чего нужен Far-плагин !ConEmu.dll (!ConEmu.x64.dll)?===
-A. Это модуль, обеспечивающий связь между Far Manager и !ConEmu.
-  * Без него не работают некоторые расширенные возможности (табы, Drag'n'Drop).
-  * Без него не включается !TrueColor в Far 3.x.
-  * Без него не будут работать некоторые другие плагины (!FarHints например).
-  * Показывает скрытую консоль с FAR-ом, если случилось несчастье и !ConEmu упал.
-  * После детача консоли (Ctrl-Alt-Tab) запускает новый !ConEmu для новой консоли.
-  * Необходим для работы с длинным буфером вывода консольных приложений.
-  * Для работы мышки в «far /w» (System\!WindowMode=1).
+===Q. What is the purpose of the Far plugin !ConEmu.dll (!ConEmu.x64.dll)?===
+A. This module provides communication between Far Manager and !ConEmu.
+  * It is required for certain extended features (tabs, Drag-and-Drop).
+  * It is required for !TrueColor in Far 3.x.
+  * It is required for certain other plugins (e.g. !FarHints).
+  * It displays the hidden real console (with FAR), should ConEmu crash.
+  * After a console detach (Ctrl-Alt-Tab), it spawns a new !ConEmu for the new console.
+  * It is required to retrieve the long output buffer for console applications.
+  * It is required for proper mouse function when using «far /w» (System\!WindowMode=1).
 
-===Q. Для чего нужен файл !ConEmuHk.dll (!ConEmuHk64.dll)===
-A. Это модуль, внедряемый в приложения, запускаемые в !ConEmu. Необходим для реализации некоторых опций, а также исправляет многие проблемы, проявляющиеся как в !ConEmu, так и без него.
-  * всплывание GUI-диалогов (без него они окажутся позади !ConEmu);
-  * корректную работу GUI-EMenu (без !ConEmuHk`*`.dll оно не закрывается);
-  * обеспечивает работу флажков "No zone check", "Ascii sort...", "Hourglass if not responding";
-  * обеспечивает работу параметра "-new_console";
-  * лечит проблемы !ShellExecute (когда вывод батников не всегда виден в консоли);
-  * лечит зависания chcp;
-  * обеспечивает мониторинг "Shell and processes";
-  * внедрение GUI приожений во вкладку !ConEmu, и т.п.
+===Q. What is the purpose of !ConEmuHk.dll (!ConEmuHk64.dll)?===
+A. This module is injected into applications ran in !ConEmu. It is required to implement certain options, as well as work around multiple problems manifesting both with and without !ConEmu. 
+  * Z-order of GUI dialogues (without it, dialogues will appear behind !ConEmu's window);
+  * Proper function of GUI-EMenu (without !ConEmuHk`*`.dll it refuses to close);
+  * Implements the flags "No zone check", "Ascii sort...", "Hourglass if not responding";
+  * Implements the "-new_console" parameter;
+  * Works around !ShellExecute problems (when batch file output does not appear in the console);
+  * Works around chcp hangs;
+  * Implements "Shell and processes" monitoring;
+  * Implements hosting of GUI applications in a !ConEmu tab, etc.
 
-===Q. Для чего нужен файл !ExtendedConsole.dll (!ExtendedConsole64.dll)?===
-A. Это поддержка расширенной консоли в Far 3.x, должен располагаться в каталоге с файлом Far.exe. При его наличии и включении флажка «!TrueMod support» в Far можно настроить любые !TrueColor цвета и стили (bold/italic/underline).
-
-
-
-==Portable-версия==
-===Q. Может ли !ConEmu быть портабельным?===
-A. Да. Для включения портабельности настроек !ConEmu достаточно создать _пустой_ файл «!ConEmu.xml» рядом с ConEmuC.exe или с !ConEmu.exe. Создать файл можно после загрузки !ConEmu, в этом случае в XML можно сохранить настройки, загруженные из реестра.
-
-===Q. При попытке использования «!ConEmu.xml» появляется ошибка «XML setting file can not be used!»===
-A. Собственно, в полном тексте этой ошибки все написано. В реестре не зарегистрирован интерфейс IID_IXMLDOMDocument. Чтобы его не регистрировать, можно рядом с ConEmuC.exe или с !ConEmu.exe положить файлы «msxml3.dll» и «msxml3r.dll». Файлы лучше брать из Windows XP - в них меньше зависимостей и они будут работать в Windows 2000.
-
-===Q. Может ли !ConEmu делать портабельными запускаемые в нем консольные приложения?===
-A. Этот функционал в стадии разработки, планируется полный перехват работы с реестром запускаемых в !ConEmu приложений.
+===Q. What is the purpose of !ExtendedConsole.dll (!ExtendedConsole64.dll)?===
+A. This file implements support for the extended console feature in Far 3.x, and must be placed in the same directory as Far.exe. In its presence and enabled «!TrueMod support» option, it is possible to configure and use arbitrary (24-bit) colors and styles (bold/italic/underline) in Far Manager.
 
 
 
-==Обновление==
-===Q. Умеет ли !ConEmu обновляться автоматически?===
-A. Да. !ConEmu может проверять наличие новых версий при запуске, ежечасно или по запросу пользователя (SystemMenu -> Help -> Check for updates).
 
-===Q. Какие возможности у автоматического обновления?===
-A. Вы можете настроить обновление так, как вам хочется.
-  * Возможна работа через Proxy.
-  * Можно проверять наличие как «стабильных» так и «alpha» сборок.
-  * При обнаружении новой версии можно отображать запрос на загрузку, а можно загружать пакет (архив или инсталлятор) сразу.
-  * Если !ConEmu был установлен через инсталлятор, то при совпадении пути установки с путем запущенного !ConEmu.exe (или !ConEmu64.exe) обновление производится через пакет «`ConEmuSetup.*.exe`».
-  * В других случаях обновление производится из 7-zip архива.
-  * Для обновления через архив на компьютере должен быть установлен архиватор ([http://www.7-zip.org/ 7-Zip] или [http://www.rarlab.com/ WinRar]).
-  * По умолчанию пакеты скачиваются в %TEMP% и удаляются после установки.
-  * Но, вы можете указать любую папку, в которую нужно скачивать пакеты обновления. Их можно не удалять после установки.
-  * Команда установки выполняется из временного cmd-файла, выполяемого в папке с !ConEmu.exe. cmd-файл создается в %TEMP%.
-    * Команда инсталлятора по умолчанию: `"%1" /p:%3 /qr`. Запускает соответствующий (x86/x64) msi-пакет с ключом `/qr` (обновление «без вопросов»).
-    * Команда архиватора по умолчанию: `<архиватор> x -y "%1"`. Вместо `<архиватор>` указывается полный путь к любому архиватору, поддерживающему распаковку 7-Zip архивов: [http://www.7-zip.org/ 7zg.exe, 7z.exe], [http://www.rarlab.com/ Unrar.exe, WinRar.exe], и т.п.
-  * Запуск cmd-файла со скриптом обновления (если пользователь согласился на обновление) выполняется после закрытия окна !ConEmu (закрытия всех вкладок).
-  * Перед запуском cmd-файла выполняется проверка отсутствия других открытых окон !ConEmu.
-  * После успешного обновления вы можете выполнить любую команду или скрипт (через cmd.exe). Например, вы можете скопировать новые файлы в другие папки, если на вашем компьютере установлено несколько копий !ConEmu. По умолчанию, в папке с !ConEmu.exe создается файл !ConEmuUpdate.info с информацией о дате и времени последнего обновления.
-  * Информацию о новых версиях !ConEmu получает по [http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/version.ini этому адресу]. В случае необходимости (например, централизованное обновление компьютеров в сети?) адрес можно изменить через reg/xml (поле "Update.!VerLocation").
+==Portable version==
+===Q. Can !ConEmu be portable?===
+A. Yes. To enable portable configuration, it is enough to create an _empty_ file «!ConEmu.xml» in the same directory as ConEmuC.exe or !ConEmu.exe. The file may be created after !ConEmu is loaded, which allows copying settings loaded from the registry to the XML file.
+
+===Q. When attempting to use «!ConEmu.xml», the error message «XML setting file can not be used!» appears===
+A. The error message explains itself: the interface IID_IXMLDOMDocument is not registered in the system registry. To avoid registering it, you can copy the files «msxml3.dll» and «msxml3r.dll» in the same directory as ConEmuC.exe or !ConEmu.exe. The versions from Windows XP are preferred - they have the least dependencies, which allows them to work in Windows 2000.
+
+===Q. Can !ConEmu make launched applications portable?===
+A. This feature is under development - complete registry interception for launched applications is planned.
+
+
+
+==Updates==
+===Q. Can !ConEmu update automatically?===
+A. Yes. !ConEmu can check for new versions on launch, every hour, or by user request (System menu -> Help -> Check for updates).
+
+===Q. What are the capabilities of the automatic updater?===
+A. You can configure updates however you like it.
+  * Proxy support.
+  * Selection between «stable» or «alpha» builds.
+  * In the presence of a new version, !ConEmu can ask for confirmation before downloading the package (archive or installer).
+  * If !ConEmu was installed using the installer, and the install path for !ConEmu.exe (or !ConEmu64.exe) coincides with the current process, updating is done using the installer («`ConEmuSetup.*.exe`»).
+  * Otherwise, updating is done using the 7-zip archive.
+  * Updating from the archive requires that file compression software ([http://www.7-zip.org/ 7-Zip] or [http://www.rarlab.com/ WinRAR]) is installed.
+  * By default, packages are downloaded to %TEMP% and deleted after installation is complete.
+  * However, you can indicate any directory, and choose not to delete installed packages.
+  * The installation command is ran from a temporary .cmd-file, launched in the directory containing !ConEmu.exe. The .cmd-file is created in %TEMP%.
+    * The default installer command is: `"%1" /p:%3 /qr`. It launches the corresponding (x86/x64) MSI package with the `/qr` parameter (silent update).
+    * The default archiver command is: `<archiver> x -y "%1"`. `<archiver>` is substituted with the full path to any file compression software, capable of unpacking 7-Zip archives: [http://www.7-zip.org/ 7zg.exe, 7z.exe], [http://www.rarlab.com/ Unrar.exe, WinRar.exe], etc.
+  * Launching the update script (.cmd-file) is done after !ConEmu closes (all tabs are closed), if the user consents.
+  * Before launching the update script, !ConEmu checks that no other !ConEmu windows are open.
+  * After a successful update, you can run any command or script (via cmd.exe). For example, you can copy the new files to other directories, if you have multiple !ConEmu installations on your computer. By default, the file !ConEmuUpdate.info is created in the same directory as !ConEmu.exe, containing a timestamp of the last update.
+  * New versions are polled from [http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/version.ini this URL]. This address can be configured in the registry or XML using the "Update.!VerLocation", should the need arise (e.g. centralized updating in a networked environment?).
+
 
 
 
 ==x64 issues==
 
-===Q. Зачем нужны файлы ConEmuC.exe, ConEmuCD.dll и !ConEmuHk.dll в 64битных ОС?===
-A. Эти файлы необходимы для запуска 32битных приложений, а также для работы 32битной версии !ConEmu.exe. Наверняка в какой-то момент вам окажется необходимо запустить 32битную консольную программу. Без этих файлов это не получится. В принципе, можно пользоваться 64битной версией !ConEmu64.exe, которая доступна в дистрибутиве «`ConEmuSetup.*.exe`», она запускает !ConEmuC64.exe в качестве корневого консольного процесса.
+===Q. What is the purpose of the files ConEmuC.exe, ConEmuCD.dll and !ConEmuHk.dll in 64-bit OS?===
+A. These files are required for launching 32-bit applications, as well as functioning of the 32-bit version of !ConEmu. You will likely at some point need to run a 32-bit console application from !ConEmu - without these files, it would not be possible. Out of principle, one can use the 64-bit !ConEmu64.exe, which is available in the «`ConEmuSetup.*.exe`» package - it launches !ConEmuC64.exe as the root console process.
 
-===Q. Зачем нужны файлы !ConEmuC64.exe, ConEmuCD64.dll и !ConEmuHk64.dll в 32битной версии !ConEmu?===
-A. Эти файлы необходимы для запуска 64битных приложений в 64битных ОС.
+===Q. What is the purpose of the files !ConEmuC64.exe, ConEmuCD64.dll and !ConEmuHk64.dll in the 32-bit version of !ConEmu?===
+A. These files are required to run 64-bit applications in 64-bit OS.
 
-===Q. При запуске команд start, echo (и прочих команд cmd.exe) на 64битной ОС возникает ошибка вида "File not found. Cannot execute. start".===
-A. Скорее всего вы удалили необходимый файл !ConEmuC64.exe и сопутствующие !ConEmuHk64.dll, ConEmuCD64.dll.
+===Q. After running the commands start, echo (and other cmd.exe commands) on 64-bit systems, an error similar to "File not found. Cannot execute. start" appears===
+A. This is most likely caused by the absence of !ConEmuC64.exe and accompanying !ConEmuHk64.dll, ConEmuCD64.dll.
 
-===Q. При попытке запуска (из Far Manager) возникает системная ошибка вида: «Ошибка при запуске приложения (0xc0000142). Для выхода из приложения нажмите кнопку "OK".»===
-A. Причина пока не найдена, какая-то проблема в Windows. Причем, ошибка возникает не только в !ConEmu, но и в 'чистой' консоли. Для восстановления нормальной работы нужно перезапустить консоль (например через Win-~).
+===Q. Attempts to launch applications (from Far Manager) causes a system error such as: «Error launching application (0xc0000142). Click "OK" to exit.»===
+A. The cause is as of yet undiscovered - it is suspected to be a problem in Windows. Note that the error also appears without !ConEmu. To restore proper function, restart the console (e.g. using Win-~).
 
-===Q. Что происходит с переменными окружения в 64битных OS?===
-A. !ConEmu не управляет переменными окружения.
+===Q. What is going on with environment variables in 64-bit OS?===
+A. !ConEmu does not control environment variables.
 
 
 
-==Настройка==
+==Configuration==
 
 ===Q. Можно ли запустить !ConEmu так, чтобы в нем сразу было открыто несколько вкладок: Far, CMD, !PowerShell?===
 A. Можно. Для этого используйте командный файл запуска. Например *startup.txt*:
