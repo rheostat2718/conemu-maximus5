@@ -28,7 +28,7 @@ That masterpiece brings so much cool features to the Far manager... The most imp
 *drweb86*, on [http://www.softpedia.com/progViewOpinions/ConEmu-151121,.html www.softpedia.com]
 
 ----
-[http://jpsoft.com/blogs/2012/04/windows-console-replacements-part-6-take-command-and-conemu/ Windows Console Replacements, Part 6 – Take Command and ConEmu] by jpsoft
+Windows Console Replacements, Part 6 – [http://jpsoft.com/blogs/2012/04/windows-console-replacements-part-6-take-command-and-conemu/ Take Command and ConEmu] by jpsoftware
 
 ----
 !ConEmu review on [http://user1.cooler-online.ru/blog/11782.html cooler-online.ru]
