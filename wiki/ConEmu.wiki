@@ -46,6 +46,7 @@ Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&top
   * normal, maximized and full screen graphical window modes;
   * window font anti-aliasing: standard, !ClearType, disabled;
   * window fonts: family, height, width, bold, italic, etc.;
+  * Chinese verions of Windows supported;
   * using [http://code.google.com/p/conemu-maximus5/issues/detail?id=153 normal/bold/italic] fonts for different parts of the console simultaneously;
   * using 24-bit colors in Far Manager 3.x;
   * [AnsiEscapeCodes ANSI X3.64 and Xterm 256 colors];
