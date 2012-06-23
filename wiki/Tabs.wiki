@@ -11,9 +11,9 @@ Initially Far Manager Viewer windows are framed by square brackets. Editor windo
 
 *Note: !ConEmu plugin is required to get tabs for Far Manager editors and viewers.*
 
-Left click on a tab will activate it, except FAR can't switch to this window (dialog is opened, macro is recorded or played, FAR menu bar is active, and so on).
+Left click on a tab will activate it, except Far Manager can't switch to this window (dialog is opened, macro is recorded or played, Far Manager menu bar is active, and so on).
 
-Right click on a tab will activate it (when it is possible) and (on succeeded activation) immediately close this tab. FAR windows will be closed by sending key sequence (F10 by default). Key sequence may be changed via registry value !TabCloseMacro. Right click on a tab, containing other console applications (cmd, powershell, etc.) brings Recreate dialog.
+Right click on a tab will activate it (when it is possible) and (on succeeded activation) immediately close this tab. Far Manager windows will be closed by sending key sequence (F10 by default). Key sequence may be changed via registry value !TabCloseMacro. Right click on a tab, containing other console applications (cmd, powershell, etc.) brings Recreate dialog.
 
 Consoles, started under Administrator (look at Run as administrator checkbox), are marked with _Shield_ icon. If You want, !ConEmu may show " (Admin)" suffix instead of icon. You can change suffix text or completely remove it on [http://code.google.com/p/conemu-maximus5/wiki/Settings#Tabs Tabs page] of Settings dialog.
 
