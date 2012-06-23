@@ -17,7 +17,7 @@ Right click on a tab will activate it (when it is possible) and (on succeeded ac
 
 Consoles, started under Administrator (look at Run as administrator checkbox), are marked with _Shield_ icon. If You want, !ConEmu may show " (Admin)" suffix instead of icon. You can change suffix text or completely remove it on [http://code.google.com/p/conemu-maximus5/wiki/Settings#Tabs Tabs page] of Settings dialog.
 
-Also, you may strip superfluous "Administrator:" prefix from console title [[http://code.google.com/p/conemu-maximus5/wiki/Settings#Tabs ibid].
+Also, you may strip superfluous "Administrator:" prefix from console title [http://code.google.com/p/conemu-maximus5/wiki/Settings#Tabs ibid].
 
 ====Switching between consoles====
 You may use `Win-Number` to activate consoles:
