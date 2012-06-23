@@ -1,4 +1,18 @@
 #labels Featured
+===Please, vote for !ConEmu===
+<wiki:comment>
+<a href="http://www.ohloh.net/stack_entries/new?project_id=conemu-maximus5&ref=sample">Ohloh</a>,
+</wiki:comment>
+<a href="https://www.ohloh.net/p/conemu-maximus5/reviews">Ohloh</a>,
+<a href="http://alternativeto.net/software/conemu/">alternativeTo</a>,
+<a href="https://sourceforge.net/projects/conemu/reviews/">!SourceForge</a>,
+<a href="http://www.facebook.com/ConEmu.Maximus5">Facebook</a>,
+
+<a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml">Softpedia</a>,
+<a href="http://www.softpedia.com/get/PORTABLE-SOFTWARE/System/System-Enhancements/ConEmu-Portable.shtml">portable version</a>,
+<a href="http://www.sofotex.com/ConEmu-download_L125596.html">Sofotex</a>.
+
+
 ===!StackOverflow Open Source Advertising: Sidebar 2012===
 <table><tr>
 <td width="230">
@@ -22,17 +36,6 @@ Please, !UpVote them!
 <wiki:comment>
 <a href="http://meta.superuser.com/a/5023/139371">adverising sidebar</a>,
 </wiki:comment>
-
-===Please, vote for !ConEmu===
-<a href="http://alternativeto.net/software/conemu/">alternativeTo</a>,
-<a href="https://sourceforge.net/projects/conemu/reviews/">!SourceForge</a>,
-<a href="http://www.facebook.com/ConEmu.Maximus5">Facebook</a>,
-
-<a href="http://www.ohloh.net/stack_entries/new?project_id=conemu-maximus5&ref=sample">Ohloh</a>,
-<a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml">Softpedia</a>,
-<a href="http://www.softpedia.com/get/PORTABLE-SOFTWARE/System/System-Enhancements/ConEmu-Portable.shtml">portable version</a>,
-<a href="http://www.sofotex.com/ConEmu-download_L125596.html">Sofotex</a>.
-
 
 ===Awards===
 <a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml"><img border="0" src="http://s1.softpedia-static.com/base_img/softpedia_free_award_f.gif"/></a>
