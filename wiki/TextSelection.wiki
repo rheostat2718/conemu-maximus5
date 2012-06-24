@@ -2,7 +2,7 @@
 *Note*. Paste выполняется средствами консоли.
 *Note*. Копирование выполняется 'с экрана', то есть с выделением в редакторе FAR не имеет ничего общего.
 
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreSelection.png" title="ConEmu text selection settings">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsSelection.png" title="ConEmu text selection settings">
 
     * Выделение теперь может быть 'блочным' (как в обычной консоли) или 'текстовым' (как в текстовых редакторах).
     * В меню окна добавлены пункты 'Mark block' и 'Mark text'.

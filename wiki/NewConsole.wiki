@@ -1,4 +1,7 @@
-﻿==-new_console and -cur_console switches==
+﻿<font size="4">-new_console and -cur_console switches</font>
+<wiki:toc max_depth="3" /> 
+
+==Syntax==
 When you run application from existing !ConEmu tab, or starting new tab from !ConEmu interface, you may use «-new_console» or «-cur_console» switches.
 
 *Warning* «-new_console» and «-cur_console» are *case sensitive*.
@@ -29,11 +32,28 @@ While you create new tab from !ConEmu GUI interface, «-new_console» and «-cur
 
 *Warning* Option «Inject !ConEmuHk» must be enabled in !ConEmu settings!
 
-*Examples*
+==Examples==
+Starts "`dir c:\ /s" in new background !ConEmu tab, set buffer height to 9999 lines, do not close tab after "dir" completion.
 {{{
-  "%ConEmuBaseDir%\ConEmuC.exe" /c dir "-new_console:bh9999c" c:\ /s
-  "%ConEmuBaseDir%\ConEmuC.exe" /c vim.exe -new_console:nh0 c:\sources\1.cpp
-  hiew.exe -cur_console:h0 c:\tools\far.exe
-  putty -new_console
+"%ConEmuBaseDir%\ConEmuC.exe" /c dir "-new_console:bh9999c" c:\ /s
 }}}
+
+Starts "`vim.exe c:\sources\1.cpp`" in new !ConEmu tab, disable buffer scrolling (buffer height will be equal to window height), do not show 'Press Enter or Esc to close console' after exiting vim.
+{{{
+"%ConEmuBaseDir%\ConEmuC.exe" /c vim.exe -new_console:nh0 c:\sources\1.cpp
+}}}
+
 *Note*. You may omit «`"%ConEmuBaseDir%\ConEmuC.exe" /c `» when starting command *from* Far Manager or starting GUI application.
+
+*Upd*. ConEmuC.exe is not necessary in !ConEmu build 120624 or higher.
+
+
+Far Manager related. Starts "`hiew.exe c:\tools\app.exe`" in *current* !ConEmu tab, do not enabling buffer scrolling (buffer height will be equal to window height).
+{{{
+hiew.exe -cur_console:h0 c:\tools\app.exe
+}}}
+
+Starts PuTTY in new !ConEmu tab.
+{{{
+putty -new_console
+}}}
