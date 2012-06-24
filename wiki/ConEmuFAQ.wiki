@@ -1,12 +1,12 @@
-<font size="4">Contents</font>
+<font size="5">*Contents*</font>
 
-=[http://translate.google.com/translate?hl=en&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FConEmuFAQ%3Fshow%3Dcontent%26wl%3Den FAQ (autotranslated)]=
+<font size="6">*[http://translate.google.com/translate?hl=en&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FConEmuFAQ%3Fshow%3Dcontent%26wl%3Den FAQ (autotranslated)]*</font>
 
 ----------------------------------------------------------------------
 
-=Translation (work in progress)=
+<font size="6">*Translation (work in progress)*</font>
 
-<font size="4">Contents</font>
+<font size="5">*Contents*</font>
 <wiki:toc max_depth="3" /> 
 
 ==General==

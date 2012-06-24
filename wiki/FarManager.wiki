@@ -1,7 +1,7 @@
 ﻿#labels Featured
 Page still under development. If you can help with writing, have questions or suggestions - leave comments here :)
 
-<font size="5"><b>Far Manager</b></font>
+<font size="5">*Far Manager*</font>
 
 Far is my favorite shell. It is not only file/archive management,
 it is powerful editor, huge number of plugins, powerful macro engine.

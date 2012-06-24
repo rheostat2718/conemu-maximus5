@@ -1,7 +1,7 @@
-﻿<font size="4">-new_console and -cur_console switches</font>
+﻿<font size="5">*-new_console and -cur_console switches*</font>
 <wiki:toc max_depth="3" /> 
 
-==Syntax==
+=Syntax=
 When you run application from existing !ConEmu tab, or starting new tab from !ConEmu interface, you may use «-new_console» or «-cur_console» switches.
 
 *Warning* «-new_console» and «-cur_console» are *case sensitive*.
@@ -32,7 +32,7 @@ While you create new tab from !ConEmu GUI interface, «-new_console» and «-cur
 
 *Warning* Option «Inject !ConEmuHk» must be enabled in !ConEmu settings!
 
-==Examples==
+=Examples=
 Starts "`dir c:\ /s" in new background !ConEmu tab, set buffer height to 9999 lines, do not close tab after "dir" completion.
 {{{
 "%ConEmuBaseDir%\ConEmuC.exe" /c dir "-new_console:bh9999c" c:\ /s
