@@ -63,7 +63,8 @@ Less number of settings may be changed manually via [Settings#Registry registry]
 либо cmd.exe, либо ту программу (или программы), которые указаны в свойствах ярлыка
 или в настройке !ConEmu.
 
-=Теперь можно [Settings#Settings_dialog открыть диалог настроек]=
+=Теперь можно открыть диалог настроек=
+[Settings#Settings_dialog Как открыть диалог настроек]
 
 =Ссылки на документацию=
   * [http://conemu.narod.ru/settings.html#Screenshots Скриншоты с русскими подсказками (начало)]
