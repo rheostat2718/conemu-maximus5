@@ -157,6 +157,29 @@ Usually, this file is located near to the _ConEmuC.exe_.
 ==Tasks==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTasks.png" title="ConEmu settings, Tasks page" alt="ConEmu settings, Tasks page">
 
+Здесь вы можете настроить список часто выполняемых задач. In fact, this is an alias to run one or more
+applications in new tabs !ConEmu. May be configured in 'Tasks' page of 'Settings' dialog, and stored in
+"Tasks" subkey subkey of reg/xml settings. 'Task' may be used (for example of the {Shells}):
+    * when you start by specifying the properties of the shortcut: "!ConEmu.exe / cmd {Shells}";
+    * specifying {Shells} in the 'Command line' page 'Main' of 'Settings' dialog;
+    * when you create a new console interface !ConEmu (`+` on the toolbar, a list of Recreate-dialog);
+    * from the command line (cmd.exe): "%!ConEmuBaseDir%\ConEmuC.exe" / c {Shells} -new_console.
+    * from the command line (far.exe): conemu:run:{Shells} -new_console
+
+ConEmu Jump list настраивается тоже здесь. Настройте список задач, в поле «ConEmu arguments for Jump list» можно
+дополнительно указать иконку, которая будет отображаться в Jump list, например
+{{{
+/icon "cmd.exe"
+}}}
+и рабочую папку, в которой будет запущен указанный процесс, например
+{{{
+/dir "c:\Program Files"
+}}}
+После настройки списка задач включите флажок «Add !ConEmu tasks to taskbar» и (по желанию) «Add commands from history, too».
+Нажмите кнопку «Update Now!». В случае успеха вы увидите сообщение «Taskbar jump list was updated successfully», ну или сообщение об ошибке.
+Есть способ инициировать Jump list при запуске !ConEmu (Issue 576, может кому еще понадобится для автоматизации установки, например)
+для этого запустите (однократно) !ConEmu.exe с аргументом "`/updatejumplist`".
+
 ==App distinct==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDistinct.png" title="ConEmu settings, App distinct page" alt="ConEmu settings, App distinct page">
 
