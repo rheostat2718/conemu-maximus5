@@ -64,8 +64,7 @@ Less number of settings may be changed manually via [Settings#Registry registry]
 или в настройке !ConEmu.
 
 =Теперь можно открыть диалог настроек=
-  * выбрав пункт «Settings...» из меню !ConEmu (открыть меню можно щелкнув правой кнопкой мышки по заголовку окна или левой кнопкой мышки по иконке в заголовке окна, или нажав на клавиатуре Win+Alt+Space)
-  * или просто нажать на клавиатуре Win+Alt+P
+[Settings#Settings_dialog]
 
 =Ссылки на документацию=
   * [http://conemu.narod.ru/settings.html#Screenshots Скриншоты с русскими подсказками (начало)]
@@ -105,6 +104,15 @@ Open !ConEmu.xml file using any text editor (Far Manager, Notepad, and so on) fi
 Usually, this file is located near to the _ConEmuC.exe_.
 
 =Settings dialog=
+Открыть диалог настроек можно несколькими способами
+  * выбрав пункт «Settings...» из системного меню !ConEmu, которое можно открыть
+    * щелкнув правой кнопкой мышки по заголовку окна
+    * щелкнув левой кнопкой мышки по иконке в заголовке окна
+    * нажав на клавиатуре Win+Alt+Space
+    * щелкнув правой кнопкой мышки по иконке !ConEmu на панели задач (в Windows 7 нужно удерживать кнопку Shift)
+    * если в [ConEmuTerms#TSA TSA] включено отображение иконки, можно щелкнуть по ней правой кнопкой мышки и выбрать пункт
+  * нажать на клавиатуре Win+Alt+P
+
 ==Main==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMain.png" title="ConEmu settings, Main page" alt="ConEmu settings, Main page">
 
