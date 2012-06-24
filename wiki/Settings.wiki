@@ -56,7 +56,7 @@ Usually, this file is located near to the _ConEmuC.exe_.
 =!ComSpec=
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsComspec.png" title="ConEmu settings, Comspec page" alt="ConEmu settings, Comspec page">
 
-==!TextSelection settings==
+=Mark & Paste=
 [TextSelection Go to description]
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsSelection.png" title="ConEmu settings, Text selection" alt="ConEmu settings, Text selection">
