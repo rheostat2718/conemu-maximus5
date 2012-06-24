@@ -45,7 +45,7 @@
 Потом, в диалоге настроек на вкладке «Update» можно будет настроить параметры обновления.
 !ConEmu не «самовольничает», перед запуском процесса обновления у вас спросят подтверждение.
 
-==Disable ConIme.exe autorun (Vista only)==
+==Disable !ConIme.exe autorun (Vista only)==
 Пользователи Windows Vista могут увидеть этот флажок. Почему и зачем написано в [ConEmuFAQ#Windows_Vista FAQ].
 
 ==После нажатия кнопки «OK»==
