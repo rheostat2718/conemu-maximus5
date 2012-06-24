@@ -157,7 +157,7 @@ Usually, this file is located near to the _ConEmuC.exe_.
   * из командной строки cmd.exe: "%!ConEmuBaseDir%\ConEmuC.exe" /c {Shells} -new_console.
   * из командной строки far.exe: conemu:run:{Shells} -new_console
 
-ConEmu Jump list настраивается тоже здесь. Настройте список задач, в поле «ConEmu arguments for Jump list» можно
+!ConEmu Jump list настраивается тоже здесь. Настройте список задач, в поле «!ConEmu arguments for Jump list» можно
 дополнительно указать иконку, которая будет отображаться в Jump list, например
 {{{
 /icon "cmd.exe"

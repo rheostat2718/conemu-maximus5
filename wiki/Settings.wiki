@@ -167,7 +167,7 @@ applications in new tabs !ConEmu. May be configured in 'Tasks' page of 'Settings
     * from the command line (cmd.exe): "%!ConEmuBaseDir%\ConEmuC.exe" / c {Shells} -new_console.
     * from the command line (far.exe): conemu:run:{Shells} -new_console
 
-ConEmu Jump list настраивается тоже здесь. Настройте список задач, в поле «ConEmu arguments for Jump list» можно
+!ConEmu Jump list настраивается тоже здесь. Настройте список задач, в поле «!ConEmu arguments for Jump list» можно
 дополнительно указать иконку, которая будет отображаться в Jump list, например
 {{{
 /icon "cmd.exe"

@@ -1,4 +1,5 @@
-﻿=Windows console with tabs=
+﻿#labels Featured
+=Windows console with tabs=
 !ConEmu may visualize with tabs all opened consoles, GUI applications (PuTTY for example) and Far Manager windows (panels, editors, viewers). !ConEmu can handle up to 30 consoles and much more Far Manager editor (viewer) windows.
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTabs2.png" title="ConEmu tabs and multiconsole" alt="ConEmu tabs">
