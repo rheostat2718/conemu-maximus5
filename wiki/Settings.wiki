@@ -2,6 +2,7 @@
 <wiki:toc max_depth="3" /> 
 
 =Abstract=
+<wiki:comment>
 !ConEmu is highly adaptable tool and have great number of settings.
 When You displeased by default !ConEmu behaviour - go to the Settings and change them.
 
@@ -9,6 +10,68 @@ Most of settings may be changed via !ConEmu interface
 (Settings dialog popped up by Win-Alt-P or SystemMenu).
 
 Less number of settings may be changed manually via [Settings#Registry registry] or [Settings#ConEmu.xml ConEmu.xml] file.
+</wiki:comment>
+
+На сайт программы регулярно приходят по результатам поискового запроса «настройка !ConEmu». Мне, как разработчику,
+непонятно, что там может быть непонятного ;-) Вопросов не задают ни
+[Settings здесь (в комментариях)], ни [http://code.google.com/p/conemu-maximus5/issues/list здесь].
+В общем, если по прочтении нижеизложенного материала вопросы остаются -
+[http://code.google.com/p/conemu-maximus5/issues/list задавайте].
+
+Про настройку !ConEmu хочется сказать следующее
+  * !ConEmu работает так, как хочется пользователю (то есть вам),
+  * Если это не так, значит в диалоге настроек есть флажок, который вы не включили ;)
+  * Конечно, может так случиться, что нужная вам опция еще никому не понадобилась, тогда вам [http://code.google.com/p/conemu-maximus5/issues/list сюда]
+
+=Первый запуск=
+Итак, при *первом* запуске программы вы, скорее всего, увидите диалог *быстрой* настройки:
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuPreConfig.png" title="Окно предварительной настройки ConEmu">
+
+Вы можете выбрать, что будете разрешать !ConEmu, т.к. на некоторые функции
+(перехват клавиатуры, внедрение в процессы, доступ к интернету)
+могут ругаться антивирусные программы. *!ConEmu не содержит троянов или вирусов*, код открыт, можете 
+[http://code.google.com/p/conemu-maximus5/source/checkout проверить]. Тем не менее, вы можете
+отключить эти функции, хотя это и не рекомендуется.
+
+==Install keyboard hooks==
+Если флажок отключить, !ConEmu не сможет обрабатывать некоторые
+клавиатурные комбинации. Например, в Windows 7 комбинации Win+_цифра_ (Win+1, Win+2, т.д.)
+переключают/запускают программы на панели задач. А ведь ими удобно переключать табы в окне !ConEmu.
+Включение флажка «Install keyboard hooks» означает не то, что !ConEmu будет блокировать системные
+клавиатурные комбинации, а только то, что у вас есть возможность включить или отключить их перехват
+в диалоге настроек. Например, флажками «Host-key+Number», «Disable Win+Tab» и т.п. (вкладка «Keys»
+диалога настроек).
+
+==Inject !ConEmuHk.dll into processes, started in !ConEmu tabs==
+Для многих возможностей
+(обработку параметра "-new_console", работу графических приложений во вкладках !ConEmu, ...)
+и избежания проблем (например, появление графических диалогов или меню под окном !ConEmu, ...)
+требуется внедрение в запускаемые процессы библиотеки !ConEmuHk.dll
+(или !ConEmuHk64.dll для 64-битных приложений).
+
+==Enable automatic updates==
+Все очевидно, разрешить обновление программы из интернета.
+Потом, в диалоге настроек на вкладке «Update» можно будет настроить параметры обновления.
+!ConEmu не «самовольничает», перед запуском процесса обновления у вас спросят подтверждение.
+
+==Disable ConIme.exe autorun (Vista only)==
+Пользователи Windows Vista могут увидеть этот флажок. Почему и зачем написано в [ConEmuFAQ#Windows_Vista FAQ].
+
+==После нажатия кнопки «OK»==
+!ConEmu запускает в своей вкладке либо Far Manager (если найден),
+либо cmd.exe, либо ту программу (или программы), которые указаны в свойствах ярлыка
+или в настройке !ConEmu.
+
+=Теперь можно открыть диалог настроек=
+  * выбрав пункт «Settings...» из меню !ConEmu (открыть меню можно щелкнув правой кнопкой мышки по заголовку окна или левой кнопкой мышки по иконке в заголовке окна, или нажав на клавиатуре Win+Alt+Space)
+  * или просто нажать на клавиатуре Win+Alt+P
+
+=Ссылки на документацию=
+  * [http://conemu.narod.ru/settings.html#Screenshots Скриншоты с русскими подсказками (начало)]
+  * [http://code.google.com/p/conemu-maximus5/wiki/Command_Line Параметры командной строки, запуск при старте нескольких вкладок]
+  * [http://code.google.com/p/conemu-maximus5/wiki/ConEmuFAQ ЧаВо (на русском)]
+  * [http://code.google.com/p/conemu-maximus5/wiki/TableOfContents Остальная документация]
 
 =Where settings are stored?=
 !ConEmu may store its settings in the Windows registry (HKCU), or in the !ConEmu.xml file.
@@ -41,68 +104,69 @@ Go to Registry editor (be careful!) and change appropriate value in the !ConEmu 
 Open !ConEmu.xml file using any text editor (Far Manager, Notepad, and so on) find appropriate value and change it.
 Usually, this file is located near to the _ConEmuC.exe_.
 
-=Main=
+=Settings dialog=
+==Main==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMain.png" title="ConEmu settings, Main page" alt="ConEmu settings, Main page">
 
-=Startup=
+==Startup==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsStartup.png" title="ConEmu settings, Startup page" alt="ConEmu settings, Startup page">
 
-=Features=
+==Features==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFeatures.png" title="ConEmu settings, Features page" alt="ConEmu settings, Features page">
 
-==!RealConsole font==
+===!RealConsole font===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreRealFont.png" title="ConEmu settings, RealConsole font" alt="ConEmu settings, RealConsole font">
 
-=!ComSpec=
+==!ComSpec==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsComspec.png" title="ConEmu settings, Comspec page" alt="ConEmu settings, Comspec page">
 
-=Mark & Paste=
+==Mark & Paste==
 [TextSelection Go to description]
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsSelection.png" title="ConEmu settings, Text selection" alt="ConEmu settings, Text selection">
 
 <wiki:comment>
-==Hide caption details==
+===Hide caption details===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreHideCaption.png" title="ConEmu settings, Hide caption details" alt="ConEmu settings, Hide caption details">
 </wiki:comment>
 
-=Far Manager=
+==Far Manager==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFarManager.png" title="ConEmu settings, Far Manager page" alt="ConEmu settings, Far Manager page">
 
-=Keys=
+==Keys==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsKeys.png" title="ConEmu settings, Keys page" alt="ConEmu settings, Keys page">
 
-=Tabs=
+==Tabs==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTabs.png" title="ConEmu settings, Tabs page" alt="ConEmu settings, Tabs page">
 
-=Status bar=
+==Status bar==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsStatus.png" title="ConEmu settings, Status bar page" alt="ConEmu settings, Status bar page">
 
-=Colors=
+==Colors==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors2.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
 
-=Tasks=
+==Tasks==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTasks.png" title="ConEmu settings, Tasks page" alt="ConEmu settings, Tasks page">
 
-=App distinct=
+==App distinct==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDistinct.png" title="ConEmu settings, App distinct page" alt="ConEmu settings, App distinct page">
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDistinct2.png" title="ConEmu settings, App distinct page" alt="ConEmu settings, App distinct page">
 
-=Views=
+==Views==
 This is settings for 'Panel Views' Far Manager plugin.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsViews.png" title="ConEmu settings, Views page" alt="ConEmu settings, Views page">
 
-=Debug=
+==Debug==
 Enables advanced logging of console processes creation.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDebug.png" title="ConEmu settings, Debug page" alt="ConEmu settings, Debug page">
 
-=Automatic update=
+==Automatic update==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsUpdate.png" title="ConEmu settings, Update page" alt="ConEmu settings, Update page">
 
-=Info=
+==Info==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsInfo.png" title="ConEmu settings, Info page" alt="ConEmu settings, Info page">
 
 =Alphabetical=

@@ -4,7 +4,7 @@
 =Введение=
 На сайт программы регулярно приходят по результатам поискового запроса «настройка !ConEmu». Мне, как разработчику,
 непонятно, что там может быть непонятного ;-) Вопросов не задают ни
-[Settings здесь], ни [http://code.google.com/p/conemu-maximus5/issues/list здесь].
+[Settings здесь (в комментариях)], ни [http://code.google.com/p/conemu-maximus5/issues/list здесь].
 В общем, если по прочтении нижеизложенного материала вопросы остаются -
 [http://code.google.com/p/conemu-maximus5/issues/list задавайте].
 
@@ -45,9 +45,8 @@
 Потом, в диалоге настроек на вкладке «Update» можно будет настроить параметры обновления.
 !ConEmu не «самовольничает», перед запуском процесса обновления у вас спросят подтверждение.
 
-На момент написания этого текста еще нет «Stable» сборок !ConEmu, в которых есть опция
-автоматического обновления. Поэтому пока, с точки зрения обновления, нет разницы между
-«Stable builds» и «Developer builds».
+==Disable ConIme.exe autorun (Vista only)==
+Пользователи Windows Vista могут увидеть этот флажок. Почему и зачем написано в [ConEmuFAQ#Windows_Vista FAQ].
 
 ==После нажатия кнопки «OK»==
 !ConEmu запускает в своей вкладке либо Far Manager (если найден),
@@ -95,68 +94,69 @@ Go to Registry editor (be careful!) and change appropriate value in the !ConEmu 
 Open !ConEmu.xml file using any text editor (Far Manager, Notepad, and so on) find appropriate value and change it.
 Usually, this file is located near to the _ConEmuC.exe_.
 
-=Main=
+=Диалог настроек «Settings»=
+==Main==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMain.png" title="ConEmu settings, Main page" alt="ConEmu settings, Main page">
 
-=Startup=
+==Startup==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsStartup.png" title="ConEmu settings, Startup page" alt="ConEmu settings, Startup page">
 
-=Features=
+==Features==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFeatures.png" title="ConEmu settings, Features page" alt="ConEmu settings, Features page">
 
-==!RealConsole font==
+===!RealConsole font===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreRealFont.png" title="ConEmu settings, RealConsole font" alt="ConEmu settings, RealConsole font">
 
-=!ComSpec=
+==!ComSpec==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsComspec.png" title="ConEmu settings, Comspec page" alt="ConEmu settings, Comspec page">
 
-=Mark & Paste=
+==Mark & Paste==
 [TextSelection Перейти к описанию]
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsSelection.png" title="ConEmu settings, Text selection" alt="ConEmu settings, Text selection">
 
 <wiki:comment>
-==Hide caption details==
+===Hide caption details===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreHideCaption.png" title="ConEmu settings, Hide caption details" alt="ConEmu settings, Hide caption details">
 </wiki:comment>
 
-=Far Manager=
+==Far Manager==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFarManager.png" title="ConEmu settings, Far Manager page" alt="ConEmu settings, Far Manager page">
 
-=Keys=
+==Keys==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsKeys.png" title="ConEmu settings, Keys page" alt="ConEmu settings, Keys page">
 
-=Tabs=
+==Tabs==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTabs.png" title="ConEmu settings, Tabs page" alt="ConEmu settings, Tabs page">
 
-=Status bar=
+==Status bar==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsStatus.png" title="ConEmu settings, Status bar page" alt="ConEmu settings, Status bar page">
 
-=Colors=
+==Colors==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors2.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
 
-=Tasks=
+==Tasks==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTasks.png" title="ConEmu settings, Tasks page" alt="ConEmu settings, Tasks page">
 
-=App distinct=
+==App distinct==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDistinct.png" title="ConEmu settings, App distinct page" alt="ConEmu settings, App distinct page">
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDistinct2.png" title="ConEmu settings, App distinct page" alt="ConEmu settings, App distinct page">
 
-=Views=
+==Views==
 This is settings for 'Panel Views' Far Manager plugin.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsViews.png" title="ConEmu settings, Views page" alt="ConEmu settings, Views page">
 
-=Debug=
+==Debug==
 Enables advanced logging of console processes creation.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDebug.png" title="ConEmu settings, Debug page" alt="ConEmu settings, Debug page">
 
-=Automatic update=
+==Automatic update==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsUpdate.png" title="ConEmu settings, Update page" alt="ConEmu settings, Update page">
 
-=Info=
+==Info==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsInfo.png" title="ConEmu settings, Info page" alt="ConEmu settings, Info page">
 
 =Alphabetical=
