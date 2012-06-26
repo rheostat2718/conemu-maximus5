@@ -74,7 +74,7 @@ A. Pay attention to the parameter `-cur_console:h[N]`, which allows controlling 
 A. `ConEmuDir` - folder, containing !ConEmu.exe; `ConEmuBaseDir` - folder, containing ConEmuC.exe; `ConEmuArgs` - arguments specified to !ConEmu.exe; `ConEmuHWND` - virtual console window handle (child window of !ConEmu).
 
 ===Q. Launched program outputs nothing.===
-A. Certain programs work with the console's alternative buffer - e.g. telnet.exe, launched without parameters. A history of tis issue can be read here: [http://code.google.com/p/conemu-maximus5/issues/detail?id=65 Issue 65]. The problem is fixed in version 120504 (the «Inject ConEmuHk» flag must be set). In previous versions, the workaround was to show the real console (!CtrlWinAltSpace), and temporarily work with it.
+A. Certain programs work with the console's alternative buffer - e.g. telnet.exe, launched without parameters. A history of this issue can be read here: [http://code.google.com/p/conemu-maximus5/issues/detail?id=65 Issue 65]. The problem is fixed in version 120504 (the «Inject ConEmuHk» flag must be set). In previous versions, the workaround was to show the real console (!CtrlWinAltSpace), and temporarily work with it.
 
 A. As a result of a !ShellExecuteEx bug, on certain operating systems the console process was launched with an incorrect output buffer handle. To fix the problem, the «Inject !ConEmuHk» flag must be set. If the problem persists - create a new [http://code.google.com/p/conemu-maximus5/issues/entry Issue] with a detailed description of the problem, and attach the debug log of the launched program: «Settings -> Debug -> Shell and processes».
 
