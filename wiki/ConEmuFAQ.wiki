@@ -275,23 +275,25 @@ To forbid its startup, apply the following to your registry and reboot:
 
 ==Abnormal termination==
 
-===Q. При завершении консольной программы возникает ошибка вида: Access violation at address 6F78DE5B in module '!ConEmuHk.dll'. Read of address 0071004E===
-A. Возможная причина - эта консольная программа порушила свою таблицу импортов. Решение - обратиться к ее разработчику. Для более точного вердикта "кто виноват" можно прислать мне минидамп.
+===Q. Upon exiting from a console program, an error such as the following appears: Access violation at address 6F78DE5B in module '!ConEmuHk.dll'. Read of address 0071004E===
+A. One possible cause is when the program destroys its own import table. The proper solution would be to contact the application developer. For a precise verdict, send me a minidump.
 
-===Q. Far зависает при выходе?===
-A. Ни одного Issue на эту тему еще не было создано. Тем не менее, если Far завис при выходе, сделайте дампы памяти процессов Far.exe, ConEmuC`*`.exe и !ConEmu`*`.exe. Как это сделать смотрите ниже. Заархивировать и прислать файлы разработчику. Для создания правильного дампа 32битного приложения в 64битной ОС нужно использовать !ConEmu.
 
-===Q. Как создать дамп памяти приложения?===
-A. Windows XP и выше.
-   Запустить `"ConEmuC.exe /DEBUGPID=ИД_Процесса"` и в появившемся окне нажать Ctrl-Break. Вам будет предложено сформировать дамп памяти процесса. `ИД_Процесса` можно посмотреть в Диспетчер задач Windows. Если процесс 64битный - запускать нужно "!ConEmuC64.exe".
+===Q. Far hangs on exit===
+A. No issues for this problem have been filed so far. Nevertheless, if Far hangs on exit, create minidumps for the processes Far.exe, ConEmuC`*`.exe and !ConEmu`*`.exe. See below for instructions. Pack up and submit the minidumps to the developer. To correctly create a minidump of a 32-bit application in a 64-bit OS, you must use !ConEmu.
 
-A. Windows 7 и выше.
-   _Внимание! Этот метод допустим только для процессов той же битности, что и OS. То есть создать корректный дамп для 32битного процесса в 64битной OS не получится. Открыть Диспетчер задач Windows, перейти на вкладку 'Процессы' и в контекстном меню выбрать пункт 'Создать файл дампа памяти'._
+===Q. How to create a minidump?===
+A. Windows XP and up.
+   Run `"ConEmuC.exe /DEBUGPID=Your_PID"` (substitute Your_PID with the process ID) and, in the new window, press Ctrl-Break. You will be offered to create a minidump. You can find the process ID in Windows' Task Manager. If the process is 64-bit, run "!ConEmuC64.exe".
 
-A. Дампы памяти умеет создавать утилита 'Process Explorer', но _с ее помощью создать корректный дамп для 32битного процесса в 64битной OS также не получится_.
+A. Windows 7 and up.
+   _Warning! This method only works for processes with the same bitness as the operating system. Therefore, you won't be able to create a working minidump for 32-bit processes when using a 64-bit Windows version._
+   Open Windows' Task Manager, switch to the "Processes" tab, right-click the process, and select "Create dump file".
 
-===Q. Что означает: ConEmuC: !CreateFile(CONOUT$) failed, !ErrCode=0x00000005===
-A. Запускаемая программа создала и установила в консоли собственный буфер,    созданный как `CreateConsoleScreenBuffer(..., 0/*No sharing*/, ...)`. Просите автора программы создавать буфер корректно, а не только для себя:
+A. 'Process Explorer' can also create minidumps, however _it will also fail to create a correct minidump for a 32-bit process on a 64-bit system_.
+
+===Q. ConEmuC: !CreateFile(CONOUT$) failed, !ErrCode=0x00000005===
+A. The launched program created and set up its own console buffer created using `CreateConsoleScreenBuffer(..., 0/*No sharing*/, ...)`. Ask the program author to create the buffer with the correct access flags:
 {{{
 (GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,...)
 }}}
@@ -300,61 +302,62 @@ A. Запускаемая программа создала и установи�
 
 ==Unsorted==
 
-===Q. Как сворачивать !ConEmu в трей (в иконку рядом с часами)?===
-A. Щелкнуть правой кнопкой по крестику в заголовке. Можно также включить флажок 'Auto minimize to TSA' в настройке. Тогда сворачивание в трей будет происходить автоматически при минимизации.
+===Q. How to minimize !ConEmu to the system tray (as an icon near the Windows clock on the taskbar)?===
+A. Right-click the X button in the title bar. You may also enable the flag 'Auto minimize to TSA' in settings, which causes !ConEmu to always minimize to the system tray.
 
-===Q. Зачем !ConEmu меняет шрифт у реальной консоли?===
-A. В реальной консоли должен быть выбран !TrueType шрифт, иначе в !ConEmu вместо юникодных символов (иероглифы, троеточие, копирайты, и пр.) будут отображаться знаки вопроса ('?'). Так устроена консоль Windows.
+===Q. Why does !ConEmu change the font of the real console?===
+A. The real console must have a !TrueType font selected, otherwise Unicode symbols (hieroglyphs, ellipses, copyright symbols) will show up as question marks ('?') in !ConEmu. This is a design limitation of the Windows console.
 
-A. Размер шрифта в реальной консоли должен быть меньше, чем !ConEmu, иначе будет невозможно увеличить размер !ConEmu (в символах) более того размера, который разрешен в Windows для текущего консольного шрифта.
+A. The font size in the real console must be smaller than !ConEmu's, otherwise it would be impossible to increase !ConEmu's window size (in characters) more than the Windows limit for the current console font.
 
-===Q. Почему-то отображается только часть консоли; консоль отображается сдвинутой; не отображается вообще.===
+===Q. The console appears in part, shifted, or not at all===
 
-A. В настройке (Settings-!ConEmu.reg) указан слишком большой консольный шрифт.
+A. The configured (Settings-!ConEmu.reg) console font size is too high.
 
-A. Возможно, выбрана слишком большая ширина окна (в символах).
+A. Possibly, the window width (in characters) is too high.
 
-A. Возможно, по какой-то причине !ConEmu не смог сменить шрифт у реальной консоли. Выберите пункт системного меню окна !ConEmu 'Properties' и на закладке 'Шрифт' выберите !TrueType шрифт и наименьший размер.
+A. Possibly, for some reason !ConEmu failed to change the real console's font. Select 'Properties" from !ConEmu's system menu, and on the 'Font' tab choose the !TrueType font and the smallest available size.
 
-===Q. Почему исчезает окно быстрого поиска в панелях при переключении языка?===
-A. Так получилось. ФАР убирает окно поиска при потере и получении фокуса. Включите флажок 'Skip focus events' на вкладке 'Features' окна 'Settings'.
+===Q. Why does the quick search window disappear when the input language is changed?===
+A. An unfortunate side effect. FAR hides the quick search window when it receives or loses focus. Enable the flag 'Skip focus events' on the 'Features' tab of the 'Settings' window as a workaround.
 
-===Q. Почему нет кнопок мультиконсоли на панели инструментов?===
-A. Включите флажок '!MultiCon' в настройке, или ключ /Multi в командной строке.
+===Q. Why are there no multiconsole buttons on the toolbar?===
+A. Enable the '!MultiCon' flag in settings, or use the /Multi command-line parameter.
 
-===Q. Зависает (в заголовке !ConEmu отображается '...Waiting for result (10 sec)') через некоторое время в FAR появляется меню плагинов (или вызывается какой-то другой плагин).===
-A. По какой-то причине !ConEmu не смог определить, что Far не отвечает на запросы пользователя (выполняется команда, ожидание, и т.п.).
+===Q. !ConEmu hangs (title bar contains '...Waiting for result (10 sec)') and after some time, the plugin menu appears (or some other plugin is called)===
+A. For some reason, !ConEmu failed to detect that Far is not responding to user input (a command is executing, waiting, etc.)
 
-===Q. Почему не отображается 'Background image'?===
-A. По умолчанию, выбранным изображением замещаются только цвета фона #0 и #1 (обычно это черный и синий). В вашей настройке цвета могут быть другими, для явного указания замещаемых цветов можно использовать параметр "bgImageColors".
+===Q. Why does the 'Background image' not show up?===
+A. By default, only background colors #0 and #1 (usually black and dark-blue) are replaced with the background image.
+Your configuration may have other colors. To explicitly indicate replaced colors, use the parameter "bgImageColors".
 
-A. Если флажок 'Background image (bmp)' в третьем состоянии - картинка отображается только в панелях.
+A. If the flag 'Background image (bmp)' is in the third state - the image is only displayed in file panels.
 
-A. Если флажок 'Background image (bmp)' включен и файл картинки выбран - проверьте значение 'Darkening'. Возможно там указан 0.
+A. If the flag 'Background image (bmp)' is set and the image file is selected, make sure the 'Darkening' setting is not set to 0.
 
-===Q. Зачем нужно подтверждение 'Press Enter to close console...' отображаемое перед закрытием консоли после завершения всех программ в ней?===
-A. Если консоль будет сразу закрываться - вы не увидите ни результата выполнения команды, ни сообщений о возможных ошибках в аргументах.
+===Q. What is the purpose of the 'Press Enter to close console...' confirmation displayed after all commands finished executing?===
+A. If the console would close automatically, you would not see neither the results of the executed command, nor any error messages.
 
-===Q. Как отключить 'Press Enter to close console...'?===
-A. Подтверждение закрытия отключается автоматически после того как:
-  * корневая консольная программа проработает более 10 секунд, или
-  * запускается FAR, как корневой процесс, и в нем загружен плагин !ConEmu.
+===Q. How to disable 'Press Enter to close console...'?===
+A. The confirmation is disabled automatically, if:
+  * the root console command runs for more than 10 seconds, or
+  * Far Manager is the root process, and the !ConEmu plugin is loaded.
 
-A. При запуске команды можно добавить параметр `-new_console:n`.
+A. Add the parameter `-new_console:n` to the launched command.
 
-===Q. Запускается FAR, плагин установлен, но все равно появляется 'Press Enter to close console...'?===
-A. Возможно, в качестве корневого процесса запустился на FAR, а cmd.exe. Проверьте список процессов на вкладке 'Info' окна 'Settings'. Причина - некорректная командная строка (аргумент /cmd в !ConEmu), возможна ошибка в некорректных кавычках.
+===Q. FAR is the root process, the plugin is installed, yet 'Press Enter to close console...' still appears===
+A. Make sure that the root process is indeed Far, and not cmd.exe. Check the process list in the 'Info' tab of the 'Settings' window. The cause is an incorrect command-line (/cmd argument in !ConEmu), possibly incorrect quoting.
 
-===Q. Почему Shift-Enter в панелях запускает новое окно с реальной консолью, а не в новой вкладке?===
-A. Отсутсвует макрос на Shift-Enter или макросы запрещены.
+===Q. Why does Shift-Enter in panels launch console programs in new standard console windows, as opposed to new !ConEmu tabs?===
+A. The Shift-Enter macro is absent or macros are forbidden.
 
-A. Shift-Enter нажат во время 'быстрого поиска' (в этом случае требуется расширенный макрос для макрообласти 'Dialog').
+A. Shift-Enter is launched during 'quick search' (which requires an extended macro for the 'Dialog' macro-context).
 
-===Q. Почему в консоли отображается прямоугольник (рамка) вместо курсора?===
-A. Опция 'Block inactive cursor'. Альтернативная индикация, что фокус не в консоли.
+===Q. Why is the cursor displayed as a rectangle instead of the usual?===
+A. The 'Block inactive cursor' option. The alternative view indicates that the console does not have focus.
 
-===Q. В табах отображаются квадратики (вместо иероглифов).===
-A. По умолчанию, текст закладок отображается шрифтом "Tahoma". Выберите другой шрифт, содержащий требуемые вам символы (например "Arial Unicode MS") на вкладке 'Tabs' окна 'Settings'.
+===Q. Text in tab captions is displayed with squares (instead of hieroglyphs).===
+A. "Tahoma" is the default font used for tab captions. Choose another font which contains your required characters (e.g. "Arial Unicode MS") on the 'Tabs' tab of the 'Settings' window.
 
-===Q. Для консоли !ConEmu не всплывает перевод !GoldenDict===
-A. Скачайте и установите патч для !GoldenDict [http://code.google.com/p/conemu-maximus5/issues/detail?id=517#c3 отсюда].
+===Q. !GoldenDict translation pop-ups do not work in !ConEmu===
+A. Download and install [http://code.google.com/p/conemu-maximus5/issues/detail?id=517#c3 this GoldenDict patch].
