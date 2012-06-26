@@ -32,7 +32,10 @@ This project grew up from [http://xs.nm.ru/ ConEmu by Zoin].
 Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&topic=38078&glp forum.ru-board.com] :)
 
 </td><td width="230" valign="top">
+<wiki:comment>
 <a href="http://code.google.com/p/conemu-maximus5/wiki/Awards"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012SO.png" title="Open Source Advertising - Sidebar - 2012"/></a>
+</wiki:comment>
+<a href="http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=Type%3DDocumentation+&sort=-modified"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012.png" title="Helping with documentation"/></a>
 </td></tr></table>
 
 
