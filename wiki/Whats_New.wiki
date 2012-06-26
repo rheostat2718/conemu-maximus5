@@ -17,8 +17,8 @@ Delete old files from old locations if you are not using the installer.
   * Again !ConEmu inside mode.
     * !AutoResize
     * "As Administrator" supported: use "-cur_console:a" or hold Shift when selecting menu item
-    * For debug purposes: "/insidewnd <HWND>" & "/insidepid <PID>".
-    * ConEmu_Inside.reg file updated.
+    * For debug purposes: "`/insidewnd <HWND>`" & "`/insidepid <PID>`".
+    * !ConEmu_Inside.reg file updated.
   * Right click on leftmost part of status bar pop up system menu (useful in '!ConEmu inside' mode).
   * Minor fix in Close Far editor/viewer confirmation.
 
