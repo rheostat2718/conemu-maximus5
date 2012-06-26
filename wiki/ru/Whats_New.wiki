@@ -13,6 +13,16 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * Заявка на Ads: [http://meta.superuser.com/a/5023/139371 meta.superuser.com], please !UpVote.
 
 
+==Build 120626==
+  * !ConEmu inside mode.
+    * !Автоподгон размера
+    * "As Administrator" supported: или с ключом `-cur_console:a` или удерживая Shift при выборе пункта меню.
+    * For debug purposes: "/insidewnd <HWND>" & "/insidepid <PID>".
+    * Обновлен ConEmu_Inside.reg.
+  * Правый клик на левом углу статусной строки открывает системное меню !ConEmu (полезно для режима '!ConEmu inside').
+  * Небольшая правка текста подтверждения закрытия редактора/вьювера.
+
+
 ==Build 120625==
   * Новая опция 'Min cursor size (pix)' на вкладках 'Text cursor' & 'App distinct'.
   * Issue 619: В не которых случаях возникал Assertion после закрытия Far Manager.

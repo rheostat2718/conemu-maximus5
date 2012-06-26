@@ -13,11 +13,21 @@ Delete old files from old locations if you are not using the installer.
   * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
 
 
+==Build 120626==
+  * Again !ConEmu inside mode.
+    * !AutoResize
+    * "As Administrator" supported: use "-cur_console:a" or hold Shift when selecting menu item
+    * For debug purposes: "/insidewnd <HWND>" & "/insidepid <PID>".
+    * ConEmu_Inside.reg file updated.
+  * Right click on leftmost part of status bar pop up system menu (useful in '!ConEmu inside' mode).
+  * Minor fix in Close Far editor/viewer confirmation.
+
+
 ==Build 120625==
-  * Новая опция 'Min cursor size (pix)' на вкладках 'Text cursor' & 'App distinct'.
-  * Issue 619: В не которых случаях возникал Assertion после закрытия Far Manager.
-  * Немного поправим 'Detect text line ends', 'Trim trailing spaces', 'Bash margin'.
-  * Новый ключик для !ConEmu.exe - "`/inside`". Пример использования в "`ConEmu\Addons\ConEmu_Inside.reg`". Смысл - создать панель в проводнике и запустить в ней, например, powershell. Пока «на поиграться», вроде работает в Windows 7 и Windows 8, в других системах не проверял. Перед вызовом контекстного меню в проводнике нужно либо увеличить высоту нижней области (Windows 7), либо показать панель информации/просмотра (Windows 7 & 8).
+  * New option 'Min cursor size (pix)' on pages 'Text cursor' & 'App distinct'.
+  * Issue 619: Sometimes Assertion appears after closing Far Manager.
+  * Minor fix in 'Detect text line ends', 'Trim trailing spaces', 'Bash margin'.
+  * New !ConEmu.exe switch - "`/inside`". Sample usage in "`ConEmu\Addons\ConEmu_Inside.reg`". In breaf - create a pane in Explorer window and start there, for example, powershell. Experimental, was tested in Windows 7 and Windows 8, other systems was not tested yet. Before calling context menu item you owe to increase height of lower pane (Windows 7) of display right pane (Windows 7 & 8).
 
 
 ==Build 120624==
