@@ -39,7 +39,7 @@ Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&top
 </td></tr></table>
 
 
-==[TableOfContents Table of contents], [Whats_New What's new], [ConEmuFAQ FAQ (russian)], [Screenshots Screenshots], [Reviews Reviews]==
+==[TableOfContents Table of contents], [Whats_New What's new], [ConEmuFAQ FAQ], [Screenshots Screenshots], [Reviews Reviews]==
 
 
 ==Description==
