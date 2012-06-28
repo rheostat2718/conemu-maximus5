@@ -1,0 +1,18 @@
+=Багтрекер !ConEmu - ошибки и предложения=
+
+==Просмотр существующих вопросов (Issues)==
+  * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-id Активные вопросы], [http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-modified сортированные по дате]===
+  * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=&sort=-id Все (активные + закрытые) вопросы]===
+  * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=Type%3DDocumentation+&sort=-modified Документация (перевод, вычитка)]===
+
+==Как пользоваться багтрекером==
+===Перед созданием новой ошибки или предложения===
+  * Прочтите [TableOfContents документацию] и [ConEmuFAQ FAQ]. Если в документации не ясен какой-то момент, сообщите об этом в комментарии (поле ввода комментария в конце каждой wiki-страницы).
+  * А также, проверьте существующие вопросы. Вполне возможно, что подобный вопрос уже создавался или был закрыт (исправлен).
+===Как следить за вопросами===
+  * Если вам интересны изменения по какому-либо Issue, поставьте на нем звездочку, и вам будут приходить уведомления на e-mail при любых изменениях в этом Issue.
+
+==Создать новый Issue==
+*Внимание* Версии !ConEmu, OS и Far Manager (если используется) - необходимая информация.
+  * ===[http://code.google.com/p/conemu-maximus5/issues/entry Сообщить об ошибке]===
+  * ===[http://code.google.com/p/conemu-maximus5/issues/entry?template=Concept Предложить улучшение]===
