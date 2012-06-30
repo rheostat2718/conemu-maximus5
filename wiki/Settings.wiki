@@ -1,4 +1,4 @@
-[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FSettings%3Fshow%3Dcontent Settings (autotranslated)]
+<font size="5">*[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FSettings%3Fshow%3Dcontent Settings (autotranslated Ru-En)]*</font>
 ----------------------------------------------------------------------
 
 <font size="5">*!ConEmu setup*</font>
