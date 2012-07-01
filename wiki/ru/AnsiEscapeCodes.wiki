@@ -40,7 +40,7 @@ vim.exe -cur_console:h0 <Vim arguments here>
 echo ^[[9999;1H
 }}}
 
-==TechInfo==
+==!TechInfo==
 Обработка ANSI escape последовательностей осуществляется в том случае, если консольная программа
 использует для вывода функции WriteConsoleA, WriteConsoleW или !WriteFile. Например:
 {{{
