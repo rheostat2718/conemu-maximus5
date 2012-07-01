@@ -31,11 +31,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
     * Синхронизация текущей папки: Explorer -> !ConEmu. На статусной строке добавлена кликабельная колонка 'Sync'.
     * Адаптировано для Vista.
   * More ANSI examples. !RenameTab.cmd, !SetConTitle.cmd, !SetProgress.cmd.
-  * GuiMacro: Progress(<Type>[,<Value>])
+  * GuiMacro.
+{{{
+  Progress(<Type>[,<Value>])
 	Set progress state on taskbar and ConEmu title.
-	 Type=0: remove progress.
-	 Type=1: set progress value to <Value> (0-100).
-	 Type=2: set error state in progress.
+	  Type=0: remove progress.
+	  Type=1: set progress value to <Value> (0-100).
+	  Type=2: set error state in progress.
+}}}
   * На ярлык !ConEmu (или сам !ConEmu.exe в проводнике) можно набросить один или несколько ярлыков программ. Каждая запустится в своей вкладке. Исключение - если в в настройке ConEmu "Startup" -> "Command line" указан "far.exe". В этом случае строка запуска "подклеивается" к "far.exe".
   * При быстром закрытии !ConEmu "крестиком" в консоли успевало мелькнуть "Press Enter or Esc to close console...".
   * Issue 575: Confirm or abort settings !ConEmu OnTop from external program.
