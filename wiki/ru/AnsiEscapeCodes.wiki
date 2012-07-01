@@ -77,7 +77,7 @@ TODO: list is incomplete yet
 For simplifying, endings in the following table marked as «ST».
 
 || ESC ] 2 ; "_txt_" ST || Set console window title to _txt_. ||
-|| *ConEmu specific* ||
+|| || *!ConEmu specific* ||
 || ESC ] 9 ; 1 ; _ms_ ST || Sleep. _ms_ - number, milliseconds. ||
 || ESC ] 9 ; 2 ; "_txt_" ST || Show GUI !MessageBox ( _txt_ ) for any purposes. ||
 || ESC ] 9 ; 3 ; "_txt_" ST || Change !ConEmu Tab to _txt_. Set empty string to return original Tab text. ||
@@ -132,5 +132,5 @@ type "Errors.log" | sed -e "s/.* : \bERR.*/^[[1;31;40m&^[[0m/i" -e "s/.* : \bWAR
 }}}
 *Warning* Перед использованием «^[» нужно заменить на ESC код (символ с кодом \x1B).
 
-==Progressbar в cmd-файлах==
+==Текстовый Progressbar в cmd-файлах==
 [http://code.google.com/p/conemu-maximus5/issues/attachmentText?id=554&aid=5540007000&name=test_bar.cmd&token=X1cvdOQjxnWPTGqFCrzyH1M0DCs%3A1337810139732 test_bar.cmd] @Artyom.Vorobets

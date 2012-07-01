@@ -1,27 +1,49 @@
-﻿<font size="5">*ANSI X3.64 and Xterm 256 colors*</font>
+﻿<font size="5">*[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FAnsiEscapeCodes%3Fshow%3Dcontent ANSI X3.64 and Xterm 256 colors (autotranslated Ru-En)]*</font>
+----------------------------------------------------------------------
+
+<font size="5">*ANSI X3.64 and Xterm 256 colors*</font>
 
 В !ConEmu 120520d появилась поддержка [http://en.wikipedia.org/wiki/ANSI_X3.64 ANSI X3.64] и его расширения [http://www.frexx.de/xterm-256-notes/ xterm 256 color mode].
 
 <wiki:toc max_depth="3" /> 
 
 =Описание=
-Новая опция «ANSI X3.64 / 256color» на вкладке «Features», по умолчанию включена.
+Новая опция «ANSI X3.64 / xterm 256 colors» на вкладке «Features», по умолчанию включена.
 Адресуется консоль целиком (с прокруткой),
 но xterm 256 color влияет только на «рабочую» область (нижняя часть консоли, если есть прокрутка).
 Вне «рабочей» области 256 цветов аппроксимируются к стандартным 16-и консольным цветам.
 
-Чтобы ANSI работало - должен быть включен «Inject !ConEmuHk».
+==Для обработки ANSI последовательностей==
+  * Должны быть включены флажки
+    * «ANSI X3.64 / xterm 256 colors» на вкладке [Settings#Features Features]
+    * «Inject !ConEmuHk» на вкладке [Settings#Features Features] (требуется для обработки программ второго уровня)
 
-Если кажется, что 256color не работает - включить флажок «Colorer !TrueMod support», проверить
-выключен ли буфер/прокрутка. Например, запустить скрипт [http://www.frexx.de/xterm-256-notes/data/256colors2.pl 256colors2.pl] так:
+==Для режима xterm 256 color==
+  * Должны быть включены флажки
+    * «!TrueMod (24bit color) support» на вкладке [Settings#Colors Colors]
+    * «ANSI X3.64 / xterm 256 colors» на вкладке [Settings#Features Features]
+    * «Inject !ConEmuHk» на вкладке [Settings#Features Features] (требуется для обработки программ второго уровня)
+  * проверить выключен ли буфер/прокрутка. 
+
+===Пример 1: Vim===
+{{{
+vim.exe -cur_console:h0 <Vim arguments here>
+}}}
+
+===Пример 2: 256colors2.pl===
+Скрипт [http://www.frexx.de/xterm-256-notes/data/256colors2.pl 256colors2.pl] нужно запускать так:
 {{{
 256colors2.pl -cur_console:h0
 }}}
-Или прокрутить консоль в самый низ («^[» нужно заменить на ESC код - символ с кодом \x1B):
+
+===Пример 3: прокрутить консоль===
+Если приложение *не* полноэкранное (вроде Far/Vim/Hiew/...),
+можно прокрутить консоль в самый низ («^[» нужно заменить на ESC код - символ с кодом \x1B):
 {{{
 echo ^[[9999;1H
 }}}
 
+==!TechInfo==
 Обработка ANSI escape последовательностей осуществляется в том случае, если консольная программа
 использует для вывода функции WriteConsoleA, WriteConsoleW или !WriteFile. Например:
 {{{
@@ -58,7 +80,7 @@ TODO: list is incomplete yet
 For simplifying, endings in the following table marked as «ST».
 
 || ESC ] 2 ; "_txt_" ST || Set console window title to _txt_. ||
-|| *ConEmu specific* ||
+|| || *!ConEmu specific* ||
 || ESC ] 9 ; 1 ; _ms_ ST || Sleep. _ms_ - number, milliseconds. ||
 || ESC ] 9 ; 2 ; "_txt_" ST || Show GUI !MessageBox ( _txt_ ) for any purposes. ||
 || ESC ] 9 ; 3 ; "_txt_" ST || Change !ConEmu Tab to _txt_. Set empty string to return original Tab text. ||
