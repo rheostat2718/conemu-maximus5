@@ -5,7 +5,9 @@ These shortcuts are only defaults!
 You may redefine almost all combinations and define
 up to 32 GuiMacro hotkeys on the [Settings#Keys Keys] page.
 
-Moreover, some actions have no default hotkeys. For example, you may choose hotkey
+Moreover, some actions have no default hotkeys.
+
+For example, you may choose hotkey
 for «Start text selection (like text editors)», «Switch Always on top window mode»
 and so on.
 
