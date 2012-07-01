@@ -1,5 +1,8 @@
 ﻿=Багтрекер !ConEmu - ошибки и предложения=
 
+==Issues usability==
+[Issues2 Look and comment]
+
 ==Просмотр существующих вопросов (Issues)==
   * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-id Активные вопросы], [http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-modified сортированные по дате]===
   * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=&sort=-id Все (активные + закрытые) вопросы]===
