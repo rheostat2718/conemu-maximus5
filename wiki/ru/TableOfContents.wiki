@@ -20,7 +20,7 @@
       * [ExtendedConsole ExtendedConsole]
       * [AnsiEscapeCodes ANSI X3.64 / 256 color]
       * [Progress Прогресс операций]
-      * [Windows7Taskbar Панель задач Windows 7]
+      * [Windows7Taskbar Таскбар Windows 7]
     * Управление
       * [Tabs Закладки (табы)]
       * [SystemMenu Системное меню]
