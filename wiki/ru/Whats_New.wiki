@@ -19,14 +19,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
     * Создать full-dump: `ConEmuC.exe /DEBUGPID=<PID> /FULL`
     * О соответствии битности беспокоиться не нужно, все сделает сам ConEmuC.exe.
     * Также, добавлен пункт в системном меню !ConEmu: Debug -> Active process memory dump.
-  * Tasks: /DIR "<dir>" учитывается при запуске вкладки в уже открытом !ConEmu.
+  * Tasks: `/DIR "<dir>"` учитывается при запуске вкладки в уже открытом !ConEmu.
   * Также, рабочую папку можно указать с помощью параметров "`-new_console:d[:<dir>]`" и "`-cur_console:d[:<dir>]`".
   * Немного AI в 'Change prompt text cursor position with Left Click' - не пытаться вывести курсор за пределы строки.
 
 
 ==Build 120630==
   * Page 'Transparency', 'Use separate value'.
-  * После закрытия консоли (не последней) на статусной строке не обновлялось поле 'ActiveCon/TotalCount'.
+  * После закрытия консоли (не последней) на статусной строке не обновлялось поле '!ActiveCon/!TotalCount'.
   * !ConEmu inside mode.
     * Синхронизация текущей папки: Explorer -> !ConEmu. На статусной строке добавлена кликабельная колонка 'Sync'.
     * Адаптировано для Vista.
