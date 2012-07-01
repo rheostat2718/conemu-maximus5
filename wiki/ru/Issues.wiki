@@ -13,6 +13,6 @@
   * Если вам интересны изменения по какому-либо Issue, поставьте на нем звездочку, и вам будут приходить уведомления на e-mail при любых изменениях в этом Issue.
 
 ==Создать новый Issue==
-*Внимание*! Версии !ConEmu, OS и Far Manager (если используется) - необходимая информация.
+*Внимание!* Версии !ConEmu, OS и Far Manager (если используется) - необходимая информация.
   * ===[http://code.google.com/p/conemu-maximus5/issues/entry Сообщить об ошибке]===
   * ===[http://code.google.com/p/conemu-maximus5/issues/entry?template=Concept Предложить улучшение]===

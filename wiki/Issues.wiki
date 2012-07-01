@@ -13,6 +13,6 @@
   * If you are interested in some issue, star it and you'll receive e-mail notifications on any changes in it.
 
 ==Create new issue==
-*Please, note!*! !ConEmu, OS and Far Manager (if used) versions are required information!
+*Please, note!* !ConEmu, OS and Far Manager (if used) versions are required information!
   * ===[http://code.google.com/p/conemu-maximus5/issues/entry Report a bug]===
   * ===[http://code.google.com/p/conemu-maximus5/issues/entry?template=Concept Make a suggestion]===
