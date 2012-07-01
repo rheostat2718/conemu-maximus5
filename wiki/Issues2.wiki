@@ -1,3 +1,5 @@
+===[http://code.google.com/p/conemu-maximus5/issues/detail?id=625 Appearence discussion issue]===
+
 =Variant 3=
 
 <table border="0">
@@ -79,5 +81,3 @@
 <wiki:comment>
  colspan="2" rowspan="2"
 </wiki:comment>
-
-===[http://code.google.com/p/conemu-maximus5/issues/detail?id=625 Appearence discussion issue]===
