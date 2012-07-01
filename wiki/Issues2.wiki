@@ -1,3 +1,36 @@
+=Variant 3=
+
+<table>
+<tr>
+<td colspan="2" rowspan="2">
+<table cellspacing="0" cellpadding="0" border="0">
+<tr>
+<td colspan="3"><a href="http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-id"><img src="http://i.imgur.com/eQ2IF.png"></img></a></td>
+</tr>
+
+<tr>
+<td><a href="http://code.google.com/p/conemu-maximus5/wiki/ConEmuFAQ"><img src="http://i.imgur.com/SPfoX.png"></img></a></td>
+<td><a href="http://code.google.com/p/conemu-maximus5/wiki/ConEmuFAQ"><img src="http://i.imgur.com/B000L.png"></img></a></td>
+<td><a href="http://code.google.com/p/conemu-maximus5/wiki/ConEmuFAQ"><img src="http://i.imgur.com/DkINw.png"></img></a></td>
+</tr>
+
+</table>
+
+</td>
+<td colspan="2"><a href="http://code.google.com/p/conemu-maximus5/issues/entry?template=Concept"><img src="http://i.imgur.com/LyeCw.png"></img></a></td>
+</tr>
+
+<tr>
+<td><a href="http://code.google.com/p/conemu-maximus5/wiki/ConEmuFAQ"><img src="http://i.imgur.com/Edz5K.png"></img></a></td>
+<td rowspan="2"><a href="http://code.google.com/p/conemu-maximus5/wiki/TableOfContents?tm=6"><img src="http://i.imgur.com/D9XxI.png"></img></a></td>
+</tr>
+
+<tr>
+<td colspan="3"><a href="http://code.google.com/p/conemu-maximus5/issues/entry"><img src="http://i.imgur.com/mc751.png"></img></a></td>
+</tr>
+</table>
+
+
 =Variant 2=
 
 <table>
