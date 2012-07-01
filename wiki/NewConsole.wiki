@@ -36,6 +36,7 @@ While you create new tab from !ConEmu GUI interface, «-new_console» and «-cur
 ==What is the difference between «-new_console» and «-cur_console»?==
 «-new_console» always creates new tab in !ConEmu, while «-cur_console» not. So, some of switches used with «-cur_console» does not have any effect.
 
+<wiki:comment>
 ==If you need to pass same name argument to console program==
 Hm, in this really rare case (I have not know any program at that moment) you may use following form
 {{{
@@ -45,6 +46,7 @@ program.exe -new_console:- -new_console «other arguments»
 {{{
 program.exe -new_console «other arguments»
 }}}
+</wiki:comment>
 
 =Examples=
 
