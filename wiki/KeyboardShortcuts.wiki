@@ -1,5 +1,7 @@
 ﻿=!ConEmu keyboard shortcuts=
-Please note! These shortcuts are only defaults!
+
+==Please note!==
+These shortcuts are only defaults!
 You may redefine almost all combinations and define
 up to 32 GuiMacro hotkeys.
 
@@ -10,24 +12,24 @@ up to 32 GuiMacro hotkeys.
 || Ctrl+Win+Alt+Space || Reveals or hide the [ConEmuTerms#RealConsole real console window]. On some systems (Vista, i.e.) You may press Space twice. ||
 || Ctrl+Win+Enter || Maximize !ConEmu window and hide window caption (!FullScreen mode). ||
 || Ctrl+Tab,<br>Ctrl+Shift+Tab || Tabs switching. In lazy switching mode (tab bar must be visible) window will not be really switched, until Ctrl is released. When lazy tab switching was started in recent mode, You may use Left and Right keys to select tabs directly. *Note*, tabs must be shown in the !ConEmu window. ||
-|| Ctrl+Left,<br>Ctrl+Right,<br>Ctrl+Up,<br>Ctrl+Down || Switch tab to left/right (while Ctrl-Tab was pressed and Ctrl - hold). ||
-|| Win+Left,<br>Win+Right,<br>Win+Up,<br>Win+Down || When «Win+Arrows - resize window» checked - obviously resize !ConEmu window. *Note*, you may change «Win» hostkey to any combination of maximum three modifiers. ||
-|| Win+1 … Win+0 || [Tabs#Switching_between_consoles Activates consoles] by numbers (1,2,...9,0). *Note*, you may change «Win» hostkey to any combination of maximum three modifiers. ||
+|| Ctrl+Left, Ctrl+Right,<br>Ctrl+Up, Ctrl+Down || Switch tab to left/right (while Ctrl-Tab was pressed and Ctrl - hold). ||
+|| Win+Left, Win+Right,<br>Win+Up, Win+Down || When «Win+Arrows - resize window» checked - obviously resize !ConEmu window.<br>*Note*, you may change «Win» hostkey to any combination of maximum three modifiers. ||
+|| Win+1 … Win+0 || [Tabs#Switching_between_consoles Activates consoles] by numbers (1,2,3,4,5,6,7,8,9,0).<br>*Note*, you may change «Win» hostkey to any combination of maximum three modifiers. ||
 
 ==Configurable hotkeys==
 || *Multiconsole* || ||
-|| Win-W || Create new console tab. [Screenshots#Confirmation_of_new_console_creation_(Win-W) Confirmation dialog] will be displayed, when «[Settings#Tabs Create confirmation]» setting is enabled. *W* is default, [Settings#Tabs configurable]. ||
-|| Win-Shift-W || Create new console tab with [Screenshots#Confirmation_of_new_console_creation_(Win-W) confirmation dialog], regardless of «[Settings#Tabs Create confirmation]» setting. *W* is default, [Settings#Tabs configurable]. ||
-|| [Screenshots#Confirmation_of_restarting_console_(Win-%7E) Win-~] || Restart current console, all applications running in the current console will be terminated. *~* is default, [Settings#Tabs configurable]. ||
-|| Win-Q, Win-Shift-Q || Activate next/previous console tab. *Q* is default, [Settings#Tabs configurable]. ||
-|| Win-Del || Terminate current console. This hotkey is *disabled* by default! You may enable it in the [Settings#Manual_change_of_settings ConEmu Settings] ||
-|| Win-A || *Ignored in Windows 7*. Turns [ConEmuTerms#BufferHeight BufferHeight] mode on/off. *A* is default. ||
-|| Win-1, ..., Win-9, Win-0 || Select console tab by number (1 throw 30) ||
+|| Win+W || Create new console tab. [Screenshots#Confirmation_of_new_console_creation_(Win-W) Confirmation dialog] will be displayed, when «[Settings#Tabs Create confirmation]» setting is enabled. *W* is default, [Settings#Tabs configurable]. ||
+|| Win+Shift+W || Create new console tab with [Screenshots#Confirmation_of_new_console_creation_(Win-W) confirmation dialog], regardless of «[Settings#Tabs Create confirmation]» setting. *W* is default, [Settings#Tabs configurable]. ||
+|| [Screenshots#Confirmation_of_restarting_console_(Win-%7E) Win+~] || Restart current console, all applications running in the current console will be terminated. *~* is default, [Settings#Tabs configurable]. ||
+|| Win+Q, Win+Shift+Q || Activate next/previous console tab. *Q* is default, [Settings#Tabs configurable]. ||
+|| Win+Del || Terminate current console. This hotkey is *disabled* by default! You may enable it in the [Settings#Manual_change_of_settings ConEmu Settings] ||
+|| Win+A || Show alternative console buffer (last command output). This is sort of «Pause» for the console. *A* is default. ||
+|| Win+S || *Ignored in Windows 7*. Turns [ConEmuTerms#BufferHeight BufferHeight] mode on/off. *S* is default. ||
 || *Minimize/Restore* || ||
-|| Win-C || Minimize or Restore !ConEmu window. *C* is default, [Settings#Manual_change_of_settings configurable]. This is *global* hotkey, it works even !ConEmu has no focus. ||
-|| Win-X || Create new console tab with `cmd.exe`. *X* is default, [Settings#Manual_change_of_settings configurable]. ||
+|| Win+C || Minimize or Restore !ConEmu window. *C* is default, [Settings#Manual_change_of_settings configurable]. This is *global* hotkey, it works even !ConEmu has no focus. ||
+|| Win+X || Create new console tab with `cmd.exe`. *X* is default, [Settings#Manual_change_of_settings configurable]. ||
 || *Unsorted* || ||
-|| Ctrl-Up, Ctrl-Down,<br>Ctrl-!PgUp, Ctrl-!PgDn || [ConEmuTerms#BufferHeight Buffer] scrolling ||
+|| Ctrl+Up, Ctrl+Down,<br>Ctrl+!PgUp, Ctrl+!PgDn || [ConEmuTerms#BufferHeight Buffer] scrolling ||
 
 ===Host key===
 Note, *Win* is default «[ConEmuTerms#Host_key Host key]», keys combination is [Settings#Tabs configurable].
