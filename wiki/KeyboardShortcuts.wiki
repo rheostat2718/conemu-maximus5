@@ -3,7 +3,11 @@
 ==Please note!==
 These shortcuts are only defaults!
 You may redefine almost all combinations and define
-up to 32 GuiMacro hotkeys.
+up to 32 GuiMacro hotkeys on the [Settings#Keys Keys] page.
+
+Moreover, some actions have no default hotkeys. For example, you may choose hotkey
+for «Start text selection (like text editors)», «Switch Always on top window mode»
+and so on.
 
 ==Non configurable hotkeys==
 || Win+Alt+A || Displays !ConEmu About dialog. Also, you may see there useful information about comand line switches. ||
@@ -25,10 +29,9 @@ up to 32 GuiMacro hotkeys.
 || Win+Del || Terminate current console. This hotkey is *disabled* by default! You may enable it in the [Settings#Manual_change_of_settings ConEmu Settings] ||
 || Win+A || Show alternative console buffer (last command output). This is sort of «Pause» for the console. *A* is default. ||
 || Win+S || *Ignored in Windows 7*. Turns [ConEmuTerms#BufferHeight BufferHeight] mode on/off. *S* is default. ||
-|| *Minimize/Restore* || ||
+|| *Unsorted* || ||
 || Win+C || Minimize or Restore !ConEmu window. *C* is default, [Settings#Manual_change_of_settings configurable]. This is *global* hotkey, it works even !ConEmu has no focus. ||
 || Win+X || Create new console tab with `cmd.exe`. *X* is default, [Settings#Manual_change_of_settings configurable]. ||
-|| *Unsorted* || ||
 || Ctrl+Up, Ctrl+Down,<br>Ctrl+!PgUp, Ctrl+!PgDn || [ConEmuTerms#BufferHeight Buffer] scrolling ||
 
 ===Host key===
