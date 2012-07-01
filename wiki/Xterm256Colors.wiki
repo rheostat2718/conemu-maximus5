@@ -5,7 +5,7 @@
     * «!TrueMod (24bit color) support» on [Settings#Colors Colors] page
     * «ANSI X3.64 / xterm 256 colors» on [Settings#Features Features] page
     * «Inject !ConEmuHk» on [Settings#Features Features] page (required for second level programs)
-  * turn off scrolling (extended attributes works only in the «work» area - the bottom of the console)
+  * Turn off scrolling (extended attributes works only in the «work» area - the bottom of the console)
 
 ===Example 1: Vim===
 {{{
