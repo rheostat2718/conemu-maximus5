@@ -22,6 +22,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * Tasks: `/DIR "<dir>"` учитывается при запуске вкладки в уже открытом !ConEmu.
   * Также, рабочую папку можно указать с помощью параметров "`-new_console:d[:<dir>]`" и "`-cur_console:d[:<dir>]`".
   * Немного AI в «Change prompt text cursor position with Left Click» - не пытаться вывести курсор за пределы строки.
+  * Issue 575: Confirm or abort setting !ConEmu !OnTop from external program.
 
 
 ==Build 120630==
@@ -41,7 +42,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 }}}
   * На ярлык !ConEmu (или сам !ConEmu.exe в проводнике) можно набросить один или несколько ярлыков программ. Каждая запустится в своей вкладке. Исключение - если в в настройке !ConEmu «Startup» -> «Command line» указан "`far.exe`". В этом случае строка запуска «подклеивается» к "`far.exe`".
   * При быстром закрытии !ConEmu «крестиком» в консоли успевало мелькнуть «Press Enter or Esc to close console...».
-  * Issue 575: Confirm or abort settings !ConEmu !OnTop from external program.
+  * Issue 575: Confirm or abort setting !ConEmu !OnTop from external program.
   * Issue 624: Menu was not available in Notepad++ with !SourceCookifier plugin.
 
 
