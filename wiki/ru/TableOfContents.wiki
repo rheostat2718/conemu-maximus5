@@ -19,6 +19,7 @@
     * Функции
       * [ExtendedConsole ExtendedConsole]
       * [AnsiEscapeCodes ANSI X3.64 / 256 color]
+      * [Xterm256Colors Xterm 256 colors]
       * [Progress Прогресс операций]
       * [Windows7Taskbar Таскбар Windows 7]
     * Управление
