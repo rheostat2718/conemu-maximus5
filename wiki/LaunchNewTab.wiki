@@ -10,6 +10,13 @@ This dialog may be opened from:
   * <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAddBtn.png" title="Toolbar" alt="Toolbar">
   * <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAddSys.png" title="System menu" alt="System menu">
 
+==Create new console without dialog==
+You may switch off create new console confirmation, just disable «Create confirmation» checkbox
+on [Settings#Tabs Tabs] settings page.
+
+*Note*. You may pop up confirmation dialog even if «Create confirmation» unchecked.
+Just hold Shift while creating console from toolbar, System menu, or Keyboard (Win+Shift+W by default).
+
 ==Create new tab from existing one==
 Use [NewConsole -new_console] switch while executing command.
 For example, if you want to start PuTTY in new !ConEmu tab,
