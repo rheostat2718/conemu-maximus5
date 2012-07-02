@@ -35,6 +35,7 @@ and so on.
 || Win+C || Minimize or Restore !ConEmu window. *C* is default, [Settings#Manual_change_of_settings configurable]. This is *global* hotkey, it works even !ConEmu has no focus. ||
 || Win+X || Create new console tab with `cmd.exe`. *X* is default, [Settings#Manual_change_of_settings configurable]. ||
 || Ctrl+Up, Ctrl+Down,<br>Ctrl+!PgUp, Ctrl+!PgDn || [ConEmuTerms#BufferHeight Buffer] scrolling ||
+|| Ctrl+Alt || Drag ConEmu window with mouse by client area ||
 
 ===Host key===
 Note, *Win* is default «[ConEmuTerms#Host_key Host key]», keys combination is [Settings#Tabs configurable].
