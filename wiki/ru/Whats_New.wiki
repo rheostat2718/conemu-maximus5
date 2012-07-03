@@ -13,6 +13,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * Заявка на Ads: [http://meta.superuser.com/a/5023/139371 meta.superuser.com], please !UpVote.
 
 
+==Build 120703==
+  * Теперь работают как !DoubleClick (для «слов») так и !TripleClick (для «строк») при выделении текста мышкой.
+
+
 ==Build 120702==
   * Drag window by any point of client area (configurable modifier, Ctrl+Alt by default).
   * «Features» -> «Snap to desktop edges».

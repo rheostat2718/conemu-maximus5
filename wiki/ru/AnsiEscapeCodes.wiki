@@ -49,6 +49,14 @@ cmd /c type "Colors-256.ans"
 Вывод текста с текущими расширенными атрибутами (xterm 256 color) возможен также функциями
 WriteConsoleOutputCharacterA и WriteConsoleOutputCharacterW.
 
+==Переменная окружения==
+Как проверить в cmd-файле или консольном приложении разрешено ли ANSI x3.64?
+Проверить значение переменной окружения «ConEmuANSI»
+{{{
+if "%ConEmuANSI%"=="ON"  echo Разрешено
+if "%ConEmuANSI%"=="OFF" echo Запрещено
+}}}
+
 =Список поддерживаемых кодов=
 ==CSI (Control Sequence Initiator) codes==
 || ESC [ _lines_ A || Moves cursor up by _lines_ lines (1 by default) ||
@@ -64,24 +72,44 @@ WriteConsoleOutputCharacterA и WriteConsoleOutputCharacterW.
 || ESC [ _lines_ S || Scroll screen (whole buffer) up by _lines_. New lines are added at the bottom. ||
 || ESC [ _lines_ T || Scroll screen (whole buffer) down by _lines_. New lines are added at the top. ||
 || ESC [ _row_ ; _col_ f || Set cursor position (same as H). The values _row_ and _col_ are 1-based. ||
-|| ESC [ _a_ ; _b_ ; _c_ m || Set attributes (see below). ||
+|| ESC [ _a_ ; _b_ h || Set mode ([AnsiEscapeCodes#Terminal_modes see below]). ||
+|| ESC [ _a_ ; _b_ l || Reset mode ([AnsiEscapeCodes#Terminal_modes see below]). ||
+|| ESC [ _a_ ; _b_ ; _c_ m || Set SGR attributes ([AnsiEscapeCodes#SGR_(Select_Graphic_Rendition)_parameters see below]). ||
 || ESC [ s || Save cursor position (can not be nested). ||
 || ESC [ u || Restore cursor position. ||
-TODO: list is incomplete yet
+
+===Terminal modes===
+|| ESC [ 7 ; _col_ h || Enables line wrapping at column position. If _col_ (1-based) is absent, wrap at column 80. ||
+|| ESC [ 7 l || Disables line wrapping. Lines wraps at the end of screen buffer. ||
+|| ESC [ 25 h || Show text cursor. ||
+|| ESC [ 25 l || Hide text cursor. ||
 
 ===SGR (Select Graphic Rendition) parameters===
-TODO: list is incomplete yet
+|| 0 || Reset current attributes ||
+|| 1 || Set !BrightOrBold ||
+|| 2 || Unset !BrightOrBold ||
+|| 3 || Set !ItalicOrInverse ||
+|| 4 || Set !BackOrUnderline ||
+|| 5 || Set !BackOrUnderline ||
+|| 30…37 || Set ANSI text color ||
+|| 38 ; 5 ; n || Set xterm text color, _n_ is color index from 0 to 255 ||
+|| 39 || Reset text color to defauls ||
+|| 40…47 || Set ANSI background color ||
+|| 48 ; 5 ; n || Set xterm background color, _n_ is color index from 0 to 255 ||
+|| 49 || Reset background color to defauls ||
 
-==OSC (Operating system command) codes==
+==OSC (Operating system commands)==
 *Note*. These codes may ends with «ESC\» (two symbols - ESC and !BackSlash) or «BELL» (symbol with code \x07).
 For simplifying, endings in the following table marked as «ST».
 
 || ESC ] 2 ; "_txt_" ST || Set console window title to _txt_. ||
-|| || *!ConEmu specific* ||
+
+===!ConEmu specific OSC===
 || ESC ] 9 ; 1 ; _ms_ ST || Sleep. _ms_ - number, milliseconds. ||
 || ESC ] 9 ; 2 ; "_txt_" ST || Show GUI !MessageBox ( _txt_ ) for any purposes. ||
 || ESC ] 9 ; 3 ; "_txt_" ST || Change !ConEmu Tab to _txt_. Set empty string to return original Tab text. ||
 || ESC ] 9 ; 4 ; _st_ ; _pr_ ST || Set progress state on Windows 7 taskbar and !ConEmu title. When _st_ is 0: remove progress. When _st_ is 1: set progress value to _pr_ (number, 0-100). When _st_ is 2: set error state in progress on Windows 7 taskbar ||
+|| ESC ] 9 ; 5 ST || Wait for ENTER/SPACE/ESC. Set environment variable "ConEmuWaitKey" to "ENTER"/"SPACE"/"ESC" on exit. ||
 
 =Примеры=
 ==ANSI and xterm color maps==

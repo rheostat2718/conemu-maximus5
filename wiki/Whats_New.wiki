@@ -13,6 +13,10 @@ Delete old files from old locations if you are not using the installer.
   * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
 
 
+==Build 120703==
+  * Now !DoubleClick (for «words») and !TripleClick (for «lines») both works for text selection.
+
+
 ==Build 120702==
   * Drag window by any point of client area (configurable modifier, Ctrl+Alt by default).
   * «Features» -> «Snap to desktop edges».
