@@ -1,6 +1,46 @@
 <font size="4">Содержание</font>
 <wiki:toc max_depth="3" /> 
 
+<wiki:comment>
+
+
+Q. Где полоса прокрутки. A. Полоса прокрутки по умолчанию скрыта. Появляется при наведении и удержании мышки (над областью для
+
+    полосы прокрутки в правой части окна). Также может появляться автоматически, если консоль скроллируется в результате вывода текста. 
+
+A. Прокрутка в консоли может быть вообще отключена, тогда значок «BufferHeight? mode» на тулбаре не утоплен.
+
+    Высота буфера задается на вкладке «ComSpec?», параметр «Long console output». Высота буфера может быть изменена или отключена через флаг «h» параметров "-new_console" и "-cur_console". 
+
+Q. Не работает прокрутка колесом мышки. A. Если колесо работает в других программах, проверьте вкладку «Keys & Macro» окна настроек.
+
+    Скорее всего, на «Wheel Up»/«Wheel Down» что-то назначено. 
+
+Q. Как настроить переключение консолей на Alt+F1 ... Alt+F12. A. На вкладке «Keys & Macro» настройте GuiMacro.
+
+    Назначьте для Alt+F1 макрос Tab(7,1), для Alt+F2 - Tab(7,2) и так далее. Отключите (если не нужен) флажок «Win+Numbers - activate console». 
+
+Delete comment
+Comment by project member ConEmu.Maximus5, Jul 1 (2 days ago)
+
+Q. How to enable xterm 256 colors in ConEmu?
+
+A. Option "ANSI X3.64 / xterm 256color" and "Inject ConEmuHk??" must be enabled (Features page). Extended colors works only in visible bottom of the console, so disable buffer or work in the bottom. For example, start program as:
+
+vim.exe -cur_console:h
+Delete comment
+Comment by project member ConEmu.Maximus5, Yesterday (25 hours ago)
+
+Нужно как-то поправить первый вопрос. Не все работают с Far Manager, то есть нужно убедиться, что ошибка не проявляется в программе, запущенной без ConEmu. Кроме того, нужно сделать акцент на то, что проверять нужно последнюю Alpha версию, а не Stable.
+Delete comment
+Comment by project member ConEmu.Maximus5, Today (2 hours ago)
+
+Q. mingw/bash/git works slow in ConEmu.
+
+A. In rare cases on some configurations users may notice lags while executing commands in ConEmu tab. This may be when many child processes are created while command execution. I you are so unlucky - just uncheck "Inject ConEmuHk?" on Features page. I'm still looking for the cause of the problem.
+
+</wiki:comment>
+
 ==О главном==
 
 ===Q. Что делать, если нашли ошибку?===
