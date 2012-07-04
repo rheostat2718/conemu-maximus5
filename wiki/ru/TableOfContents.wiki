@@ -7,6 +7,9 @@
       * [x64_or_x86 x64 или x86]
       * [Certificate Что такое «Сертификат»?]
       * [ConEmuTerms Термины]
+      * [Screenshots Скриншоты]
+      * [ConEmuFAQ FAQ]
+      * [Whats_New Whats new]
     * Запуск приложений
       * [LaunchNewTab Новый таб]
       * [Command_Line Аргументы ConEmu.exe]
@@ -33,9 +36,6 @@
     * Far Manager
       * [ConEmuFarPlugin Плагины Far & ConEmu]
       * [FarMacro Far макросы]
-    * [Screenshots Скриншоты]
-    * [ConEmuFAQ FAQ]
-    * [Whats_New Whats new]
     * Разное
       * [Awards ConEmu Awards]
       * [Reviews ConEmu Reviews]
