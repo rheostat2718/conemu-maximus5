@@ -99,18 +99,21 @@ A. This module provides communication between Far Manager and !ConEmu.
   * It is required for proper mouse function when using «far /w» (System\!WindowMode=1).
 
 ===Q. What is the purpose of !ConEmuHk.dll (!ConEmuHk64.dll)?===
-A. This module is injected into applications ran in !ConEmu. It is required to implement certain options, as well as work around multiple problems manifesting both with and without !ConEmu. 
+A. This module is injected into applications ran in !ConEmu. It is required to implement certain options, as well as work around multiple problems manifesting both with and without !ConEmu.
   * Z-order of GUI dialogues (without it, dialogues will appear behind !ConEmu's window);
-  * Proper function of GUI-EMenu (without !ConEmuHk`*`.dll it refuses to close);
+  * Proper function of Far Manager GUI-EMenu (without !ConEmuHk`*`.dll it refuses to close by mouse click);
   * Implements the flags "No zone check", "Ascii sort...", "Hourglass if not responding";
   * Implements the "-new_console" parameter;
   * Works around !ShellExecute problems (when batch file output does not appear in the console);
   * Works around chcp hangs;
   * Implements "Shell and processes" monitoring;
   * Implements hosting of GUI applications in a !ConEmu tab, etc.
+  * Implements ANSI X3.64 with xterm 256 color extension.
+  * Implements "Change prompt text cursor position with Left Click".
+  * And any other existing or future «inprocess» features.
 
 ===Q. What is the purpose of !ExtendedConsole.dll (!ExtendedConsole64.dll)?===
-A. This file implements support for the extended console feature in Far 3.x, and must be placed in the same directory as Far.exe. In its presence and enabled «!TrueMod support» option, it is possible to configure and use arbitrary (24-bit) colors and styles (bold/italic/underline) in Far Manager.
+A. This file implements support for the extended console feature in Far 3.x, and must be placed in the same directory as !ConEmuHk.dll. In its presence and enabled «!TrueMod support» option, it is possible to configure and use arbitrary (24-bit) colors and styles (bold/italic/underline) in Far Manager.
 
 
 

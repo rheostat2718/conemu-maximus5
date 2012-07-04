@@ -7,7 +7,7 @@
       * [x64_or_x86 x64 or x86]
       * [Certificate What is «Certificate»?]
       * [ConEmuTerms ConEmu Terms]
-      * [Screenshots More screenshots]
+      * [Screenshots Screenshots]
       * [ConEmuFAQ FAQ]
       * [Whats_New Whats new]
     * Launch apps
