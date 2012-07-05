@@ -16,7 +16,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 ==Build 120705==
   * Settings tree redesigned.
   * Issue 630: «Snap to desktop edges» and multi-monitor layout.
-  * ConEmuC: "/ATTACH /CONPID=<pid> /GHWND=NEW" - Alternative nonintrusive attach of existing console to the NEW instance of ConEmu.exe.
+  * ConEmuC: "`/ATTACH /CONPID=<pid> /GHWND=NEW`" - Alternative nonintrusive attach of existing console to the NEW instance of ConEmu.exe.
   * Issue 623: Continue...
 
 
