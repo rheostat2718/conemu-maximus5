@@ -8,6 +8,12 @@ You can execute !ConEmu GUI macro from:
 {{{
 "%ConEmuBaseDir%\ConEmuC.exe" /GUIMACRO WindowMinimize
 }}}
+  * ANSI X3.64 OSC code, i.e.:
+{{{
+rem Replace «^e» with real ESC code (symbol with ASCII \x1B)
+echo ^e]9;6;"IsConEmu"^e\
+if "%ConEmuMacroResult%"=="Yes" echo ConEmu found!
+}}}
   * via Far Manager plugin (Far1/Far2/Far3 are supported):
 {{{
 F11 -> ConEmu -> Execute ConEmu macro
