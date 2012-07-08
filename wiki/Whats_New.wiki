@@ -15,17 +15,17 @@ Delete old files from old locations if you are not using the installer.
 
 ==Build 120708==
   * GuiMacro: теперь можно позвать через ANSI коды. Пример в файле «!IsConEmu.cmd».
-  * Cmd_Autorun.cmd fixed.
-  * ConEmuC switches. "`/IsConEmu`", "`/IsTerm`", "`/IsAnsi`". !ErrorLevel 1 - ON, !ErrorLevel 2 - OFF.
+  * Вкладка «Keys & Macro»: В поле редактирования GuiMacro можно использовать \e (ESC) и \a (BELL).
+  * !Cmd_Autorun.cmd fixed.
+  * ConEmuC switches. "`/IsConEmu`", "`/IsTerm`", "`/IsAnsi`". `ErrorLevel 1` - ON, `ErrorLevel 2` - OFF.
   * Issue 633: Cannot specifiy environment variables for startup dir.
   * Mark & Copy.
     * Уточнение !DoubleClick, !TripleClick.
     * Ctrl+C/Ctrl+Ins при наличии выделения выполняют копирование и завершают режим выделения.
   * Issue 634: Опция «End selection on typing». 3-е состояние - завершить без копирования.
   * Во время выделения текста не работали хоткеи (типа Win+Alt+P).
-  * Issue 635: На странице «Mark & Paste» показываем хинт, если модификаторы Text/Block/Prompt совпадают.
+  * Issue 635: На вкладке «Mark & Paste» показываем хинт, если модификаторы Text/Block/Prompt совпадают.
   * Issue 631: Italic drawing bug.
-  * В поле редактирования GuiMacro можно использовать \e (ESC) и \a (BELL).
   * Issue 593: Minimize/Restore hotkey fix. Now activating !ConEmu if not focused.
   * !ConEmu Inside: Добавлена поддержка Windows XP. В проводнике должна быть показана панель «Полезный совет».
   * Доработана вкладка «Integration».

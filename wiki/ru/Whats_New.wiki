@@ -15,22 +15,27 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 ==Build 120708==
   * GuiMacro: теперь можно позвать через ANSI коды. Пример в файле «!IsConEmu.cmd».
-  * Cmd_Autorun.cmd fixed.
+  * «Keys & Macro» page: In the GuiMacro edit field you may use \e (ESC) and \a (BELL).
+  * !Cmd_Autorun.cmd fixed.
   * ConEmuC switches. "`/IsConEmu`", "`/IsTerm`", "`/IsAnsi`". !ErrorLevel 1 - ON, !ErrorLevel 2 - OFF.
   * Issue 633: Cannot specifiy environment variables for startup dir.
   * Mark & Copy.
-    * Уточнение !DoubleClick, !TripleClick.
-    * Ctrl+C/Ctrl+Ins при наличии выделения выполняют копирование и завершают режим выделения.
-  * Issue 634: Опция «End selection on typing». 3-е состояние - завершить без копирования.
-  * Во время выделения текста не работали хоткеи (типа Win+Alt+P).
-  * Issue 635: На странице «Mark & Paste» показываем хинт, если модификаторы Text/Block/Prompt совпадают.
+    * !DoubleClick, !TripleClick fixes.
+    * Ctrl+C/Ctrl+Ins when selection exists executes copy and stop selection.
+  * Issue 634: Option «End selection on typing». 3d state - stop without copying.
+  * While selection hotkeys (like Win+Alt+P) was not working.
+  * Issue 635: «Mark & Paste» page, showing hint when modifiers Text/Block/Prompt intersects.
   * Issue 631: Italic drawing bug.
-  * В поле редактирования GuiMacro можно использовать \e (ESC) и \a (BELL).
   * Issue 593: Minimize/Restore hotkey fix. Now activating !ConEmu if not focused.
-  * !ConEmu Inside: Добавлена поддержка Windows XP. В проводнике должна быть показана панель «Полезный совет».
-  * Доработана вкладка «Integration».
-    * Группы «!ConEmu Inside» и «!ConEmu Here» отвечают за регистрацию/удаление пунктов контекстного меню проводника для дисков/папок/файлов. Выпадающие списки «Menu item» показывют текущие пункты меню (то что сейчас зарегистрировано в реестре). Любой пункт можно просмотреть (выбрав его в списке) и отредактировать (нажав кнопку «Register»).
-    * Группа «Automatic attach of cmd...» позволяет установить (или просмотреть текущую) команду, выполняемую процессором (cmd и tcc) при старте. Это позволяет автоматически подцепить запущенный cmd/tcc в новую вкладку !ConEmu.
+  * !ConEmu Inside: Windows XP supported. Pane «Tip» (?) must be shown in Explorer.
+  * Page «Integration» completed.
+    * Группы «!ConEmu Inside» и «!ConEmu Here» отвечают за регистрацию/удаление пунктов контекстного меню 
+    проводника для дисков/папок/файлов. Выпадающие списки «Menu item» показывют текущие пункты меню 
+    (то что сейчас зарегистрировано в реестре). Любой пункт можно просмотреть (выбрав его в списке) и 
+    отредактировать (нажав кнопку «Register»).
+    * Группа «Automatic attach of cmd...» позволяет установить (или просмотреть текущую) команду, 
+    выполняемую процессором (cmd и tcc) при старте. Это позволяет автоматически подцепить запущенный 
+    cmd/tcc в новую вкладку !ConEmu.
 
 
 ==Build 120705==
