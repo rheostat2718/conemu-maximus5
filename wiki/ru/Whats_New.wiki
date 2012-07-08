@@ -17,7 +17,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * GuiMacro: теперь можно позвать через ANSI коды. Пример в файле «!IsConEmu.cmd».
   * «Keys & Macro» page: In the GuiMacro edit field you may use \e (ESC) and \a (BELL).
   * !Cmd_Autorun.cmd fixed.
-  * ConEmuC switches. "`/IsConEmu`", "`/IsTerm`", "`/IsAnsi`". !ErrorLevel 1 - ON, !ErrorLevel 2 - OFF.
+  * ConEmuC switches. "`/IsConEmu`", "`/IsTerm`", "`/IsAnsi`". `ErrorLevel 1` - ON, `ErrorLevel 2` - OFF.
   * Issue 633: Cannot specifiy environment variables for startup dir.
   * Mark & Copy.
     * !DoubleClick, !TripleClick fixes.
@@ -29,13 +29,8 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * Issue 593: Minimize/Restore hotkey fix. Now activating !ConEmu if not focused.
   * !ConEmu Inside: Windows XP supported. Pane «Tip» (?) must be shown in Explorer.
   * Page «Integration» completed.
-    * Группы «!ConEmu Inside» и «!ConEmu Here» отвечают за регистрацию/удаление пунктов контекстного меню 
-    проводника для дисков/папок/файлов. Выпадающие списки «Menu item» показывют текущие пункты меню 
-    (то что сейчас зарегистрировано в реестре). Любой пункт можно просмотреть (выбрав его в списке) и 
-    отредактировать (нажав кнопку «Register»).
-    * Группа «Automatic attach of cmd...» позволяет установить (или просмотреть текущую) команду, 
-    выполняемую процессором (cmd и tcc) при старте. Это позволяет автоматически подцепить запущенный 
-    cmd/tcc в новую вкладку !ConEmu.
+    * Groups «!ConEmu Inside» and «!ConEmu Here» provides register/unregister of shell context menu items for drives/folders/files. Comboboxes «Menu item» displays current registered items. Any registered item may be browsed (choose it in list) and changed (press «Register»).
+    * Group «Automatic attach of cmd...» provide install (or view) command, which command processor (cmd/tcc) will execute on startup. This allows to attach new console (cmd/tcc) into new !ConEmu tab.
 
 
 ==Build 120705==
