@@ -13,6 +13,12 @@ Delete old files from old locations if you are not using the installer.
   * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
 
 
+==Build 120709==
+  * Minimize/Restore takes into account «Always on top» option.
+  * «Copy on LButton up» refined.
+  * New hotkey: Minimize/Restore (alternative).
+
+
 ==Build 120708==
   * GuiMacro: теперь можно позвать через ANSI коды. Пример в файле «!IsConEmu.cmd».
   * Вкладка «Keys & Macro»: В поле редактирования GuiMacro можно использовать \e (ESC) и \a (BELL).
