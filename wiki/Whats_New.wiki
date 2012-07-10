@@ -13,6 +13,13 @@ Delete old files from old locations if you are not using the installer.
   * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
 
 
+==Build 120710==
+  * Reorder tabs. New hotkeys. Win+Alt+Left/Win+Alt+Right move tab (definitely all tab of current console) leftward/rightward.
+  * Issue 637: !ConEmu recursively runs itself in an endless loop.
+  * Error when "Download path" = "C:\".
+  * Changes in hooks.
+
+
 ==Build 120709==
   * Minimize/Restore takes into account «Always on top» option.
   * «Copy on LButton up» refined.
