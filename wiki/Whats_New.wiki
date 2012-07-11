@@ -14,6 +14,17 @@ Delete old files from old locations if you are not using the installer.
 
 
 ==Build 120710==
+  * Far Manager. Do not turn on long buffer while searching in archives via !MultiArc.
+  * !StatusBar.
+    * New column «[+]» - shows create new console popup menu.
+    * Right click on «[+]» or «!ActiveCon/!TotalCon» pop up current tab menu.
+  * !DblClick on system icon had not closed !ConEmu window.
+  * Injects bugfixes.
+  * Issue 639: `/cmd` can't find `far.cmd` or `far.bat` without the extension.
+  * !ConEmu Inside. When !ConEmu already exists subsequence calls of menu item creates new console (tab) in existing window.
+
+
+==Build 120710==
   * Reorder tabs. New hotkeys. Win+Alt+Left/Win+Alt+Right move tab (definitely all tab of current console) leftward/rightward.
   * Issue 637: !ConEmu recursively runs itself in an endless loop.
   * Error when "Download path" = "C:\".
