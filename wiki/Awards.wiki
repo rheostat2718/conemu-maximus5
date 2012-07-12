@@ -29,22 +29,6 @@
 <a href="http://www.sofotex.com/ConEmu-download_L125596.html">Sofotex</a>.
 
 
-===!StackOverflow Open Source Advertising: Sidebar 2012===
-<table><tr>
-<td width="230">
-<a href="http://meta.superuser.com/a/5023/139371"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012U.png" title="Community Promotion Ads - 2012"/></a>
-</td>
-<td width="230">
-<a href="http://meta.stackoverflow.com/a/134414/187198"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012.png" title="Open Source Advertising - Sidebar - 2012"/></a>
-</td>
-<td width="400" valign="top">
-This adverising was posted to Meta !StackOverflow,<br/>
-it requires a minimum score threshold (at least 6)<br/>
-before it will be served up and shown on the site.<br/>
-Please, !UpVote them!
-</td></tr></table>
-
-
 ===!StackOverflow.com and !SuperUser.com answers===
   * !StackOverflow.com
     * <a href="http://stackoverflow.com/a/10904494/1405560">Is there a better Windows Console Window?</a>
@@ -61,3 +45,19 @@ Please, !UpVote them!
 <wiki:comment>
 <a href="http://meta.superuser.com/a/5023/139371">adverising sidebar</a>,
 </wiki:comment>
+
+
+===!StackOverflow Open Source Advertising: Sidebar 2012===
+<table><tr>
+<td width="230">
+<a href="http://meta.superuser.com/a/5023/139371"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012U.png" title="Community Promotion Ads - 2012"/></a>
+</td>
+<td width="230">
+<a href="http://meta.stackoverflow.com/a/134414/187198"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012.png" title="Open Source Advertising - Sidebar - 2012"/></a>
+</td>
+<td width="400" valign="top">
+This adverising was posted to Meta !StackOverflow,<br/>
+it requires a minimum score threshold (at least 6)<br/>
+before it will be served up and shown on the site.<br/>
+Please, !UpVote them!
+</td></tr></table>
