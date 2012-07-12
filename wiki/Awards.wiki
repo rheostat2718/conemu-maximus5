@@ -1,4 +1,20 @@
 #labels Featured
+===Awards===
+<a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml"><img border="0" src="http://s1.softpedia-static.com/base_img/softpedia_free_award_f.gif"/></a>
+<a href='http://www.findmysoft.com'><img src='http://www.findmysoft.com/ConEmu_award2.png' alt='FindMysoft.com - Fast and free software download directory'/></a>
+<a href='http://www.sofotex.com/ConEmu-download_L125596.html'><img src='http://www.sofotex.com/img/5stars-sm.jpg' alt='SofoTex.com - Software downloads'/></a>
+
+<a href="http://www.bestfreewaredownload.com/software-search.html?keywords=conemu&category_id=0" target="_blank"><img src="http://www.bestfreewaredownload.com/images/BFD_award5.png" alt="Best Freeware Download" border="0"/></a>
+<a href="http://www.downloadtyphoon.com/software-search.html?keywords=conemu" target="_blank"><img src="http://www.downloadtyphoon.com/templates/downty/images/award_5.gif" alt="Download Typhoon" border="0"/></a>
+<a href="http://www.windows7download.com/software-search.html?keywords=conemu" target="_blank"><img src="http://www.windows7download.com/img/awards/award_5.png" alt="Windows 7 Download" border="0"/></a>
+<a href="http://www.bestvistadownloads.com/software-search.html?keywords=conemu" target="_blank"><img src="http://www.bestvistadownloads.com/templates/BVD/images/award_5.gif" alt="Best Vista Download" border="0"/></a>
+
+<wiki:comment>
+<a href="http://www.bestsoftware4download.com/" target="_blank"><img src="http://www.bestsoftware4download.com/images/BS4D_award5.png" alt="Best Software 4 Download" border="0"/></a>
+</wiki:comment>
+
+<wiki:gadget url="http://www.ohloh.net/p/376210/widgets/project_users.xml" height="100" border="0"/>
+
 ===Please, vote for !ConEmu===
 <wiki:comment>
 <a href="http://www.ohloh.net/stack_entries/new?project_id=conemu-maximus5&ref=sample">Ohloh</a>,
@@ -45,19 +61,3 @@ Please, !UpVote them!
 <wiki:comment>
 <a href="http://meta.superuser.com/a/5023/139371">adverising sidebar</a>,
 </wiki:comment>
-
-===Awards===
-<a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml"><img border="0" src="http://s1.softpedia-static.com/base_img/softpedia_free_award_f.gif"/></a>
-<a href='http://www.findmysoft.com'><img src='http://www.findmysoft.com/ConEmu_award2.png' alt='FindMysoft.com - Fast and free software download directory'/></a>
-<a href='http://www.sofotex.com/ConEmu-download_L125596.html'><img src='http://www.sofotex.com/img/5stars-sm.jpg' alt='SofoTex.com - Software downloads'/></a>
-
-<a href="http://www.bestfreewaredownload.com/software-search.html?keywords=conemu&category_id=0" target="_blank"><img src="http://www.bestfreewaredownload.com/images/BFD_award5.png" alt="Best Freeware Download" border="0"/></a>
-<a href="http://www.downloadtyphoon.com/software-search.html?keywords=conemu" target="_blank"><img src="http://www.downloadtyphoon.com/templates/downty/images/award_5.gif" alt="Download Typhoon" border="0"/></a>
-<a href="http://www.windows7download.com/software-search.html?keywords=conemu" target="_blank"><img src="http://www.windows7download.com/img/awards/award_5.png" alt="Windows 7 Download" border="0"/></a>
-
-<wiki:comment>
-<a href="http://www.bestsoftware4download.com/" target="_blank"><img src="http://www.bestsoftware4download.com/images/BS4D_award5.png" alt="Best Software 4 Download" border="0"/></a>
-</wiki:comment>
-<a href="http://www.bestvistadownloads.com/software-search.html?keywords=conemu" target="_blank"><img src="http://www.bestvistadownloads.com/templates/BVD/images/award_5.gif" alt="Best Vista Download" border="0"/></a>
-
-<wiki:gadget url="http://www.ohloh.net/p/376210/widgets/project_users.xml" height="100" border="0"/>
