@@ -30,9 +30,18 @@ Please, !UpVote them!
 
 
 ===!StackOverflow.com and !SuperUser.com answers===
-<a href="http://stackoverflow.com/a/10904494/1405560">Answer 1 (SO)</a>,
-<a href="http://superuser.com/a/436027/139371">answer 2 (SU)</a>,
-<a href="http://superuser.com/a/439469/139371">answer 3 (SU)</a>.
+  * !StackOverflow.com
+    * <a href="http://stackoverflow.com/a/10904494/1405560">Is there a better Windows Console Window?</a>
+    * <a href="http://stackoverflow.com/a/10668782/1405560">Displaying Hebrew text in a console</a>
+  * !SuperUser.com
+    * <a href="http://superuser.com/a/436027/139371">Console like Gnome Terminal for Windows</a>
+    * <a href="http://superuser.com/a/439469/139371">Multi-tab command prompt in Windows?</a>
+    * <a href="http://superuser.com/a/446320/139371">Is there a windows console emulator?</a>
+    * <a href="http://superuser.com/a/445405/139371">Attach a running console application to a new ConEmu instance</a>
+    * <a href="http://superuser.com/a/441853/139371">Windows console with ANSI colors handling</a>
+    * <a href="http://superuser.com/a/441545/139371">What are the PowerShell consoles for Windows?</a>
+
+
 <wiki:comment>
 <a href="http://meta.superuser.com/a/5023/139371">adverising sidebar</a>,
 </wiki:comment>
