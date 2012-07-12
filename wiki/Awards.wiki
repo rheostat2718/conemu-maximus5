@@ -37,9 +37,9 @@ Please, !UpVote them!
     * <a href="http://superuser.com/a/436027/139371">Console like Gnome Terminal for Windows</a>
     * <a href="http://superuser.com/a/439469/139371">Multi-tab command prompt in Windows?</a>
     * <a href="http://superuser.com/a/446320/139371">Is there a windows console emulator?</a>
-    * <a href="http://superuser.com/a/445405/139371">Attach a running console application to a new ConEmu instance</a>
+    * <a href="http://superuser.com/a/445405/139371">Attach a running console application to a new !ConEmu instance</a>
     * <a href="http://superuser.com/a/441853/139371">Windows console with ANSI colors handling</a>
-    * <a href="http://superuser.com/a/441545/139371">What are the PowerShell consoles for Windows?</a>
+    * <a href="http://superuser.com/a/441545/139371">What are the !PowerShell consoles for Windows?</a>
 
 
 <wiki:comment>
