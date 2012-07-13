@@ -9,7 +9,7 @@ Today, !ConEmu can be used with any other console application or simple GUI tool
 
 [Awards Please, vote for ConEmu]
 
-<table cellpadding="0" cellspacing="0" border="1">
+<table cellpadding="0" cellspacing="0" border="0">
 <tr>
 <td height="25" width="240" valign="bottom" colspan="4"><font size="3">*Download*</font></td>
 <td width="90" rowspan="2"><wiki:gadget url="http://www.ohloh.net/p/376210/widgets/project_users_logo.xml" width="90" height="43" border="0"/></td>
