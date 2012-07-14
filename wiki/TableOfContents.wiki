@@ -25,7 +25,7 @@
       * [Xterm256Colors Xterm 256 colors]
       * [Progress Operation progress]
       * [Windows7Taskbar Windows 7 taskbar]
-      * [InsideParent !ConEmu Inside]
+      * [InsideParent ConEmu Inside]
     * Controls
       * [Tabs Tabs]
       * [SystemMenu System menu]
