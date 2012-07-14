@@ -36,7 +36,7 @@ Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&top
 
 <font size="3">*Disclaimer #1*</font>
 
-!ConEmu is not a shell, so it does not provide "shell features" like tab-completion, command history and others. !ConEmu is advanced console window where you can run any shell of your choice. However, some of this features placed in RoadMap.
+!ConEmu is not a shell, so it does not provide "shell features" like tab-completion, command history and others. !ConEmu is advanced console window where you can run any shell of your choice. However, some of these features placed in RoadMap.
 
 <font size="3">*Disclaimer #2*</font>
 
