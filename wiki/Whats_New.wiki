@@ -28,8 +28,8 @@ Delete old files from old locations if you are not using the installer.
   * New feature on «Features» page: «Use Clink in prompt». Clink - bash style completion.
     * This is *experimental* feature, it may be changed or removed in future builds.
     * Download here version 0.1.1: http://clink.googlecode.com
-    * Unpack here: `%!ConEmuBaseDir%\clink`
-    * Please note, clink archive contains subfolder. Filesclink_dll_x86.dll and clink_dll_x64.dll must be located in !ConEmu\clink.
+    * Unpack here: `%ConEmuBaseDir%\clink`
+    * Please note, clink archive contains subfolder. Files `clink_dll_x86.dll` and `clink_dll_x64.dll` must be located in `ConEmu\clink`.
 
 
 ==Build 120710==

@@ -28,8 +28,8 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * На вкладке «Features» добавлен флажок «Use Clink in prompt». Clink - bash style completion.
     * Опция *экспериментальная*, может быть изменена или удалена в следующих версиях ;)
     * Качать здесь версию 0.1.1: http://clink.googlecode.com
-    * Распаковывать сюда: `%!ConEmuBaseDir%\clink`
-    * Учтите, что архив clink содержит подпапки. Файлы clink_dll_x86.dll и clink_dll_x64.dll должны лежать в папке !ConEmu\clink.
+    * Распаковывать сюда: `%ConEmuBaseDir%\clink`
+    * Учтите, что архив clink содержит подпапки. Файлы `clink_dll_x86.dll` и `clink_dll_x64.dll` должны лежать в папке `ConEmu\clink`.
 
 
 ==Build 120710==
