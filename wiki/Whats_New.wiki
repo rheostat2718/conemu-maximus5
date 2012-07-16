@@ -13,6 +13,25 @@ Delete old files from old locations if you are not using the installer.
   * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
 
 
+==Build 120716==
+  * Window size and position moved to separate page «Size & Pos».
+    * Option «Long console output» moved to the page «Size & Pos».
+    * Option «Cmd output codepage» moved to the page «!ComSpec».
+  * New option «Show & store current window size and position». Turned On by default. When turned Off field values X/Y/Width/Height are not updated automatically (they displays user saved values).
+  * Button «Apply» in the window mode «Normal» was not changed window position (X/Y).
+  * Issue 638: bincmp fails.
+  * After Apps+F context menu unexpectedly appears in Find dialog.
+  * New color palette <!PowerShell>.
+  * !ConEmu Inside: Windows 2000 and Windows 2003 supported.
+  * Windows 2000 supported again. Alternative mode attach in Windows 2000 is not available.
+  * While alternative buffer is active (Win+A) keys !PgUp/!PgDn/Up/Down will scroll console (holding Ctrl is not necessary).
+  * New feature on «Features» page: «Use Clink in prompt». Clink - bash style completion.
+    * This is *experimental* feature, it may be changed or removed in future builds.
+    * Download here version 0.1.1: http://clink.googlecode.com
+    * Unpack here: `%!ConEmuBaseDir%\clink`
+    * Please note, clink archive contains subfolder. Filesclink_dll_x86.dll and clink_dll_x64.dll must be located in !ConEmu\clink.
+
+
 ==Build 120710==
   * Far Manager. Do not turn on long buffer while searching in archives via !MultiArc.
   * !StatusBar.
