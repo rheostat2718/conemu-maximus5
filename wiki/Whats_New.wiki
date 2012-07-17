@@ -13,6 +13,12 @@ Delete old files from old locations if you are not using the installer.
   * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
 
 
+==Build 120717==
+  * Do not run clink in background threads.
+  * Sometimes !ConEmu may crash while initialzing Far Manager.
+  * New item «Console information» in the !ConEmu Far Manager plugin menu.
+
+
 ==Build 120716==
   * Window size and position moved to separate page «Size & Pos».
     * Option «Long console output» moved to the page «Size & Pos».
