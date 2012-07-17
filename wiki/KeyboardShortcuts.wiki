@@ -36,6 +36,9 @@ and so on.
 || Win+X || Create new console tab with `cmd.exe`. *X* is default, [Settings#Manual_change_of_settings configurable]. ||
 || Ctrl+Up, Ctrl+Down,<br>Ctrl+!PgUp, Ctrl+!PgDn || [ConEmuTerms#BufferHeight Buffer] scrolling ||
 || Ctrl+Alt || Drag ConEmu window with mouse by client area ||
+|| Win+Alt+Left, Win+Alt+Right || Move active tab leftward/rightward (aka reorder !ConEmu tabs) ||
+|| Apps+R || Rename current tab. In the current !ConEmu version Far Manager editors/viewers can not be renamed ||
+|| Apps+F || Search text in the console ||
 
 ===Host key===
 Note, *Win* is default «[ConEmuTerms#Host_key Host key]», keys combination is [Settings#Tabs configurable].
