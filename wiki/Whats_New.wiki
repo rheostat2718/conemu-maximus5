@@ -13,6 +13,16 @@ Delete old files from old locations if you are not using the installer.
   * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
 
 
+==Build 120719==
+  * Issue 645: !PowerShell cmdlet Write-Progress detection.
+{{{
+0..100 | foreach {Write-Progress Test Progress -PercentComplete $_; sleep -m 100}
+}}}
+  * «On the fly» changing of text and popup-s console colors (cmd, powershell, etc.)
+    * «On the fly» changing of popup-s allowed in Vista or higher. Win2k and WinXP - after start of new console.
+    * While changing popup-s colors !RealConsole may flicker on the screen.
+
+
 ==Build 120717==
   * Do not run clink in background threads.
   * Sometimes !ConEmu may crash while initialzing Far Manager.
