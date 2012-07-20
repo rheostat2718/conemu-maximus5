@@ -89,9 +89,9 @@ When You specify the [Command_Line /config] switch in the !ConEmu.exe command li
 
 ==!ConEmu.xml==
 You may use !ConEmu in «portable» mode, so all settings will be stored in the _!ConEmu.xml_ file,
-located next to the _ConEmuC.exe_. Template file _!ConEmu_Sample.xml_ is shipped with !ConEmu.
-You must rename it to _!ConEmu.xml_ for engaging xml-mode. You may use [Command_Line /config]
-switch with xml-mode too.
+located next to the _ConEmuC.exe_ or _ConEmu.exe_. Template file _!ConEmu_Sample.xml_ is shipped with !ConEmu.
+You must create a new empty _!ConEmu.xml_ or just rename _!ConEmu_Sample.xml_ to _!ConEmu.xml_ for engaging xml-mode.
+You may use [Command_Line /config] switch with xml-mode too.
 
 Note. You may rename this file any time, even after !ConEmu starts and loads its settings from registry.
 
