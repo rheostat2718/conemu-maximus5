@@ -24,6 +24,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * Status bar appearance. Options «Vertical separators» and «Horizontal separator».
   * Статус при старте консоли отображается только в строке статуса (если она включена).
   * Правка «Sleep in background».
+  * Правка журналирования клавиатуры (ConEmu.exe /log).
 
 
 ==Build 120719==

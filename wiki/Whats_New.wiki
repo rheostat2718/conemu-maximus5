@@ -24,6 +24,7 @@ Delete old files from old locations if you are not using the installer.
   * Status bar appearance. Options «Vertical separators» and «Horizontal separator».
   * Status will be shown on startup in Status bar only (if enabled).
   * «Sleep in background» fixes.
+  * Keyboard logging fixes (`ConEmu.exe /log`).
 
 
 ==Build 120719==
