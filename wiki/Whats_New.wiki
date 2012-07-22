@@ -13,6 +13,19 @@ Delete old files from old locations if you are not using the installer.
   * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
 
 
+==Build 120722==
+  * Issue 348: Maximize errors with Hide caption.
+  * Issue 641: Show current console title in the status bar.
+  * Issue 645: !PowerShell cmdlet Write-Progress detection.
+  * Issue 646: !ConEmu eats dead keys.
+  * Issue 647: Mouse wheel does not respect Control Panel settings.
+  * Issue 648: Progress detection AI fixes.
+  * Alternative buffer was scrolled twice by arrows.
+  * Status bar appearance. Options «Vertical separators» and «Horizontal separator».
+  * Status will be shown on startup in Status bar only (if enabled).
+  * «Sleep in background» fixes.
+
+
 ==Build 120719==
   * Issue 645: !PowerShell cmdlet Write-Progress detection.
 {{{
