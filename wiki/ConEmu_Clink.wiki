@@ -1,0 +1,17 @@
+=!ConEmu and clink==
+Build 120716 introduces new experimental feature on «Features» page: «Use Clink in prompt». Clink - bash style completion.
+
+  * This is *experimental* feature, it may be changed or removed in future builds.
+  * Download here version 0.1.1: http://clink.googlecode.com
+  * Unpack here: `%ConEmuBaseDir%\clink` (this folder already created by !ConEmu installer and contains `Readme.txt`)
+  * Please note, clink archive contains subfolder. Files `clink_dll_x86.dll` and `clink_dll_x64.dll` must be located in `%ConEmuBaseDir%\clink`.
+  * Restart !ConEmu and ensure that «Use Clink in prompt» is checked on «Features» page.
+
+OK, now bash style completion will be available in `cmd.exe` and `powershell.exe`.
+
+Note. Clink will be called in shell prompt (cmd/powershell) if `ConEmuHk.dll` or `ConEmuHk64.dll`
+is loaded into shell process. This will be done for «root» processes (that you specify when creating
+console) or when «Inject !ConEmuHk» option is checked on «Features» page (this is required, if you
+start second-level cmd/powershell from root process, e.g. `cmd /c cmd /k …`).
+
+Please refer to http://clink.googlecode.com for further information and bugreports.

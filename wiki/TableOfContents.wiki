@@ -26,6 +26,7 @@
       * [Progress Operation progress]
       * [Windows7Taskbar Windows 7 taskbar]
       * [InsideParent ConEmu Inside]
+      * [ConEmu_Clink Bash completion]
     * Controls
       * [Tabs Tabs]
       * [SystemMenu System menu]
