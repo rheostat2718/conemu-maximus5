@@ -13,6 +13,18 @@ Delete old files from old locations if you are not using the installer.
   * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
 
 
+==Build 120727==
+  * Issue 643: Windows from powershell/.net does not appears on screen.
+  * Issue 652: New predefined palette <Solarized Light>.
+  * Speedup of ecompl Far Manager plugin.
+  * Color values fields (Settings dialog) allows next formats: «#RRGGBB» (hex), «0xBBGGRR» (hex), «xBBGGRR» (hex), «RRR,GGG,BBB» (dec), «RRR GGG BBB» (dec).
+  * New minimal value for «transparency» is 0. Now on focus lose window may completely disappears from screen.
+
+
+==Build 120726==
+  * Mailing list created: http://groups.google.com/group/conemu_ml. Welcome!
+
+
 ==Build 120722==
   * Issue 348: Maximize errors with Hide caption.
   * Issue 641: Show current console title in the status bar.
