@@ -13,6 +13,12 @@ Delete old files from old locations if you are not using the installer.
   * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
 
 
+==Build 120727a==
+  * Now you may use `ConEmu.exe` switches in the «Command» field on «Integration» page. For example: `/single /cmd powershell.exe`.
+  * Minor hooks optimization.
+  * Issue 651: Sometimes, !ConEmu choose incorrect update method (msi instead 7z and vice versa). Cause of previously saved value "Update.!DownloadSetup".
+
+
 ==Build 120727==
   * Issue 643: Windows from powershell/.net does not appears on screen.
   * Issue 652: New predefined palette <Solarized Light>.

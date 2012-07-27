@@ -23,6 +23,11 @@ Very convenient tool to run console apps. The best ever integration with Far Man
 *Sergiy Yakovyn*. Read more on [https://sourceforge.net/projects/conemu/reviews/ sourceforge.net]
 
 ----
+For those who are heavy users of consoles/terminals such as cygwin/bash, PyCmd/Console2...I just discovered this great projec... I have been using Console2 for years, its great, but conemu has so much more features, AND is its in very active development (unlike console2). I have switched already.
+
+*jmwap*, on [http://www.ghisler.ch/board/viewtopic.php?p=253148&sid=bdf234f28ab181938eebe033617a74cf#253148 ghisler.ch/board]
+
+----
 That masterpiece brings so much cool features to the Far manager... The most important are one window for other Far, drag'nd'drop,colors and some other less noticable but not less important features
 
 *drweb86*, on [http://www.softpedia.com/progViewOpinions/ConEmu-151121,.html www.softpedia.com]
