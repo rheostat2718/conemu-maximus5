@@ -58,7 +58,6 @@ ConEmu.exe /cmd {taskname}
 || /autosetup 1 | 0 || Install or remove !ConEmu autostart with cmd.exe ||
 || /visible || Starts with visible real console ||
 || /detached || Starts with no console, !ConEmu is ready for attaching from another real console or FAR manager ||
-|| /attach || ... ||
 || /nokeyhooks || Disable !SetWindowsHookEx and global hotkeys ||
 || /inside<br>/insidepid _PID_<br>/insidewnd x<i>HWND</i> || Starts !ConEmu in «inside» mode (act as child window of parent process) ||
 || /updatejumplist || May be used for automated !ConEmu set up from batches. Updates Windows 7 jump list on !ConEmu startup. ||
