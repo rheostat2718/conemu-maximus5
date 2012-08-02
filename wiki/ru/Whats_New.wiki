@@ -14,14 +14,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 ==Build 120802==
-[!] Experimental: `-new_console:s[<SplitTab>T][<Percents>](H|V)`. Examples.
+  * Experimental: `-new_console:s[<SplitTab>T][<Percents>](H|V)`. Примеры.
     `cmd -new_console:s` - split current tab, new tab and old (current) tab become 50% width of current tab.
     `cmd -new_console:s50H` - same as `cmd -new_console:s`.
     `cmd -new_console:sV` - split current tab, create new tab to the bottom.
     `cmd -new_console:s3T30H` - split 3-d tab, create new tab to the right with 30% width.
-[%] In Build 120727a xterm-256 was broken.
-[%] Issue 651: 7-zip/!WinRar was not elevated, when updating in "Program Files".
-[+] Опция «Add %!ConEmuBaseDir% to %PATH%» на вкладке «!ComSpec». По умолчанию включена.
+  * In Build 120727a xterm-256 was broken.
+  * Issue 651: 7-zip/!WinRar was not elevated, when updating in "Program Files".
+  * Опция «Add %!ConEmuBaseDir% to %PATH%» на вкладке «!ComSpec». По умолчанию включена.
 
 
 ==Build 120727a==
