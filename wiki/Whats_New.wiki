@@ -13,6 +13,16 @@ Delete old files from old locations if you are not using the installer.
   * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
 
 
+Questions about usablity of "-new_console:s".
+  * Mouse wheel. What console to send? Active or «Under cursor»?
+
+
+==Build 120803==
+  * Bugfixes and regressions of !SplitScreen. Now you can create more than two splits.
+  * Some changes in «Long console output» (plugin required in Far Manager).
+  * Minimal console size now is 4 cols 2 lines.
+
+
 ==Build 120802==
   * Experimental: `-new_console:s[<SplitTab>T][<Percents>](H|V)`. Examples.
     * `cmd -new_console:s` - split current tab, new tab and old (current) tab become 50% width of current tab.
