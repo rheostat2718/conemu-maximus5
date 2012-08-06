@@ -17,6 +17,25 @@ Questions about usablity of "-new_console:s".
   * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+
+==Build 120806==
+  * Bugfixes and regressions of SplitScreen.
+  * Failed to store height less than 9 lines.
+  * GuiMacro.
+{{{
+	Close(<What>[,<Flags>])
+	  close current console (0), without confirmation (0,1),
+	  terminate active process (1), without confirmation (1,1)
+    Shell. You may omit both <File> and <Parms>. This means «Duplicate tab».
+      Shell("new_console:sV") - create same tab, split current tab to bottom;
+      Shell("new_console:sH") - create same tab, split current tab to right.
+}}}
+
+
+==Build 120803==
+  * Bugfixes and regressions of !SplitScreen.
+
+
 ==Build 120803==
   * Bugfixes and regressions of !SplitScreen. Now you can create more than two splits.
   * Some changes in «Long console output» (plugin required in Far Manager).
