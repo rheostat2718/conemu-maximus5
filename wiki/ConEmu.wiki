@@ -20,7 +20,7 @@ Today, !ConEmu can be used with any other console application or simple GUI tool
 </tr>
 <tr>
   <td height="25" width="240" valign="top">[http://code.google.com/p/conemu-maximus5/downloads/list Latest version], 
-[code.google.com/p/conemu-maximus5/downloads/detail?name=ConEmuSetup.120727c.exe Stable version]
+[http://code.google.com/p/conemu-maximus5/downloads/detail?name=ConEmuSetup.120727c.exe Stable version]
 <wiki:comment>
 [http://code.google.com/p/conemu-maximus5/downloads/list?q=label:Featured+summary:Maximus5 Stable version]
 </wiki:comment>
