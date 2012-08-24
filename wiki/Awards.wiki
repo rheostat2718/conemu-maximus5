@@ -33,7 +33,7 @@
   * !StackOverflow.com
     * <a href="http://stackoverflow.com/a/10904494/1405560">Is there a better Windows Console Window?</a>
     * <a href="http://stackoverflow.com/a/10668782/1405560">Displaying Hebrew text in a console</a>
-  * !SuperUser.com
+  * !SuperUser.com. <font color="#FF0000">Please, don't upvote all answers simultaneously, cause of "Serial upvoting reversing"</font> :(
     * <a href="http://superuser.com/a/457098/139371">Windows “cmd” Replacements</a>
     * <a href="http://superuser.com/a/436027/139371">Console like Gnome Terminal for Windows</a>
     * <a href="http://superuser.com/a/439469/139371">Multi-tab command prompt in Windows?</a>
