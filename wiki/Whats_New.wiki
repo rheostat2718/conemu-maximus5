@@ -2,16 +2,6 @@
 Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
-{{{
-*****************
-«ExtendedConsole.dll» and «ExtendedConsole64.dll» are now in the ConEmu subfolder!
-Delete old files from old locations if you are not using the installer.
-*****************
-}}}
-
-
-  * Please vote for ConEmu in [http://meta.superuser.com/a/5023/139371 SuperUser's 2012 Community Promotion Ads].
-
 
 Questions about usablity of "-new_console:s".
   * Mouse wheel. What console to send? Active or «Under cursor»?
@@ -21,11 +11,12 @@ Questions about usablity of "-new_console:s".
 ==Build 120806==
   * Bugfixes and regressions of SplitScreen.
   * Failed to store height less than 9 lines.
+  * Issue 668: "-new_console:d:C:\Program Files (x86)" fails.
   * GuiMacro.
 {{{
-	Close(<What>[,<Flags>])
-	  close current console (0), without confirmation (0,1),
-	  terminate active process (1), without confirmation (1,1)
+    Close(<What>[,<Flags>])
+      close current console (0), without confirmation (0,1),
+      terminate active process (1), without confirmation (1,1)
     Shell. You may omit both <File> and <Parms>. This means «Duplicate tab».
       Shell("new_console:sV") - create same tab, split current tab to bottom;
       Shell("new_console:sH") - create same tab, split current tab to right.
@@ -604,3 +595,4 @@ All my attempts to post comments and contact the article author were ignored :(
 
 ==Older entries==
 [http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FWhats_New%3Fshow%3Dcontent WhatsNew autotranslated]
+[http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt Full changelog on SVN]

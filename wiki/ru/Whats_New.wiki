@@ -2,16 +2,6 @@
 Проголосуйте за !ConEmu, если не жалко :)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
-{{{
-*****************
-«ExtendedConsole.dll» и «ExtendedConsole64.dll» теперь лежат в подпапке ConEmu
-Удалите старые файлы самостоятельно, если вы не использовали инсталлятор.
-*****************
-}}}
-
-
-  * Заявка на Ads: [http://meta.superuser.com/a/5023/139371 meta.superuser.com], please !UpVote.
-
 
 Questions about usablity of "-new_console:s".
   * Mouse wheel. What console to send? Active or «Under cursor»?
@@ -21,11 +11,12 @@ Questions about usablity of "-new_console:s".
 ==Build 120806==
   * Bugfixes and regressions of SplitScreen.
   * В настройке не сохранялась высота консоли менее 9 строк.
+  * Issue 668: "-new_console:d:C:\Program Files (x86)" fails.
   * GuiMacro.
 {{{
-	Close(<What>[,<Flags>])
-	  close current console (0), without confirmation (0,1),
-	  terminate active process (1), without confirmation (1,1)
+    Close(<What>[,<Flags>])
+      close current console (0), without confirmation (0,1),
+      terminate active process (1), without confirmation (1,1)
     Shell. You may omit both <File> and <Parms>. This means «Duplicate tab».
       Shell("new_console:sV") - create same tab, split current tab to bottom;
       Shell("new_console:sH") - create same tab, split current tab to right.
@@ -2272,3 +2263,6 @@ $if (callplugin(0x43454D55,"IsConEmu()")!=1 && env("ConEmuMacroResult")=="Yes") 
 ====Changes====
   * Правки в GCC мейке.
   * Разрешена смена размера консоли самим консольным приложением (например, командой 'MODE CON: COLS=80 LINES=25').
+
+==Более старые записи==
+[http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt Полный лог изменений на SVN]
