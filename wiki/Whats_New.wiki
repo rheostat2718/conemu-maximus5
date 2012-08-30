@@ -7,9 +7,42 @@ Questions about usablity of "-new_console:s".
   * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+==120830==
+Wikipedia page [http://en.wikipedia.org/wiki/User:Maximus7792/ConEmu User:Maximus7792/ConEmu] in progress. Any comments, suggestions or corrections?
+
+
+==Build 120830==
+  * Internal changes in child windows.
+  * Some fixes for DBCS.
+  * GuiMacro. Changes in Shell function. All following examples runs "cmd" in new tab: «`Shell("new_console","cmd")`» or «`Shell("","cmd")`» or «`Shell("","","cmd")`». *Memorial*. Other verbs, like «`Shell("open","cmd")`» runs "cmd" outside of !ConEmu window.
+  * Safe Far close. From current build, this option may be used for «Unsafe» console closing. Type "`#Close(1,1)`" (without quotas) in Safe Far close macro field and turn on checkbox. Now, click on the cross-button in !ConEmu title provokes «Terminate active process» in all opened consoles, regardless of «Far» it is or not. *Warning!* Use on your own responsibility, this method may damage console applications data!
+  * Far Manager & [TabletPC TabletPC]. Tap on clock+1row (upper-right corner) show/hide panels.
+  * !DoubleClick on !TabBar free area acts as click on `[+]` button.
+
+
+==Build 120826==
+  * GuiMacro.
+{{{
+    Print(["<Text>"])
+      Alias for Paste(2,"<Text>")
+    Rename(<Type>,["<Title>"])
+      Rename tab (Type=0) or console title (Type=1)
+    Close(<What>[,<Flags>])
+      close current console (0), without confirmation (0,1),
+      terminate active process (1), without confirmation (1,1),
+      close ConEmu window (2)
+}}}
+  * Internal changes in child windows.
+  * When «Show & store current window size and position» is off, size and pos was not displayed on «Size & Pos» page.
+  * !CmdAutoAttach failed, if !ConEmu.exe not installed.
+  * «Show was hidden warning» option on «Features» page. «On» by default. May be turned «Off» for use with some desktop switchers (Dexpot e.g.).
+  * Issue 674: Tab macro function going to console doesn't handle 1-based offsets properly.
+  * После показа/скрытия TabBar (3-е состояние флажка) или StatusBar менялась высота окна !ConEmu.
+  * <Twilight> and <Zenburn> color palettes.
+
 
 ==Build 120806==
-  * Bugfixes and regressions of SplitScreen.
+  * Bugfixes and regressions of !SplitScreen.
   * Failed to store height less than 9 lines.
   * Issue 668: "-new_console:d:C:\Program Files (x86)" fails.
   * GuiMacro.
