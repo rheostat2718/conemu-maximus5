@@ -38,7 +38,7 @@ Wikipedia page [http://en.wikipedia.org/wiki/User:Maximus7792/ConEmu User:Maximu
   * «Show was hidden warning» option on «Features» page. «On» by default. May be turned «Off» for use with some desktop switchers (Dexpot e.g.).
   * Issue 674: Tab macro function going to console doesn't handle 1-based offsets properly.
   * После показа/скрытия TabBar (3-е состояние флажка) или StatusBar менялась высота окна !ConEmu.
-  * <Twilight> and <Zenburn> color palettes.
+  * «Twilight» and «Zenburn» color palettes.
 
 
 ==Build 120806==
