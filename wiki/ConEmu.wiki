@@ -86,7 +86,7 @@ If you notice lags while executing batches or commands (from cmd/git/bash/etc.) 
   * configurable and clickable status bar;
   * and more, and more... take a look at the Settings dialog, [Whats_New What's New page] and Settings.reg
 
-All settings are read from the registry (multiple named configurations are supported), after which the command line parameters are applied.
+All settings are read from the registry or ConEmu.xml file (multiple named configurations are supported), after which the command line parameters are applied.
 Parameters /Config and /!BufferHeight can only be specified on the command line.
 Most settings are configured using the Settings dialog, not from the command line.
 
