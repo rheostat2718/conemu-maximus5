@@ -7,6 +7,14 @@ Questions about usablity of "-new_console:s".
   * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+==120902==
+  * Fixed regression of «Auto show scrollbar».
+  * Issue 696: «Frame width» does not works (with «Hide caption always»).
+  * Some excess and wrong console resizes removed on window state change.
+  * Successive show/hide tab bar descrease window height.
+  * Installer creates "`ConEmu.exe`" and "`ConEmu64.exe`" in !AppPaths (HKLM).
+
+
 ==120830==
 Wikipedia page [http://en.wikipedia.org/wiki/User:Maximus7792/ConEmu User:Maximus7792/ConEmu] in progress. Any comments, suggestions or corrections?
 
