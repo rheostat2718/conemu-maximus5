@@ -7,6 +7,10 @@ Questions about usablity of "-new_console:s".
   * Mouse wheel. What console to send? Active or «Under cursor»?
 
 
+==120903==
+  * SplitScreen options in «Create new console» dialog.
+
+
 ==120902==
   * Fixed regression of «Auto show scrollbar».
   * Issue 696: «Frame width» does not works (with «Hide caption always»).
