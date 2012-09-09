@@ -6,12 +6,38 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Questions about usablity of "-new_console:s".
   * Mouse wheel. What console to send? Active or «Under cursor»?
 
+==Build 120909==
+  * Settings -> Tasks: more intuitive configuration for Tasks edit box, new buttons.
+    * "Add Tab" - opens standard dialog with "Save" button, which append new line to Tasks edit box.
+     *"Add startup dir" - simplifying insertion of `"-new_console:d:<dir>"` with GUI dialog.
+     *"Add file path" - inserts path to any file (GUI dialog too).
+  * Settings -> !ComSpec: «Support UNC paths in cmd.exe». The beginning. Checkbox turn on "!DisableUNCCheck".
+  * GCC Build updated. !ConEmu, ConEmuC, ConEmuCD, !ConEmuHk. 32-bit versions only was tested in GCC.
+  * MinGW. ConEmu files MAY be stored in MinGW compatible locations:
+{{{
+    $MINGW_ROOT/bin/
+      ConEmu.exe, ConEmu64.exe
+    $MINGW_ROOT/libexec/conemu/
+      ConEmuC.exe, ConEmuHk.dll and others
+      ConEmu.xml - contains some defaults for MinGW environment
+    $MINGW_ROOT/share/conemu/
+      WhatsNew-ConEmu.txt and others
+}}}
+  * !AutoUpdate is disabled in MinGW mode.
+  * Minor changes in command line parser.
+  * Selection ended unexpectedly when Modifier for selection start was set and 
 
-==120903==
+
+==Build 120904==
+  * When «Auto tabs» is on, creating new console shrinked !ConEmu size.
+  * SplitScreen, dialog fixes.
+
+
+==Build 120903==
   * SplitScreen options in «Create new console» dialog.
 
 
-==120902==
+==Build 120902==
   * Fixed regression of «Auto show scrollbar».
   * Issue 696: «Frame width» does not works (with «Hide caption always»).
   * Some excess and wrong console resizes removed on window state change.
