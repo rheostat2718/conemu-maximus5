@@ -4,7 +4,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 ----
 
-Предложение статьи о ConEmu для wikipedia было отклонено :(
+Предложение статьи о !ConEmu для wikipedia было отклонено :(
 
 «You need at least reputable news media coverage»
 
