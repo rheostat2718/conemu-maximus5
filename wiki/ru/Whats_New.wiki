@@ -3,8 +3,25 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
-Questions about usablity of "-new_console:s".
-  * Mouse wheel. What console to send? Active or «Under cursor»?
+Предложение статьи о ConEmu для wikipedia было отклонено :(
+«You need at least reputable news media coverage»
+http://en.wikipedia.org/wiki/Wikipedia:Articles_for_creation/ConEmu
+
+
+==Build 120913==
+  * I'm bored to tell «Read Disclaimer #2». Option «Inject !ConEmuHk» is off for now by default.
+  * Some more diagnostic info on failed to start root command (shell).
+  * Some default hotkeys are moved from Macros to User area, not to occupy Macros cells.
+  * GuiMacro.
+    Paste(4[,<Title>]) - choose file and paste full pathname
+    Paste(5[,<Title>]) - choose folder and paste full path
+  * New switches in "-new_console".
+    "-new_console:o" - don't enable 'Long console output' when starting command from Far Manager.
+    "-new_console:i" - don't inject ConEmuHk into starting process.
+  * !ConEmu hungs on exit, when F-Secure is installed.
+  * Attach does not catch console windows (regression of 120909).
+  * Hyperlinks detector fixes.
+  * In some cases (e.g. "far /x"), split console (Ctrl+Shift+O/E) starts program via "cmd.exe" as root console app.
 
 
 ==Build 120909==
