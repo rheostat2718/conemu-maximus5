@@ -209,6 +209,33 @@ A. In the font list you may directly select e.g. `[Raster Fonts 8x12]`.
 ===Q. Why are horizontal lines (drawn using box drawing characters) discontinuous?===
 A. In some fonts, the width of the corresponding box drawing characters is shorter than the font's declared average character width, which !ConEmu uses to determine the size of box drawing characters. To get rid of the artifacts, enable the checkbox «Fix Far borders» and increase the width of the "frames" font. The corresponding settings are on the 'Main' tab in the 'Settings' dialog.
 
+===Q. How to start several consoles in 2x2 grid===
+A. The question from [http://superuser.com/q/473807/139371 superuser.com]. !ConEmu (build 120909 or higher recommended) provides SplitScreen feature. You may set up named task to open several consoles on startup in the grid. Here the example for 2x2 grid.
+{{{
+>cmd -cur_console:n
+cmd -cur_console:s1TVn
+cmd -cur_console:s1THn
+cmd -cur_console:s2THn
+}}}
+
+===Q. How do you configure ConEmu to run cmd.exe as an Administrator from an Explorer integration?===
+A. Read the answer on [http://superuser.com/q/470408/139371 superuser.com].
+
+===Q. How do I give each tab opened by a {Task} a custom name?===
+A. Read the answer on [http://superuser.com/q/459154/139371 superuser.com].
+
+===Q. How to set up Git Bash Here in !ConEmu?===
+A. Read the answer on [http://superuser.com/q/454380/139371 superuser.com].
+
+===Q. How to export !ConEmu settings?===
+A. Read the answer on [http://superuser.com/q/450144/139371 superuser.com].
+
+===Q. How to attach a running console application to a new !ConEmu instance?===
+A. Read the answer on [http://superuser.com/q/445394/139371 superuser.com].
+
+===Q. How to delete items from the «Create new console» dropdown?===
+A. Read the answer on [http://superuser.com/a/436273/139371 superuser.com].
+
 
 
 ==Far Manager==

@@ -5,6 +5,7 @@ Following information is a copy of answers from [ConEmuFAQ ConEmu FAQ].
 =How to create a minidump=
 A. Windows XP and up.
    Run `"ConEmuC.exe /DEBUGPID=Your_PID /FULL"` or `"ConEmuC.exe /DEBUGPID=Your_PID /MINI"` (substitute Your_PID with the process ID, [MiniDump#How_to_find_Process_ID_(PID) read below]). You will be offered to choose filename for a minidump.
+
    _*Warning!*_ Before creating dumps of Far Manager please ensure that "far.exe" was started with "/x" switch.
 
 A. Windows 7 and up.
