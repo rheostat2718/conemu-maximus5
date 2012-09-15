@@ -218,7 +218,7 @@ cmd -cur_console:s1THn
 cmd -cur_console:s2THn
 }}}
 
-===Q. How do you configure ConEmu to run cmd.exe as an Administrator from an Explorer integration?===
+===Q. How do you configure !ConEmu to run cmd.exe as an Administrator from an Explorer integration?===
 A. Read the answer on [http://superuser.com/q/470408/139371 superuser.com].
 
 ===Q. How do I give each tab opened by a {Task} a custom name?===
@@ -316,13 +316,16 @@ A. Process Explorer.
 
 ===Q. Where can I find Process ID (PID)===
 A. You can find the Process ID near to Process Name (!ConEmu.exe, cmd.exe, etc.)
-  * in Windows' Task Manager;
+  * in Windows' Task Manager, PID column on Processes page;
   * in the !ConEmu status line;
   * in the Info page of !ConEmu [Settings#Info Settings] dialog.
 
 *Note!* Sometimes PID column in the Task Manager window may be hidden, enable it in Task manager settings.
   * Windows 7 and below: Task Manager -> Processes tab -> Menu -> View -> Select Columns -> Check «PID».
   * Windows 8: Task Manager -> Show «More details» -> Processes tab -> Right click on column title -> Check «PID».
+
+===Q. How to run Task Manager===
+A. Press *Ctrl+Shift+Esc* or right click on taskbar and choose menu item «Task Manager».
 
 ===Q. ConEmuC: !CreateFile(CONOUT$) failed, !ErrCode=0x00000005===
 A. The launched program created and set up its own console buffer created using `CreateConsoleScreenBuffer(..., 0/*No sharing*/, ...)`. Ask the program author to create the buffer with the correct access flags:
