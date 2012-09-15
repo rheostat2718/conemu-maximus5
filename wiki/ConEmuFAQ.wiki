@@ -307,11 +307,11 @@ A. No issues for this problem have been filed so far. Nevertheless, if hang occu
 A. Windows XP and above.
    Press *Win+R* and run the following command, it will create a full process memory dump (it may be large enough).
 {{{
-ConEmuC.exe /DEBUGPID=Your_PID /FULL
+C:\Program Files\ConEmu\ConEmu\ConEmuC.exe /DEBUGPID=Your_PID /FULL
 }}}
    Or, create a small process memory dump. Yes, it will be small, but may contains not enough information for detecting a problem.
 {{{
-ConEmuC.exe /DEBUGPID=Your_PID /MINI
+C:\Program Files\ConEmu\ConEmu\ConEmuC.exe /DEBUGPID=Your_PID /MINI
 }}}
 
    Substitute _Your_PID_ with the process ID, [MiniDump#How_to_find_Process_ID_(PID) read below]. You will be offered to choose filename for a minidump.
