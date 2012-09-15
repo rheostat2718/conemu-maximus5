@@ -44,6 +44,7 @@
       * [RoadMap ConEmu Road Map]
       * [TipsAndTweaks Tips and Tweaks]
       * [PVSStudio PVS-Studio]
+      * [MiniDump MiniDump]
   * [FarManager About Far Manager]
   * [FarPlugins Far Manager plugins]
     * [ClipFixer ClipFixer]

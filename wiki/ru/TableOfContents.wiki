@@ -44,6 +44,7 @@
       * [RoadMap Планы на будущее]
       * [TipsAndTweaks Советы и хитрости]
       * [PVSStudio PVS-Studio]
+      * [MiniDump MiniDump]
   * [FarManager Введение в Far Manager]
   * [FarPlugins Far Manager plugins]
     * [ClipFixer ClipFixer]
