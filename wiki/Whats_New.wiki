@@ -2,15 +2,6 @@
 Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
-----
-
-Sad day, submission of !ConEmu to wikipedia was declined.
-
-«You need at least reputable news media coverage»
-
-http://en.wikipedia.org/wiki/Wikipedia:Articles_for_creation/ConEmu
-
-----
 
 ==Build 120913==
   * I'm bored to tell «Read Disclaimer #2». Option «Inject !ConEmuHk» is off for now by default.
