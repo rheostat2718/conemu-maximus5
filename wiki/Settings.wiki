@@ -75,7 +75,7 @@ Less number of settings may be changed manually via [Settings#Registry registry]
   * [http://code.google.com/p/conemu-maximus5/wiki/ConEmuFAQ ЧаВо (на русском)]
   * [http://code.google.com/p/conemu-maximus5/wiki/TableOfContents Остальная документация]
 
-=Where settings are stored?=
+=Where settings are stored=
 !ConEmu may store its settings in the Windows registry (HKCU), or in the !ConEmu.xml file.
 
 ==Registry==
