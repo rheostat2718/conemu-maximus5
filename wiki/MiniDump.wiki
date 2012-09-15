@@ -4,7 +4,7 @@ Following information is a copy of answers from [ConEmuFAQ ConEmu FAQ].
 
 =How to create a minidump=
 A. Windows XP and above.
-   Following command will create a full process memory dump (it may be large enough).
+   Press *Win+R* and run the following command, it will create a full process memory dump (it may be large enough).
 {{{
 ConEmuC.exe /DEBUGPID=Your_PID /FULL
 }}}
