@@ -3,6 +3,12 @@ Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 120916==
+  * Settings dialog redesigned. New pages created. Some options renamed.
+  * Regression fixed. Can't activate alternative mode for tab #1.
+  * Alternative buffer of "far /w" was not scrollable.
+
+
 ==Build 120913==
   * I'm bored to tell «Read Disclaimer #2». Option «Inject !ConEmuHk» is off for now by default.
   * Some more diagnostic info on failed to start root command (shell).

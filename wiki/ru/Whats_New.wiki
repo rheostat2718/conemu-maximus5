@@ -3,6 +3,12 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 120916==
+  * Диалог настроек подвергся переделке. Добавлены новые страницы. Некоторые контролы переименованы.
+  * Альтернативный буфер не включался для консоли #1.
+  * Альтернативный буфер не скроллировался при "far /w".
+
+
 ==Build 120913==
   * I'm bored to tell «Read Disclaimer #2». Option «Inject !ConEmuHk» is off for now by default.
   * Some more diagnostic info on failed to start root command (shell).
