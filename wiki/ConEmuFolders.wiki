@@ -1,15 +1,15 @@
-!ConEmu has several required files (`exe` and `dll`) for normal operation.
+ï»¿!ConEmu has several required files (`exe` and `dll`) for normal operation.
 
 This page describes possible variants of files layouts.
 
 =Standard structure=
-|| `.\ConEmu.exe` <br> `.\ConEmu64.exe` || Main !ConEmu files (32bit and 64bit), usually located in `C:\Program Files\ConEmu`. Far Manager users might install !ConEmu to the folder, where `far.exe` is located. In that case, default shell will be `far.exe`. ||
-|| `.\ConEmu\ConEmuC.exe` <br> `.\ConEmu\ConEmuCD.dll` <br> `.\ConEmu\ConEmuHk.dll` || Required 32bit console part of !ConEmu package. These files are required in 64bit OS`s too, if you want to run any 32bit application in !ConEmu. ||
+|| `.\ConEmu.exe` <br> `.\ConEmu64.exe` || Main !ConEmu files (32bit and 64bit), usually located in `C:\Program Files\ConEmu`.<br> Far Manager users might install !ConEmu to the folder, where `far.exe` is located.<br> In that case, default shell will be `far.exe`. ||
+|| `.\ConEmu\ConEmuC.exe` <br> `.\ConEmu\ConEmuCD.dll` <br> `.\ConEmu\ConEmuHk.dll` || Required 32bit console part of !ConEmu package.<br> These files are required in 64bit OS`s too, if you want to<br> run any 32bit application in !ConEmu. ||
 || `.\ConEmu\ConEmuC64.exe` <br> `.\ConEmu\ConEmuCD64.dll` <br> `.\ConEmu\ConEmuHk64.dll` || Required 64bit console part of !ConEmu package. These files are required in 64bit OS`s only. ||
 || `.\Plugins\ConEmu\` || This folder contains Far Manager plugins. If you are not using Far Manager, you may delete `Plugins` folder ||
 
 =Plain structure=
-|| `.\ConEmu.exe` <br> `.\ConEmu64.exe` <br> `.\ConEmu\ConEmuC.exe` <br> `.\ConEmu\ConEmuCD.dll` <br> `.\ConEmu\ConEmuHk.dll` <br> `.\ConEmu\ConEmuC64.exe` <br> `.\ConEmu\ConEmuCD64.dll` <br> `.\ConEmu\ConEmuHk64.dll` || If you wish, you may put all !ConEmu files in one folder. But, you must write post-update command to move console-part files to root folder, if you want to use «Autoupdate» feature. ||
+|| `.\ConEmu.exe` <br> `.\ConEmu64.exe` <br> `.\ConEmu\ConEmuC.exe` <br> `.\ConEmu\ConEmuCD.dll` <br> `.\ConEmu\ConEmuHk.dll` <br> `.\ConEmu\ConEmuC64.exe` <br> `.\ConEmu\ConEmuCD64.dll` <br> `.\ConEmu\ConEmuHk64.dll` || If you wish, you may put all !ConEmu files in one folder. But, you must write post-update command to move console-part files to root folder, if you want to use Â«AutoupdateÂ» feature. ||
 
 =MinGW structure=
 || `.\bin\ConEmu.exe` <br> `.\bin\ConEmu64.exe` || MinGW `bin` folder is located usually in `C:\MinGW\bin`. ||
