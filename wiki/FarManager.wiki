@@ -62,7 +62,7 @@ Through it you can use many plugins from Far 2.x.
     * Regular Expression Search - it work in Editor and panels
 
 
-=1. Installation=
+=1. Downloads / Installation=
   #. Download Full version from [http://www.farmanager.com/download.php?l=en official site]. Does not matter whatever you use - msi installer or 7z package.
   #. (Optionally) update binary files with my [http://code.google.com/p/conemu-maximus5/downloads/list Far3bis]. List of improvements [http://conemu-maximus5.googlecode.com/svn/trunk/Far3bis/unicode_far/bis_changelog here]. In breaf - improvements of plugin manager (!AltShiftF9), optimization of C0 column, !MacroLib support.
 
