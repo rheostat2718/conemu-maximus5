@@ -1,0 +1,7 @@
+!ConEmu has several required files (`exe` and `dll`) for normal operation.
+
+This page describes possible variants of files layouts.
+
+=Standard structure=
+|| `.\ConEmu.exe` <br> `.\ConEmu64.exe` || Main !ConEmu files (32bit and 64bit), usually located in `C:\Program Files\ConEmu` ||
+|| `.\ConEmu\ConEmuC.exe` <br> `.\ConEmu\ConEmuCD.dll` <br> `.\ConEmu\ConEmuHk.dll` || Required console part of !ConEmu package ||
