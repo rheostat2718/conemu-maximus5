@@ -47,13 +47,11 @@ Thumbnails and Tiles already works, but they are !ConEmu windows which overlaps 
 ==Configurable panels and toolbars==
 Something like what is in TCMD or TC.
 
-==IME support==
-Yes, !ConEmu already can use IME in the floating window. It will be good to use IME «inplace».
-
 ==RTL languages==
 RTL is beyond my comprehension :) If RTL users think !ConEmu may be better - let me know.
 
 ==History in cmd and powershell==
 Some users asks about any way to get it to remember history from previous sessions.
-This is complicated (but possible). For now, I can recommend Far Manager as framework
-for cmd.exe: http://stackoverflow.com/a/10921470/1405560
+This is complicated (but possible). For now, I can recommend:
+  * Far Manager as framework for cmd.exe: http://stackoverflow.com/a/10921470/1405560
+  * [ConEmu_Clink Clink] for bash-style completion in cmd.exe.

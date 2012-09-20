@@ -450,4 +450,4 @@ A. Опция 'Block inactive cursor'. Альтернативная индика
 A. По умолчанию, текст закладок отображается шрифтом "Tahoma". Выберите другой шрифт, содержащий требуемые вам символы (например "Arial Unicode MS") на вкладке 'Tabs' окна 'Settings'.
 
 ===Q. Для консоли !ConEmu не всплывает перевод !GoldenDict===
-A. Скачайте и установите патч для !GoldenDict [http://code.google.com/p/conemu-maximus5/issues/detail?id=517#c3 отсюда].
+A. Обновите !GoldenDict до версии [http://goldendict.org/forum/viewtopic.php?p=7835#p7835 1.0.1-271] или более поздней.

@@ -407,4 +407,4 @@ A. The 'Block inactive cursor' option. The alternative view indicates that the c
 A. "Tahoma" is the default font used for tab captions. Choose another font which contains your required characters (e.g. "Arial Unicode MS") on the 'Tabs' tab of the 'Settings' window.
 
 ===Q. !GoldenDict translation pop-ups do not work in !ConEmu===
-A. Download and install [http://code.google.com/p/conemu-maximus5/issues/detail?id=517#c3 this GoldenDict patch].
+A. Update !GoldenDict to version [http://goldendict.org/forum/viewtopic.php?p=7835#p7835 1.0.1-271] or higher.
