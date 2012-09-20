@@ -13,6 +13,13 @@ As a long-time user of Console 2, I switched to !ConEmu recently and have not lo
 *Charles Roper*. Read more on [http://stackoverflow.com/a/10904494/1405560 stackoverflow.com]
 
 ----
+!ConEmu feels like a terminal designed for those who really use the command line often.
+
+The cusomization is targeted at the power user to produce an environment exactly the way you want, but it can feel a bit daunting to look at hundred of settings at one time.
+
+*Bill Morefield*. Read full review on [http://windows.appstorm.net/reviews/utilities-reviews/an-even-better-command-line-with-conemu/ AppStorm.net]
+
+----
 I found out about !ConEmu from Hanselman's post. !ConEmu is the best terminal application for Windows!
 
 *Ashwin*. Read more on [http://meta.stackoverflow.com/a/134414/187198 meta.stackoverflow.com]
