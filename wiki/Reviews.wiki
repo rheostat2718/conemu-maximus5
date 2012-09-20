@@ -45,6 +45,11 @@ This is an excellent addition to my suite of favourite programs. I've been lamen
 *Arild Jacobsen*, on [http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx#1ca49883-20a4-4645-9341-8fea8fc4ccd4 Hanselman's blog]
 
 ----
+ConEmu is my favorite free !PowerShell tool. It is a generic multi-console host so you can add as many console-based applications like !PowerShell to it.
+
+Read more on [http://www.powertheshell.com/conemu-free-multiconsole-host/ PowerTheShell.com]
+
+----
 Windows Console Replacements, Part 6 – [http://jpsoft.com/blogs/2012/04/windows-console-replacements-part-6-take-command-and-conemu/ Take Command and ConEmu] by jpsoftware
 
 ----
