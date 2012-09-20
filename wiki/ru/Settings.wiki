@@ -107,10 +107,10 @@ Usually, this file is located near to the _ConEmuC.exe_.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMain.png" title="ConEmu settings, Main page" alt="ConEmu settings, Main page">
 
 ==Size and Pos==
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsSizeAndPos.png" title="ConEmu settings, Main page" alt="ConEmu settings, Size and position page">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsSizeAndPos.png" title="ConEmu settings, Size and position page" alt="ConEmu settings, Size and position page">
 
 ==Appearance==
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsAppearance.png" title="ConEmu settings, Main page" alt="ConEmu settings, Appearance page">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsAppearance.png" title="ConEmu settings, Appearance page" alt="ConEmu settings, Appearance page">
 
 ==Automatic update==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsUpdate.png" title="ConEmu settings, Update page" alt="ConEmu settings, Update page">
@@ -154,7 +154,7 @@ Usually, this file is located near to the _ConEmuC.exe_.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreRealFont.png" title="ConEmu settings, RealConsole font" alt="ConEmu settings, RealConsole font">
 
 ==Text cursor==
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTextCursor.png" title="ConEmu settings, Features page" alt="ConEmu settings, Text cursor page">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTextCursor.png" title="ConEmu settings, Text cursor page" alt="ConEmu settings, Text cursor page">
 
 ==Colors==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
@@ -162,13 +162,24 @@ Usually, this file is located near to the _ConEmuC.exe_.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors2.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
 
 ==Transparency==
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTransparency.png" title="ConEmu settings, Features page" alt="ConEmu settings, Transparency page">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTransparency.png" title="ConEmu settings, Transparency page" alt="ConEmu settings, Transparency page">
 
 ==Tabs==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTabs.png" title="ConEmu settings, Tabs page" alt="ConEmu settings, Tabs page">
 
 ==Status bar==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsStatus.png" title="ConEmu settings, Status bar page" alt="ConEmu settings, Status bar page">
+
+==Integration==
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsStatus.png" title="ConEmu settings, Integration page" alt="ConEmu settings, Integration page">
+
+==App distinct==
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDistinct.png" title="ConEmu settings, App distinct page" alt="ConEmu settings, App distinct page">
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDistinct2.png" title="ConEmu settings, App distinct page" alt="ConEmu settings, App distinct page">
+
+==Keys and Macro==
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsKeys.png" title="ConEmu settings, Keys and Macro page" alt="ConEmu settings, Keys and Macro page">
 
 ==Mark & Paste==
 [TextSelection Перейти к описанию]
@@ -183,24 +194,16 @@ Usually, this file is located near to the _ConEmuC.exe_.
 ==Far Manager==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFarManager.png" title="ConEmu settings, Far Manager page" alt="ConEmu settings, Far Manager page">
 
-==Keys==
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsKeys.png" title="ConEmu settings, Keys page" alt="ConEmu settings, Keys page">
-
-==App distinct==
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDistinct.png" title="ConEmu settings, App distinct page" alt="ConEmu settings, App distinct page">
-
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDistinct2.png" title="ConEmu settings, App distinct page" alt="ConEmu settings, App distinct page">
-
 ==Views==
 This is settings for 'Panel Views' Far Manager plugin.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsViews.png" title="ConEmu settings, Views page" alt="ConEmu settings, Views page">
 
+==Info==
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsInfo.png" title="ConEmu settings, Info page" alt="ConEmu settings, Info page">
+
 ==Debug==
 Enables advanced logging of console processes creation.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDebug.png" title="ConEmu settings, Debug page" alt="ConEmu settings, Debug page">
-
-==Info==
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsInfo.png" title="ConEmu settings, Info page" alt="ConEmu settings, Info page">
 
 =Alphabetical=
 || lbLDragKey || Drag with left mouse button, only when pressed... ||
