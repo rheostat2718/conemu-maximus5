@@ -184,7 +184,7 @@ applications in new tabs !ConEmu. May be configured in 'Tasks' page of 'Settings
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsStatus.png" title="ConEmu settings, Status bar page" alt="ConEmu settings, Status bar page">
 
 ==Integration==
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsStatus.png" title="ConEmu settings, Integration page" alt="ConEmu settings, Integration page">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsIntegration.png" title="ConEmu settings, Integration page" alt="ConEmu settings, Integration page">
 
 ==App distinct==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsDistinct.png" title="ConEmu settings, App distinct page" alt="ConEmu settings, App distinct page">
