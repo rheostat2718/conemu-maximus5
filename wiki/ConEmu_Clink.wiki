@@ -1,6 +1,8 @@
 ﻿=!ConEmu and clink==
 Build 120716 introduces new experimental feature on «Features» page: «Use Clink in prompt». Clink - bash style completion.
 
+*Note* Clink version 0.2 is recommended. But, unfortunately its binaries was not released by the author yet. You may [https://code.google.com/p/clink/#Building_clink build clink] yourself from its [https://code.google.com/p/clink/source/checkout sources].
+
   * This is *experimental* feature, it may be changed or removed in future builds.
   * Download here version 0.1.1: http://clink.googlecode.com
   * Unpack here: `%ConEmuBaseDir%\clink` (this folder already created by !ConEmu installer and contains `Readme.txt`)
