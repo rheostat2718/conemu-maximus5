@@ -4,23 +4,22 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 ==Build 120923==
-  * Internal window resize changes.
-  * Touchscreen. Ignore SPI_GETWHEELSCROLLLINES.
-  * IME. Composition window placed inside !ConEmu.
-  * Dir sync settings.
-  * RClick & Far 3 & "Far /w" does not select panel items.
-  * Minor changes in splitter`s painting.
+  * Внутренние изменения в ресайзе.
+  * Touchscreen. Игнорировать SPI_GETWHEELSCROLLLINES.
+  * Окно ввода IME теперь отображается внутри !ConEmu.
+  * RClick & Far 3 & "Far /w" не выделял элементы на панели.
+  * Изменения отрисовки сплиттеров.
   * Issue 689: Progress stuck at 100% in powershell.
-  * New switch: "!ConEmu.exe /reset" starts without loading settings (a'la fresh config).
-  * New option on «Show» page: «Don't show !ConEmu window on Taskbar».
-  * New option on «Caption» page: «Always show numbers [n/m]».
-  * New option on «Tabs» page: «Tabs on bottom».
+  * Новый ключ: "!ConEmu.exe /reset" starts without loading settings (a'la fresh config).
+  * Опция, вкладка «Show»: «Don't show !ConEmu window on Taskbar».
+  * Опция, вкладка «Caption»: «Always show numbers [n/m]».
+  * Опция, вкладка «Tabs»: «Tabs on bottom».
   * Issue 716: GuiMacro.
 {{{
 SetOption("QuakeAutoHide",Value).
-  Value: 2 - switch autohide, 1 - enable, 0 - disable.
+  Value: 2 - переключить автоскрытие, 1 - скрывать при потере фокуса, 0 - не скрывать при потере фокуса.
 }}}
-  * Issue 717: New global hotkey for «Restore (bring to front)». Unassigned by default.
+  * Issue 717: Новый хоткей для «Restore (bring to front)». По умолчанию - не назначен.
 
 
 ==Build 120916==
