@@ -3,6 +3,13 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 120924==
+  * Внутренние изменения в ресайзе (продолжение).
+  * Модуль !ConEmuHk собирается с ключом "/DYNAMICBASE".
+  * Ключ "/single" учитывает путь запущенного ранее экземпляра !ConEmu.
+  * Для режима «Quake style» подразумевается ключ "/single".
+
+
 ==Build 120923==
   * Внутренние изменения в ресайзе.
   * Touchscreen. Игнорировать SPI_GETWHEELSCROLLLINES.
