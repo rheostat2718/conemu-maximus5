@@ -6,7 +6,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 ==Build 120924==
   * Internal window resize changes (continuation).
   * !ConEmuHk compiled with "/DYNAMICBASE".
-  * Switch "/single" takes care of the path, from exsisting !ConEmu instance was started.
+  * Switch "/single" takes care of the path, from existing !ConEmu instance was started.
   * For «Quake style» switch "/single" implied.
 
 
