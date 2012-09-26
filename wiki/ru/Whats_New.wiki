@@ -3,6 +3,17 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 120926==
+  * Issue 727: Shortcut opens multiple instances.
+  * Issue 724: Internal window resize changes (continuation).
+  * When can't create font (specified font not found in system) defaulting to monospace fonts.
+  * Ctrl+Shift+D, Ctrl+Shift+F - select and paste to console path to a folder or a file.
+
+
+==Build 120925==
+  * Issue 721: Window is not resizable in Normal mode with caption hidden.
+
+
 ==Build 120924==
   * Внутренние изменения в ресайзе (продолжение).
   * Модуль !ConEmuHk собирается с ключом "/DYNAMICBASE".
