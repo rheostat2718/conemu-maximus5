@@ -3,6 +3,19 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121002==
+  * Far 3 build 2848 supported.
+  * Two elevated in task.
+  * DBCS bugfixes (default font in real console).
+  * More information in logs.
+
+
+==Build 120930==
+  * GuiMacro: Paste(8) - paste path from clipboard converted to !CygWin style.
+  * When started with "`/logN`" switch and program folder is write-protected, log files will be created on `Desktop\ConEmuLogs`.
+  * Bugfix: "`/single`" switch.
+
+
 ==Build 120926==
   * Issue 727: Shortcut opens multiple instances.
   * Issue 724: Internal window resize changes (continuation).
