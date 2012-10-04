@@ -3,6 +3,11 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121004==
+  * !BugFix. "`%ConEmuDir%`" does not works for elevated consoles.
+  * !BugFix. Maximize fails on WinXP.
+
+
 ==Build 121002==
   * Far 3 build 2848 supported.
   * Two elevated in task.
