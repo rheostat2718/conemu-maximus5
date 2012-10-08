@@ -3,6 +3,13 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121008==
+  * Правки в «Sleep in background».
+  * Немного AI в «Press Enter or Esc to close console» (учитывается успешное чтение ввода из консоли).
+  * Игнорировалось изменение «Pad size» в диалоге.
+  * !Bugfix: Не срабатывал «Restart as Administrator».
+
+
 ==Build 121004==
   * !BugFix. "`%ConEmuDir%`" does not works for elevated consoles.
   * !BugFix. Maximize fails on WinXP.
