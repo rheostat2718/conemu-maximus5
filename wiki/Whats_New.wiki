@@ -3,6 +3,29 @@ Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121014==
+  * Far 3 build 2851 supported. Builds from 2799 to 2850 (inclusively) not supported.
+  * Incorrect startup position when maximized and hide caption.
+  * AnsiColors16.ans changed, AnsiColors16t.ans created.
+  * Some resize bugfixes.
+  * Minor changes in Settings dialog.
+  * New !ConEmu.exe command line switches (some exists already but not described).
+{{{
+/Reset - Don't load settings from registry/xml.
+/UpdateJumpList - Update Windows 7 taskbar jump list.
+/LoadCfgFile <file> - Use specified xml file as configuration storage.
+/SaveCfgFile <file> - Save configuration to the specified xml file.
+/Exit - Don't create ConEmu window, exit after actions.
+}}}
+  * Issue 760: Shield overlay icon appears only on tab-change on Taskbar.
+  * New option: «Appearance» -> «Show Shield overlay (Win7 or higher)».
+
+
+==Build 121009==
+  * Changes of numbers on «Appearance» page was ignored.
+  * Far Manager: when "far /w" and mouse over visible scrollbar - mouse wheel scrolls console.
+
+
 ==Build 121008==
   * Changes in «Sleep in background».
   * Some more AI in «Press Enter or Esc to close console» (successfull !ReadLn takes into account).
