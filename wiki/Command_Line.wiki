@@ -18,6 +18,11 @@
 || /!FontFile _fontfilename_ || Loads fonts from file for !ConEmu process ||
 || /!BufferHeight _lines_ || Set console buffer height. May be used with cmd.exe, !PowerShell, etc. ||
 || /Log | /Log1 | /Log2 || Used to create debug log files ||
+|| /Reset || Don't load settings from registry/xml. ||
+|| /UpdateJumpList || Update Windows 7 taskbar jump list. ||
+|| /LoadCfgFile _file_ || Use specified xml file as configuration storage. ||
+|| /SaveCfgFile _file_ || Save configuration to the specified xml file. ||
+|| /Exit || Don't create ConEmu window, exit after actions. ||
 || -new_console <br> -cur_console || This *special* switches may be specified after */cmd* switch. Read more about [NewConsole -new_console and -cur_console] switches ||
 || /cmd _commandline_ <br> /cmd @_taskfile_ <br> /cmd _{taskname}_ || Command line to start. This must be the last used switch (excepting -new_console and -cur_console). You may use ">" and "`*`" modifiers in cmdfile and /!BufferHeight argument. <br> _taskname_ is one of the tasks specified on the 'Tasks' page of 'Settings' dialog. ||
 

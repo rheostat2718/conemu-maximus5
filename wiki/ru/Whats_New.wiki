@@ -6,7 +6,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 ==Build 121014==
   * Far 3 build 2851 supported. Builds from 2799 to 2850 (inclusively) not supported.
   * Incorrect startup position when maximized and hide caption.
-  * AnsiColors16.ans changed, AnsiColors16t.ans created.
+  * !AnsiColors16.ans changed, !AnsiColors16t.ans created.
   * Some resize bugfixes.
   * Minor changes in Settings dialog.
   * New !ConEmu.exe command line switches (some exists already but not described).
