@@ -3,6 +3,47 @@ Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121020==
+  * Filter had not works as expected on «Keys & Macro» page.
+  * Minor changes in !ConEmu initialization process.
+  * Create new console dialog, field «Another user». Preferring build-in Administrator, another user from Administrators group, or just another user.
+  * Recreating console as another user did not works.
+  * Issue 767: «Tabs» page, if «Multiple consoles in one !ConEmu window» is off then creating new tasks in new !ConEmu window by default.
+  * New `ConEmu.exe` command line switch:
+{{{
+/Palette - Choose named color palette.
+}}}
+  * Issue 764: Enable same FG/BG color when BG color is background image.
+  * Issue 777: Resizing only works right from corners when «Pad size» is set.
+
+
+==Build 121018==
+  * Removing GCC warnings.
+  * Tasks page: New button «Active tabs» will add all current tabs into selected task.
+  * Button «No» in close confirmation dialog. It will close active console only.
+  * Confirmation dialog was not shown when single console was opened.
+  * Don't show «Press Enter or Esc to close console» after killing root process.
+  * Issue 774: !ConEmu window size breaks when moved across monitors.
+  * Issue 775: Failed to update Windows 7 Jump list when no tasks are left in the list.
+
+
+==Build 121016==
+  * !ConEmu on Reddit! http://redd.it/11k5oy Please, vote ;)
+  * Internal resize changes.
+  * Issue 736: !ConEmu crashes on saving a task when creating the new one.
+  * Pasting !CygWin paths fails.
+  * Fixes in «Extend foreground color with background».
+  * User palettes was not saved with «Save settings» button.
+  * Apps+Insert - paste file pathname from cliboard, converted to !CygWin style.
+  * App distinct: When there is no explicit settings for current application - root application settings applied.
+
+
+==Build 121015==
+  * Option «Use Clink in prompt» supports loading of clink version 0.2 (recommended). There is no need to set up «clink autorun» when this option is checked.
+  * Issue 763: Maximizing puts !ConEmu on the second monitor.
+  * Issue 764: Enable same FG/BG color when BG color is background image.
+
+
 ==Build 121014==
   * Far 3 build 2851 supported. Builds from 2799 to 2850 (inclusively) not supported.
   * Incorrect startup position when maximized and hide caption.
