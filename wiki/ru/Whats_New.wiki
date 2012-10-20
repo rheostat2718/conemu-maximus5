@@ -11,7 +11,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * Issue 767: «Tabs» page, if «Multiple consoles in one !ConEmu window» is off then creating new tasks in new !ConEmu window by default.
   * New `ConEmu.exe` command line switch:
 {{{
-/Palette - Choose named color palette.
+/Palette <Name> - Choose named color palette.
 }}}
   * Issue 764: Enable same FG/BG color when BG color is background image.
   * Issue 777: Resizing only works right from corners when «Pad size» is set.

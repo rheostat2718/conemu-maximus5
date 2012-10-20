@@ -17,6 +17,7 @@
 || /Size _fontsize_ || Specify the font size ||
 || /!FontFile _fontfilename_ || Loads fonts from file for !ConEmu process ||
 || /!BufferHeight _lines_ || Set console buffer height. May be used with cmd.exe, !PowerShell, etc. ||
+|| /Palette _Name_ || Choose named color palette. ||
 || /Log | /Log1 | /Log2 || Used to create debug log files ||
 || /Reset || Don't load settings from registry/xml. ||
 || /!UpdateJumpList || Update [Windows7Taskbar#Customizable_Jump_list Windows 7 taskbar jump list]. ||
