@@ -3,6 +3,17 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121022==
+  * New default hotkeys: Ctrl+RClick - system menu, Shift+RClick - active tab menu.
+  * New GuiMacro.
+{{{
+Menu(<Type>) - pop up System (Type=0) or Tab (Type=1) menu.
+}}}
+  * Now you may use LButton, RButton, MButton in "Keys & Macro". Note. When you use Alt+Btn for Menu() - release Alt before Btn to avoid menu cancelling.
+  * Added default support of GIT-bash directory structure, read ConEmuFolders#MinGW_structure for details.
+  * Hiew32 fails to paste more than 1 char at once.
+
+
 ==Build 121020==
   * Filter had not works as expected on «Keys & Macro» page.
   * Minor changes in !ConEmu initialization process.
