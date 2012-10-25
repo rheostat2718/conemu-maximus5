@@ -24,9 +24,13 @@ Let type in command prompt «csudo diskpart»
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuSuDo1.png" title="Running csudo command">
 
-Get UAC confirmation
+Get UAC confirmation on Vista or later
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuSuDo2.png" title="csudo UAC confirmation">
+
+Or choose another credentials on Windows 2000 or Windows XP
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuSuDo4.png" title="csudo UAC confirmation">
 
 Here we are, diskpart started elevated in a split
 
@@ -35,7 +39,9 @@ Here we are, diskpart started elevated in a split
 ==Batch file contents==
 As you can see, batch contains two parameters, which you may redefine: !ConEmuSplit and !ConfirmClose.
 For example, if you want to start elevated command in new tab rather than in split - just
-change `set ConEmuSplit=VERT` to `set ConEmuSplit=NO`.
+change «`set ConEmuSplit=VERT`» to «`set ConEmuSplit=NO`».
+
+*csudo.cmd*
 
 {{{
 @echo off
