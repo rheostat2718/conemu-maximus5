@@ -7,7 +7,7 @@ When you run application from existing !ConEmu tab, or starting new tab from !Co
 *Warning* «-new_console» and «-cur_console» are *case sensitive*.
 
 {{{
-  -new_console[:abcd[:dir]h[N]ru[:user:pwd]]
+  -new_console[:abcd[:dir]h[N][s<...>(H|V)]ru[:user:pwd]]
   or
   -cur_console[:abcd[:dir]h[N]ru[:user:pwd]]
      a - RunAs shell verb (as Admin on Vista+, login/passw in Win2k and WinXP)
@@ -15,13 +15,18 @@ When you run application from existing !ConEmu tab, or starting new tab from !Co
      c - force enable 'Press Enter or Esc to close console' (default)
      d - specify working directory, MUST BE LAST OPTION
      h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines
+     i - don't inject ConEmuHk into starting process
      n - disable 'Press Enter or Esc to close console'
+     o - don't enable 'Long console output' when starting command from Far Manager
      r - run as restricted user
+     s[<SplitTab>T][<Percents>](H|V) - run new console in a split
      u - ConEmu choose user dialog
      u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST OPTION
 }}}
 
 *Note* These switches are shown in !ConEmu «About» dialog.
+
+*Note* The «s» switch is complicated, look at examples below.
 
 Btw, «-new_console» is one of the ways to start *GUI* application from existing tab in the new !ConEmu tab.
 
@@ -30,6 +35,9 @@ Several switches in one command may be used, «-new_console:b -new_console:h9999
 While you create new tab from !ConEmu GUI interface, «-new_console» and «-cur_console» have the same effect.
 
 *Note* These are NOT a switches of ConEmuC, specify them as application (far, vim, putty, etc.) switches.
+
+*Warning* Take into account «MUST BE LAST OPTION» comments. You can't use «u:...» and «d:...» together,
+correct notation will be `"-new_console:d:c:\users\Pete" "-new_console:u:Pete:password"`.
 
 *Warning* Option «Inject !ConEmuHk» must be enabled in !ConEmu settings!
 
@@ -82,4 +90,32 @@ hiew.exe -cur_console:h0 c:\tools\app.exe
 Starts PuTTY in new !ConEmu tab.
 {{{
 putty -new_console
+}}}
+
+==Example 6 (Split Screen)==
+Split current tab, new tab will be created to the right, both tabs becomes 50% width of active tab.
+{{{
+cmd -new_console:s
+}}}
+or
+{{{
+cmd -new_console:s50H
+}}}
+
+Split current tab, create new tab to the bottom.
+{{{
+cmd -new_console:sV
+}}}
+
+Split 3-d tab, create new tab to the right with 30% width.
+{{{
+cmd -new_console:s3T30H
+}}}
+
+You may also create named task with several cmd's. Next example creates four cmd.exe consoles in a grid 2x2.
+{{{
+>cmd -cur_console:n
+cmd -cur_console:s1TVn
+cmd -cur_console:s1THn
+cmd -cur_console:s2THn
 }}}

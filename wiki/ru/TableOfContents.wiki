@@ -13,6 +13,7 @@
       * [Whats_New Whats new]
     * Запуск приложений
       * [LaunchNewTab Новый таб]
+      * [ConEmuSuDo sudo]
       * [Command_Line Аргументы ConEmu.exe]
       * [ConEmuC ConEmuC]
       * [NewConsole Ключ -new_console]

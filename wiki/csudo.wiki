@@ -1,0 +1,18 @@
+﻿==Unix like sudo command on Windows==
+
+Common question: «Is there any 'sudo' command for Windows?»
+
+One of the answers is here. 
+
+!ConEmu package contains batch file «%!ConEmuBaseDir%\csudo.cmd».
+When checkbox «Add %!ConEmuBaseDir% to %PATH%» is On («!ComSpec» page),
+you may just type csudo in non-elevated prompt in your shell.
+
+You may also rename «csudo.cmd» to «sudo.cmd» if you like simple «sudo» notation.
+
+*Note* Elevated command will starts in new elevated !ConEmu tab.
+
+===Example===
+{{{
+csudo dism /online /enable-feature /featurename:NetFX3 /All /Source:D:\sources\sxs /LimitAccess
+}}}
