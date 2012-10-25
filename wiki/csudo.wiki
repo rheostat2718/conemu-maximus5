@@ -1,4 +1,4 @@
-﻿==Unix like sudo command on Windows==
+﻿=Unix like sudo command on Windows=
 
 Common question: «Is there any 'sudo' command for Windows?»
 
@@ -12,7 +12,17 @@ You may also rename «csudo.cmd» to «sudo.cmd» if you like simple «sudo» no
 
 *Note* Elevated command will starts in new elevated !ConEmu tab.
 
-===Example===
+==Example==
 {{{
 csudo dism /online /enable-feature /featurename:NetFX3 /All /Source:D:\sources\sxs /LimitAccess
 }}}
+
+==Screenshots==
+Let type in command prompt «csudo diskpart»
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuSuDo1.png" title="Running csudo command">
+
+Get UAC confirmation
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuSuDo2.png" title="csudo UAC confirmation">
+
+Here we are, diskpart started elevated in a split
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuSuDo3.png" title="Running csudo command">
