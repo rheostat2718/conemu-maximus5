@@ -4,7 +4,8 @@ Common question: «Is there any 'sudo' command for Windows?»
 
 One of the answers is here. 
 
-!ConEmu package contains (_actually not yet ATM_) batch file «%!ConEmuBaseDir%\csudo.cmd».
+!ConEmu package contains (_actually not yet ATM_) batch file
+«%!ConEmuBaseDir%\[http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/csudo.cmd csudo.cmd]».
 When checkbox «Add %!ConEmuBaseDir% to %PATH%» is On («!ComSpec» page),
 you may just type csudo in non-elevated prompt in your shell.
 
