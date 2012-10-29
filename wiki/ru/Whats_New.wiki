@@ -22,7 +22,7 @@ csudo dism /online /enable-feature /featurename:NetFX3 /All /Source:D:\sources\s
 Menu(<Type>) - pop up System (Type=0) or Tab (Type=1) menu.
 }}}
   * Now you may use LButton, RButton, MButton in "Keys & Macro". Note. When you use Alt+Btn for Menu() - release Alt before Btn to avoid menu cancelling.
-  * Added default support of GIT-bash directory structure, read ConEmuFolders#MinGW_structure for details.
+  * Added default support of GIT-bash directory structure, read [ConEmuFolders#MinGW_structure MinGW structure] for details.
   * Hiew32 fails to paste more than 1 char at once.
 
 
