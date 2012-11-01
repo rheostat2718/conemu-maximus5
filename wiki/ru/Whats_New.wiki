@@ -3,28 +3,37 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121101==
+  * Искать текст теперь можно по всему буферу (а не только по видимой области). Флажок «Freeze console» требуется включить. To be continued...
+  * В некоторых случаях !DosBox не стартовал из командной строки Far (doom.exe -warp 10).
+  * Background: можно задать «сплошной цвет» а не только файл картинки. Введите в поле «Path» значение цвета !ColorRef (напимер «#300A24» без кавычек). Поддерживаемые форматы: «#RRGGBB» (hex), «0xBBGGRR» (hex), «xBBGGRR» (hex), «RRR,GGG,BBB» (dec), «RRR GGG BBB» (dec).
+  * Новая цветовая схема: <Ubuntu>. Если хотите получить «фиолетовый» фон - установите цвет #300A24 в качестве фоновой картинки на вкладке «Main».
+  * Умолчание для хоткея «Minimize/Restore» заменено на `Ctrl+~`.
+  * Issue 795: Ошибка смены размера окна при Hide/Restore.
+
+
 ==Build 121029==
-  * New option: Settings -> Status bar -> System colors.
-  * Issue 791: Rollback changes in «Run As Administrator».
-  * Issue 700: Forcing !ConEmu's console to larger history buffer count. Small count causes «Up arrow don't work in prompt» for long console trees, for example: «cmd -> Far -> ConEmuC -> cmd -> vim -> cmd -> ...» Forcing values in `HKEY_CURRENT_USER\Console\ConEmu`: History buffer size - min=16, default=50; Count - min=16, default=32.
-  * In the Tasks popup menu (Win+N or down arrow near to `[+]`) you may RClick on the task and get submenu with task contents. You may click task command to start particular command.
-  * Issue 794: Names of renamed tabs should appear on taskbar.
+  * Новая опция: Settings -> Status bar -> System colors (отрисовка статусной строки с использованием стандартных цветов Windows).
+  * Issue 791: Откат предыдущих изменений «Run As Administrator».
+  * Issue 700: Принудительная установка бОльшего количества буферов истории команд. Лечим следующий «глюк» консоли: при запуске дерева процессов (например «cmd -> Far -> ConEmuC -> cmd -> vim -> cmd -> ...») при малом количестве буферов (всего 4 по умолчанию) перестает работать Up arrow в строке ввода. Меняем здесь `HKEY_CURRENT_USER\Console\ConEmu`: History buffer size - min=16, default=50; Count - min=16, default=32.
+  * В меню задач /Tasks popup menu/ (Win+N or down arrow near to `[+]`) теперь можно щелкнуть RClick по задаче для вызова подменю с содержимым задачи. Здесь можно выбрать конкретную команду для запуска нового таба, если не нужно запускать весь список.
+  * Issue 794: При переименовании таба новое имя отражается на панели задач.
 
 
 ==Build 121028==
-  * Issue 526: Optimization of «Inject !ConEmuHk». Hope on great speedup and no new bugs.
-  * Changed «Run As Administrator» startup style to avoid flickering of real console.
-  * Fixed default Far Manager macros for Lua (Far 3 build 2851).
-  * Sometimes "-new_console" was removed with excess spaces.
-  * `*`nix like «sudo» command. Batch file "%!ConEmuBaseDir%\csudo.cmd". When checkbox «Add %!ConEmuBaseDir% to %PATH%» is On («!ComSpec» page), you may just type csudo in non-elevated prompt, for example:
+  * Issue 526: Оптимизация «Inject !ConEmuHk». Должно быть значительное ускорение и, надеюсь, без новых багов.
+  * (Выполнен откат) Попытка смены способа запуска «Run As Administrator» для избежания мелькания RealConsole при загрузке.
+  * Исправлены встроенные макросы для Far Manager / Lua (Far 3 build 2851).
+  * Правка "-new_console": иногда вместе с ключом убирались нужные пробелы.
+  * Команда «sudo» в стиле `*`nix. В поставку включен файл "%!ConEmuBaseDir%\csudo.cmd". Если флажок «Add %!ConEmuBaseDir% to %PATH%» включен (вкладка «!ComSpec»), то в non-elevated командной строке можно набрать csudo для запуска с повышенными привилегиями, например:
 {{{
 csudo dism /online /enable-feature /featurename:NetFX3 /All /Source:D:\sources\sxs /LimitAccess
 }}}
-  * Some fixes in closing !ConEmu window.
+  * Некоторые правки закрытия окна !ConEmu.
 
 
 ==Build 121022==
-  * New default hotkeys: Ctrl+RClick - system menu, Shift+RClick - active tab menu.
+  * Новые горячие клавишы (теперь для мышки): Ctrl+RClick - system menu, Shift+RClick - active tab menu.
   * New GuiMacro.
 {{{
 Menu(<Type>) - pop up System (Type=0) or Tab (Type=1) menu.

@@ -3,6 +3,15 @@ Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121101==
+  * Searching in full console (not only visible area). Checkbox «Freeze console» must be turned on. To be continued...
+  * Sometimes !DosBox do not starts from Far command prompt (doom.exe -warp 10).
+  * Background: you may set «solid color». Just type in «Path» field !ColorRef value (e.g. «#300A24» without quotas) instead of background picture file. Supported formats are: «#RRGGBB» (hex), «0xBBGGRR» (hex), «xBBGGRR» (hex), «RRR,GGG,BBB» (dec), «RRR GGG BBB» (dec).
+  * New predefined color scheme: <Ubuntu>. If you need purple background, set background color to #300A24 on «Main» page.
+  * Decided to change default hotkey for «Minimize/Restore» - it's now `Ctrl+~`.
+  * Issue 795: Reducing window size on Hide/Restore.
+
+
 ==Build 121029==
   * New option: Settings -> Status bar -> System colors.
   * Issue 791: Rollback changes in «Run As Administrator».
@@ -13,7 +22,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 ==Build 121028==
   * Issue 526: Optimization of «Inject !ConEmuHk». Hope on great speedup and no new bugs.
-  * Changed «Run As Administrator» startup style to avoid flickering of real console.
+  * (Rolled back) Changed «Run As Administrator» startup style to avoid flickering of real console.
   * Fixed default Far Manager macros for Lua (Far 3 build 2851).
   * Sometimes "-new_console" was removed with excess spaces.
   * `*`nix like «sudo» command. Batch file "%!ConEmuBaseDir%\csudo.cmd". When checkbox «Add %!ConEmuBaseDir% to %PATH%» is On («!ComSpec» page), you may just type csudo in non-elevated prompt, for example:
