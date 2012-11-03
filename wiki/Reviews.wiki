@@ -56,8 +56,6 @@ This is an excellent addition to my suite of favourite programs. I've been lamen
 Read more on [http://www.powertheshell.com/conemu-free-multiconsole-host/ PowerTheShell.com]
 
 ----
-I've tried them all : !TakeCommand, !PromptPal, !PowerCmd, Console2.
-
 !ConEmu is the best one! It's free, full of features and its development is very active.
 
 [http://www.reddit.com/r/software/comments/11k5oy/conemu_a_good_regularly_updated_console_emulator/c6v9kk3 electrotype] on reddit.com
