@@ -8,6 +8,12 @@ I haven't even begun to scratch the surface as !ConEmu is one of those applicati
 *Scott Hanselman*. Read [http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx full article]
 
 ----
+One of my favorite !ConEmu features is the ability to add custom predefined tasks or command groups to the quick-access menus. These provide customized actions with all the parameters and options you need in one or two clicks. You can then add these tasks to the Windows taskbar (Jump Lists) for easy reuse. !ConEmu will also store commands from your usage history if you so choose.
+
+*Greg Steen*. Read 
+[http://technet.microsoft.com/en-us/magazine/jj649372.aspx#ctl00_MTContentSelector1_mainContentContainer_ctl02 full review]
+
+----
 As a long-time user of Console 2, I switched to !ConEmu recently and have not looked back. This is so much better than anything that has come before it almost defies belief. Plus is is being rapidly developed (thanks Maximus!) with juicy new features appearing often enough to make it feel exciting. If you've not tried this, do it now. I have no hesitation in recommending it as the best console emulator on Windows.
 
 *Charles Roper*. Read more on [http://stackoverflow.com/a/10904494/1405560 stackoverflow.com]
@@ -48,6 +54,13 @@ This is an excellent addition to my suite of favourite programs. I've been lamen
 !ConEmu is my favorite free !PowerShell tool. It is a generic multi-console host so you can add as many console-based applications like !PowerShell to it.
 
 Read more on [http://www.powertheshell.com/conemu-free-multiconsole-host/ PowerTheShell.com]
+
+----
+I've tried them all : !TakeCommand, !PromptPal, !PowerCmd, Console2.
+
+!ConEmu is the best one! It's free, full of features and its development is very active.
+
+[http://www.reddit.com/r/software/comments/11k5oy/conemu_a_good_regularly_updated_console_emulator/c6v9kk3 electrotype] on reddit.com
 
 ----
 Windows Console Replacements, Part 6 – [http://jpsoft.com/blogs/2012/04/windows-console-replacements-part-6-take-command-and-conemu/ Take Command and ConEmu] by jpsoftware
