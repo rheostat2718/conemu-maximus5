@@ -19,6 +19,7 @@
       * [NewConsole Ключ -new_console]
       * [DosBox DOS приложения (DosBox)]
     * Настройка
+      * [SettingsFast Первый запуск]
       * [Settings Настройка]
       * [Fonts Шрифты]
     * Функции

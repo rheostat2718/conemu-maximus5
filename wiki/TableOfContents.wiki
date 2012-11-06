@@ -19,6 +19,7 @@
       * [NewConsole -new_console switch]
       * [DosBox DOS applications]
     * Settings
+      * [SettingsFast First start]
       * [Settings Settings]
       * [Fonts Fonts]
     * Features

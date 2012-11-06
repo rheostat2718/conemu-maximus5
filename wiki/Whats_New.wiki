@@ -2,7 +2,6 @@
 Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
-
 ==Build 121106==
   * New ConEmuC command: Export environment variables to parent processes. Syntax (case insensitive):
 {{{
