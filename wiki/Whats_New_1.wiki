@@ -1,6 +1,9 @@
 <font size="5">*[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FWhats_New_1%3Fshow%3Dcontent Whats_New_1 (autotranslated Ru-En)]*</font>
 ----------------------------------------------------------------------
 
+==Newer entries==
+  * [Whats_New 120408 .. current]
+
 ==Build 111220==
   * Улучшен детектор прогресса в консоли.
   * GuiMacro. Новая функция: `Shell("<Verb>","<File>"[,"<Parms>"[,"<Dir>"[,<ShowCmd>]]])`
@@ -169,7 +172,7 @@
 ==Build 110926==
 ====Changes====
   * Пункт меню 'Terminate' и кнопка 'Terminate' в 'Recreate dialog' отображает подтверждение с выбором: закрыть консоль 'крестиком' или убить активный процесс (!TerminateProcess).
-  * Упрощена настройка Background. В поле 'Replace color indexes' можно указать '*', тогда будет краситься только фон панелей Far manager.
+  * Упрощена настройка Background. В поле 'Replace color indexes' можно указать `"*"` (звездочку), тогда будет краситься только фон панелей Far manager.
   * Far3 build 2204.
 
 
@@ -287,7 +290,7 @@
   * Не работал перехват WinAPI в плагинах, загруженых через Far3wrap.
 ====Changes====
   * В Thumbnails & Tiles учитывается многострочная статусная область панелей.
-  * Добавлен файл !ConEmu\Far3_reg\Thumbnails_!KeyBar.xml
+  * Добавлен файл `ConEmu\Far3_reg\Thumbnails_KeyBar.xml`
 
 
 ==Build 110712==
