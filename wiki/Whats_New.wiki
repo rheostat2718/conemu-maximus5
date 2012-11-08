@@ -872,5 +872,5 @@ All my attempts to post comments and contact the article author were ignored :(
 
 
 ==Older entries==
-[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FWhats_New%3Fshow%3Dcontent WhatsNew autotranslated]
-[http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt Full changelog on SVN]
+  * [http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FWhats_New%3Fshow%3Dcontent WhatsNew autotranslated]
+  * [http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt Full changelog on SVN]

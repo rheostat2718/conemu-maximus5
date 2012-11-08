@@ -1061,5 +1061,5 @@ macro:post $If (Apanel.Folder || Apanel.Plugin && !!(APanel.OPIFlags & 0x20)) ms
 
 
 ==Более старые записи==
-[Whats_New_1 Builds 090707 .. 111220]
-[http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt Полный лог изменений на SVN]
+  * [Whats_New_1 Builds 090707 .. 111220]
+  * [http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt Полный лог изменений на SVN]
