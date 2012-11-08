@@ -1,0 +1,876 @@
+#labels Featured
+Please, vote for !ConEmu
+http://code.google.com/p/conemu-maximus5/wiki/Awards
+
+==Build 121106==
+  * New ConEmuC command: Export environment variables to parent processes. Syntax (case insensitive):
+{{{
+ConEmuC /export[=CON|ALL] [Var1 [Var2 [...]]]
+  VarN        - may contains one trailing/middle asterisk (sort of filemask support).
+  /export     - export to all processes of current console and ConEmu GUI
+  /export=CON - export to all processes of current console only
+  /export=ALL - export to all processes of opened tabs and ConEmu GUI
+}}}
+    * Note! This is experimental, «Inject !ConEmuHk» required to set variables, some shells may ignores environment changes because of their features.
+    * Shells comments: «Far Manager» & «TCC/LE» - OK; «cmd» - fails partially (required to run smth from active cmd, for example "cmd /k exit", to «apply» changes); bash - fails completely (seems, it does not support outside changing of env.vars)..
+  * When «Hide caption» and «Frame width» >= resizable frame width - resizable frame used.
+
+
+==Build 121104==
+  * Issue 786: Failed to input Chinese in PuTTY.
+  * Resize bugfix: when maximizing scrolling window (e.g. "dir c:\ /s") «viewport» enlarges after delay.
+
+
+==Build 121101==
+  * Searching in full console (not only visible area). Checkbox «Freeze console» must be turned on. To be continued...
+  * Sometimes !DosBox do not starts from Far command prompt (doom.exe -warp 10).
+  * Background: you may set «solid color». Just type in «Path» field !ColorRef value (e.g. «#300A24» without quotas) instead of background picture file. Supported formats are: «#RRGGBB» (hex), «0xBBGGRR» (hex), «xBBGGRR» (hex), «RRR,GGG,BBB» (dec), «RRR GGG BBB» (dec).
+  * New predefined color scheme: <Ubuntu>. If you need purple background, set background color to #300A24 on «Main» page.
+  * Decided to change default hotkey for «Minimize/Restore» - it's now `Ctrl+~`.
+  * Issue 795: Reducing window size on Hide/Restore.
+
+
+==Build 121029==
+  * New option: Settings -> Status bar -> System colors.
+  * Issue 791: Rollback changes in «Run As Administrator».
+  * Issue 700: Forcing !ConEmu's console to larger history buffer count. Small count causes «Up arrow don't work in prompt» for long console trees, for example: «cmd -> Far -> ConEmuC -> cmd -> vim -> cmd -> ...» Forcing values in `HKEY_CURRENT_USER\Console\ConEmu`: History buffer size - min=16, default=50; Count - min=16, default=32.
+  * In the Tasks popup menu (Win+N or down arrow near to `[+]`) you may RClick on the task and get submenu with task contents. You may click task command to start particular command.
+  * Issue 794: Names of renamed tabs should appear on taskbar.
+
+
+==Build 121028==
+  * Issue 526: Optimization of «Inject !ConEmuHk». Hope on great speedup and no new bugs.
+  * (Rolled back) Changed «Run As Administrator» startup style to avoid flickering of real console.
+  * Fixed default Far Manager macros for Lua (Far 3 build 2851).
+  * Sometimes "-new_console" was removed with excess spaces.
+  * `*`nix like «sudo» command. Batch file "%!ConEmuBaseDir%\csudo.cmd". When checkbox «Add %!ConEmuBaseDir% to %PATH%» is On («!ComSpec» page), you may just type csudo in non-elevated prompt, for example:
+{{{
+csudo dism /online /enable-feature /featurename:NetFX3 /All /Source:D:\sources\sxs /LimitAccess
+}}}
+  * Some fixes in closing !ConEmu window.
+
+
+==Build 121022==
+  * New default hotkeys: Ctrl+RClick - system menu, Shift+RClick - active tab menu.
+  * New GuiMacro.
+{{{
+Menu(<Type>) - pop up System (Type=0) or Tab (Type=1) menu.
+}}}
+  * Now you may use LButton, RButton, MButton in "Keys & Macro". Note. When you use Alt+Btn for Menu() - release Alt before Btn to avoid menu cancelling.
+  * Added default support of GIT-bash directory structure, read [ConEmuFolders#MinGW_structure MinGW structure] for details.
+  * Hiew32 fails to paste more than 1 char at once.
+
+
+==Build 121020==
+  * Filter had not works as expected on «Keys & Macro» page.
+  * Minor changes in !ConEmu initialization process.
+  * Create new console dialog, field «Another user». Preferring build-in Administrator, another user from Administrators group, or just another user.
+  * Recreating console as another user did not works.
+  * Issue 767: «Tabs» page, if «Multiple consoles in one !ConEmu window» is off then creating new tasks in new !ConEmu window by default.
+  * New `ConEmu.exe` command line switch:
+{{{
+/Palette <Name> - Choose named color palette.
+}}}
+  * Issue 764: Enable same FG/BG color when BG color is background image.
+  * Issue 777: Resizing only works right from corners when «Pad size» is set.
+
+
+==Build 121018==
+  * Removing GCC warnings.
+  * Tasks page: New button «Active tabs» will add all current tabs into selected task.
+  * Button «No» in close confirmation dialog. It will close active console only.
+  * Confirmation dialog was not shown when single console was opened.
+  * Don't show «Press Enter or Esc to close console» after killing root process.
+  * Issue 774: !ConEmu window size breaks when moved across monitors.
+  * Issue 775: Failed to update Windows 7 Jump list when no tasks are left in the list.
+
+
+==Build 121016==
+  * !ConEmu on Reddit! http://redd.it/11k5oy Please, vote ;)
+  * Internal resize changes.
+  * Issue 736: !ConEmu crashes on saving a task when creating the new one.
+  * Pasting !CygWin paths fails.
+  * Fixes in «Extend foreground color with background».
+  * User palettes was not saved with «Save settings» button.
+  * Apps+Insert - paste file pathname from cliboard, converted to !CygWin style.
+  * App distinct: When there is no explicit settings for current application - root application settings applied.
+
+
+==Build 121015==
+  * Option «Use Clink in prompt» supports loading of clink version 0.2 (recommended). There is no need to set up «clink autorun» when this option is checked.
+  * Issue 763: Maximizing puts !ConEmu on the second monitor.
+  * Issue 764: Enable same FG/BG color when BG color is background image.
+
+
+==Build 121014==
+  * Far 3 build 2851 supported. Builds from 2799 to 2850 (inclusively) not supported.
+  * Incorrect startup position when maximized and hide caption.
+  * !AnsiColors16.ans changed, !AnsiColors16t.ans created.
+  * Some resize bugfixes.
+  * Minor changes in Settings dialog.
+  * New !ConEmu.exe command line switches (some exists already but not described).
+{{{
+/Reset - Don't load settings from registry/xml.
+/UpdateJumpList - Update Windows 7 taskbar jump list.
+/LoadCfgFile <file> - Use specified xml file as configuration storage.
+/SaveCfgFile <file> - Save configuration to the specified xml file.
+/Exit - Don't create ConEmu window, exit after actions.
+}}}
+  * Issue 760: Shield overlay icon appears only on tab-change on Taskbar.
+  * New option: «Appearance» -> «Show Shield overlay (Win7 or higher)».
+
+
+==Build 121009==
+  * Changes of numbers on «Appearance» page was ignored.
+  * Far Manager: when "far /w" and mouse over visible scrollbar - mouse wheel scrolls console.
+
+
+==Build 121008==
+  * Changes in «Sleep in background».
+  * Some more AI in «Press Enter or Esc to close console» (successfull !ReadLn takes into account).
+  * Changes of «Pad size» was ignored.
+  * !Bugfix: Restart as Administrator fails.
+
+
+==Build 121004==
+  * !BugFix. "`%ConEmuDir%`" does not works for elevated consoles.
+  * !BugFix. Maximize fails on WinXP.
+
+
+==Build 121002==
+  * Far 3 build 2848 supported.
+  * Two elevated in task.
+  * DBCS bugfixes (default font in real console).
+  * More information in logs.
+
+
+==Build 120930==
+  * GuiMacro: Paste(8) - paste path from clipboard converted to !CygWin style.
+  * When started with "`/logN`" switch and program folder is write-protected, log files will be created on `Desktop\ConEmuLogs`.
+  * Bugfix: "`/single`" switch.
+
+
+==Build 120926==
+  * Issue 727: Shortcut opens multiple instances.
+  * Issue 724: Internal window resize changes (continuation).
+  * When can't create font (specified font not found in system) defaulting to monospace fonts.
+  * Ctrl+Shift+D, Ctrl+Shift+F - select and paste to console path to a folder or a file.
+
+
+==Build 120925==
+  * Issue 721: Window is not resizable in Normal mode with caption hidden.
+
+
+==Build 120924==
+  * Internal window resize changes (continuation).
+  * !ConEmuHk compiled with "/DYNAMICBASE".
+  * Switch "/single" takes care of the path, from existing !ConEmu instance was started.
+  * For «Quake style» switch "/single" implied.
+
+
+==Build 120923==
+  * Internal window resize changes.
+  * Touchscreen. Ignore SPI_GETWHEELSCROLLLINES.
+  * IME. Composition window placed inside !ConEmu.
+  * RClick & Far 3 & "Far /w" does not select panel items.
+  * Minor changes in splitter`s painting.
+  * Issue 689: Progress stuck at 100% in powershell.
+  * New switch: "!ConEmu.exe /reset" starts without loading settings (a'la fresh config).
+  * New option on «Show» page: «Don't show !ConEmu window on Taskbar».
+  * New option on «Caption» page: «Always show numbers [n/m]».
+  * New option on «Tabs» page: «Tabs on bottom».
+  * Issue 716: GuiMacro.
+{{{
+SetOption("QuakeAutoHide",Value).
+  Value: 2 - switch autohide, 1 - enable, 0 - disable.
+}}}
+  * Issue 717: New global hotkey for «Restore (bring to front)». Unassigned by default.
+
+
+==Build 120916==
+  * Settings dialog redesigned. New pages created. Some options renamed.
+  * Regression fixed. Can't activate alternative mode for tab #1.
+  * Alternative buffer of "far /w" was not scrollable.
+
+
+==Build 120913==
+  * I'm bored to tell «Read Disclaimer #2». Option «Inject !ConEmuHk» is off for now by default.
+  * Some more diagnostic info on failed to start root command (shell).
+  * Some default hotkeys are moved from Macros to User area, not to occupy Macros cells.
+  * GuiMacro.
+{{{
+    Paste(4[,<Title>]) - choose file and paste full pathname
+    Paste(5[,<Title>]) - choose folder and paste full path
+}}}
+  * New switches in "-new_console".
+{{{
+    "-new_console:o" - don't enable 'Long console output' when starting command from Far Manager.
+    "-new_console:i" - don't inject ConEmuHk into starting process.
+}}}
+  * !ConEmu hungs on exit, when F-Secure is installed.
+  * Attach does not catch console windows (regression of 120909).
+  * Hyperlinks detector fixes.
+  * In some cases (e.g. "far /x"), split console (Ctrl+Shift+O/E) starts program via "cmd.exe" as root console app.
+
+
+==Build 120909==
+  * Settings -> Tasks: more intuitive configuration for Tasks edit box, new buttons.
+    * "Add Tab" - opens standard dialog with "Save" button, which append new line to Tasks edit box.
+     *"Add startup dir" - simplifying insertion of `"-new_console:d:<dir>"` with GUI dialog.
+     *"Add file path" - inserts path to any file (GUI dialog too).
+  * Settings -> !ComSpec: «Support UNC paths in cmd.exe». The beginning. Checkbox turn on "!DisableUNCCheck".
+  * GCC Build updated. !ConEmu, ConEmuC, ConEmuCD, !ConEmuHk. 32-bit versions only was tested in GCC.
+  * MinGW. ConEmu files MAY be stored in MinGW compatible locations:
+{{{
+    $MINGW_ROOT/bin/
+      ConEmu.exe, ConEmu64.exe
+    $MINGW_ROOT/libexec/conemu/
+      ConEmuC.exe, ConEmuHk.dll and others
+      ConEmu.xml - contains some defaults for MinGW environment
+    $MINGW_ROOT/share/conemu/
+      WhatsNew-ConEmu.txt and others
+}}}
+  * !AutoUpdate is disabled in MinGW mode.
+  * Minor changes in command line parser.
+  * Selection ended unexpectedly when Modifier for selection start was set and 
+
+
+==Build 120904==
+  * When «Auto tabs» is on, creating new console shrinked !ConEmu size.
+  * SplitScreen, dialog fixes.
+
+
+==Build 120903==
+  * SplitScreen options in «Create new console» dialog.
+
+
+==Build 120902==
+  * Fixed regression of «Auto show scrollbar».
+  * Issue 696: «Frame width» does not works (with «Hide caption always»).
+  * Some excess and wrong console resizes removed on window state change.
+  * Successive show/hide tab bar descrease window height.
+  * Installer creates "`ConEmu.exe`" and "`ConEmu64.exe`" in !AppPaths (HKLM).
+
+
+==120830==
+Wikipedia page [http://en.wikipedia.org/wiki/User:Maximus7792/ConEmu User:Maximus7792/ConEmu] in progress. Any comments, suggestions or corrections?
+
+
+==Build 120830==
+  * Internal changes in child windows.
+  * Some fixes for DBCS.
+  * GuiMacro. Changes in Shell function. All following examples runs "cmd" in new tab: «`Shell("new_console","cmd")`» or «`Shell("","cmd")`» or «`Shell("","","cmd")`». *Memorial*. Other verbs, like «`Shell("open","cmd")`» runs "cmd" outside of !ConEmu window.
+  * Safe Far close. From current build, this option may be used for «Unsafe» console closing. Type "`#Close(1,1)`" (without quotas) in Safe Far close macro field and turn on checkbox. Now, click on the cross-button in !ConEmu title provokes «Terminate active process» in all opened consoles, regardless of «Far» it is or not. *Warning!* Use on your own responsibility, this method may damage console applications data!
+  * Far Manager & [TabletPC TabletPC]. Tap on clock+1row (upper-right corner) show/hide panels.
+  * !DoubleClick on !TabBar free area acts as click on `[+]` button.
+
+
+==Build 120826==
+  * GuiMacro.
+{{{
+    Print(["<Text>"])
+      Alias for Paste(2,"<Text>")
+    Rename(<Type>,["<Title>"])
+      Rename tab (Type=0) or console title (Type=1)
+    Close(<What>[,<Flags>])
+      close current console (0), without confirmation (0,1),
+      terminate active process (1), without confirmation (1,1),
+      close ConEmu window (2)
+}}}
+  * Internal changes in child windows.
+  * When «Show & store current window size and position» is off, size and pos was not displayed on «Size & Pos» page.
+  * !CmdAutoAttach failed, if !ConEmu.exe not installed.
+  * «Show was hidden warning» option on «Features» page. «On» by default. May be turned «Off» for use with some desktop switchers (Dexpot e.g.).
+  * Issue 674: Tab macro function going to console doesn't handle 1-based offsets properly.
+  * После показа/скрытия TabBar (3-е состояние флажка) или StatusBar менялась высота окна !ConEmu.
+  * «Twilight» and «Zenburn» color palettes.
+
+
+==Build 120806==
+  * Bugfixes and regressions of !SplitScreen.
+  * Failed to store height less than 9 lines.
+  * Issue 668: "-new_console:d:C:\Program Files (x86)" fails.
+  * GuiMacro.
+{{{
+    Close(<What>[,<Flags>])
+      close current console (0), without confirmation (0,1),
+      terminate active process (1), without confirmation (1,1)
+    Shell. You may omit both <File> and <Parms>. This means «Duplicate tab».
+      Shell("new_console:sV") - create same tab, split current tab to bottom;
+      Shell("new_console:sH") - create same tab, split current tab to right.
+}}}
+
+
+==Build 120803==
+  * Bugfixes and regressions of !SplitScreen.
+
+
+==Build 120803==
+  * Bugfixes and regressions of !SplitScreen. Now you can create more than two splits.
+  * Some changes in «Long console output» (plugin required in Far Manager).
+  * Minimal console size now is 4 cols 2 lines.
+
+
+==Build 120802==
+  * Experimental: `-new_console:s[<SplitTab>T][<Percents>](H|V)`. Examples.
+    * `cmd -new_console:s` - split current tab, new tab and old (current) tab become 50% width of current tab.
+    * `cmd -new_console:s50H` - same as `cmd -new_console:s`.
+    * `cmd -new_console:sV` - split current tab, create new tab to the bottom.
+    * `cmd -new_console:s3T30H` - split 3-d tab, create new tab to the right with 30% width.
+  * Regression, Build 120727a: xterm-256 was broken.
+  * Issue 651: 7-zip/!WinRar was not elevated, when updating in "Program Files".
+  * New option «Add %!ConEmuBaseDir% to %PATH%» on page «!ComSpec». Turned on by default.
+
+
+==Build 120727a==
+  * Now you may use `ConEmu.exe` switches in the «Command» field on «Integration» page. For example: `/single /cmd powershell.exe`.
+  * Minor hooks optimization.
+  * Issue 651: Sometimes, !ConEmu choose incorrect update method (msi instead 7z and vice versa). Cause of previously saved value "Update.!DownloadSetup".
+
+
+==Build 120727==
+  * Issue 643: Windows from powershell/.net does not appears on screen.
+  * Issue 652: New predefined palette <Solarized Light>.
+  * Speedup of ecompl Far Manager plugin.
+  * Color values fields (Settings dialog) allows next formats: «#RRGGBB» (hex), «0xBBGGRR» (hex), «xBBGGRR» (hex), «RRR,GGG,BBB» (dec), «RRR GGG BBB» (dec).
+  * New minimal value for «transparency» is 0. Now on focus lose window may completely disappears from screen.
+
+
+==Build 120726==
+  * Mailing list created: http://groups.google.com/group/conemu_ml. Welcome!
+
+
+==Build 120722==
+  * Issue 348: Maximize errors with Hide caption.
+  * Issue 641: Show current console title in the status bar.
+  * Issue 645: !PowerShell cmdlet Write-Progress detection.
+  * Issue 646: !ConEmu eats dead keys.
+  * Issue 647: Mouse wheel does not respect Control Panel settings.
+  * Issue 648: Progress detection AI fixes.
+  * Alternative buffer was scrolled twice by arrows.
+  * Status bar appearance. Options «Vertical separators» and «Horizontal separator».
+  * Status will be shown on startup in Status bar only (if enabled).
+  * «Sleep in background» fixes.
+  * Keyboard logging fixes (`ConEmu.exe /log`).
+
+
+==Build 120719==
+  * Issue 645: !PowerShell cmdlet Write-Progress detection.
+{{{
+0..100 | foreach {Write-Progress Test Progress -PercentComplete $_; sleep -m 100}
+}}}
+  * «On the fly» changing of text and popup-s console colors (cmd, powershell, etc.)
+    * «On the fly» changing of popup-s allowed in Vista or higher. Win2k and WinXP - after start of new console.
+    * While changing popup-s colors !RealConsole may flicker on the screen.
+
+
+==Build 120717==
+  * Do not run clink in background threads.
+  * Sometimes !ConEmu may crash while initialzing Far Manager.
+  * New item «Console information» in the !ConEmu Far Manager plugin menu.
+
+
+==Build 120716==
+  * Window size and position moved to separate page «Size & Pos».
+    * Option «Long console output» moved to the page «Size & Pos».
+    * Option «Cmd output codepage» moved to the page «!ComSpec».
+  * New option «Show & store current window size and position». Turned On by default. When turned Off field values X/Y/Width/Height are not updated automatically (they displays user saved values).
+  * Button «Apply» in the window mode «Normal» was not changed window position (X/Y).
+  * Issue 638: bincmp fails.
+  * After Apps+F context menu unexpectedly appears in Find dialog.
+  * New color palette <!PowerShell>.
+  * !ConEmu Inside: Windows 2000 and Windows 2003 supported.
+  * Windows 2000 supported again. Alternative mode attach in Windows 2000 is not available.
+  * While alternative buffer is active (Win+A) keys !PgUp/!PgDn/Up/Down will scroll console (holding Ctrl is not necessary).
+  * New feature on «Features» page: «Use Clink in prompt». Clink - bash style completion.
+    * This is *experimental* feature, it may be changed or removed in future builds.
+    * Download here version 0.1.1: http://clink.googlecode.com
+    * Unpack here: `%ConEmuBaseDir%\clink`
+    * Please note, clink archive contains subfolder. Files `clink_dll_x86.dll` and `clink_dll_x64.dll` must be located in `ConEmu\clink`.
+
+
+==Build 120710==
+  * Far Manager. Do not turn on long buffer while searching in archives via !MultiArc.
+  * !StatusBar.
+    * New column «[+]» - shows create new console popup menu.
+    * Right click on «[+]» or «!ActiveCon/!TotalCon» pop up current tab menu.
+  * !DblClick on system icon had not closed !ConEmu window.
+  * Injects bugfixes.
+  * Issue 639: `/cmd` can't find `far.cmd` or `far.bat` without the extension.
+  * !ConEmu Inside. When !ConEmu already exists subsequence calls of menu item creates new console (tab) in existing window.
+
+
+==Build 120710==
+  * Reorder tabs. New hotkeys. Win+Alt+Left/Win+Alt+Right move tab (definitely all tab of current console) leftward/rightward.
+  * Issue 637: !ConEmu recursively runs itself in an endless loop.
+  * Error when "Download path" = "C:\".
+  * Changes in hooks.
+
+
+==Build 120709==
+  * Minimize/Restore takes into account «Always on top» option.
+  * «Copy on LButton up» refined.
+  * New hotkey: Minimize/Restore (alternative).
+
+
+==Build 120708==
+  * GuiMacro: теперь можно позвать через ANSI коды. Пример в файле «!IsConEmu.cmd».
+  * Вкладка «Keys & Macro»: В поле редактирования GuiMacro можно использовать \e (ESC) и \a (BELL).
+  * !Cmd_Autorun.cmd fixed.
+  * ConEmuC switches. "`/IsConEmu`", "`/IsTerm`", "`/IsAnsi`". `ErrorLevel 1` - ON, `ErrorLevel 2` - OFF.
+  * Issue 633: Cannot specifiy environment variables for startup dir.
+  * Mark & Copy.
+    * Уточнение !DoubleClick, !TripleClick.
+    * Ctrl+C/Ctrl+Ins при наличии выделения выполняют копирование и завершают режим выделения.
+  * Issue 634: Опция «End selection on typing». 3-е состояние - завершить без копирования.
+  * Во время выделения текста не работали хоткеи (типа Win+Alt+P).
+  * Issue 635: На вкладке «Mark & Paste» показываем хинт, если модификаторы Text/Block/Prompt совпадают.
+  * Issue 631: Italic drawing bug.
+  * Issue 593: Minimize/Restore hotkey fix. Now activating !ConEmu if not focused.
+  * !ConEmu Inside: Добавлена поддержка Windows XP. В проводнике должна быть показана панель «Полезный совет».
+  * Доработана вкладка «Integration».
+    * Группы «!ConEmu Inside» и «!ConEmu Here» отвечают за регистрацию/удаление пунктов контекстного меню проводника для дисков/папок/файлов. Выпадающие списки «Menu item» показывют текущие пункты меню (то что сейчас зарегистрировано в реестре). Любой пункт можно просмотреть (выбрав его в списке) и отредактировать (нажав кнопку «Register»).
+    * Группа «Automatic attach of cmd...» позволяет установить (или просмотреть текущую) команду, выполняемую процессором (cmd и tcc) при старте. Это позволяет автоматически подцепить запущенный cmd/tcc в новую вкладку !ConEmu.
+
+
+==Build 120705==
+  * Settings tree redesigned.
+  * Issue 630: «Snap to desktop edges» and multi-monitor layout.
+  * ConEmuC: "`/ATTACH /CONPID=<pid> /GHWND=NEW`" - Alternative nonintrusive attach of existing console to the NEW instance of ConEmu.exe.
+  * Issue 623: Continue...
+
+
+==Build 120704==
+  * !FindEditor/!FindViewer/!FindFarWindow возвращал "!NotFound".
+  * Empty lines sometimes appear on Debug page even if «Shell activity» = «Disabled».
+  * Issue 623: Continue...
+  * Issue 629: Crash on saving color palette.
+  * Alternative nonintrusive attach mode for console windows.
+
+
+==Build 120703==
+  * Now !DoubleClick (for «words») and !TripleClick (for «lines») both works for text selection.
+  * Extended ANSI codes (`ESC ] 9 ; ...`) - http://code.google.com/p/conemu-maximus5/wiki/AnsiEscapeCodes#ConEmu_specific_OSC.
+  * Issue 623: Checking...
+
+
+==Build 120702==
+  * Drag window by any point of client area (configurable modifier, Ctrl+Alt by default).
+  * «Features» -> «Snap to desktop edges».
+  * Issue 626: /dir arg is ignored for startup task.
+  * «Colors» -> Text/Back. The beginning.
+
+
+==Build 120701==
+  * Для облегчения отладки и сообщений об ошибках.
+    * Создать mini-dump: `ConEmuC.exe /DEBUGPID=<PID> /MINI`
+    * Создать full-dump: `ConEmuC.exe /DEBUGPID=<PID> /FULL`
+    * О соответствии битности беспокоиться не нужно, все сделает сам ConEmuC.exe.
+    * Также, добавлен пункт в системном меню !ConEmu: Debug -> Active process memory dump.
+  * Tasks: `/DIR "<dir>"` учитывается при запуске вкладки в уже открытом !ConEmu.
+  * Также, рабочую папку можно указать с помощью параметров "`-new_console:d[:<dir>]`" и "`-cur_console:d[:<dir>]`".
+  * Немного AI в «Change prompt text cursor position with Left Click» - не пытаться вывести курсор за пределы строки.
+  * Issue 575: Confirm or abort setting !ConEmu !OnTop from external program.
+
+
+==Build 120630==
+  * Page «Transparency», «Use separate value».
+  * После закрытия консоли (не последней) на статусной строке не обновлялось поле «!ActiveCon/!TotalCount».
+  * !ConEmu inside mode.
+    * Синхронизация текущей папки: Explorer -> !ConEmu. На статусной строке добавлена кликабельная колонка «Sync».
+    * Адаптировано для Vista.
+  * More ANSI examples. !RenameTab.cmd, !SetConTitle.cmd, !SetProgress.cmd.
+  * GuiMacro.
+{{{
+Progress(<Type>[,<Value>])
+  Set progress state on taskbar and ConEmu title.
+    Type=0: remove progress.
+    Type=1: set progress value to <Value> (0-100).
+    Type=2: set error state in progress.
+}}}
+  * На ярлык !ConEmu (или сам !ConEmu.exe в проводнике) можно набросить один или несколько ярлыков программ. Каждая запустится в своей вкладке. Исключение - если в в настройке !ConEmu «Startup» -> «Command line» указан "`far.exe`". В этом случае строка запуска «подклеивается» к "`far.exe`".
+  * При быстром закрытии !ConEmu «крестиком» в консоли успевало мелькнуть «Press Enter or Esc to close console...».
+  * Issue 575: Confirm or abort setting !ConEmu !OnTop from external program.
+  * Issue 624: Menu was not available in Notepad++ with !SourceCookifier plugin.
+
+
+==Build 120626==
+  * Again !ConEmu inside mode.
+    * !AutoResize
+    * «As Administrator» supported: use "`-cur_console:a`" or hold Shift when selecting menu item
+    * For debug purposes: "`/insidewnd <HWND>`" & "`/insidepid <PID>`".
+    * !ConEmu_Inside.reg file updated.
+  * Right click on leftmost part of status bar pop up system menu (useful in «!ConEmu inside» mode).
+  * Minor fix in Close Far editor/viewer confirmation.
+
+
+==Build 120625==
+  * New option 'Min cursor size (pix)' on pages 'Text cursor' & 'App distinct'.
+  * Issue 619: Sometimes Assertion appears after closing Far Manager.
+  * Minor fix in 'Detect text line ends', 'Trim trailing spaces', 'Bash margin'.
+  * New !ConEmu.exe switch - "`/inside`". Sample usage in "`ConEmu\Addons\ConEmu_Inside.reg`". In breaf - create a pane in Explorer window and start there, for example, powershell. Experimental, was tested in Windows 7 and Windows 8, other systems was not tested yet. Before calling context menu item you owe to increase height of lower pane (Windows 7) of display right pane (Windows 7 & 8).
+
+
+==Build 120624==
+  * On the page 'Mark & Paste' option 'Auto copy' was renamed to 'Copy on LButton up'. Turned on by default.
+  * Failed to save settings 'Highlight and goto' and 'External editor'.
+  * Issue 587, Issue 605: Don't show empty clipboard message on Paste.
+  * New settings: scrollbar appear/disappear delay.
+  * Quake mode Again: 'Pad size (pix)' - pad around console field, works only with checked 'Try to center'.
+  * 'App distinct' settings page redesigned.
+  * Now are configurable: Apps+Space, Alt+F9, Alt+Enter, Alt+Space, Ctrl+Up, Ctrl+Down, Ctrl+!PgUp, Ctrl+!PgDn и !PicView.!SlideShow.
+  * Checkbox removed (was in 'Send to console' group): Alt+F9, Alt+Enter, Alt+Space.
+  * Win+Down does not increased height of console (option «Win+Arrows - resize window»).
+  * Issue 606: Warnings was not appears in TSA in Windows XP.
+  * New settings page 'Text cursor'.
+  * Issue 612: Option to change cursor size ('Fixed cursor size' & '(5-100) %').
+  * Issue 608: Fixed display problems after closing telnet and returning to calling app (cmd, far).
+  * cmd/powershell/tcc: Switch "-new_console" (for starting console applications in new !ConEmu tab)
+  now may be used without "ConEmuC.exe". For example, you may type in cmd.exe prompt:
+{{{
+powershell -new_console
+}}}
+  * Some fixes in Detach of GUI applications.
+  * Issue 607: 'Mark & Paste' and 'App distinct' -> 'Detect text line ends', 'Bash margin', 'Trim trailing spaces', 'EOL'.
+  * 'Mark & Paste' and 'App distinct' -> 'Change prompt text cursor position with Left Click'.
+
+
+==Build 120618==
+  * Issue 582: Change cursor position with mouse click (cmd, powershell, tcc/le, ...)
+
+
+==Build 120617a==
+  * Small lag removed when activating (restoring) !ConEmu with Far 3.
+  * Putty does not received mouse wheel events.
+  * GUI applications fix (broken in 120617).
+
+
+==Build 120617==
+  * 'Quake style slide down' third state - auto hide on lose focus.
+  * Do not catch focus when starting with argument "/min".
+  * Issue 599: 'Auto copy' on 'Mark & Paste' - copy selected text immediately on left mouse button up (when selecting with mouse).
+  * Issue 599, Issue 570: Small lags removed when pasting large amounts of text from clipboard.
+  * 'Main' settings page redesigned.
+  * Chinese (DBCS) improvements.
+  * Some Wine related fixes, but still not working ;)
+  * Message balloon is shown in TSA when registration of global hotkey (Minimize/Restore) failed.
+  * New default for Minimize/Restore - Win+Shift+C.
+
+
+==Build 120614==
+  * !DownLeft and !DownRight options for background image alignment.
+  * Issue 577: Chinese font display error on Chinese Win XP.
+  * Issue 587: Right click gives an error box.
+
+
+==Build 120613==
+  * After deleting Task chosen for Startup, !ConEmu stopped starting.
+  * 120612: Executing a command with "-new_console" argument (from an existing tab) caused !ConEmu to minimize.
+  * Tab menu (Rename tab) and Apps+R. Only panels can be renamed in Far (as of yet).
+  * !UpRight option for background image alignment.
+  * Issue 590: Ctrl+C/Ctrl+Break fixes.
+  * Some Quake style improvements.
+
+
+==Build 120612==
+  * Sample «!ColorPrompt.cmd» added to distribution. Run it in cmd.exe or tcc.exe for change command prompt text color to yellow.
+  * New !ComEmu.exe arguments - /!ShowHide and /ShowHideTSA. When !ConEmu is not yet started - starts it (with optional /cmd ... argument), when !ConEmu window exists - minimize it or hide to TSA. Similar to global hotkey Win+C, but hotkey wouldn't work if !ConEmu was not been started yet. These keys may be used for a desktop shortcut.
+  * New !ConEmu.exe argument - /dir "Folder". Same as «Working folder» in shortcut properties.
+  * Added «Quake style slide down» switch on the «Features» page. Sample settings are in «!ConEmu\!ConEmu_Tilde.xml» (something like [http://tech-bytes.co.uk/2008/05/23/a-quake-style-console-for-your-gnome-desktop/ this]). Rename sample «ConEmu_Tilde.xml» to «!ConEmu.xml», run ConEmu on startup with /min switch, and !ConEmu will slide down/up by Tilde key.
+  * Issue 576: Trap when updating Jump Lists/Task while history is empty.
+  * Copy to clipboard did not work from alternative console (Win+A).
+  * Issue 584: App distinct color palette not working.
+  * Issue 576: !ConEmu.exe /updatejumplist.
+  * When Maximized, checking/unchecking «Hide caption always» lost caption.
+  * !GuiMacro additions:
+{{{
+    Paste(2[,"<Text>"]) - paste all lines without confirmation
+    Paste(3[,"<Text>"]) - paste first line without confirmation
+    Task(Index[,"Dir"]) - start task by 1-based index
+    Task("Name"[,"Dir"]) - start task with the specified name
+}}}
+  * !GuiMacro: The "Macro" setting on the «Keys» page now supports "\\", "\r", "\n", "\t" escape sequences. Example: «Paste(2,"exit\n")» will close cmd.exe.
+
+
+==120611==
+  * [http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx Article] in Scott Hanselman's blog :)
+
+
+==Build 120609==
+  * Injects code was rewritten (new ASLR in Windows 8 RC x64).
+  * Issue 571: Added «New window» check box in the creation confirmation dialog. If you choose «Another user», !ConEmu itself will be started under the chosen account. You may set a separate hotkey for the dialog with the check box turned on.
+  * Some drawing artifacts may appears on window edges in Maximized and Fullscreen modes.
+  * Refinement of screenshots (Maximized/Fullscreen window modes).
+  * Attaching did not work for GUI applications (notepad, PuTTY, ...)
+  * The cursor was not moved in the console while dragging the scrollbar thumb area.
+
+
+==Long time ago?==
+Lifehacker published [http://lifehacker.com/5857540/the-best-terminal-emulator-for-windows an article about Console, PowerCmd, Take Command and Mintty]. Unfortunately, ConEmu, once again, was not mentioned :(
+All my attempts to post comments and contact the article author were ignored :(
+
+
+==Build 120608==
+  * New wiki page: http://code.google.com/p/conemu-maximus5/wiki/RoadMap
+  * Refinement of console closing confirmation.
+  * GuiMacro: !WindowFullscreen, !WindowMaximize, !WindowMode, Status.
+  * Keys: Always on Top, Show/hide status bar (Apps+S), Show/hide tab bar (Apps+T), About (Win+Alt+A).
+  * About: Pages added width arguments of ConEmuC, -new_console and GuiMacro.
+  * Added external editor startup line option in the «Mark & Paste» page. By default: `far.exe /e%1:%2 "%3"`. '%1' - row, '%2' column, '%3' - filename.
+  * Refinement of screenshot creation (Win+H). New Win+Shift+H - entire monitor area screenshot.
+  * Issue 570: Pasting into iPython (in fact, any console app except Far) does not work as expected.
+  * Issue 558: Some more color anomalies.
+
+
+==120605==
+  * An answer was posted on [http://stackoverflow.com/questions/60950/is-there-a-better-windows-console-window/10904494#10904494 stackoverflow.com]. Q: Is there a better Windows Console Window.
+  * Advertising application on [http://meta.stackoverflow.com/questions/132988/open-source-advertising-sidebar-2012/134414#134414 meta.stackoverflow.com].
+
+
+==Build 120604==
+  * Error «Can't free hooks in module ...» in !ConEmuHk.dll
+  * Issue 557: Assertion в RealBuffer.cpp
+  * Issue 568: First call of 'View console output' (Far plugin) opens viewer in dump-mode
+  * Fixed occasional exception in Far after execution of console command
+
+
+==Build 120603==
+  * Internal interprocess communication changes.
+  * Status bar: New column '!ConEmu GUI PID'.
+  * Issue 566: Hotkey `<<None>>` is not unique.
+  * 'Settings'-> 'Tasks' -> '!ConEmu arguments for Jump list'. You may specify here additional arguments for !ConEmu.exe, when starting from taskbar (Jump list). E.g.: `/icon "cmd.exe"`.
+
+
+==Build 120602==
+  * Internal interprocess communication changes.
+  * Windows 7 or higher. Jump list support: !ConEmu may add its 'Predefined tasks' and commands from its history into the Windows 'Tasks' section. Jump list population takes some time, therefore the button 'Update Now!' was added to the 'Tasks' page of the 'Settings' dialog.
+  * !ConEmu.exe: Added command line argument /title "Template". The specified text will be shown in !ConEmu's window title instead of the active console's title. You may use environment variables in the "Template" string.
+  * 'Create new console' dialog: Added 'Reset command history...' item to the system menu.
+  * Win+H: Make screenshot of active !ConEmu window.
+  * Tabs: Separate tab templates for Panels (Far) and other console applications.
+  * Tabs: You may specify word list, excluded from the title of consoles (with exception of Far). Tired of the 'Administrator:' prefix of the consoles, runned as Administrator (Win7).
+  * Take away lags while closing !ConEmu.
+  * Sometimes, Shell-dialogs (starting files, EMenu items) does not appears in front of !ConEmu.
+  * Minor change in (isMonitorConsoleLang == 2).
+  * 'Fade when inactive' affects Status bar.
+  * Command line, specified by '/cmd' argument (!ConEmu.exe) will be added to the history.
+  * Issue 561: Sometimes, !ConEmuHk64.dll cause exception in the console application.
+  * Issue 564: Mouse events does not sent to Far, when 'Inject !ConEmuHk' is off.
+  * Changes in close tabs confirmation. Single dialog for all console, when closing !ConEmu by «clicking on the cross».
+
+
+==Build 120527a==
+  * Window mode changes (Normal/Maximized/Full screen) was not saved, if button 'Apply' was not clicked before 'Save settings'.
+  * Fixed Status bar setup menu hints.
+
+
+==Build 120527==
+  * Current accelerators are shown in system and tab menu.
+  * Mouse events was not sent to console apps (except Far), when scrolling is on.
+  * 'Settings' -> 'Features' -> 'Mouse options' -> 'Enable mouse'. Enabled by default. May be disabled to forbid sending mouse event to console. However, when disabled, you still can use mouse for selecting and pasting text.
+  * New transparency option - !ColorKey. However, '!UserScreen transparency' is still more useful for Far Manager.
+  * Win+G - new hotkey for 'Attach...' system menu item.
+  * Status Bar. Enabled by default. Font, color and column list (any of 20-th) are configurable in 'Settings' -> 'Status bar'. You may show/hide column from status bar popup menu, too. Column descriptions displayed, while hover mouse over it. Some columns process left clicks:
+    * columns 'CAPS'/'NUM'/'SCRL' - switching;
+    * column 'Active VCon' - active console selection popup menu (same as from toolbar);
+    * column 'Transparency' - changing on the fly (100%..40%, !UserScreen, !ColorKey).
+
+
+==Build 120524a==
+  * ConEmuC.exe/!ConEmuC64.exe sets console text attributes to 7 on startup.
+  * 'Settings' -> 'Mark & Paste' -> 'Freeze console before selection'.
+  * 'Find test' -> 'Freeze console'.
+  * Lags in !ConEmu plugin.
+
+
+==120524==
+  * [http://www.facebook.com/ConEmu.Maximus5 Facebook] page was created.
+
+
+==Build 120523a==
+  * Issue 554: Fixed handling of `^[#G` (ANSI X3.64).
+
+
+==Build 120523==
+  * 'Auto scroll' item removed from the system menu. If the console must be paused - use - Win+A (alternative buffer).
+  * Ctrl+Win+Alt+Enter - forced activation of !ConEmu in !FullScreen. Like Win+C, the configurable hotkey will work regardless of the active application.
+  * Win+Shift+Del - Terminate the active process in the current console.
+  * The "ConEmuANSI" environment variable was added. Possible values are "ON" and "OFF".
+  * Issue 554: Cursor positioning and text output errors (ANSI X3.64).
+  * Issue 553: Console scrolling rollback.
+
+
+==Build 120522==
+  * New option: «[AnsiEscapeCodes ANSI X3.64 / 256color]» («Features» tab). The entire console's area is used (incl. scroll buffer), however Xterm 256color only applies to the "working" area (lowest part of the console, when using the scroll buffer). The option "Inject !ConEmuHk" must be enabled as well. If 256color does not seem to work, enable the «Colorer !TrueMod support» flag, and check that buffer/scrolling is disabled. Example: "`256colors2.pl -cur_console:h0`". Or, to scroll the console to the bottom: "`echo ^[[9999;1H`" (replace «^[» with the real ESC symbol (char with code \x1B)). Two examples are included in `ConEmu\Addons\AnsiColors16.ans` and `ConEmu\Addons\AnsiColors256.ans`.
+  * Win+A - alternative buffer (toolbar button - black square). When used in Far Manager, it displays the output of the last command. Otherwise, freezes the current state of the console (incl. scroll buffer). The alternative console can be closed by a repeated Win+A or Esc.
+  * Win+S - enable/disable scroll buffer (!BufferHeight). Ignored in Win7. Toolbar button - vertical arrows.
+  * Win+N - Show create new console popup menu.
+  * Issue 551: Updater, Invalid unpack command line, while using environment variables.
+  * New !ConEmu.exe command-line options:
+{{{
+    /min - run minimized;
+    /tsa - minimize to tray (to minimize to TSA on start, use with /min);
+    /icon "<file>" - use icon from <file> (<file> can be exe, dll or ico);
+    /noupdate - disable automatic update check on start.
+}}}
+  * 'About' dialog updated.
+  * Fixed exception when lowering font size in Maximized window mode.
+  * Added three system palettes: Standard VGA, Terminal.app, xterm.
+  * Injects fixes.
+  * Fixed incorrect size of fast configuration dialog when !ConEmu starts maximized (shortcut property).
+  * Fixed incorrect rendering when the flag 'Auto' on the 'Main' tab was enabled in Maximized window mode.
+  * Minor changes in ConEmuC.exe.
+
+
+==120520==
+  * ConEmu is mentioned in Wikipedia: http://en.wikipedia.org/wiki/Comparison_of_file_managers#cite_ref-20
+
+
+==Build 120515==
+  * 'App distinct' loading was broken in previous build.
+  * Maximum number of allowed consoles is 30 now.
+  * Only active console 'button' is shown on toolbar. Left click on active console button pop up all opened tabs menu.
+  * Console activation with numbers.
+    * Win+F11 and Win+F12 not used.
+    * When console count less then 11'th - behaviour as before.
+    * Otherwise - one-number and two-number activations are allowed. Example:
+    * «Win(down) 1 5» - activates 15'th console;
+    * «Win(down) 1 Win(up)» - activates 1'th console.
+  * Once more 'Sleep in background' bugfix.
+  * Issue 541: Incorrect RClick file selection in !PanelViews.
+
+
+==Build 120514==
+  * Issue 543, Issue 544: Fixing bugs of unlucky version :)
+  * Issue 56: Catch focus on drag over.
+  * Drag&Drop: Menu on drop in Far command line.
+  * Drag&Drop: Internal changes in overlay image.
+
+
+==Build 120513==
+  * 'Ignore console cursor size' instead of not worked 'Ignore telnet cursor size'. Option exists in 'App distinct' also.
+  * Fixed unworked option 'Send Alt+Space to console' (page 'Keys').
+  * Checkbox 'Run as adminstrator' was ignored in create new console dialog, when starting Task.
+  * Issue 532: Option 'Show TSA balloon' (affects automatic mode only).
+  * Issue 537: !WinRar option check before updating: [HKCU\Software\WinRAR\Extraction\Profile] "!UnpToSubfolders"
+  * Issue 538: Wrong icons in Thumbnails/Tiles modes in root of archive.
+  * Issue 539: Wrong drawing of Thumbnails/Tiles over QView (Ctrl+Q) and Info (Ctrl+L) panels.
+  * Shell Drop allowed to Far editor and dialogs. Drop as pasting dragged file path names.
+  * Once more 'Sleep in background' bugfix.
+  * 'Command line' option moved to new 'Startup' page of 'Settings' dialog.
+  * New items 'New console dialog' and 'Setup tasks' in popup menu (`[+]` button on toolbar).
+
+
+==Build 120510==
+  * !ConEmu internal paste locks clipboard (Shift+Ins, Ctrl+V).
+  * Far macro sample: ConEmu\Far1_reg\TabList.reg
+  * !AnsiCon raise exception in cmd/tcc.
+
+
+==Build 120509a==
+  * Issue 534: !ConEmuSetup: Bugfix in default path display.
+  * Find text in consoles. Hotkey Apps+F or Edit -> Find text.
+  * Telnet and 'Sleep in background' bugfix.
+
+
+==Build 120508==
+  * Issue 65: Checkbox «Inject !ConEmuHk» must be turned on for correct displaying console applications, used !SetConsoleActiveScreenBuffer (telnet.exe etc.).
+  * !ExtendedConsole files moved to !ConEmu subfolder.
+  * !HotKeys processing was fully remaked.
+    * «!HostKey» term was eliminated.
+    * Almost all hotkeys may use own modifiers.
+    * Exceptions are: system hotkeys, console activation by number (mutual modifier) and window resize by arrows (mutual modifier).
+    * Now you may use «keys» !WheelUp, !WheelDown, !WheelLeft, !WheelRight (mouse wheel).
+  * Up to 32 GUI Macro may be configured and assigned to !HotKeys. By default, !CtrlWheelUp/!CtrlWheelDown will modify font height.
+  * Now you can use environment variables in "`ConEmu:run:`" (Far Manager plugin). For example, you may use file association for "`*.cpp,*.hpp`" (e.g. !AltF4):
+{{{
+    ConEmu:Run:"%FARHOME%\Tools\Notepad++\notepad++.exe" -new_console "!\!.!"
+}}}
+  * Optional confirmation for closing console from !ConEmu (Features -> Confirm close console).
+  * Portable: You may place files MsXml3.dll and MsXml3r.dll near to !ConEmu.exe, for eliminating xml-problems on Live (PE) and Windows 2000. I recommend to take files from Windows XP (they have less dependencies).
+  * Console recreation small bugfixes.
+  * Shift was not works for menu items 'Restart', 'Restart as', 'New console'.
+  * System and tab menu always pop up on RClick on the tab.
+  * GUI Apps in tabs: 'Attach...' menu item works now.
+  * GUI Macro: `Tab(<Cmd>[,<Parm>])`
+{{{
+    <Cmd>=0 - show/hide tabs
+    <Cmd>=1 - commit lazy changes
+    <Cmd>=2 - switch next (eq. CtrlTab)
+    <Cmd>=3 - switch prev (eq. CtrlShiftTab)
+    <Cmd>=4 - switch tab direct (no recent mode), Parm=(1,-1)
+    <Cmd>=5 - switch tab recent, Parm=(1,-1)
+    <Cmd>=6 - switch console direct (no recent mode), Parm=(1,-1)
+    <Cmd>=7 - activate console by number, Parm=(1-based console index)
+    <Cmd>=8 - show tabs list menu (indiffirent Far/Not Far)
+}}}
+  * GUI Macro: `Paste(<Cmd>[,"<Text>"])`
+{{{
+    <Cmd>=0 - paste all lines, <Cmd>=1 - paste first line
+    When <Text> is omitted - paste from Windows clipboard, otherwise - paste specified text.
+}}}
+  * Keyboard: 'Show opened tabs list (does not work in Far - use macro instead)'. Default - F12.
+  * !ConEmu plugin: new plugin menu item - 'Show all tabs list', you may use Far macro 'ConEmu.TabList.fml'
+  * Issue 530: Bugfix in Thumbnails/Tiles colors when «Optional marking character» is turned on.
+  * Вкладка настроек 'Text selection' переименована в 'Mark & Paste'.
+  * !ConEmu may process internally pasting text from clipboard to console applications. By default, Ctrl+V pastes first line of text, Shift+Ins pastes all lines (<Enter> keypress are generated between lines). Optional multiline paste confirmation and large text confirmation (200 chars by default).
+  * Pasting options on 'Mark & Paste' and 'App distinct' pages of 'Settings' dialog.
+  * Preferred command processor (bits) is taked in account while starting "cmd" in new tab.
+  * New Tab popup menu hotkey - Apps+Space (previously Win+Apps).
+
+
+==Build 120422==
+  * Issue 527: Bugfixes in panel detector.
+  * Incorrect window placement on startup when 'Hide caption' and 'Maximized' in shortcut properties.
+  * Old width/height appears in 'Settings' dialog after 'Apply' depressed.
+  * Buttons +/-/Up/Down does not work on 'App distinct' page.
+
+
+==Build 120421==
+  * *Warning*. Changes in command processor using.
+  * New page '!ComSpec' in 'Settings' dialog. 'Long console output' was moved here.
+  * On '!ComSpec' page located used command processor settings. Default is autoselection of tcc.exe (if installed) and cmd.exe. You can force used processor (x32/x64) in 64-bit OS. Default is the same as OS (x64 cmd.exe in Windows x64).
+  * Option 'Leave on close' revealed on 'Tabs' page.
+
+
+==Build 120418==
+  * Hyperlinks to file/line does not works in buffer consoles.
+  * Some speed up of command execution.
+
+
+==Build 120417==
+  * Issue 511: bdf-fonts may be used for Fix Far boders.
+  * Issue 523: Edit->Mark fails on scrolled consoles.
+
+
+==Build 120416==
+  * Some settings (Palette, Cursor, Extend Fonts) may be changed separately by application name and Elevation flag. Page 'App distinct' of 'Settings' window. Separate settings will be stored in "Apps" subkey of reg/xml settings.
+
+
+==Build 120414==
+  * Checkbox 'Long console output' was not checked in 'Settings' dialog.
+  * Error in Plugin.Call ("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b", "...") result for Far3.
+  * After Far3 build 2576 was broken macros containing $Text. E.g. 'long right-click'.
+  * GUI Apps in tabs: "Notepad" in Win-W don't works.
+  * Removed a small delay before switching tabs (editor/viewer) via !ConEmu.
+  * Issue 516 : When you click on the taskbar to minimize !ConEmu, Win-Number was not turned off.
+  * Issue 518 : If the Far 'hangs', then when you try to access it (switching tabs, etc.) !ConEmu hang for a while.
+  * Issue 521 : Editor/Viewer tabs disappearing.
+  * Issue 248 : Added ability to save / load custom color palette. Сolor palette contains 32 (16+16) colors and setting 'Extend foreground colors'. Named palettes are stored in the "Colors" subkey of reg/xml settings.
+  * Issue 445 : Added ability to create custom 'Tasks'. In fact, this is an alias to run one or more applications in new tabs !ConEmu. May be configured in 'Tasks' page of 'Settings' dialog, and stored in "Tasks" subkey subkey of reg/xml settings. 'Task' may be used (for example of the {Shells}):
+    * when you start by specifying the properties of the shortcut: "!ConEmu.exe / cmd {Shells}";
+    * specifying {Shells} in the 'Command line' page 'Main' of 'Settings' dialog;
+    * when you create a new console interface !ConEmu (`+` on the toolbar, a list of Recreate-dialog);
+    * from the command line (cmd.exe): "%!ConEmuBaseDir%\ConEmuC.exe" / c {Shells} -new_console.
+    * from the command line (far.exe): conemu:run:{Shells} -new_console 
+  * Minor fix in debug switch "/ detached".
+  * Vista+: When the console is set detache acceptable to the user font size. 
+
+
+==Build 120408==
+  * !ConEmu was mentioned on http://jpsoft.com/blogs/2012/04/windows-console-replacements-part-6-take-command-and-conemu/
+
+
+==Older entries==
+[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FWhats_New%3Fshow%3Dcontent WhatsNew autotranslated]
+[http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt Full changelog on SVN]
