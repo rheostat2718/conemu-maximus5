@@ -3,18 +3,30 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121108==
+[*] Settings: Настройки «Automatic attach of cmd ...» перемещены на вкладку «ComSpec».
+[+] Новые переменные окружения: "ConEmuDrawHWND" and "ConEmuBackHWND".
+[+] Переменые окружения ("ConEmuHWND", "ConEmuDrawHWND", "ConEmuBackHWND") обрабатываются перед запуском новой консоли. Ниже пример запуска gvim (команда для cmd запущенного в !ConEmu):
+{{{
+gvim --windowid !ConEmuBackHWND! -new_console:sH
+}}}
+
+
 ==Build 121106==
-  * New ConEmuC command: Export environment variables to parent processes. Syntax (case insensitive):
+  * Новый ключ ConEmuC: Экспорт переменых окружения в родительские процессы. Формат (регистроНЕзависимо):
 {{{
 ConEmuC /export[=CON|ALL] [Var1 [Var2 [...]]]
-  VarN        - may contains one trailing/middle asterisk (sort of filemask support).
-  /export     - export to all processes of current console and ConEmu GUI
-  /export=CON - export to all processes of current console only
-  /export=ALL - export to all processes of opened tabs and ConEmu GUI
+  VarN        - имя переменной, в середине/конце можно указать '*' (вроде масок).
+  /export     - копировать переменные в процессы текущей консоли и ConEmu GUI
+  /export=CON - копировать переменные только в процессы текущей консоли
+  /export=ALL - копировать переменные в процессы всех табов и ConEmu GUI
 }}}
-    * Note! This is experimental, «Inject !ConEmuHk» required to set variables, some shells may ignores environment changes because of their features.
-    * Shells comments: «Far Manager» & «TCC/LE» - OK; «cmd» - fails partially (required to run smth from active cmd, for example "cmd /k exit", to «apply» changes); bash - fails completely (seems, it does not support outside changing of env.vars)..
-  * When «Hide caption» and «Frame width» >= resizable frame width - resizable frame used.
+    * Внимание! «Inject !ConEmuHk» должна быть включена для установки переменных.
+    * Некоторые шеллы могут игнорировать изменение переменных.
+    * «Far Manager» & «TCC/LE» - OK; «cmd» - частично (
+    нужно что-нибудь запустить в открытом ранее cmd.exe, хотя бы "cmd /k exit", чтобы переменные «применились»;
+    bash - не работает (похоже, что он полностью игнорирует смену переменных «снаружи»).
+  * При «Hide caption» и «Frame width» >= ширины «resizable» рамки - рамка не скрывается и ее можно ресайзить мышкой.
 
 
 ==Build 121104==

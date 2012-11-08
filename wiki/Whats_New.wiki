@@ -2,6 +2,15 @@
 Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
+==Build 121108==
+[*] Settings: Group of controls «Automatic attach of cmd ...» moved to «ComSpec» page.
+[+] New environment variables: "ConEmuDrawHWND" and "ConEmuBackHWND".
+[+] HWND environment variables ("ConEmuHWND", "ConEmuDrawHWND", "ConEmuBackHWND") are processed when creating new console. For example, you may start gvim from cmd running in !ConEmu:
+{{{
+gvim --windowid !ConEmuBackHWND! -new_console:sH
+}}}
+
+
 ==Build 121106==
   * New ConEmuC command: Export environment variables to parent processes. Syntax (case insensitive):
 {{{
@@ -11,8 +20,9 @@ ConEmuC /export[=CON|ALL] [Var1 [Var2 [...]]]
   /export=CON - export to all processes of current console only
   /export=ALL - export to all processes of opened tabs and ConEmu GUI
 }}}
-    * Note! This is experimental, «Inject !ConEmuHk» required to set variables, some shells may ignores environment changes because of their features.
-    * Shells comments: «Far Manager» & «TCC/LE» - OK; «cmd» - fails partially (required to run smth from active cmd, for example "cmd /k exit", to «apply» changes); bash - fails completely (seems, it does not support outside changing of env.vars)..
+    * Note! This is experimental, «Inject !ConEmuHk» required to set variables.
+    * Some shells may ignores environment changes because of their features.
+    * Shells comments: «Far Manager» & «TCC/LE» - OK; «cmd» - fails partially (required to run smth from active cmd, for example "cmd /k exit", to «apply» changes); bash - fails completely (seems, it does not support outside changing of env.vars).
   * When «Hide caption» and «Frame width» >= resizable frame width - resizable frame used.
 
 
