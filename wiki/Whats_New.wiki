@@ -2,10 +2,17 @@
 Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
+==Build 121109==
+  * Fast access to «Keys & Macro» (hotkeys) settings page. Win+Alt+K or SystemMenu -> Help -> Hotkeys.
+  * New hotkeys: Win+Alt+Del - close active tab, Win+F4 - close all tabs (same as «Cross» click).
+  * When closing tab from Win7 taskbar thumbnail - closing confirmation was not appears onscreen.
+  * New menu item «Duplicate root...» in tab menu. It tries to create new tab with root process and same directory/environment. Hotkey available but not assigned by default.
+
+
 ==Build 121108==
-[*] Settings: Group of controls «Automatic attach of cmd ...» moved to «ComSpec» page.
-[+] New environment variables: "ConEmuDrawHWND" and "ConEmuBackHWND".
-[+] HWND environment variables ("ConEmuHWND", "ConEmuDrawHWND", "ConEmuBackHWND") are processed when creating new console. For example, you may start gvim from cmd running in !ConEmu:
+  * Settings: Group of controls «Automatic attach of cmd ...» moved to «ComSpec» page.
+  * New environment variables: "ConEmuDrawHWND" and "ConEmuBackHWND".
+  * HWND environment variables ("ConEmuHWND", "ConEmuDrawHWND", "ConEmuBackHWND") are processed when creating new console. For example, you may start gvim from cmd running in !ConEmu:
 {{{
 gvim --windowid !ConEmuBackHWND! -new_console:sH
 }}}

@@ -3,10 +3,17 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121109==
+  * Быстрый доступ к вкладке «Keys & Macro» (hotkeys) страницы настроек. Win+Alt+K или SystemMenu -> Help -> Hotkeys.
+  * Новые hotkeys: Win+Alt+Del - закрыть активный таб (сделано для редакторов/вьюверов в Far), Win+F4 - закрыть ConEmu (same as «Cross» click).
+  * При закрытии таба через Win7 taskbar thumbnail - подтверждение закрытия не появлялось на экране.
+  * Новый пункт «Duplicate root...» в меню таба. Пытается создать копию таба с корневым процессом в той же директории и с тем же окружением. Можно назначить хоткей.
+
+
 ==Build 121108==
-[*] Settings: Настройки «Automatic attach of cmd ...» перемещены на вкладку «ComSpec».
-[+] Новые переменные окружения: "ConEmuDrawHWND" and "ConEmuBackHWND".
-[+] Переменые окружения ("ConEmuHWND", "ConEmuDrawHWND", "ConEmuBackHWND") обрабатываются перед запуском новой консоли. Ниже пример запуска gvim (команда для cmd запущенного в !ConEmu):
+  * Settings: Настройки «Automatic attach of cmd ...» перемещены на вкладку «ComSpec».
+  * Новые переменные окружения: "ConEmuDrawHWND" and "ConEmuBackHWND".
+  * Переменые окружения ("ConEmuHWND", "ConEmuDrawHWND", "ConEmuBackHWND") обрабатываются перед запуском новой консоли. Ниже пример запуска gvim (команда для cmd запущенного в !ConEmu):
 {{{
 gvim --windowid !ConEmuBackHWND! -new_console:sH
 }}}
