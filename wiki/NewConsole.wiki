@@ -7,21 +7,22 @@ When you run application from existing !ConEmu tab, or starting new tab from !Co
 *Warning* «-new_console» and «-cur_console» are *case sensitive*.
 
 {{{
-  -new_console[:abcd[:dir]h[N][s<...>(H|V)]ru[:user:pwd]]
+  -new_console[:switches]
   or
-  -cur_console[:abcd[:dir]h[N]ru[:user:pwd]]
+  -cur_console[:switches]
      a - RunAs shell verb (as Admin on Vista+, login/passw in Win2k and WinXP)
      b - Create background tab
      c - force enable 'Press Enter or Esc to close console' (default)
-     d - specify working directory, MUST BE LAST OPTION
+     d:<dir> - specify working directory, MUST BE LAST or single OPTION
      h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines
      i - don't inject ConEmuHk into starting process
      n - disable 'Press Enter or Esc to close console'
      o - don't enable 'Long console output' when starting command from Far Manager
      r - run as restricted user
      s[<SplitTab>T][<Percents>](H|V) - run new console in a split
+     t:tabname - rename new created tab, MUST BE LAST or signle OPTION
      u - ConEmu choose user dialog
-     u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST OPTION
+     u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST or signle OPTION
 }}}
 
 *Note* These switches are shown in !ConEmu «About» dialog.
