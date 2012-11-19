@@ -3,6 +3,22 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121118==
+  * For debug purposes. User may define environment variable `"ConEmuReportExe"`. !ConEmuHk (when it is injected in the process with defined name) will show message box. It is right moment to take memory dump of this infiltrated process. For example (for cmd.exe command prompt):
+{{{
+    set ConEmuReportExe=sh.exe
+    "C:\Program Files (x86)\Git\bin\sh.exe" --login -i
+}}}
+  * Issue 811: Unable to change Highlight & goto shortcut.
+  * When «Don't close !ConEmu on last console close» is on it was impossible to close empty !ConEmu window.
+  * Split key macros (default as Ctrl+Shift+O & Ctrl+Shift+E) works now like «Duplicate root...» menu item.
+  * Settings page «Status bar» redesigned: two listboxes (available and selected) instead of checkboxes.
+  * Issue 814: макрос на переход по "гиперссылке" на ошибки компиляции в Far3 build 2949.
+  * New switch: "-new_console:t:tabname". Allows rename new created tab.
+  * GuiMacro: Tab(10,1) and Tab(10,-1) cycle switches visible split-panes.
+  * Issue 818: More DBCS console bugfixes.
+
+
 ==Build 121109==
   * Быстрый доступ к вкладке «Keys & Macro» (hotkeys) страницы настроек. Win+Alt+K или SystemMenu -> Help -> Hotkeys.
   * Новые hotkeys: Win+Alt+Del - закрыть активный таб (сделано для редакторов/вьюверов в Far), Win+F4 - закрыть !ConEmu (same as «Cross» click).
