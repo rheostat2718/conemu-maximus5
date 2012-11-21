@@ -2,6 +2,11 @@
 Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
+==Build 121121==
+  * Settings -> Keys & Macro. Checkbox «Hide unassigned» temporarily hides from list actions and macros without hokeys.
+  * Issue 700: WinXP, Default history buffers count too small.
+
+
 ==Build 121119==
   * Bugfix. 10 sec delay when starting Quake-style or "/single" !ConEmu.
   * Apps+Tab and Apps+Shift+Tab switches between visible split-panes.
