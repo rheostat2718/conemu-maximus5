@@ -3,7 +3,7 @@ Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 ==Build 121121==
-  * Settings -> Keys & Macro. Checkbox «Hide unassigned» temporarily hides from list actions and macros without hokeys.
+  * Settings -> Keys & Macro. Checkbox «Hide unassigned» temporarily hides from list actions and macros without hotkeys.
   * Issue 700: WinXP, Default history buffers count too small.
 
 
