@@ -90,7 +90,7 @@ A. This is the "console" component of !ConEmu. It communicates information from 
 
 ===Q. What is the purpose of the Far plugin !ConEmu.dll (!ConEmu.x64.dll)?===
 A. This module provides communication between Far Manager and !ConEmu.
-  * It is required for certain extended features (tabs, Drag-and-Drop).
+  * It is required for certain extended features (tabs, Drag-and-Drop, progress).
   * It is required for !TrueColor in Far 3.x.
   * It is required for certain other plugins (e.g. !FarHints).
   * It displays the hidden real console (with FAR), should ConEmu crash.
