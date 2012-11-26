@@ -1,0 +1,13 @@
+﻿http://superuser.com/q/509642/139371
+
+
+OK, inspired with question and the beginning. [ConEmu build 121124][1] introduces experimental feature "Replace default Windows terminal". It's new so may be buggy ;)
+
+![enter image description here][2]
+
+Just turn on checkbox, point applications from you like to start console tools (for example `explorer.exe|totalcmd.exe`) and voila. You may press <kbd>Win</kbd>+<kbd>R</kbd> type `ipconfig /all` and press <kbd>Enter</kbd>. It will starts in the new ConEmu tab. You may also doubleclick on some executable in the Explorer window.
+
+  - In this build it may be required to restart ConEmu before Explorer will be hooked
+  - Autoupdate with 7z package most likely will fails
+  - Only console applications will be intercepted into ConEmu tabs, `*.cmd` files - not yet
+  - ConEmu window must exists for successfully new tab startup
