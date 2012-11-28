@@ -3,6 +3,19 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121128==
+  * Some changes in console server & !ExtendedConsole.dll.
+  * -new_console:z
+  * «Default terminal» - more flexible:
+    * active config name used;
+    * close confirmation configurable;
+    * don't inject hooks configurable;
+    * take care about started with debugging;
+    * still available after GUI was closed;
+    * "-new_console:z" may be used when you need to force real console instead of replacing as «default terminal».
+  * Issue 828: Auto-hidden taskbar and maximized !ConEmu without Caption.
+
+
 ==Build 121125==
   * GCC warnings and errors.
   * Empty passwords are allowed when «Run as user» (if they are allowed by local policy of course).
