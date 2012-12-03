@@ -31,6 +31,12 @@ A. Using the utility !CertMgr from the Windows SDK:
 
 A. For details, see here: [Certificate Certificate installation]
 
+===Q. What is an Apps key?===
+A. This key (mentioned as `VK_APPS` in `WinUser.h`) located between !*RightWin* and !*RightShift* on most [http://en.wikipedia.org/wiki/File:Klawiatura_maszynistki.jpg keyboard layouts]. Sometimes it's called *Application/Menu*. Thought, it is not correct in Windows because `VK_MENU` (from `WinUser.h`) refers to *Alt* in fact.
+
+===Q. What is a Host key?
+A. This is sort of «substitution» for key chosed by user. For example you may choose common modifier (from one or more Ctrl/Alt/Shift/Apps) for group of actions. Browse «Keys & Macro» page in the Settings dialog.
+
 ===Q. Not all characters (hieroglyphs, ellipses, copyright symbols etc.) are displayed===
 A. For some reason, !ConEmu failed to change the font of the real console. Select 'Debug' → 'Properties' from !ConEmu's system menu, and on the 'Font' tab choose a !TrueType font.
 
