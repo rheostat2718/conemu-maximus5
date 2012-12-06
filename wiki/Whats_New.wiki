@@ -3,6 +3,18 @@ Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 121206==
+  * Timeout for downloading files (Auto-Update) increased to 180 seconds.
+  * Issue 743: Sometimes Auto-Update fails via proxy.
+  * Refactoring of menus processing.
+  * Shell style Drag&Drop allows drops into inactive panes (split-screen). To be more exact pane will be activated on drag-over.
+  * Sometimes «Quake-style slide down» shows window without sliding.
+  * New file in !ConEmu folder `"TypeBuildErrors.cmd"`. This may be used for colorization errors and warnings in the compiler outputs.
+  * Some more information with "/log2".
+  * Issue 834: Too large FPS while using Far 2 truemod.
+  * Redesign of «Mark & Paste» settings page.
+
+
 ==Build 121128==
   * Some changes in console server & !ExtendedConsole.dll.
   * -new_console:z
