@@ -20,7 +20,7 @@
 || /Palette _Name_ || Choose named color palette. ||
 || /Log | /Log1 | /Log2 || Used to create debug log files ||
 || /Reset || Don't load settings from registry/xml. ||
-|| /!UpdateJumpList || Update [Windows7Taskbar#Customizable_Jump_list Windows 7 taskbar jump list]. ||
+|| /!UpdateJumpList || Update [Windows7Taskbar#Customizable_Jump_list Windows 7 taskbar jump list]. May be used for automated !ConEmu set up from batches. ||
 || /!LoadCfgFile _file_ || Use specified xml file as configuration storage. ||
 || /!SaveCfgFile _file_ || Save configuration to the specified xml file. ||
 || /Exit || Don't create !ConEmu window, exit after actions. ||
@@ -68,4 +68,3 @@ ConEmu.exe /cmd {taskname}
 || /nokeyhooks || Disable !SetWindowsHookEx and global hotkeys ||
 || /noregfonts || Disable auto register fonts (font files from !ConEmu folder) ||
 || /inside<br>/insidepid _PID_<br>/insidewnd x<i>HWND</i> || Starts !ConEmu in «inside» mode (act as child window of parent process) ||
-|| /updatejumplist || May be used for automated !ConEmu set up from batches. Updates Windows 7 jump list on !ConEmu startup. ||
