@@ -3,6 +3,7 @@
 OK, inspired with question and the beginning. !ConEmu build 121124 introduces experimental feature
 «Replace default Windows terminal». It's new so may be buggy ;)
 
+*Old screenshot, need to be updated*
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsIntegration.png" title="ConEmu settings, Integration page" alt="ConEmu settings, Integration page">
 
 Just turn on checkbox «Force !ConEmu as default terminal for console applications»,
