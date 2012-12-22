@@ -30,5 +30,22 @@ and it will be launched in the new tab of !ConEmu.
 
 *Note*. Option «Inject !ConEmuHk» must be turned on (Settings -> Features).
 
+==Default terminal feature==
+This allows to seize creation of console processes from many (selected by user) applications.
+For example, when you run «Command prompt» shortcut from «Start menu» cmd.exe may start in the new !ConEmu tab.
+Read more about [DefaultTerminal Default terminal feature].
+
 ==Attach existing console or GUI application==
 Choose «Attach...» from [SystemMenu system menu].
+
+==Attach from command prompt==
+Batch file «Attach.cmd» ships with !ConEmu package. Run this file from any cmd.exe to attach this console
+into the new !ConEmu tab. This batch just run following command
+{{{
+ConEmuC.exe /ATTACH /NOCMD
+}}}
+which you may run from any other console shell or even from your own console application.
+
+==Automatic attach of cmd==
+Mostly like as «Attach from command prompt» but you may set up automatic execution of «Attach» on cmd.exe startup.
+This also works with TCC/LE. Set up feature on «ComSpec» page of «Settings» dialog.
