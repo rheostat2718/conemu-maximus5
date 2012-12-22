@@ -48,4 +48,4 @@ which you may run from any other console shell or even from your own console app
 
 ==Automatic attach of cmd==
 Mostly like as «Attach from command prompt» but you may set up automatic execution of «Attach» on cmd.exe startup.
-This also works with TCC/LE. Set up feature on «ComSpec» page of «Settings» dialog.
+This also works with TCC/LE. Set up feature on «!ComSpec» page of «Settings» dialog.

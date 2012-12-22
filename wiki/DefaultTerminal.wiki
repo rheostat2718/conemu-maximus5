@@ -1,13 +1,21 @@
 ﻿http://superuser.com/q/509642/139371
 
+OK, inspired with question and the beginning. !ConEmu build 121124 introduces experimental feature
+«Replace default Windows terminal». It's new so may be buggy ;)
 
-OK, inspired with question and the beginning. [ConEmu build 121124][1] introduces experimental feature "Replace default Windows terminal". It's new so may be buggy ;)
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsIntegration.png" title="ConEmu settings, Integration page" alt="ConEmu settings, Integration page">
 
-![enter image description here][2]
+Just turn on checkbox «Force !ConEmu as default terminal for console applications»,
+optionally turn on checkbox «Register on OS startup»
+and point applications from you like to start console tools (for example `explorer.exe|totalcmd.exe`)
+and voila. You may press *Win*+*R* type `ipconfig /all` and press *Enter*.
+It will starts in the new !ConEmu tab. You may also doubleclick on some executable in the Explorer window.
 
-Just turn on checkbox, point applications from you like to start console tools (for example `explorer.exe|totalcmd.exe`) and voila. You may press <kbd>Win</kbd>+<kbd>R</kbd> type `ipconfig /all` and press <kbd>Enter</kbd>. It will starts in the new ConEmu tab. You may also doubleclick on some executable in the Explorer window.
-
-  - In this build it may be required to restart ConEmu before Explorer will be hooked
+  - In this build it may be required to restart !ConEmu before Explorer will be hooked
   - Autoupdate with 7z package most likely will fails
-  - Only console applications will be intercepted into ConEmu tabs, `*.cmd` files - not yet
-  - ConEmu window must exists for successfully new tab startup
+  - Only console applications will be intercepted into !ConEmu tabs, `*.cmd` files - not yet
+
+«Default terminal» feature from «Integration» page is more powerful than «Autorun» from «!ComSpec» page.
+«Integration» must seize starting of *any* console program, not only cmd.exe.
+For example, you may dblclick on, hm, `ipconfig.exe` in Total Commander panel and voila...
+Also there will be no flickering of real console window.
