@@ -13,6 +13,7 @@
       * [Whats_New Whats new]
     * Запуск приложений
       * [LaunchNewTab Новый таб]
+      * [RestartTab Перезапуск таба]
       * [csudo sudo]
       * [Command_Line Аргументы ConEmu.exe]
       * [ConEmuC ConEmuC]

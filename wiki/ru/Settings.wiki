@@ -51,6 +51,9 @@ Usually, this file is located near to the _ConEmuC.exe_.
 ==Appearance==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsAppearance.png" title="ConEmu settings, Appearance page" alt="ConEmu settings, Appearance page">
 
+==Task bar==
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTaskBar.png" title="ConEmu settings, Task bar page" alt="ConEmu settings, Task bar page">
+
 ==Automatic update==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsUpdate.png" title="ConEmu settings, Update page" alt="ConEmu settings, Update page">
 

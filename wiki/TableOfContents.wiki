@@ -13,6 +13,7 @@
       * [Whats_New Whats new]
     * Launch apps
       * [LaunchNewTab Launch new tab]
+      * [RestartTab Restart tab]
       * [csudo sudo]
       * [Command_Line Command line]
       * [ConEmuC ConEmuC]
