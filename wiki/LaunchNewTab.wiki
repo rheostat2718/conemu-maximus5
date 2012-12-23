@@ -1,6 +1,4 @@
-﻿=Launching applications in !ConEmu=
-
-<font size="5">*Possibilities*</font>
+﻿<font size="5">*Launching applications in !ConEmu*</font>
 <wiki:toc max_depth="3" /> 
 
 ==Create new console dialog==
