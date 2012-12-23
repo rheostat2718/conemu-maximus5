@@ -6,9 +6,18 @@ How to start application (tcc, powershell, far, putty) in !ConEmu tab?
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of new console creation" alt="ConEmu new console">
 
 This dialog may be opened from:
-  * Keyboard (Win+W by default)
+  * Keyboard (Win+W by default), or
   * <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAddBtn.png" title="Toolbar" alt="Toolbar">
   * <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAddSys.png" title="System menu" alt="System menu">
+
+Well, what you can do with this dialog?
+  * Choose command line and startup directory for new process (you may use environment variables in both fields).
+  * Choose another user name and password, «Restricted current user» account or «Run as administrator» feature.
+  * You may split active tab vertically or horizontally (you need last alpha versions for this feature).
+  * And it is possible to start new tab in the new !ConEmu window (new `ConEmu.exe` process will be started).
+  * Dialog's system menu contains «Reset command history» menu item.
+
+Similar dialog may be opened for 
 
 ==Create new console without dialog==
 You may switch off create new console confirmation, just disable «Create confirmation» checkbox
@@ -29,6 +38,13 @@ and it will be launched in the new tab of !ConEmu.
 -new_console works even in batch files.
 
 *Note*. Option «Inject !ConEmuHk» must be turned on (Settings -> Features).
+
+==Duplicate root==
+Well, this interesting feature offers a way to duplicate shell (root process of current tab) state
+to the new !ConEmu tab.
+For example, you have started `cmd.exe`, set up environment variables, cd somewhere,
+run any program (vim for example) and call «Duplicate root» from tab popup menu. This will
+create «copy» of `cmd.exe` at most recent state (when possible).
 
 ==Default terminal feature==
 This allows to seize creation of console processes from many (selected by user) applications.
