@@ -31,7 +31,7 @@ Today, !ConEmu can be used with any other console application or simple GUI tool
 
 This project grew up from [http://xs.nm.ru/ ConEmu by Zoin].
 
-Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&topic=38078&glp forum.ru-board.com] :)
+Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&topic=45328 forum.ru-board.com] :)
 
 
 
