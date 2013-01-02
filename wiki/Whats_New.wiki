@@ -3,6 +3,10 @@ Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 130102==
+  * GuiMacro parser regression. Only one string argument was processed.
+
+
 ==Build 130101==
   * When unhandled exception occurred in !ConEmu - full memory dump will be created on desktop in "ConEmuTrap" folder.
   * New options for «Esc» key or «Task bar» page: «Minimize !ConEmu when all consoles closed», «Minimize always» and «Never». May be useful in Quake mode.

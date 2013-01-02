@@ -51,7 +51,7 @@ If you notice lags while executing batches or commands (from cmd/git/bash/etc.) 
 <wiki:comment>
 <a href="http://code.google.com/p/conemu-maximus5/wiki/Awards"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012SO.png" title="Open Source Advertising - Sidebar - 2012"/></a>
 </wiki:comment>
-<a href="http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=Type%3DDocumentation+&sort=-modified"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012.png" title="Helping with documentation"/></a>
+<a href="http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=Type%3DDocumentation+&sort=-modified"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2013.png" title="Helping with documentation"/></a>
 </td></tr></table>
 
 
