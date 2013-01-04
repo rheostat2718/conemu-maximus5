@@ -1,0 +1,52 @@
+﻿=List of environment variables set by !ConEmu=
+|| *Name* || *Description* || *Example* ||
+|| `ConEmuDir` || folder, containing !ConEmu.exe || `C:\ConEmu` ||
+|| `ConEmuBaseDir` || folder, containing ConEmuC.exe || `C:\ConEmu\ConEmu` ||
+|| `ConEmuArgs` || arguments specified to !ConEmu.exe || ||
+|| `ConEmuConfig` || current configuration name, see `/config` switch || ||
+|| `ConEmuBuild` || current !ConEmu build number || `121202` ||
+|| `ConEmuHWND` || main !ConEmu window handle || `0x0021094A` ||
+|| `ConEmuDrawHWND` || virtual console window handle (child window of !ConEmu), this is canvas for console text painting || `0x000E0F8A` ||
+|| `ConEmuBackHWND` || backing for canvas, it may be larger than canvas if padding or scrollbars exists || `0x00040E8A` ||
+|| `ConEmuANSI` || set to `ON` when «ANSI X3.64» is enabled || `ON` or `OFF` ||
+|| `ConEmuHooks` || you may temporarily disable injects when running «long» batches or initialization scripts, for example<br>`cmd /k set ConEmuHooks=OFF & "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" -new_console:sV -new_console:t:SDK & set ConEmuHooks=` || `OFF` or `Enabled` ||
+
+Also, there is an option «Add %!ConEmuBaseDir% to %PATH%» on settings page «!ComSpec». It is turned on by default
+and allows to easily run executables and scripts from `%ConEmuBaseDir%` folder. For example:
+{{{
+ConEmuC /EXPORT PATH
+
+or
+
+csudo dism.exe /online /enable-feature /featurename:NetFX3 /All /Source:D:\sources\sxs /LimitAccess
+}}}
+
+
+=Export variables=
+When you start new console - it inherits environment strings (`%PATH%` also) from parent process (!ConEmu GUI).
+
+When you change %PATH% in your shell - it applies to this shell and its children processes (that is started in current console/tab).
+
+If you need to fixate this temporarily environment changes - you may execute
+{{{
+ConEmuC /export PATH
+}}}
+
+This will «copy» your current `%PATH%` value to ConEmu GUI and it will be applied to all new ConEmu's consoles.
+
+==Full syntax of Export command==
+{{{
+ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]
+ConEmuC /export[=CON|ALL] [Var1 [Var2 [...]]]
+  VarN        - may contains one trailing/middle asterisk (sort of filemask support).
+  /export     - export to all processes of current console and ConEmu GUI
+  /export=CON - export to all processes of current console only
+  /export=ALL - export to all processes of opened tabs and ConEmu GUI
+}}}
+
+  * Note! «Inject !ConEmuHk» required to set variables.
+  * Some shells may ignores environment changes by `/EXPORT=ALL` because of their features.
+  * Shells comments
+    * «Far Manager» & «TCC/LE» - OK;
+    * «cmd» - fails partially (required to run smth from active cmd, for example "cmd /k exit", to «apply» changes);
+    * «bash» - fails completely (seems, it does not support outside changing of env.vars).

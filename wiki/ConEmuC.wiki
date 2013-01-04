@@ -26,12 +26,11 @@ You may specify font face name and size to the real console.
 
 ===ConEmuC.exe command line switches===
 
-|| || *Usage* ||
-|| || `ConEmuC /?`<br>Show help screen ||
-|| || `ConEmuC [switches] [/U | /A] /C «command line, passed to %%COMSPEC%%»` ||
+|| || *Show help screen* ||
+|| || `ConEmuC /?` ||
+|| || *Execute commands* ||
 || || `ConEmuC [switches] /ROOT «program with arguments, far.exe for example»` ||
-|| || `ConEmuC /ATTACH /NOCMD` ||
-|| || `ConEmuC /GUIMACRO «`[GuiMacro ConEmu GUI macro command]`»` ||
+|| || `ConEmuC [switches] [/U | /A] /C «command line, passed to %%COMSPEC%%»` ||
 || || *Switches* ||
 || `/[NO]CONFIRM` || `[`don't`]` confirm closing console on program termination ||
 || `/ATTACH` || auto attach to !ConEmu GUI ||
@@ -39,6 +38,14 @@ You may specify font face name and size to the real console.
 || `/B{W|H|Z}` || define window width, height and buffer height ||
 || `/F{N|W|H}` || define console font name, width, height ||
 || `/LOG[N]` || create (debug) log file, N is number from 0 to 3 ||
+|| || *Attach current console to !ConEmu GUI* ||
+|| || `ConEmuC /ATTACH /NOCMD` ||
+|| || *[GuiMacro ConEmu GUI macro command]* ||
+|| || `ConEmuC /GUIMACRO «GuiMacroString»` ||
+|| || *Start debugger or create memory dump* ||
+|| || `ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]` ||
+|| || *[ConEmuEnvironment#Export_variables Export environment variable to the parent processes]* ||
+|| || `ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]` ||
 
 ===-new_console and -cur_console switches===
 When you run application from !ConEmu console, you may use *[NewConsole -new_console]* or *[NewConsole -cur_console]* switches.

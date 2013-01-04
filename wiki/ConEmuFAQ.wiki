@@ -69,16 +69,7 @@ A. For comfort, when using Far, one can configure a macro bound to !ShiftEnter (
 A. Pay attention to the parameter `-cur_console:h[N]`, which allows controlling long output of commands or applications when running them from [ConEmuFAQ#Far_Manager Far Manager].
 
 ===Q. Which environment variables does !ConEmu set?===
-|| *Name* || *Description* || *Example* ||
-|| `ConEmuDir` || folder, containing !ConEmu.exe || `C:\ConEmu` ||
-|| `ConEmuBaseDir` || folder, containing ConEmuC.exe || `C:\ConEmu\ConEmu` ||
-|| `ConEmuArgs` || arguments specified to !ConEmu.exe || ||
-|| `ConEmuConfig` || current configuration name, see `/config` switch || ||
-|| `ConEmuBuild` || current !ConEmu build number || `121202` ||
-|| `ConEmuHWND` || main !ConEmu window handle || `0x0021094A` ||
-|| `ConEmuDrawHWND` || virtual console window handle (child window of !ConEmu), this is canvas for console text painting || `0x000E0F8A` ||
-|| `ConEmuBackHWND` || backing for canvas, it may be larger than canvas if padding or scrollbars exists || `0x00040E8A` ||
-|| `ConEmuANSI` || set to `ON` when «ANSI X3.64» is enabled || `ON` or `OFF` ||
+A. Read wiki page [ConEmuEnvironment ConEmu Environment].
 
 ===Q. Launched program outputs nothing.===
 A. Certain programs work with the console's alternative buffer - e.g. telnet.exe, launched without parameters. A history of this issue can be read here: [http://code.google.com/p/conemu-maximus5/issues/detail?id=65 Issue 65]. The problem is fixed in version 120504 (the «Inject ConEmuHk» flag must be set). In previous versions, the workaround was to show the real console (!CtrlWinAltSpace), and temporarily work with it.
