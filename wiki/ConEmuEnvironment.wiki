@@ -32,7 +32,7 @@ If you need to fixate this temporarily environment changes - you may execute
 ConEmuC /export PATH
 }}}
 
-This will «copy» your current `%PATH%` value to ConEmu GUI and it will be applied to all new ConEmu's consoles.
+This will «copy» your current `%PATH%` value to !ConEmu GUI and it will be applied to all new !ConEmu's consoles.
 
 ==Full syntax of Export command==
 {{{
