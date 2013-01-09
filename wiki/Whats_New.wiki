@@ -3,6 +3,12 @@ Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 130109==
+  * Sometimes, trap occures when switching to tab which is in «closing state».
+  * «Resize mark» renamed to «Size grip».
+  * «Default terminal» fails to execute smth like "cmd /k copy aaa bbb".
+
+
 ==Build 130108==
   * New «column» in Status bar - «Resize mark». You can change !ConEmu size by dragging this «column» even when frame is hidden.
   * Starting shells takes into account paths defined in "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths".
