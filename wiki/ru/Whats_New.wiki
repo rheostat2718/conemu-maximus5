@@ -3,6 +3,24 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 130113==
+  * Searching in «Settings» dialog now available. Type text in «Find» editbox (upper-left corner) and wait a little. You may continue search by pressing ">" button.
+  * New option «Minimize on focus lose» on «Task bar» page. This is used only for «normal» style, «quake» style has separate option.
+  * New switch. Now it is possible to start several tabs from the command line or shortcut without creating tasks.
+{{{
+ConEmu.exe /cmdlist cmd1 | cmd2 | cmd3
+}}}
+  * Issue 864: !MiddleButtonClick on free tabbar area creates new tab.
+  * Issue 871: Sometimes inactive consoles was not resized properly.
+  * URL-detector does not strip single-quote from the end of URL.
+  * Dropping long filepathnamed to prompt sometimes fails (pasted paths was trimmed).
+  * Issue 878: Can't select in putty after moving !ConEmu window.
+  * New option «Focus in child windows». Enabled by default. It means set focus in xshell/putty/notepad/etc. when !ConEmu is activated or tab switched.
+  * New hotkey (not set by default): Switch focus between !ConEmu and child GUI application (xshell/putty/notepad/etc.)
+  * Now you may export your current configuration to xml-file directly from Settings dialog.
+  * Current settings storage location displayed on the top of Settings dialog.
+
+
 ==Build 130109==
   * Sometimes, trap occures when switching to tab which is in «closing state».
   * «Resize mark» renamed to «Size grip».
