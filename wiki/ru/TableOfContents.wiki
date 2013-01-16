@@ -49,6 +49,7 @@
       * [TipsAndTweaks Советы и хитрости]
       * [PVSStudio PVS-Studio]
       * [MiniDump MiniDump]
+      * [ConEmuHelping Как помочь в разработке]
   * [FarManager Введение в Far Manager]
   * [FarPlugins Far Manager plugins]
     * [ClipFixer ClipFixer]

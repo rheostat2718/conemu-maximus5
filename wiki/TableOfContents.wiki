@@ -49,6 +49,7 @@
       * [TipsAndTweaks Tips and Tweaks]
       * [PVSStudio PVS-Studio]
       * [MiniDump MiniDump]
+      * [ConEmuHelping How you may help]
   * [FarManager About Far Manager]
   * [FarPlugins Far Manager plugins]
     * [ClipFixer ClipFixer]
