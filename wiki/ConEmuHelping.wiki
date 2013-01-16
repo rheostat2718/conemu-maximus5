@@ -33,4 +33,8 @@ svn checkout http://conemu-maximus5.googlecode.com/svn/trunk/ conemu-maximus5-re
   * Можете предложить лучший вариант текста?
   * Можете перевести/поправить/дописать страничку документации?
 
-Есть множество путей прислать исправления. 
+Есть множество путей прислать исправления.
+
+  * Создать новый [http://code.google.com/p/conemu-maximus5/issues/entry?template=Documentation Issue типа Documentation] (предпочтительно в большинстве случаев)
+  * Прислать мне e-mail
+  * Если вы готовы на неоднократную помощь - можно дать вам привилегию на правку wiki, подробнее [http://code.google.com/p/conemu-maximus5/issues/detail?id=609#c1 здесь].
