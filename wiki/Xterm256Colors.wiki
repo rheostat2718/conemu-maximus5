@@ -1,5 +1,15 @@
 ﻿=How to enable xterm 256 colors in !ConEmu=
 
+Note. If «Inject !ConEmuHk» is off, you can still use ANSI in vim (or any other application)
+if you run them via ConEmuC.exe but not directly. For example, run vim from bash
+{{{
+conemuc //c C:\\GIT\\share\\vim\\vim73\\vim.exe 1.cpp
+}}}
+Of course, you may omit full path to vim.exe if it may be found in %PATH% environment variable.
+
+Note. !ConEmu will disable scroll buffer automatically, when vim.exe is started.
+For any other application - you must do it yourself.
+
 ==xterm 256 color mode requirements==
   * Options must be turned on
     * «!TrueMod (24bit color) support» on [Settings#Colors Colors] page
