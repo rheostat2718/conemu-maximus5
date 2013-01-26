@@ -3,40 +3,41 @@
 
 <font size="5">*ANSI X3.64 and Xterm 256 colors*</font>
 
-В !ConEmu 120520d появилась поддержка [http://en.wikipedia.org/wiki/ANSI_X3.64 ANSI X3.64] и его расширения [http://www.frexx.de/xterm-256-notes/ xterm 256 color mode].
+!ConEmu (from build 120520d) can process [http://en.wikipedia.org/wiki/ANSI_X3.64 ANSI X3.64]
+and its extension [http://www.frexx.de/xterm-256-notes/ xterm 256 color mode].
 
 <wiki:toc max_depth="3" /> 
 
-=Описание=
-Новая опция «ANSI X3.64 / xterm 256 colors» на вкладке «Features», по умолчанию включена.
-Адресуется консоль целиком (с прокруткой),
-но xterm 256 color влияет только на «рабочую» область (нижняя часть консоли, если есть прокрутка).
-Вне «рабочей» области 256 цветов аппроксимируются к стандартным 16-и консольным цветам.
+=Description=
+New option «ANSI X3.64 / xterm 256 colors» on the «Features» page, turned On by default.
+It works with full console (including scrolling area - !BufferHeight)
+but xterm 256 color affects only on «working» area (this is bottom part of console, if scrolling exists).
+Outside (upper area) 256 colors will be approximated to console stanard 16-colors.
 
-==Для обработки ANSI последовательностей==
-  * Должны быть включены флажки
-    * «ANSI X3.64 / xterm 256 colors» на вкладке [Settings#Features Features]
-    * «Inject !ConEmuHk» на вкладке [Settings#Features Features] (требуется для обработки программ второго уровня)
+==ANSI sequences processing requirements==
+  * These checkboxes must be *On*
+    * «ANSI X3.64 / xterm 256 colors» on the [Settings#Features Features] page
+    * «Inject !ConEmuHk» on the [Settings#Features Features] page (required for 2-nd level programs, aka started from your shell)
 
-==Для режима xterm 256 color==
-  * Должны быть включены флажки
-    * «!TrueMod (24bit color) support» на вкладке [Settings#Colors Colors]
-    * «ANSI X3.64 / xterm 256 colors» на вкладке [Settings#Features Features]
-    * «Inject !ConEmuHk» на вкладке [Settings#Features Features] (требуется для обработки программ второго уровня)
-  * проверить выключен ли буфер/прокрутка. 
+==xterm 256 color processing requirements==
+  * These checkboxes must be *On*
+    * «!TrueMod (24bit color) support» on the [Settings#Colors Colors] page
+    * «ANSI X3.64 / xterm 256 colors» on the [Settings#Features Features] page
+    * «Inject !ConEmuHk» on the [Settings#Features Features] page (required for 2-nd level programs, aka started from your shell)
+  * You need to ensure that buffer/scrolling is Off
 
-===Пример 1: Vim===
+===Example 1: Vim===
 {{{
 vim.exe -cur_console:h0 <Vim arguments here>
 }}}
 
-===Пример 2: 256colors2.pl===
+===Example 2: 256colors2.pl===
 Скрипт [http://www.frexx.de/xterm-256-notes/data/256colors2.pl 256colors2.pl] нужно запускать так:
 {{{
 256colors2.pl -cur_console:h0
 }}}
 
-===Пример 3: прокрутить консоль===
+===Example 3: прокрутить консоль===
 Если приложение *не* «полноэкранное» (вроде Far/Vim/Hiew/...),
 можно прокрутить консоль в самый низ («^[» нужно заменить на ESC код - символ с кодом \x1B):
 {{{
