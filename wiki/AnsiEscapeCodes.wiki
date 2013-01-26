@@ -37,12 +37,12 @@ vim.exe -cur_console:h0 <Vim arguments here>
 256colors2.pl -cur_console:h0
 }}}
 
-===Example 3: прокрутить консоль===
-Если приложение *не* «полноэкранное» (вроде Far/Vim/Hiew/...),
-можно прокрутить консоль в самый низ («^[» нужно заменить на ESC код - символ с кодом \x1B):
+===Example 3: scroll console to bottom===
+You may scroll console to the bottom (activate working area):
 {{{
 echo ^[[9999;1H
 }}}
+*Warning* You need to change «^[» to ESC code before using this script (char with code \x1B).
 
 ==!TechInfo==
 Обработка ANSI escape последовательностей осуществляется в том случае, если консольная программа
