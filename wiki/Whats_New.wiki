@@ -3,6 +3,13 @@ Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 130208==
+  * Interprocess communication changes.
+  * Issue 926: Pad around console redraw lag.
+  * Issue 928: Regression of 130205: Restart of console does not works.
+  * Preparing for multi-page selection.
+
+
 ==Build 130205==
   * Some improvements for «stress mode».
   * «Disabled» will be shown in «Keys & Macro» if specified action is disabled in settings.
