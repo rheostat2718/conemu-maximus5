@@ -3,6 +3,10 @@ Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 130210==
+  * Regression. Sometimes !ConEmu.exe may crash on startup.
+
+
 ==Build 130208==
   * Interprocess communication changes.
   * Issue 926: Pad around console redraw lag.
