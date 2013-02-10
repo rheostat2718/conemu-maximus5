@@ -4,7 +4,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 ==Build 130210==
-  * Regression. Sometimes !ConEmu.exe may crash on startup.
+  * Regression. Sometimes !ConEmu.exe may crash on startup or quake-sliding.
 
 
 ==Build 130208==
