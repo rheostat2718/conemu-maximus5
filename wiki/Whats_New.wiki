@@ -5,6 +5,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 ==Build 130210==
   * Regression. Sometimes !ConEmu.exe may crash on startup or quake-sliding.
+  * Issue 932: Support UltraEdit decimal color format.
 
 
 ==Build 130208==
