@@ -3,6 +3,12 @@ Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 130212==
+  * Issue 912: Resize changes (Full Screen Does Not Allow Win+Shift+Arrow to Move Monitors).
+  * Issue 937: Drag&Drop once more (AIMP3).
+  * Issue 938: Double click for word selection stops working after a while.
+
+
 ==Build 130210==
   * Regression. Sometimes !ConEmu.exe may crash on startup or quake-sliding.
   * Issue 932: Support UltraEdit decimal color format.
