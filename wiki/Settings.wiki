@@ -106,7 +106,7 @@ applications in new tabs !ConEmu. May be configured in 'Tasks' page of 'Settings
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors2.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
 
-==Transparency==
+==[SettingsTransparency Transparency]==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTransparency.png" title="ConEmu settings, Transparency page" alt="ConEmu settings, Transparency page">
 
 ==Tabs==
