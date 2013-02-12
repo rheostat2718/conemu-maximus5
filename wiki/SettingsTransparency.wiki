@@ -1,0 +1,5 @@
+=Transparency=
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTransparency.png" title="ConEmu settings, Transparency page" alt="ConEmu settings, Transparency page">
+
+=Change transparency on the fly=
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTransparency.png" title="ConEmu Alpha transparency">
