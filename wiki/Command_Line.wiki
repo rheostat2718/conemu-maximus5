@@ -68,3 +68,4 @@ ConEmu.exe /cmd {taskname}
 || /nokeyhooks || Disable !SetWindowsHookEx and global hotkeys ||
 || /noregfonts || Disable auto register fonts (font files from !ConEmu folder) ||
 || /inside<br>/insidepid _PID_<br>/insidewnd x<i>HWND</i> || Starts !ConEmu in «inside» mode (act as child window of parent process) ||
+|| /demote || Run command de-elevated, using Task Sheduler. May be useful in Vista and higher with UAC enabled. Example: ConEmu.exe /demote /cmd powershell.exe ||
