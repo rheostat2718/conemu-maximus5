@@ -44,6 +44,10 @@ You may specify font face name and size to the real console.
 || || `ConEmuC /GUIMACRO «GuiMacroString»` ||
 || || *Start debugger or create memory dump* ||
 || || `ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]` ||
+|| || *Start «command line» under debugger* ||
+|| || `ConEmuC /DEBUGEXE «command line»` ||
+|| || *Start «command line» under debugger, debug all children* ||
+|| || `ConEmuC /DEBUGTREE «command line»` ||
 || || *[ConEmuEnvironment#Export_variables Export environment variable to the parent processes]* ||
 || || `ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]` ||
 
