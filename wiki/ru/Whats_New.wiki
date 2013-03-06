@@ -3,6 +3,11 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 130305==
+  * Scrollbar was not appears/works when mouse was over padding on right edge.
+  * Updated debug switch: "ConEmuC /debugtree <command_line>".
+
+
 ==Build 130304==
   * Regression: GUI applications attach failed.
   * Issue 971: Sending dead chars to child GUI applications.
