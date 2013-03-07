@@ -1,7 +1,10 @@
 #labels Featured
 ===Awards===
 <a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml"><img border="0" src="http://s1.softpedia-static.com/base_img/softpedia_free_award_f.gif"/></a>
+<a href="http://www.windows8downloads.com/" target="_blank"><img src="http://www.windows8downloads.com/img/awards/award_5.png" alt="Windows 8 Downloads" border="0" width="160" height="80"/></a>
+<wiki:comment>
 <a href='http://www.findmysoft.com'><img src='http://www.findmysoft.com/ConEmu_award2.png' alt='FindMysoft.com - Fast and free software download directory'/></a>
+</wiki:comment>
 <a href="http://www.downloadatlas.com/"><img src="http://www.downloadatlas.com/images/editors_choice.png" style="border:none;" width="80" height="80" alt="ConEmu Editor's Choice" /></a>
 <a href='http://www.sofotex.com/ConEmu-download_L125596.html'><img src='http://www.sofotex.com/img/5stars-sm.jpg' alt='SofoTex.com - Software downloads'/></a>
 
