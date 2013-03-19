@@ -4,21 +4,21 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 ==Build 130319==
-  * Issue 924: ConHost.exe crashed when maximizing.
-  * Issue 974: "Leave ConEmu opened" blocks autoupdate.
+  * Issue 924: !ConHost.exe crashed when maximizing.
+  * Issue 974: «Leave !ConEmu opened» blocks autoupdate.
   * Issue 990: Regression. ANSI processor was not initialized properly.
   * Issue 994: Regression. Clink loading failed.
 
 
 ==Build 130318==
-  * Issue 984: Option "Add %ConEmuDir% to %PATH%" on ComSpec page. Turned ON by default.
+  * Issue 984: Option "Add %!ConEmuDir% to %PATH%" on !ComSpec page. Turned ON by default.
   * Issue 915: Closing options redesigned. Taskbar page, checkboxes
-    * Close ConEmu with last tab
+    * Close !ConEmu with last tab
     * Quit on close (e.g. caption bar cross clicking)
     * Minimize on closing last tab
     * Hide to the TSA
   * Some changes in console handling.
-  * Failed to disable "Use clink in prompt" in active session (ConEmu restart was needed).
+  * Failed to disable "Use clink in prompt" in active session (!ConEmu restart was needed).
 
 
 ==Build 130314==
@@ -28,7 +28,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 ==Build 130313==
   * Scrollbar was not appears/works when mouse was over padding on right edge.
-  * Updated debug switch: "ConEmuC /debugtree <command_line>".
+  * Updated debug switch: `"ConEmuC /debugtree <command_line>"`.
   * Flickering when starting Quake mode in TSA.
   * Drawing artefacts in the Status bar when resizing window.
   * Issue 969: Disabling "Multiple consoles in one ConEmu window" has no effect for "Default terminal".
@@ -37,7 +37,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 ==Build 130305==
   * Scrollbar was not appears/works when mouse was over padding on right edge.
-  * Updated debug switch: "ConEmuC /debugtree <command_line>".
+  * Updated debug switch: `"ConEmuC /debugtree <command_line>"`.
 
 
 ==Build 130304==
@@ -50,7 +50,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * Issue 964: Duplicate Root shows an assert.
   * Issue 965: Regression: stored fixed position for normal mode was ignored.
   * Settings->Info: showing "conhost.exe" in processes list for Windows 8 and higher.
-  * New debug switch: "ConEmuC /debugtree <command_line>".
+  * New debug switch: `"ConEmuC /debugtree <command_line>"`.
 
 
 ==Build 130227==
