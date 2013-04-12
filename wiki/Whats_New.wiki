@@ -2,6 +2,19 @@
 Please, vote for !ConEmu
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
+You can show your appreciation and support future development by donating.
+Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
+
+
+==Build 130411==
+  * Quit on close once again... If no opened consoles and cross clicking - !ConEmu will terminates.
+  * Issue 1014: "Extend Fonts" feature does not work (was locked to far.exe only).
+  * Issue 1011: Typo in installer.
+  * Some more logging on keyboard input.
+  * Allow to set tab templates without "%s" and "%n".
+  * Far 3 (Lua) macro fails: Plugin.Call("bd454d48-448e-46cc-909d-b6cf789c2d65",1).
+  * Issue 1020: Far 3 build 3277 supported.
+
 
 ==Build 130401==
   * Some more internal diagnostics.
