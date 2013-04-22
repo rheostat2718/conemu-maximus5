@@ -6,6 +6,18 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 130422==
+  * Issue 1035: Assertion on startup with some keyboard layouts.
+
+
+==Build 130421==
+  * Option «Inject ConEmuHk» is enabled by default (for new configurations).
+  * Some more internal logging.
+  * Three-level autoupdate: Stable, Preview, Developer.
+  * Issue 944: With some keyboard layouts ConEmu starting may cause loading "fantom" language.
+  * Options «Focus in child windows» was ignored when activating ConEmu.
+
+
 ==Build 130411==
   * Quit on close once again... If no opened consoles and cross clicking - !ConEmu will terminates.
   * Issue 1014: "Extend Fonts" feature does not work (was locked to far.exe only).
