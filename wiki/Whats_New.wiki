@@ -6,6 +6,11 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 130425==
+  * Issue 1040: Resize Far 3 panels macro error.
+  * Issue 1035: Assertion on startup with some keyboard layouts (again).
+
+
 ==Build 130422==
   * Issue 1035: Assertion on startup with some keyboard layouts.
 

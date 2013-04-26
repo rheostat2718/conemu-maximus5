@@ -6,6 +6,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 130425==
+  * Issue 1040: Resize Far 3 panels macro error.
+  * Issue 1035: Assertion on startup with some keyboard layouts (again).
+
+
 ==Build 130422==
   * Issue 1035: Assertion on startup with some keyboard layouts.
 
