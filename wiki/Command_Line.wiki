@@ -39,8 +39,40 @@ ConEmuC.exe command line switches are described [ConEmuC#ConEmuC.exe_command_lin
 ConEmu.exe /ct /font "Lucida Console" /size 16 /cmd far.exe "c:\1 2\"
 }}}
 
-2.	Starts with thee tabs: FAR, CMD and !PowerShell. FAR will be active console, CMD will be started under Administrator.
+2.  Starts continuous operation minimized in taskbar status area (TSA), use icon from "cmd.exe".
+{{{
+ConEmu.exe /tsa /min /icon "cmd.exe" /cmd cmd /c dir c:\ /s
+}}}
 
+3. Start four cmd tabs in a grid 2x2 (*Win+R* or *shortcut* syntax)
+{{{
+ConEmu.exe /cmdlist >cmd -cur_console:n ||| cmd -cur_console:s1TVn ||| cmd -cur_console:s1THn ||| cmd -cur_console:s2THn
+}}}
+
+4.	Starts with four tabs: Far Manager, CMD, !PowerShell and Bash.
+  * Far.exe will be active console;
+  * Cmd.exe will be started with 400 lines buffer height in the `%ALLUSERSPROFILE%` directory and special color 4F (white on red);
+  * !PowerShell will be started as Administrator with 1000 lines buffer height in the `%USERPROFILE%` directory;
+  * Bash (MinGW) will be started in the `C:\Source` directory.
+
+*Win+R* or *shortcut* syntax (following is *one-line* command, splitted for clearness)
+{{{
+ConEmu.exe /cmdlist
+  >"C:\Program Files\Far\far.exe"
+  ||| cmd /k color 4F "-cur_console:h400d:%ALLUSERSPROFILE%"
+  ||| *powershell "-cur_console:h1000d:%USERPROFILE%"
+  ||| C:\MinGW\msys\1.0\bin\sh.exe --login -i "-cur_console:d:C:\Source"
+}}}
+batch files (bat, cmd) syntax (following is *one-line* command, splitted for clearness)
+{{{
+rem Remove line breaks after paste!
+start "ConEmu" "C:\Program Files\ConEmu\ConEmu.exe" /cmdlist
+  ^>"C:\Program Files\Far\far.exe"
+  ^|^|^| cmd /k color 4F "-cur_console:h400d:%ALLUSERSPROFILE%"
+  ^|^|^| *powershell "-cur_console:h1000d:%USERPROFILE%"
+  ^|^|^| C:\MinGW\msys\1.0\bin\sh.exe --login -i "-cur_console:d:C:\Source"
+}}}
+or
 {{{
 ConEmu.exe /cmd @startfile.txt
 }}}
@@ -49,16 +81,16 @@ or
 ConEmu.exe /cmd {taskname}
 }}}
 
-3.  Starts continuous operation minimized in taskbar status area (TSA), use icon from "cmd.exe".
-{{{
-}}}
-
 ====Sample startfile.txt or contents of {taskname}====
 {{{
 >"C:\Program Files\Far\far.exe"
-*/BufferHeight 400 cmd
-/BufferHeight 1000 powershell
+cmd /k color 4F "-cur_console:h400d:%ALLUSERSPROFILE%"
+*powershell "-cur_console:h1000d:%USERPROFILE%"
+C:\MinGW\msys\1.0\bin\sh.exe --login -i "-cur_console:d:C:\Source"
 }}}
+
+start "Three tabs" "C:\Program Files\ConEmu\ConEmu.exe" /cmdlist ^> cmd /k color 4C -cur_console:d:x:\mercurial\blah\blah ^|^|^| cmd /k color 5D -cur_console:d:x:\mercurial\blah\blah\solr ^|^|^| cmd /k color 2A -cur_console:d:x:\mercurial\blah\blah\rep
+
 
 ===Rarely used switches===
 
