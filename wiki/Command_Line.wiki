@@ -26,6 +26,8 @@
 || /Exit || Don't create !ConEmu window, exit after actions. ||
 || -new_console <br> -cur_console || This *special* switches may be specified after */cmd* switch. Read more about [NewConsole -new_console and -cur_console] switches ||
 || /cmd _commandline_ <br> /cmd @_taskfile_ <br> /cmd _{taskname}_ || Command line to start. This must be the last used switch (excepting -new_console and -cur_console). You may use ">" and "`*`" modifiers in cmdfile and /!BufferHeight argument. <br> _taskname_ is one of the tasks specified on the 'Tasks' page of 'Settings' dialog. ||
+|| /cmd _commandline_ <br> /cmd @_taskfile_ <br> /cmd _{taskname}_ || Command line to start. This must be the last used switch (excepting -new_console and -cur_console). You may use ">" and "`*`" modifiers in cmdfile and /!BufferHeight argument. <br> _taskname_ is one of the tasks specified on the 'Tasks' page of 'Settings' dialog. ||
+|| /cmdlist _commands_ || Run several tabs on startup. This must be the last used switch (excepting -new_console and -cur_console). Use the same syntax and abilities as on the 'Tasks' page of 'Settings' dialog. Delimit commands (tabs) with `|||`. Note, that you must escape delimiter `^|^|^|` when running from cmd-files. ||
 
 ConEmuC.exe command line switches are described [ConEmuC#ConEmuC.exe_command_line_switches here].
 
