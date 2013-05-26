@@ -6,6 +6,11 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 130526==
+  * One more fix for "Sleep in backgound".
+  * Issue 1076: Regression: Second instance (with single instance mode) always starts in `%ConEmuDir%`.
+
+
 ==Build 130523==
   * Don't lock current (startup) directory.
   * Width and Height may be set up in cells/pixels/percents.
@@ -14,7 +19,7 @@ Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 mai
   * New option «Align !ConEmu window size to cells» on «Size & Pos» page.
   * Some changes in ANSI processor.
   * Minor changes in mouse-over-scrollbar processing.
-  * Issue 1004: overflow of SetTitle when "/title" option was specified.
+  * Issue 1004: overflow of !SetTitle when "/title" option was specified.
   * Issue 1067: missing linking dependency for ConEmuDW project.
   * Issue 1068: UI interface for «Default tab click action» (patch from peter.sunde).
   * Issue 1069: better clink error message (check box «Use clink in prompt»).
@@ -25,7 +30,7 @@ Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 mai
 
 
 ==Build 130427==
-  * Issue 1035, 1050: Keyboard layouts once more.
+  * Issue 1035, Issue 1050: Keyboard layouts once more.
   * Issue 1047: Assertion on start file dragging.
   * Issue 1052: New option «Show balloon help tooltips» on «Appearance» page.
 
