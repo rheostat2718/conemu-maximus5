@@ -7,7 +7,7 @@
 || /FS | /Max | /Min || (Full screen), (Maximized) or (Minimized) mode ||
 || /TSA || Override (enable) minimize to taskbar status area ||
 || /Icon _file_ || Take icon from file (exe, dll, ico) ||
-|| /Title _title_ || Set fixed _title_ for !ConEmu window. You may use environment variables in _title_. ||
+|| /Title _title_ || Set *fixed* _title_ for !ConEmu window. You may use environment variables in _title_. ||
 || /Multi | /!NoMulti || Enable or disable multiconsole features ||
 || /Single || New console will be started in new tab of existing !ConEmu ||
 || /!ShowHide | /ShowHideTSA || May be used with !AutoHotKey or desktop shortcuts. Works like «Minimize/Restore» global hotkey. ||

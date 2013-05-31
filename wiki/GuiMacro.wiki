@@ -34,6 +34,16 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
 ===List of functions===
 <wiki:comment> !!! add same functions to "src\ConEmu\About.h" !!! </wiki:comment>
 {{{
+	Close(<What>[,<Flags>])
+	  - Close current console (0), without confirmation (0,1),
+	    terminate active process (1), without confirmation (1,1)
+	    close ConEmu window (2)
+	    close active tab (3)
+	    close active group (4)
+    Copy(<What>)
+      - Copy active console contents
+	    What==0: current selection
+	    What==1: all buffer contents
     FindEditor("<FullEditFileName>"),
     FindViewer("<FullViewerFileName>"),
     FindFarWindow(<WindowType>,"<WindowTitle>")
@@ -63,19 +73,30 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
        Cmd==1: paste first line
        Cmd==2: paste all lines, without confirmations
        Cmd==3: paste first line, without confirmations
+	   Cmd==4: select and parse file pathname, Text - default
+	   Cmd==5: select and parse folder pathname, Text - default
+	   Cmd==6: select and parse cygwin file pathname, Text - default
+	   Cmd==7: select and parse cygwin folder pathname, Text - default
+	   Cmd==8: paste path from clipboard converted to CygWin style
+	Print(["<Text>"])
+	 - Alias for Paste(2,"<Text>")
 	Progress(<Type>[,<Value>])
 	 - Set progress state on taskbar and !ConEmu title
 	   Type=0: remove progress
 	   Type=1: set progress value to <Value> (0-100)
 	   Type=2: set error state in progress
-    SetOption("QuakeAutoHide",Value).
-     - Value: 2 - switch autohide, 1 - enable, 0 - disable.
+	Rename(<Type>,["<Title>"])
+	  - Rename tab (Type=0) or console title (Type=1)
+    SetOption("<Name>",<Value>)
+	  - Name = "QuakeAutoHide": auto hide on focus lose, Quake mode
+	      Value: 2 - switch auto-hide, 1 - enable, 0 - disable
     Shell("<Verb>","<File>"[,"<Parms>"[,"<Dir>"[,<ShowCmd>]]])
      - Verb can be "open", "print" and so on, or special value "new_console",
        which starts File in the new tab of ConEmu window. Examples:
          Shell("open","cmd.exe","/k")
          Shell("","","cmd.exe /k -new_console:b"),
          Shell("new_console:b","","cmd.exe /k")
+         Shell(\"new_console:sV\")
     Status(0[,<Parm>])
      - Show/Hide status bar, Parm=1 - Show, Parm=2 - Hide
     Status(1[,"<Text>"])
@@ -91,6 +112,8 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
        Cmd==6 - switch console direct (no recent mode), Parm=(1,-1)
        Cmd==7 - activate console by number, Parm=(1-based console index)
        Cmd==8 - show tabs list menu (indiffirent Far/Not Far)
+	   Cmd==9: close active tab, same as Close(3)
+	   Cmd==10: switches visible split-panes, Parm=(1,-1)
     Task(Index[,"Dir"])
      - start task with 1-based index
     Task("Name"[,"Dir"])
@@ -103,9 +126,11 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
        returns previous window mode
     WindowMinimize() or WindowMinimize(1)
      - Minimize ConEmu window ("1" means "minimize to the TSA")
-    WindowMode([\"<Mode>\"])\r\n" \
+    WindowMode([\"<Mode>\"])
      - Returns or set current window mode
-       "NOR", "MAX", "FS", "MIN", "TSA"
+       "NOR", "MAX", "FS" (fullscreen), "MIN", "TSA"
+       "TLEFT", "TRIGHT" (tile to left/right), "THEIGHT",
+       "MPREF", "MNEXT" (move ConEmu to prev/next monitor)
 }}}
 
 ===Examples===
