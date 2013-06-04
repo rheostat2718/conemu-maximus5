@@ -22,6 +22,11 @@ csudo dism.exe /online /enable-feature /featurename:NetFX3 /All /Source:D:\sourc
 }}}
 
 
+=Debug purposed variables=
+|| *Name* || *Description* || *Example* ||
+|| `ConEmuSleepIndicator` || turning on monitoring feature of «Sleep in background», when `ConEmuSleepIndicator=NUM` !ConEmu will turn off !NumLock when going sleep and turn on !NumLock when full active back || `NUM` or `OFF` ||
+
+
 =Export variables=
 When you start new console - it inherits environment strings (`%PATH%` also) from parent process (!ConEmu GUI).
 
