@@ -6,6 +6,13 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 130612==
+  * Issue 1090: Regression: Win+Left/Right does not move !ConEmu anymore between multiple monitors (beginning).
+  * Regression: Wrong working directory in recreate dialog.
+  * Automatic crashdump creation when exception occures in ConEmuC.
+  * !ConEmu may close unexpectedly when clicking on !ConEmu system icon while GUI child application is running in tab.
+
+
 ==Build 130604==
   * Issue 1080, Issue 1082: Regression: 5 sec delay when starting new console.
   * Issue 1083: Process Win+Left/Win+Right internally (tile to left/right).
