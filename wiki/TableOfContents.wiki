@@ -1,5 +1,4 @@
 #labels Featured
-#sidebar
 ==Contents==
   * !ConEmu
     * General
@@ -49,6 +48,7 @@
       * [TipsAndTweaks Tips and Tweaks]
       * [PVSStudio PVS-Studio]
       * [MiniDump MiniDump]
+      * [LogFiles LogFiles]
       * [ConEmuHelping How you may help]
   * [FarManager About Far Manager]
   * [FarPlugins Far Manager plugins]
