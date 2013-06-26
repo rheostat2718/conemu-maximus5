@@ -6,6 +6,12 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 130625==
+  * Issue 1096: Possible crash while executing some GuiMacro.
+  * Issue 1107: Some unassigned hotkeys can't be hidden in Options dialog.
+  * Some internal changes in GUI resize.
+
+
 ==Build 130621==
   * Show IBeam cursor when mouse is used for selection.
   * Checking conflicts between key modifiers for text selection and Far Manager D&D.
