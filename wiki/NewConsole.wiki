@@ -16,6 +16,7 @@ When you run application from existing !ConEmu tab, or starting new tab from !Co
      d:<dir> - specify working directory, MUST BE LAST or single OPTION
      h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines
      i - don't inject ConEmuHk into starting process
+     I - (GuiMacro only) forces inheriting of root process contents, like "Duplicate root" feature
      n - disable 'Press Enter or Esc to close console'
      o - don't enable 'Long console output' when starting command from Far Manager
      r - run as restricted user

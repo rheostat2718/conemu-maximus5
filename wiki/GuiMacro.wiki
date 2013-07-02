@@ -99,7 +99,8 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
          Shell("open","cmd.exe","/k")
          Shell("","","cmd.exe /k -new_console:b"),
          Shell("new_console:b","","cmd.exe /k")
-         Shell(\"new_console:sV\")
+         Shell("new_console:sV")
+         Shell("new_console:Ibn","cmd","/k start explorer \"%CD%\" && exit")
     Status(0[,<Parm>])
      - Show/Hide status bar, Parm=1 - Show, Parm=2 - Hide
     Status(1[,"<Text>"])
