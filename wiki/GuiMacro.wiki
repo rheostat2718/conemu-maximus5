@@ -40,6 +40,7 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
         close ConEmu window (2)
         close active tab (3)
         close active group (4)
+        close all tabs but active (5)
     Copy(<What>)
       - Copy active console contents
         What==0: current selection
