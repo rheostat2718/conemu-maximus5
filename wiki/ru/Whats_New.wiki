@@ -6,7 +6,19 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
-==Build 130625==
+==Build 130703==
+  * GuiMacro delimiting fixed. Examples:
+{{{
+print("qqq"); WindowMinimize();
+print("qqq") WindowMinimize()
+print: "qqq"; WindowMinimize
+}}}
+  * GuiMacro: Close(5) - close all tabs but active.
+  * Issue 1130: Decreasing font may stuck on some values.
+  * Some fixes in build files.
+
+
+==Build 130702==
   * GuiMacro: new option "I" (capital 'i', case sensitive) for "shell" function. It forces inheriting of root process contents, like "Duplicate root" feature.
 {{{
 Example: shell("new_console:Ibn","cmd","/k start explorer \"%CD%\" && exit")
