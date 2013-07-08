@@ -6,6 +6,13 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 130708==
+  * Far Macro `"ConEmu.Editor.fml"` was changed! Update your copies in MacroLib!
+  * Issue 1126: !ConEmu macros adopted for Far Manager 3 (tested in build 3502). New macros located in `"%ConEmuBaseDir\Far3_lua"`. You need to copy selected files to your `"%FARPROFILE%\Macros\scripts"` folder.
+  * Right click on «Minimize» button hides ConEmu to TSA.
+  * Issue 1123: "Close(5)" crashes.
+
+
 ==Build 130703==
   * GuiMacro delimiting fixed. Examples:
 {{{
