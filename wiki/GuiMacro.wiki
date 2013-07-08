@@ -48,7 +48,7 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
     FindEditor("<FullEditFileName>"),
     FindViewer("<FullViewerFileName>"),
     FindFarWindow(<WindowType>,"<WindowTitle>")
-     - Returns "Found:<index of RealConsole>", "Blocked", or "NotFound"
+     - Returns "Found:<index of RealConsole>", "Active:<Far window number>", "Blocked", or "NotFound"
        <WindowType> is number from Far Manager enum WINDOWINFO_TYPE
     FontSetName("<FontFaceName>"[,FontHeight[,FontWidth]])
      - Change font face name and (optionally) height/width.
