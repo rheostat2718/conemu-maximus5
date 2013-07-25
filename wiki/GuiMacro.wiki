@@ -32,7 +32,7 @@ When you call plugin menu, result is show in the dialog field,
 When you use far manager macro - result is placed to the '!ConEmuMacroResult' environment variable.
 
 ===List of functions===
-<wiki:comment> !!! add same functions to "src\ConEmu\About.h" !!! </wiki:comment>
+<wiki:comment> !!! when modifying - add same functions to "src\ConEmu\About.h" !!! </wiki:comment>
 {{{
     Close(<What>[,<Flags>])
       - Close current console (0), without confirmation (0,1),
@@ -102,6 +102,11 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
          Shell("new_console:b","","cmd.exe /k")
          Shell("new_console:sV")
          Shell("new_console:Ibn","cmd","/k start explorer \"%CD%\" && exit")
+    Split(<Cmd>,<Horz>,<Vert>)
+     - Cmd=0, Horz=1..99, Vert=0: Duplicate active «shell» split to right, same as Shell("new_console:s50Hn")
+       Cmd=0, Horz=0, Vert=1..99: Duplicate active «shell» split to bottom, same as Shell("new_console:s50Vn")
+       Cmd=1, Horz=-1..1, Vert=-1..1: Move splitter between panes (aka resize panes)
+       Cmd=2, Horz=-1..1, Vert=-1..1: Put cursor to the nearest pane (preferred direction may be choosed).
     Status(0[,<Parm>])
      - Show/Hide status bar, Parm=1 - Show, Parm=2 - Hide
     Status(1[,"<Text>"])

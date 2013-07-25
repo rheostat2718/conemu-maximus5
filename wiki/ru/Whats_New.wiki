@@ -6,6 +6,19 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 130725==
+  * GuiMacro: new function 
+{{{
+Split(<Cmd>,<Horz>,<Vert>)
+    Cmd=0, Horz=1..99, Vert=0: Duplicate active «shell» split to right, same as Shell("new_console:s50Hn")
+    Cmd=0, Horz=0, Vert=1..99: Duplicate active «shell» split to bottom, same as Shell("new_console:s50Vn")
+    Cmd=1, Horz=-1..1, Vert=-1..1: Move splitter between panes (aka resize panes)
+    Cmd=2, Horz=-1..1, Vert=-1..1: Put cursor to the nearest pane (preferred direction may be choosed).
+}}}}
+  * New hotkeys: Apps+Shift+Arrows - resize splits, Apps+Arrows - put focus to next split.
+  * Far 3 macro `"ConEmu.ShiftEnter.lua"` updated.
+
+
 ==Build 130722==
   * Build number stored in xml-configuration file when saving settings.
   * Keys & Macros: "Drag !ConEmu window by client area" renamed to "Move !ConEmu window by dragging client area".
@@ -14,6 +27,7 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
   * Issue ???: Don't resize real console until mouse button released (Far Manager still resized «on the fly»).
   * Issue 1141: Tab bar position fails after restoring !ConEmu when «Auto show» (tabs) is selected.
   * Some more internal logging.
+  * Macro ConEmu.ShiftEnter.lua fails in Far 3.
 
 
 ==Build 130708==
