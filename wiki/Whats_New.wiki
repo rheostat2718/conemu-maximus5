@@ -6,6 +6,13 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 130726==
+  * Issue 1133: New option on "Status" page: "Use vertical padding". With unchecked you may use same status bar height and font as font in console.
+  * Issue 1158: Provide "ConEmu Here" menu item for Windows 7 libraries. Have no sense for library root - select smth or open library folder.
+  * Issue 1159: Crash when trying to put focus in bottom split while there was horizonal split only.
+  * Issue 1159: Split to bottom and split to right hotkeys was messed up.
+
+
 ==Build 130725==
   * GuiMacro: new function 
 {{{
