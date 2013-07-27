@@ -1,7 +1,9 @@
 ﻿=Багтрекер !ConEmu - ошибки и предложения=
 
+<wiki:comment>
 ==Issues usability==
 [Issues2 Look and comment]
+</wiki:comment>
 
 ==Просмотр существующих вопросов (Issues)==
   * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-id Активные вопросы], [http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-modified сортированные по дате]===
@@ -18,5 +20,6 @@
 ==Создать новый Issue==
 *Внимание!* Версии !ConEmu, OS и Far Manager (если используется) - необходимая информация.
   * ===[http://code.google.com/p/conemu-maximus5/issues/entry Сообщить об ошибке]===
+  * ===[http://code.google.com/p/conemu-maximus5/issues/entry?template=Question Задать вопрос]===
   * ===[http://code.google.com/p/conemu-maximus5/issues/entry?template=Concept Предложить улучшение]===
   * ===[http://code.google.com/p/conemu-maximus5/issues/entry?template=Documentation О документации и переводе]===
