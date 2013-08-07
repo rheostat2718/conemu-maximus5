@@ -11,9 +11,10 @@ When you run application from existing !ConEmu tab, or starting new tab from !Co
   or
   -cur_console[:switches]
      a - RunAs shell verb (as Admin on Vista+, login/passw in Win2k and WinXP)
-     b - Create background tab
+     b - create background tab
      c - force enable 'Press Enter or Esc to close console' (default)
      d:<dir> - specify working directory, MUST BE LAST or single OPTION
+     f - force starting console active, useful when starting several consoles simultaneously
      h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines
      i - don't inject ConEmuHk into starting process
      I - (GuiMacro only) forces inheriting of root process contents, like "Duplicate root" feature

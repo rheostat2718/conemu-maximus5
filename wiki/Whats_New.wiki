@@ -6,6 +6,20 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 130807==
+  * Forbid Far Manager plugins to change window styles of !ConEmu windows.
+  * Some fixes in Far Manager command execution interceptor.
+  * New color scheme: "<Solarized (Luke Maciak)>".
+  * New switch "-new_console:f" forces starting console active. May be useful when starting several consoles simultaneously. Example:
+{{{
+ConEmu.exe /cmdlist powershell -new_console:f ||| cmd -new_console:sH
+}}}
+  * Wrong size and pos of child GUI windows in split.
+  * Hotkey «Close current tab» must close group when option «One tab per group» is enabled.
+  * GuiMacro: Close(6) - close active tab or group, Close(7) - all active processes of the active group.
+  * Activate pane by mouse over works now with GUI child applications.
+
+
 ==Build 130726==
   * Issue 1133: New option on "Status" page: "Use vertical padding". With unchecked you may use same status bar height and font as font in console.
   * Issue 1158: Provide "ConEmu Here" menu item for Windows 7 libraries. Have no sense for library root - select smth or open library folder.
