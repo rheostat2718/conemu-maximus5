@@ -6,6 +6,10 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 130807a==
+  * Fix: Activate pane by mouse over works now with GUI child applications.
+
+
 ==Build 130807==
   * Forbid Far Manager plugins to change window styles of !ConEmu windows.
   * Some fixes in Far Manager command execution interceptor.

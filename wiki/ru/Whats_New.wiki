@@ -6,6 +6,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 130807a==
+  * Fix: Activate pane by mouse over works now with GUI child applications.
+
+
 ==Build 130807==
   * Forbid Far Manager plugins to change window styles of !ConEmu windows.
   * Some fixes in Far Manager command execution interceptor.
