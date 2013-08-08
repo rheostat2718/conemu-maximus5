@@ -6,8 +6,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
-==Build 130807a==
-  * Fix: Activate pane by mouse over works now with GUI child applications.
+==Build 130808==
+  * Issue 1181: Activate pane by mouse over works now with GUI child applications.
+  * Option "Activate split on mouse over" is disabled by default.
+  * Internal log changing: `"ConEmu /log /single"` will affect existing instance.
 
 
 ==Build 130807==
