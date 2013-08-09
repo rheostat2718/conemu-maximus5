@@ -6,6 +6,12 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 130809==
+  * Issue 1179: Can't disable text cursor blinking when !ConEmu window is inactive.
+  * conemu_ml: TCC fails while executing: `""F:\program files\take command\tcc.exe" /C "alias where" "`.
+  * Issue 1090: Tile left/right fails to move !ConEmu window between monitors.
+
+
 ==Build 130808==
   * Issue 1181: Activate pane by mouse over works now with GUI child applications.
   * Option "Activate split on mouse over" is disabled by default.
