@@ -1,6 +1,9 @@
 Googlecode has strong limits for attachments in the Issues.
-That's why you can't upload large files (crash dumps etc.) to your Issue and need to use
-on of hundreds of free file hosters.
+Moreover, total space for *all* attachments in *all* issues is limited too.
+I need to contact Google support team to increase issues quota each time when it goes out :(
+
+That's why you can't (strongly not recommended) upload large files (crash dumps etc.) to your Issue
+and need to use on of dozens of free file hosters. Some links below...
 
 =!DropBox (my choice)=
 Free [http://db.tt/9myALvii registration] and free space: 2.0 GB + 500 MB (my invite link) + 500 MB (installing app to your mobile).
