@@ -1,0 +1,18 @@
+Googlecode has strong limits for attachments in the Issues.
+That's why you can't upload large files (crash dumps etc.) to your Issue and need to use
+on of hundreds of free file hosters.
+
+=!DropBox (my choice)=
+Free [http://db.tt/9myALvii registration] and free space: 2.0 GB + 500 MB (my invite link) + 500 MB (installing app to your mobile).
+Upload file to !DropBox (even from your browser) and post link to the Issue.
+
+I like using !DropBox app on my Android device, it allows creating shortcuts to specific folder just on launcher screen.
+
+=Yandex=
+Another free cloud service [https://disk.yandex.ru/invite/?hash=VZANG8NO Yandex disk] gives you up to 10 GB free space.
+
+=!SkyDrive=
+Free cloud service from [https://skydrive.live.com/ Microsoft] gives you 7 GB for free.
+
+=Sendspace=
+[http://www.sendspace.com/ Sendspace] allows you to upload files up to 300 MB without registration.
