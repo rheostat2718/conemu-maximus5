@@ -6,6 +6,11 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 130812==
+  * Issue 1191: Due to Explorer bug (or weird feature?) !ConEmu was launched instead of explorer from taskbar pinned library icon. Registry keys (related to "!ConEmu here") will be fixed on !ConEmu launch.
+  * New option on "Features" page - "Exception handler (debug)". When checked - unhandled exception filter will be installed in alternative servers.
+
+
 ==Build 130809==
   * Issue 1179: Can't disable text cursor blinking when !ConEmu window is inactive.
   * conemu_ml: TCC fails while executing: `""F:\program files\take command\tcc.exe" /C "alias where" "`.
