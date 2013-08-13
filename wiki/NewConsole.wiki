@@ -10,7 +10,7 @@ When you run application from existing !ConEmu tab, or starting new tab from !Co
   -new_console[:switches]
   or
   -cur_console[:switches]
-     a - RunAs shell verb (as Admin on Vista+, login/passw in Win2k and WinXP)
+     a - RunAs shell verb (as Admin on Vista+, user/pwd in Win2k and WinXP)
      b - create background tab
      c - force enable 'Press Enter or Esc to close console' (default)
      d:<dir> - specify working directory, MUST BE LAST or single OPTION
@@ -78,7 +78,7 @@ vim.exe -new_console:nh0 c:\sources\1.cpp
 }}}
 
 ==Example 3==
-Starts "`cmd.exe`" in specified directory with specified login (Nick) and password (pwd).
+Starts "`cmd.exe`" in specified directory with specified login/username (Nick) and password (pwd).
 {{{
 cmd.exe "-new_console:d:C:\Users\Nick" "-new_console:u:Nick:pwd"
 }}}

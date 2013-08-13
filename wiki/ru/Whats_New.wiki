@@ -6,6 +6,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 130813==
+  * Crashed sometimes with `"ConEmu /log"`.
+
+
 ==Build 130812==
   * Issue 1191: Due to Explorer bug (or weird feature?) !ConEmu was launched instead of explorer from taskbar pinned library icon. Registry keys (related to "!ConEmu here") will be fixed on !ConEmu launch.
   * New option on "Features" page - "Exception handler (debug)". When checked - unhandled exception filter will be installed in alternative servers.
@@ -52,7 +56,7 @@ Split(<Cmd>,<Horz>,<Vert>)
     Cmd=0, Horz=0, Vert=1..99: Duplicate active «shell» split to bottom, same as Shell("new_console:s50Vn")
     Cmd=1, Horz=-1..1, Vert=-1..1: Move splitter between panes (aka resize panes)
     Cmd=2, Horz=-1..1, Vert=-1..1: Put cursor to the nearest pane (preferred direction may be choosed).
-}}}}
+}}}
   * New hotkeys: Apps+Shift+Arrows - resize splits, Apps+Arrows - put focus to next split.
   * Far 3 macro `"ConEmu.ShiftEnter.lua"` updated.
 
