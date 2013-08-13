@@ -49,6 +49,8 @@
       * [PVSStudio PVS-Studio]
       * [MiniDump MiniDump]
       * [LogFiles LogFiles]
+      * [DropBox DropBox]
+      * [MicrosoftBugs Microsoft Bugs]
       * [ConEmuHelping How you may help]
   * [FarManager About Far Manager]
   * [FarPlugins Far Manager plugins]
