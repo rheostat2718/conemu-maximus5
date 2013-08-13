@@ -1,9 +1,13 @@
 ﻿=Exception in !ReadConsoleOutput=
 http://social.msdn.microsoft.com/Forums/en-US/40c8e395-cca9-45c8-b9b8-2fbe6782ac2b
 
+Appears: Windows 8, Fixed: ?
+
 Workaround: enable «Inject !ConEmuHk» option.
 
 =Console screen buffer corrupts from other console application=
 http://social.msdn.microsoft.com/Forums/en-US/ec363615-397c-42a8-84d2-38a70e4f8ae2
+
+Appears: Windows 7, Fixed: Windows 8
 
 Workaround: enable «Inject !ConEmuHk» option.
