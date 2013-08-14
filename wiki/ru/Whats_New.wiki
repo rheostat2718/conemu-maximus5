@@ -6,6 +6,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 130814==
+  * Sometimes 0-size crash dump files were created.
+
+
+==Build 130813a==
+  * Issue 1193: !PowerShell: Get-Credential crashes. Bug appears in 130807.
+  * !ConEmu About dialog was broken.
+
 ==Build 130813==
   * Crashed sometimes with `"ConEmu /log"`.
 

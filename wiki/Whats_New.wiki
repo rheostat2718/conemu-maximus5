@@ -6,6 +6,15 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 130814==
+  * Sometimes 0-size crash dump files were created.
+
+
+==Build 130813a==
+  * Issue 1193: !PowerShell: Get-Credential crashes. Bug appears in 130807.
+  * !ConEmu About dialog was broken.
+
+
 ==Build 130813==
   * Crashed sometimes with `"ConEmu /log"`.
 

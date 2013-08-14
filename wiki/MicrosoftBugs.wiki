@@ -1,13 +1,34 @@
 ﻿=Exception in !ReadConsoleOutput=
 http://social.msdn.microsoft.com/Forums/en-US/40c8e395-cca9-45c8-b9b8-2fbe6782ac2b
 
-Appears: Windows 8, Fixed: ?
+|| Appears  || Windows 8 ||
+|| Fixed || ? ||
 
-Workaround: enable «Inject !ConEmuHk» option.
+==Workaround==
+Turn on «Inject !ConEmuHk» option.
+
+==Related issues==
+Issue 1060, Issue 1061, Issue 1146, Issue 1190
+
+
+
 
 =Console screen buffer corrupts from other console application=
 http://social.msdn.microsoft.com/Forums/en-US/ec363615-397c-42a8-84d2-38a70e4f8ae2
 
-Appears: Windows 7, Fixed: Windows 8
+|| Appears || Windows 7 ||
+|| Fixed || Windows 8 ||
 
-Workaround: enable «Inject !ConEmuHk» option.
+==Related issues==
+Issue 65, Issue 107, Issue 529, Issue 669, Issue 910, Issue 1023, Issue 1081
+
+==Workaround==
+Turn on «Inject !ConEmuHk» option. Workaround was first created in !ConEmu build 120509a.
+
+
+
+=Conclusion=
+My (and not only) experience in «bug reporting» suggests that Microsoft won't fix reported bugs.
+Wondering, for is service packs for?
+But, may be, bug will be fixed in the next version of Windows...
+Users and developers, help yourself.
