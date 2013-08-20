@@ -1,14 +1,17 @@
 ﻿=Exception in !ReadConsoleOutput=
 http://social.msdn.microsoft.com/Forums/en-US/40c8e395-cca9-45c8-b9b8-2fbe6782ac2b
 
-|| Appears  || Windows 8 ||
+|| Appears  || Windows 8 (there are occasional reports about Windows 7 too) ||
 || Fixed || ? ||
+
+==Sample project==
+http://conemu-maximus5.googlecode.com/svn/files/BugReports/
 
 ==Workaround==
 Turn on «Inject !ConEmuHk» option.
 
 ==Related issues==
-Issue 1060, Issue 1061, Issue 1146, Issue 1190
+Issue 1060, Issue 1061, Issue 1146, Issue 1190, Issue 1203, Issue 1204
 
 
 
