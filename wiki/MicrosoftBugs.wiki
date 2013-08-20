@@ -35,6 +35,9 @@ Turn on «Inject !ConEmuHk» option. Workaround was first created in !ConEmu bui
 
 =Conclusion=
 My (and not only) experience in «bug reporting» suggests that Microsoft won't fix reported bugs in current versions of Windows.
-Wondering, for is service packs for?
+
+Wondering, what are service packs for?
+
 But, may be, bug will be fixed in the next version of Windows...
+
 Users and developers, help yourself.
