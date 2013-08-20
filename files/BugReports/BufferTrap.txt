@@ -1,0 +1,25 @@
+Bug in KernelBase appears from Windows 8 and still alive in Windows 8.1 console+ACE-
+In breaf - +ACI-First-chance exception at ... (ntdll.dll) in ...: 0xC0000005: Access violation writing location+ACI- is occured (always) when application calls ReadConsoleOutput function and ReadRegion lies out of scrollable area (buffer).
+http://msdn.microsoft.com/en-us/library/windows/desktop/ms684965(v+AD0-vs.85).aspx
+Previous versions of Windows survives, function returns an error without crashing the application.
+
+Sample project (VC 2009 +ACY- 2012) in zip file and just a BufferTrap.cpp
+http://conemu-maximus5.googlecode.com/svn/files/BugReports/Buffer-Trap.zip
+
+
+Sample code:
+HANDLE h +AD0- GetStdHandle(STD+AF8-OUTPUT+AF8-HANDLE)+ADs-
+CONSOLE+AF8-SCREEN+AF8-BUFFER+AF8-INFO csbi +AD0- +AHsAfQA7-
+GetConsoleScreenBufferInfo(h, +ACY-csbi)+ADs-
+COORD crNoScroll +AD0- +AHs-min(80,csbi.srWindow.Right-csbi.srWindow.Left+-1), min(25,csbi.srWindow.Bottom-csbi.srWindow.Top+-1)+AH0AOw-
+SetConsoleScreenBufferSize(h, crNoScroll)+ADs-
+CHAR+AF8-INFO+ACo- pLine +AD0- new CHAR+AF8-INFO+AFs-csbi.dwSize.X+AF0AOw-
+COORD bufSize +AD0- +AHs-csbi.dwSize.X,1+AH0AOw-
+COORD bufCoord +AD0- +AHs-0,0+AH0AOw-
+SMALL+AF8-RECT rgn +AD0- +AHs-0,9998,csbi.dwSize.X-1,9998+AH0AOw-
+// Here will be a crash+ACE- Example:
+// First-chance exception at 0x7789F073 (ntdll.dll) in BufferTrap.exe: 0xC0000005: Access violation writing location 0x00A3E000.
+ReadConsoleOutputW(h, pLine, bufSize, bufCoord, +ACY-rgn)+ADs-
+
+Don't suggest to pass correct reading region+ACE- Windows is multitasking OS, yeah? So, any application in the same console may change buffer height at any moment. Application can't ensure, that between GetConsoleScreenBufferInfo and ReadConsoleOutput there was no changes in buffer height+ACE-
+Kernel must not crash application.
