@@ -15,6 +15,7 @@ Issue 1060, Issue 1061, Issue 1146, Issue 1190, Issue 1203, Issue 1204
 
 
 
+<br>
 
 =Console screen buffer corrupts from other console application=
 http://social.msdn.microsoft.com/Forums/en-US/ec363615-397c-42a8-84d2-38a70e4f8ae2
@@ -30,8 +31,10 @@ Turn on «Inject !ConEmuHk» option. Workaround was first created in !ConEmu bui
 
 
 
+<br>
+
 =Conclusion=
-My (and not only) experience in «bug reporting» suggests that Microsoft won't fix reported bugs.
+My (and not only) experience in «bug reporting» suggests that Microsoft won't fix reported bugs in current versions of Windows.
 Wondering, for is service packs for?
 But, may be, bug will be fixed in the next version of Windows...
 Users and developers, help yourself.
