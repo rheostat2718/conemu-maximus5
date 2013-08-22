@@ -1,4 +1,6 @@
-﻿Change `prompt` function in your powershell profile.
+﻿Do you want to see your current powershell location (directory, etc.)
+in the !ConEmu tab title? You can do it. Tab title will be updated
+each time powershell print your prompt.
 
 Open your profile in the editor, Notepad for example
 
@@ -17,7 +19,8 @@ function prompt
 }
 }}}
 
-or use following code to change console title, but not tab
+
+or use following code to change console title, but not only tab title
 
 {{{
 function prompt
