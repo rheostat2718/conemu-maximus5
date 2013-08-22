@@ -52,6 +52,8 @@
       * [DropBox DropBox]
       * [MicrosoftBugs Microsoft Bugs]
       * [PowershellPrompt Powershell Prompt]
+      * [ProcessExplorer Process Explorer]
+      * [ProcessMonitor Process Monitor]
       * [ConEmuHelping How you may help]
   * [FarManager About Far Manager]
   * [FarPlugins Far Manager plugins]
