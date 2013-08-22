@@ -6,6 +6,18 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 130822==
+  * Issue 1195: Assertion.
+  * Issue 1198: Crash when exporting xml configuration to read-only folder.
+  * Split was erroneously activated by mouse hover while any menu (tab, system, etc.) was active.
+  * Trying to search "msxml3.dll" in %PATH% when it is not available via COM and is not found in the !ConEmu's folder.
+  * Fails to typing japanese/chinese in the python prompt.
+
+
+==Build 130815==
+  * Issue 1183: Sometimes Far x64 crashes on context menu.
+
+
 ==Build 130814==
   * Sometimes 0-size crash dump files were created.
 
@@ -122,7 +134,7 @@ Example: shell("new_console:Ibn","cmd","/k start explorer \"%CD%\" && exit")
   * Close confirmation from tab belonging to group (splits) will suggest closing whole group.
   * Issue 978: New option "One tab per group", disabled by default. Weird with Far Manager editor windows yet.
   * Issue 1095: Transparency was not changed after Quake activation.
-  * Incorrect cursor position in console after vim exiting.
+  * Incorrect cursor position in console after vim exiting. Don't forget enable «Inject ConEmuHk»!
   * Issue 1103: GuiMacro: `SetOption("bgImageDarker",<value>)` - change darkening of background image, 0..255.
 
 
@@ -144,7 +156,7 @@ Example: shell("new_console:Ibn","cmd","/k start explorer \"%CD%\" && exit")
 ==Build 130530==
   * One more fix for "Sleep in backgound".
   * Wheel was not working while mouse was over scrollbar.
-  * Buffer (scrolling and contents) was not restored after Vim exit.
+  * Buffer (scrolling and contents) was not restored after Vim exit. Don't forget enable «Inject ConEmuHk»!
   * When Vim started current buffer output stored, and may be viewed by as Alternative buffer («lock» button on toolbar or Win+A by default).
   * Issue 1077: Sometimes assertion (keyboard layout related) may occurs on startup.
 
