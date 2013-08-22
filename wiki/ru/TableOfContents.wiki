@@ -52,6 +52,7 @@
       * [LogFiles Log файлы]
       * [DropBox DropBox]
       * [MicrosoftBugs Microsoft Bugs]
+      * [PowershellPrompt Powershell Prompt]
       * [ConEmuHelping Как помочь в разработке]
   * [FarManager Введение в Far Manager]
   * [FarPlugins Far Manager plugins]
