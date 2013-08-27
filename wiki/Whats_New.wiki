@@ -9,9 +9,9 @@ Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 mai
 ==Build 130827==
   * New search sequence for `ConEmu.xml` file:
 {{{
-    * %APPDATA%\ConEmu.xml`
-	* %ConEmuBaseDir%\ConEmu.xml
-	* %ConEmuDir%\ConEmu.xml
+* %APPDATA%\ConEmu.xml`
+* %ConEmuBaseDir%\ConEmu.xml
+* %ConEmuDir%\ConEmu.xml
 }}}
   * New user may choose settings storage location on the first start (Fast configuration dialog).
   * New option `"SaveCmdHistory"`, may be changed via reg/xml configuration.
