@@ -19,7 +19,6 @@ You will get command prompt with permanent history (Alt+F8).
 OK. If you still want use plain "cmd.exe" - here is one trick using AnsiEscapeCodes.
 
 ===Set up your task===
-C:\DropBox\Photos\ShareX\2013-09\2013-09-13_01-28-10.png
 <img src="http://conemu-maximus5.googlecode.com/svn/files/PromptAtBottom1.png" title="Prompt at the bottom of ConEmu window" alt="Prompt at the bottom">
 
 ===Choose it as startup task===
