@@ -1,4 +1,4 @@
-Page is under construction
+ï»¿Page is under construction
 
 =Did you know that=
 
@@ -9,7 +9,7 @@ minimize !ConEmu to taskbar status area (hide from screen).
 console app will starts in new !ConEmu tab.
 
 ==!ConEmu may set up itself as default terminal==
-goto «Settings» -> «Integration» and check «Force !ConEmu as default terminal...»,
+goto Â«SettingsÂ» -> Â«IntegrationÂ» and check Â«Force !ConEmu as default terminal...Â»,
 you may also adjust list of hooked applications *from* which you like to run console applications.
 
 ==!ConEmu may be easily configured as compile-host==
@@ -20,7 +20,7 @@ For example, when I need to build !ConEmu I just right-click on special icon in 
 choose configuration (Debug, Release and so on), and build will starts in Quake-style console.
 On build errors `TypeBuildErrors.cmd "Errors.log"` called to highlight lines with errors and warnings.
 I can Ctrl+Click on error and get source file in the editor positioned on error-line.
-After fixing all errors I just press `Win+~` to «restart» console, this will starts build again.
+After fixing all errors I just press `Win+~` to Â«restartÂ» console, this will starts build again.
 
 ==creating single-file portable !ConEmu==
 will be clarified, !WinRar required

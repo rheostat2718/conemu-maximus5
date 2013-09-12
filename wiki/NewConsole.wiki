@@ -22,9 +22,11 @@ When you run application from existing !ConEmu tab, or starting new tab from !Co
      o - don't enable 'Long console output' when starting command from Far Manager
      r - run as restricted user
      s[<SplitTab>T][<Percents>](H|V) - run new console in a split
-     t:tabname - rename new created tab, MUST BE LAST or signle OPTION
+     t:tabname - rename new created tab, MUST BE LAST or single OPTION
      u - ConEmu choose user dialog
-     u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST or signle OPTION
+     u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST or single OPTION
+     w - Enable 'Overwrite' mode in command prompt by default
+     z - Don't use 'Default terminal' feature for this command
 }}}
 
 *Note* These switches are shown in !ConEmu «About» dialog.
