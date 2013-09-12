@@ -47,6 +47,7 @@
       * [Reviews ConEmu Reviews]
       * [RoadMap Планы на будущее]
       * [TipsAndTweaks Советы и хитрости]
+      * [PromptAtTheBottom Prompt внизу окна]
       * [PVSStudio PVS-Studio]
       * [MiniDump MiniDump]
       * [LogFiles Log файлы]
