@@ -1,0 +1,29 @@
+﻿Do you want to get your cmd.exe prompt bottom aligned? On ConEmu startup and after "cls"?
+
+==Far Manager==
+Actually, I can't understand why anyone use cmd as shell but not a FarManager.
+It's a fast handy and powerfull combination of:
+
+  * command prompt (you may run any console or GUI application from its prompt, any %COMSPEC% commands, can be integrated with powershell);
+  * two pane file manager (copy/move files, create directories and hard links, browse remote hosts, and so on); you have no need in file manager? are you sure you are working on your PC?
+  * powerful and fast editor with syntax highlighting;
+  * dozens of miscellaneous plugins for anyone taste and purpose;
+
+Try it! [http://www.farmanager.com/download.php?l=en Download] and install into !ConEmu's folder
+(put far.exe near to !ConEmu.exe) and run it.
+If you don't need panels on startup (really?) - press *Ctrl+O*, *Ctrl+B* and save configuration changes *Shift+F9*.
+You will get command prompt with permanent history (Alt+F8).
+
+
+==Plain cmd.exe==
+OK. If you still want use plain "cmd.exe" - here is one trick using AnsiEscapeCodes.
+
+===Set up your task===
+C:\DropBox\Photos\ShareX\2013-09\2013-09-13_01-28-10.png
+<img src="http://conemu-maximus5.googlecode.com/svn/files/PromptAtBottom1.png" title="Prompt at the bottom of ConEmu window" alt="Prompt at the bottom">
+
+===Choose it as startup task===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/PromptAtBottom2.png" title="Prompt at the bottom of ConEmu window" alt="Prompt at the bottom">
+
+===Prompt will appears at the bottom===
+<img src="http://conemu-maximus5.googlecode.com/svn/files/PromptAtBottom3.png" title="Prompt at the bottom of ConEmu window" alt="Prompt at the bottom">
