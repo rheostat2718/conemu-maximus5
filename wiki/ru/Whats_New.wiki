@@ -26,7 +26,7 @@ Plugin.Call("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b", 99)
 
 
 ==Build 130913==
-  * Issue 1229: Special prefix symbols '>' and '*' (task item) was not stripped when starting new console from task menu.
+  * Issue 1229: Special prefix symbols `'>'` and `'*'` (task item) was not stripped when starting new console from task menu.
   * Some changes in color palette processing.
   * New switch `"-new_console:P:PaletteName"` allows set fixed color palette for specified tab.
 {{{
