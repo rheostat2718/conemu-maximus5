@@ -17,9 +17,9 @@ When You specify the [Command_Line /config] switch in the !ConEmu.exe command li
 Вы можете включить в !ConEmu «портабельный» режим, в котором все настройки будут храниться в файле _!ConEmu.xml_.
 !ConEmu ищет этот файл в следующем порядке:
 
-|| %APPDATA%\ConEmu.xml || Я не считаю этот случай действительно «портабельным», но многие просили %APPDATA% ||
-|| %ConEmuBaseDir%\ConEmu.xml || Папка с файлами ConEmuC.exe и ConEmuC64.exe ||
-|| %ConEmuDir%\ConEmu.xml || Папка с файлами ConEmu.exe и ConEmu64.exe ||
+|| `%APPDATA%\ConEmu.xml` || Я не считаю этот случай действительно «портабельным», но многие просили `%APPDATA%` ||
+|| `%ConEmuBaseDir%\ConEmu.xml` || Папка с файлами `ConEmuC.exe` и `ConEmuC64.exe` ||
+|| `%ConEmuDir%\ConEmu.xml` || Папка с файлами `ConEmu.exe` и `ConEmu64.exe` ||
 
 При [SettingsFast первом запуске ConEmu], вы можете включить «портабельный» режим и выбрать расположение xml файла.
 Также вы можете создать новый пустой _!ConEmu.xml_ или просто переименовать _!ConEmu_Sample.xml_ в _!ConEmu.xml_
