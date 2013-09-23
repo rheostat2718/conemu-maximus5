@@ -111,7 +111,7 @@ The !ConEmu Jump list is set here too. Set up a list of tasks in the field of «
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors2.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
 
 ==Transparency==
-[SettingsTransparency Read more]
+[SettingsTransparency Read more]<br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTransparency.png" title="ConEmu settings, Transparency page" alt="ConEmu settings, Transparency page">
 
 ==Tabs==

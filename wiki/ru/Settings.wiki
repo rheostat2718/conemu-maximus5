@@ -113,7 +113,7 @@ Usually, this file is located near to the _ConEmuC.exe_.
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors2.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
 
 ==Transparency==
-[SettingsTransparency Подробнее]
+[SettingsTransparency Подробнее]<br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTransparency.png" title="ConEmu settings, Transparency page" alt="ConEmu settings, Transparency page">
 
 ==Tabs==
