@@ -1,6 +1,3 @@
-<font size="5">*[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FSettings%3Fshow%3Dcontent Settings (autotranslated Ru-En)]*</font>
-----------------------------------------------------------------------
-
 <font size="5">*!ConEmu setup*</font>
 <wiki:toc max_depth="3" /> 
 
@@ -17,12 +14,22 @@ When You specify the [Command_Line /config] switch in the !ConEmu.exe command li
 {{{[HKEY_CURRENT_USER\Software\ConEmu\«configname»]}}}
 
 ==!ConEmu.xml==
-You may use !ConEmu in «portable» mode, so all settings will be stored in the _!ConEmu.xml_ file,
-located next to the _ConEmuC.exe_ or _ConEmu.exe_. Template file _!ConEmu_Sample.xml_ is shipped with !ConEmu.
-You must create a new empty _!ConEmu.xml_ or just rename _!ConEmu_Sample.xml_ to _!ConEmu.xml_ for engaging xml-mode.
-You may use [Command_Line /config] switch with xml-mode too.
+You may use !ConEmu in «portable» mode, so all settings will be stored in the _!ConEmu.xml_ file.
+!ConEmu search sequence of this file:
 
-Note. You may rename this file any time, even after !ConEmu starts and loads its settings from registry.
+|| %APPDATA%\ConEmu.xml || I don't think this is really «portable», but many users was asked about %APPDATA% ||
+|| %ConEmuBaseDir%\ConEmu.xml || Folder with ConEmuC.exe and ConEmuC64.exe ||
+|| %ConEmuDir%\ConEmu.xml || Folder with ConEmu.exe and ConEmu64.exe ||
+
+On [SettingsFast first time ConEmu run], you may choose «portable» mode and location of xml file.
+
+Or you may create manually a new empty _!ConEmu.xml_ or just rename _!ConEmu_Sample.xml_ to _!ConEmu.xml_
+for engaging xml-mode. Template file _!ConEmu_Sample.xml_ is shipped with !ConEmu.
+You may use [Command_Line named configuration (/config)] switch with xml-mode too.
+Also, there are switches [Command_Line /loadcfgfile and /safecfgfile] to use any special locations
+(not so useful for daily using, but available).
+
+Note. You may rename/create _!ConEmu.xml_ file any time, even after !ConEmu starts and loads its settings from registry.
 
 =Manual change of settings=
 So, You want to change setting, which is absent in the Settings dialog.
@@ -36,14 +43,14 @@ Open !ConEmu.xml file using any text editor (Far Manager, Notepad, and so on) fi
 Usually, this file is located near to the _ConEmuC.exe_.
 
 =Settings dialog=
-Открыть диалог настроек можно несколькими способами
-  * выбрав пункт «Settings...» из системного меню !ConEmu, которое можно открыть
-    * щелкнув правой кнопкой мышки по заголовку окна
-    * щелкнув левой кнопкой мышки по иконке в заголовке окна
-    * нажав на клавиатуре Win+Alt+Space
-    * щелкнув правой кнопкой мышки по иконке !ConEmu на панели задач (в Windows 7 нужно удерживать кнопку Shift)
-    * если в [ConEmuTerms#TSA TSA] включено отображение иконки, можно щелкнуть по ней правой кнопкой мышки и выбрать пункт
-  * нажать на клавиатуре Win+Alt+P
+You may open settings dialog in several ways
+  * Choosing «Settings...» menu item in !ConEmu [SystemMenu system menu], which can be opened
+    * by right-clicking on the window title
+    * by left-clicking on the icon in the !ConEmu title bar
+    * by pressing Win+Alt+Space on the keyboard
+    * by right-clicking on the !ConEmu (running) icon in the taskbar (in Windows 7 you must hold down Shift key)
+    * by right-clicking on the !ConEmu icon in [ConEmuTerms#TSA TSA] (if you enable TSA feature)
+  * Or, you may press Win+Alt+P on the keyboard (predefined hotkey)
 
 ==Main==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMain.png" title="ConEmu settings, Main page" alt="ConEmu settings, Main page">
@@ -66,7 +73,7 @@ Usually, this file is located near to the _ConEmuC.exe_.
 ==Tasks==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTasks.png" title="ConEmu settings, Tasks page" alt="ConEmu settings, Tasks page">
 
-Here you can configure a list of common tasks.  In fact, this is an alias to run one or more applications in new tabs within ConEmu. These can be configured in the 'Tasks' page of the 'Settings' dialog, and stored in the "Tasks" subkey of reg/xml settings. 'Tasks' may be used as follows (as an example, we will use a task named {Shells}):
+Here you can configure a list of common tasks. In fact, this is an alias to run one or more applications in new tabs within ConEmu. These can be configured in the 'Tasks' page of the 'Settings' dialog, and stored in the "Tasks" subkey of reg/xml settings. 'Tasks' may be used as follows (as an example, we will use a task named {Shells}):
     * when you start by specifying the properties of the shortcut: "!ConEmu.exe / cmd {Shells}";
     * specifying {Shells} in the 'Command line' page 'Main' of 'Settings' dialog;
     * when you create a new console interface !ConEmu (`+` on the toolbar, a list of Recreate-dialog);
@@ -288,3 +295,4 @@ Enables advanced logging of console processes creation.
 || cbAlwaysShowTrayIcon || Always show ConEmu icon in the Taskbar Status Area (TSA) ||
 || cbAlwaysShowScrollbar || Always show scrollbar on the right edge of window<br>3d state means - autoshow on scroll ||
 || Use !ConEmuHk injects || Allow injecting !ConEmuHk.dll (ConEmuHk64.dll) in every process of !ConEmu console window ||
+

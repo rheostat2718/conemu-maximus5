@@ -9,8 +9,8 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
 ==Build 130923==
   * Issue 1234: Tasks menu changes (Win+N, button `[+]`)
     * by default - does not expand to submenus, RClick on task - show submenu with task commands;
-	* Shift+Click on `[+]` arrow - creates submenus for tasks, RClick on task - run all task commands;
-	* also, user may set new hotkey for «Show create new console popup menu with task submenus».
+    * Shift+Click on `[+]` arrow - creates submenus for tasks, RClick on task - run all task commands;
+    * also, user may set new hotkey for «Show create new console popup menu with task submenus».
   * Issue 1238: Running particular command from task submenus - was ignored «/dir ...» switch.
   * Vista and higher: Default console font - «Consolas» (if ClearType is enabled in system).
   * Vista and higher: Default tab and status bars font - «Segoe UI».

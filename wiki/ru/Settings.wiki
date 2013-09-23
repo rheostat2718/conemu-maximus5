@@ -14,12 +14,21 @@ When You specify the [Command_Line /config] switch in the !ConEmu.exe command li
 {{{[HKEY_CURRENT_USER\Software\ConEmu\«configname»]}}}
 
 ==!ConEmu.xml==
-You may use !ConEmu in «portable» mode, so all settings will be stored in the _!ConEmu.xml_ file,
-located next to the _ConEmuC.exe_ or _ConEmu.exe_. Template file _!ConEmu_Sample.xml_ is shipped with !ConEmu.
-You must create a new empty _!ConEmu.xml_ or just rename _!ConEmu_Sample.xml_ to _!ConEmu.xml_ for engaging xml-mode.
-You may use [Command_Line /config] switch with xml-mode too.
+Вы можете включить в !ConEmu «портабельный» режим, в котором все настройки будут храниться в файле _!ConEmu.xml_.
+!ConEmu ищет этот файл в следующем порядке:
 
-Note. You may rename this file any time, even after !ConEmu starts and loads its settings from registry.
+|| %APPDATA%\ConEmu.xml || Я не считаю этот случай действительно «портабельным», но многие просили %APPDATA% ||
+|| %ConEmuBaseDir%\ConEmu.xml || Папка с файлами ConEmuC.exe и ConEmuC64.exe ||
+|| %ConEmuDir%\ConEmu.xml || Папка с файлами ConEmu.exe и ConEmu64.exe ||
+
+При [SettingsFast первом запуске ConEmu], вы можете включить «портабельный» режим и выбрать расположение xml файла.
+Также вы можете создать новый пустой _!ConEmu.xml_ или просто переименовать _!ConEmu_Sample.xml_ в _!ConEmu.xml_
+для включения xml-режима. Пример настроек _!ConEmu_Sample.xml_ поставляется с !ConEmu.
+Ключ [Command_Line именованных конфигураций (/config)] также можно использовать в xml-режиме.
+И наконец, есть два ключа [Command_Line /loadcfgfile и /safecfgfile] для использования специально указанных файлов
+(может быть полезно в некоторых случаях).
+
+Примечание. Вы можете переименовать/создать файл _!ConEmu.xml_ в любое время, даже после загрузки настроек из реестра.
 
 =Manual change of settings=
 So, You want to change setting, which is absent in the Settings dialog.
@@ -34,12 +43,12 @@ Usually, this file is located near to the _ConEmuC.exe_.
 
 =Диалог настроек «Settings»=
 Открыть диалог настроек можно несколькими способами
-  * выбрав пункт «Settings...» из системного меню !ConEmu, которое можно открыть
+  * выбрав пункт «Settings...» из [SystemMenu системного меню] !ConEmu, которое можно открыть
     * щелкнув правой кнопкой мышки по заголовку окна
     * щелкнув левой кнопкой мышки по иконке в заголовке окна
     * нажав на клавиатуре Win+Alt+Space
     * щелкнув правой кнопкой мышки по иконке !ConEmu на панели задач (в Windows 7 нужно удерживать кнопку Shift)
-    * если в [ConEmuTerms#TSA TSA] включено отображение иконки, можно щелкнуть по ней правой кнопкой мышки и выбрать пункт
+    * если в [ConEmuTerms#TSA TSA] включено отображение иконки, можно щелкнуть по ней правой кнопкой мышки
   * нажать на клавиатуре Win+Alt+P
 
 ==Main==
@@ -103,7 +112,7 @@ Usually, this file is located near to the _ConEmuC.exe_.
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsColors2.png" title="ConEmu settings, Colors page" alt="ConEmu settings, Colors page">
 
-==Transparency==
+==[SettingsTransparency Transparency]==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsTransparency.png" title="ConEmu settings, Transparency page" alt="ConEmu settings, Transparency page">
 
 ==Tabs==
@@ -122,6 +131,9 @@ Usually, this file is located near to the _ConEmuC.exe_.
 
 ==Keys and Macro==
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsKeys.png" title="ConEmu settings, Keys and Macro page" alt="ConEmu settings, Keys and Macro page">
+
+==Controls==
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsControls.png" title="ConEmu settings, Controls page" alt="ConEmu settings, Controls page">
 
 ==Mark & Paste==
 [TextSelection Перейти к описанию]
