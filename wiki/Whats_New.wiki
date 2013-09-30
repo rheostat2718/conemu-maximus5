@@ -6,6 +6,22 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 130929==
+  * Issue 714: Font size fixed when copying using CF_HTML formatting. You may choose from Edit submenu one of the following options:
+	* Plain text only (don't copy HTML formatting);
+	* Copy HTML format (text will be ready for pasting in Word, Outlook etc.);
+	* Copy as HTML (you want RAW HTML? choose this option).
+  * Send cursor keys to vim with xterm control sequences.
+
+
+==Build 130928==
+  * Default anti-aliasing method will be «ClearType» if it is turned on in your OS.
+  * Infinite run loop when «Single instance» was ON and «Multiple consoles» was OFF.
+  * GuiMacro: Close(8) - close all consoles.
+  * New menu items in «Close or kill submenus»: «Close all consoles» and «Close except active».
+  * Issue 714: Copying text to clipboard using CF_HTML formatting. May be disabled from Edit submenu (Copy HTML format).
+
+
 ==Build 130923==
   * Issue 1234: Tasks menu changes (Win+N, button `[+]`)
     * by default - does not expand to submenus, RClick on task - show submenu with task commands;
