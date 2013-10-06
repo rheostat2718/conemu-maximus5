@@ -2,6 +2,7 @@
 || *Name* || *Description* || *Example* ||
 || `ConEmuDir` || folder, containing !ConEmu.exe || `C:\ConEmu` ||
 || `ConEmuBaseDir` || folder, containing ConEmuC.exe || `C:\ConEmu\ConEmu` ||
+|| `ConEmuWorkDir` || folder, from where your shell was started || `C:\Users` ||
 || `ConEmuArgs` || arguments specified to !ConEmu.exe || ||
 || `ConEmuConfig` || current configuration name, see `/config` switch || ||
 || `ConEmuBuild` || current !ConEmu build number || `121202` ||

@@ -6,6 +6,19 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 131006==
+  * New option on «Startup» page: «Auto save/restore of opened tabs».
+  * New environment variable `"ConEmuWorkDir"`, it contains folder from where your shell was started. User may use it when starting shell, with «ConEmu Here» feature for example:
+{{{
+"C:\Program Files\Far Manager\far.exe" "!ConEmuWorkDir!"
+}}}
+  * «Default terminal» settings are moved to own page. «Integration» page contains only «ConEmu Here» and «ConEmu Inside».
+  * After unregistering «ConEmu Here» or «ConEmu Inside» item drop down was refreshed but not edit fields.
+  * Issue 1269: More debug logging of Win+Left/Win+Right.
+  * Issue 1262: ConEmu.Editor.lua bug.
+  * Debug purposes: "/basic" and "/resetdefault" switch.
+
+
 ==Build 130929==
   * Issue 714: Font size fixed when copying using CF_HTML formatting. You may choose from Edit submenu one of the following options:
 	* Plain text only (don't copy HTML formatting);
