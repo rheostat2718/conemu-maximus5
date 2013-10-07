@@ -30,6 +30,7 @@
       * [Windows7Taskbar Windows 7 taskbar]
       * [InsideParent ConEmu Inside]
       * [ConEmu_Clink Bash completion]
+      * [ConEmuEnvironment Environment variables]
     * Controls
       * [Tabs Tabs]
       * [SystemMenu System menu]
