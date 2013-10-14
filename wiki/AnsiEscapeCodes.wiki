@@ -1,8 +1,4 @@
-﻿<font size="5">*[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FAnsiEscapeCodes%3Fshow%3Dcontent ANSI X3.64 and Xterm 256 colors (autotranslated Ru-En)]*</font>
-----------------------------------------------------------------------
-
-
-<font size="5">*ANSI X3.64 and Xterm 256 colors*</font>
+﻿<font size="5">*ANSI X3.64 and Xterm 256 colors*</font>
 
 !ConEmu (from build 120520d) can process [http://en.wikipedia.org/wiki/ANSI_X3.64 ANSI X3.64]
 and its extension [http://www.frexx.de/xterm-256-notes/ xterm 256 color mode].
@@ -33,7 +29,7 @@ vim.exe -cur_console:h0 <Vim arguments here>
 }}}
 
 ===Example 2: 256colors2.pl===
-Скрипт [http://www.frexx.de/xterm-256-notes/data/256colors2.pl 256colors2.pl] нужно запускать так:
+Perl script [http://www.frexx.de/xterm-256-notes/data/256colors2.pl 256colors2.pl] need to be runned as following:
 {{{
 256colors2.pl -cur_console:h0
 }}}
@@ -46,20 +42,20 @@ echo ^[[9999;1H
 *Warning* You need to change «^[» to ESC code before using this script (char with code \x1B).
 
 ==!TechInfo==
-Обработка ANSI escape последовательностей осуществляется в том случае, если консольная программа
-использует для вывода функции WriteConsoleA, WriteConsoleW или !WriteFile. Например:
+ANSI escape sequences will be processed when console application output text using
+Windows API functions WriteConsoleA, WriteConsoleW or !WriteFile. For example:
 {{{
 cmd /c type "Colors-256.ans"
 }}}
-Вывод текста с текущими расширенными атрибутами (xterm 256 color) возможен также функциями
-WriteConsoleOutputCharacterA и WriteConsoleOutputCharacterW.
+Also, output with extended attributes (xterm 256 color) is available with functions
+WriteConsoleOutputCharacterA and WriteConsoleOutputCharacterW.
 
 ==Environment variable==
-Как проверить в cmd-файле или консольном приложении разрешено ли ANSI x3.64?
-Проверить значение переменной окружения «ConEmuANSI»
+How can I check in cmd-file if ANSI x3.64 is supported and enabled?
+You need to check «ConEmuANSI» environment variable
 {{{
-if "%ConEmuANSI%"=="ON"  echo Разрешено
-if "%ConEmuANSI%"=="OFF" echo Запрещено
+if "%ConEmuANSI%"=="ON"  echo Enabled
+if "%ConEmuANSI%"=="OFF" echo Disabled
 }}}
 
 =List of supported codes=
@@ -125,7 +121,7 @@ For simplifying, endings in the following table marked as «ST».
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAnsi.png" title="ANSI X3.64 and Xterm 256 colors in ConEmu">
 
 ===Xterm 256 color map===
-Пример из файла: `ConEmu\Addons\AnsiColors256.ans`.
+Example from file: `ConEmu\Addons\AnsiColors256.ans`.
 {{{
 ^[[9999S^[[9999;1HSystem colors (0..15 from xterm palette):
 ^[[48;5;0m  ^[[48;5;1m  ^[[48;5;2m  ^[[48;5;3m  ^[[48;5;4m  ^[[48;5;5m  ^[[48;5;6m  ^[[48;5;7m  ^[[0m
@@ -153,21 +149,22 @@ System colors (Standard console 16 colors):
 *Warning* You need to change «^[» to ESC code before using this script (char with code \x1B).
 
 ==sixteencolors.net==
-Большой архив [http://en.wikipedia.org/wiki/ANSI_art ANSI арта]: http://sixteencolors.net/
+Large [http://en.wikipedia.org/wiki/ANSI_art ANSI art] archive: http://sixteencolors.net/
 
-Скачать файл ans, и выполнить в консоли !ConEmu, например `type TK-FREES.ANS`. Посмотреть и пролистать предыдущий вывод можно перейдя в альтернативный режим - Win+A.
+Download ans file and execute it in !ConEmu console, e.g. `type TK-FREES.ANS`.
+You can view and scroll last output switching into alternative mode - Win+A.
 
-*Note* Многие арты расчитаны на ширину консоли в *80* символов.
+*Note* Many arts was written for 80-chars console width.
 
 ==Compiler error highlighting==
 {{{
 nmake | sed -e "s/.* : \bERR.*/^[[1;31;40m&^[[0m/i" -e "s/.* : \bWARN.*/^[[1;36;40m&^[[0m/i"
 }}}
-или
+or
 {{{
 type "Errors.log" | sed -e "s/.* : \bERR.*/^[[1;31;40m&^[[0m/i" -e "s/.* : \bWARN.*/^[[1;36;40m&^[[0m/i"
 }}}
-*Warning* Перед использованием «^[» нужно заменить на ESC код (символ с кодом \x1B).
+*Warning* Before execution replace «^[» width real ESC character (symbol with code of \x1B).
 
 ==Text Progressbar in cmd-files==
 [http://code.google.com/p/conemu-maximus5/issues/attachmentText?id=554&aid=5540007000&name=test_bar.cmd&token=X1cvdOQjxnWPTGqFCrzyH1M0DCs%3A1337810139732 test_bar.cmd] @Artyom.Vorobets
