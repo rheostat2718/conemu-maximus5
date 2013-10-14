@@ -1,6 +1,7 @@
 ﻿<font size="5">*[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FAnsiEscapeCodes%3Fshow%3Dcontent ANSI X3.64 and Xterm 256 colors (autotranslated Ru-En)]*</font>
 ----------------------------------------------------------------------
 
+
 <font size="5">*ANSI X3.64 and Xterm 256 colors*</font>
 
 !ConEmu (from build 120520d) can process [http://en.wikipedia.org/wiki/ANSI_X3.64 ANSI X3.64]
