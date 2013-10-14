@@ -47,6 +47,7 @@
       * [Awards ConEmu Awards]
       * [Reviews ConEmu Reviews]
       * [RoadMap Планы на будущее]
+      * [ConEmuHk Inject ConEmuHk]
       * [TipsAndTweaks Советы и хитрости]
       * [PromptAtTheBottom Prompt внизу окна]
       * [PVSStudio PVS-Studio]
