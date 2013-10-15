@@ -6,6 +6,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 131015==
+  * Environment variables are allowed in tab icon paths.
+  * Issue 1275: !ConEmu window was restored from TSA unexpectedly after RClick-Esc.
+  * Menu item «Store history» in the create new console dialog (right-click on title bar).
+  * Minor changes in «New console» dialog.
+  * Environment export was not working in Far Manager. Example:
+
+
 ==Build 131010==
   * ConEmuC will expand environment variables before running commands.
   * Support !PortableApps.com folder structure from the box. No need for explicit `'/LoadCfgFile "%PAL:DataDir%\settings\ConEmu.xml"'`.
