@@ -12,6 +12,10 @@ Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 mai
   * Menu item «Store history» in the create new console dialog (right-click on title bar).
   * Minor changes in «New console» dialog.
   * Environment export was not working in Far Manager. Example:
+{{{
+vcvarsall.bat x86 & ConEmuC /export=CON
+}}}
+  * Regression: crash of ConEmuC while expanding environment variables.
 
 
 ==Build 131010==
