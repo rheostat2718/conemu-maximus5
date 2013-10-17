@@ -6,6 +6,15 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 131017==
+  * New switch "-new_console:W:Background" allows set background image per tab or split. Option «Background image» *must be enabled* in main settings (main image path may be empty).
+  * Regression. When prompting for password (-new_console:u:User) command field was not filled.
+  * Internal changes of "-new_console" parser.
+  * Minor internal changes in closing procedure.
+  * About dialog, "-new_console" page was added. May be called from Tasks setup ('?' button in title bar and click on tasks edit field).
+  * Issue 823: Shift+left mouse selection does not select above visible windows (has to scroll buffer up).
+
+
 ==Build 131015==
   * Environment variables are allowed in tab icon paths.
   * Issue 1275: !ConEmu window was restored from TSA unexpectedly after RClick-Esc.

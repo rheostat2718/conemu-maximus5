@@ -13,6 +13,7 @@ When you run application from existing !ConEmu tab, or starting new tab from !Co
      a - RunAs shell verb (as Admin on Vista+, user/pwd in Win2k and WinXP)
      b - create background tab
      c - force enable 'Press Enter or Esc to close console' (default)
+     C:<iconfile> - specify icon used in tab, MUST BE LAST or single OPTION
      d:<dir> - specify working directory, MUST BE LAST or single OPTION
      f - force starting console active, useful when starting several consoles simultaneously
      h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines
@@ -20,12 +21,14 @@ When you run application from existing !ConEmu tab, or starting new tab from !Co
      I - (GuiMacro only) forces inheriting of root process contents, like "Duplicate root" feature
      n - disable 'Press Enter or Esc to close console'
      o - don't enable 'Long console output' when starting command from Far Manager
+     P:<palettename> - set fixed palette for tab, MUST BE LAST or single OPTION
      r - run as restricted user
      s[<SplitTab>T][<Percents>](H|V) - run new console in a split
      t:tabname - rename new created tab, MUST BE LAST or single OPTION
      u - ConEmu choose user dialog
      u:<user>:<pwd> - specify user/pwd in args, MUST BE LAST or single OPTION
      w - Enable 'Overwrite' mode in command prompt by default
+     W:<tabwallpaper> - use specified wallpaper for the tab, MUST BE LAST or single OPTION
      z - Don't use 'Default terminal' feature for this command
 }}}
 
