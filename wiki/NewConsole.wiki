@@ -4,7 +4,7 @@
 =Syntax=
 When you run application from existing !ConEmu tab, or starting new tab from !ConEmu interface, you may use «-new_console» or «-cur_console» switches.
 
-*Warning* «-new_console» and «-cur_console» are *case sensitive*.
+*Warning* «-new_console», «-cur_console» and all subswitches are *case sensitive*.
 
 {{{
   -new_console[:switches]
