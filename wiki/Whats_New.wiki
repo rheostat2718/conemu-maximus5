@@ -6,6 +6,14 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 131020==
+  * Issue 1267: Chinese message of previous command crash.
+  * Issue 1291: Python fails to print string sequence with ASCII character followed by Chinese character.
+  * Issue 1292: While selection is active, Shift-Home/Shift-End keys extend selection to line begin/end.
+  * Issue 1293: Regression. "-new_console:d:<path>" and whitespace in <path> = parser issue.
+  * Issue 1289: Regression. No background image at start.
+
+
 ==Build 131017==
   * New switch "-new_console:W:Background" allows set background image per tab or split. Option «Background image» *must be enabled* in main settings (main image path may be empty).
   * Regression. When prompting for password (-new_console:u:User) command field was not filled.
