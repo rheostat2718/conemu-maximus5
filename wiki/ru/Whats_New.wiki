@@ -10,7 +10,7 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
   * Issue 1267: Chinese message of previous command crash.
   * Issue 1291: Python fails to print string sequence with ASCII character followed by Chinese character.
   * Issue 1292: While selection is active, Shift-Home/Shift-End keys extend selection to line begin/end.
-  * Issue 1293: Regression. "-new_console:d:<path>" and whitespace in <path> = parser issue.
+  * Issue 1293: Regression. `"-new_console:d:<path>"` and whitespace in <path> = parser issue.
   * Issue 1289: Regression. No background image at start.
 
 
