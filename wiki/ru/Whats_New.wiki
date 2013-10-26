@@ -6,6 +6,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 131026==
+  * Showing Task hotkeys in the start menu (Win+N, [+] drop down).
+  * Task hotkeys may be configured on «Keys & Macro» settings page, too.
+  * Regression. Changes in «Default terminal» hooked applications was ignored.
+  * Shift+Home and Shift+End start text selection if «Start selection with Shift+Arrows» is enabled.
+  * Trim trailing «.,;» from hyperlinks (Ctrl+LClick).
+
+
 ==Build 131025==
   * Issue 1304: Fail to Run history item from dropdown menu.
   * Issue 1298: !ConEmu may crash when starting some incorrect tasks.
