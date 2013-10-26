@@ -7,6 +7,7 @@ Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 mai
 
 
 ==Build 131025==
+  * Issue 1304: Fail to Run history item from dropdown menu.
   * Issue 1298: !ConEmu may crash when starting some incorrect tasks.
   * Issue 1269: Win+Left, Win+Right once more.
   * GuiMacro: !SetOption("!AlwaysOnTop",Value). Where Value: 2 - switch !AlwaysOnTop, 1 - enable, 0 - disable.
