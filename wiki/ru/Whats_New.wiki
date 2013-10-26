@@ -9,7 +9,7 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
 ==Build 131025==
   * Issue 1298: !ConEmu may crash when starting some incorrect tasks.
   * Issue 1269: Win+Left, Win+Right once more.
-  * GuiMacro: SetOption("AlwaysOnTop",Value). Where Value: 2 - switch !AlwaysOnTop, 1 - enable, 0 - disable.
+  * GuiMacro: !SetOption("!AlwaysOnTop",Value). Where Value: 2 - switch !AlwaysOnTop, 1 - enable, 0 - disable.
   * Issue 675: When both "Reset selection on input" and "any key" are checked selection was dropped when Shift (e.g.) was released.
   * Issue 685: Allow using simple modifiers for text selection (Shift, Alt, Control).
   * Issue 836: Allow to set tasks hotkey.
@@ -20,7 +20,7 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
   * Issue 1267: Chinese message of previous command crash.
   * Issue 1291: Python fails to print string sequence with ASCII character followed by Chinese character.
   * Issue 1292: While selection is active, Shift-Home/Shift-End keys extend selection to line begin/end.
-  * Issue 1293: Regression. `"-new_console:d:<path>"` and whitespace in <path> = parser issue.
+  * Issue 1293: Regression. `"-new_console:d:<path>"` and whitespace in `<path>` = parser issue.
   * Issue 1289: Regression. No background image at start.
 
 
