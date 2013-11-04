@@ -9,7 +9,7 @@ Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 mai
 ==Build 131103==
   * Issue 1079: Console hangs when running PHP console scripts.
   * Issue 1195: Invalid size locking region was used after resizing window when Far is active.
-  * Issue 1196: ConEmu's Far plugin language resources.
+  * Issue 1196: !ConEmu's Far plugin language resources.
   * Issue 1300: Failed (hanged) while closing Far Manager using «Safe Far close macro» in some cases.
   * Issue 1301: Clink initialization method was changed.
   * Issue 1307: Some resize fixes in Quake mode.
@@ -25,7 +25,7 @@ Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 mai
   * Batch file `"SetEscChar.cmd"` provided for use with cmd.exe scripts.
   * Issue 1308: Don't use copy with HTML formatting (by default).
   * Issue 367: New background placements - Center, Stretch-Fit, Stretch-Fill.
-  * Debugging purposes: new ConEmu.exe switches "/nomacro" and "/nohotkey".
+  * Debugging purposes: new !ConEmu.exe switches "/nomacro" and "/nohotkey".
   * cmd.exe users: option «Support UNC Paths» on «!ComSpec» allows "cd" to network location. This works in prompt only! And only in newly created consoles after enabling feature.
 {{{
 Example: cd \\server\share\folder
