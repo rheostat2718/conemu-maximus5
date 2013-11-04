@@ -44,10 +44,13 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
         close active tab or group (6)
         close all active processes of the active group (7)
         close all tabs (8)
-    Copy(<What>)
+    Copy(<What>[,<Format>])
       - Copy active console contents
         What==0: current selection
         What==1: all buffer contents
+        Format==0: plain text, not formatting
+        Format==1: copy HTML format
+        Format==2: copy as HTML
     FindEditor("<FullEditFileName>"),
     FindViewer("<FullViewerFileName>"),
     FindFarWindow(<WindowType>,"<WindowTitle>")
@@ -134,8 +137,9 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
     WindowFullscreen()
      - Switch fullscreen window mode
        returns previous window mode
-    WindowMaximize()
-     - Switch maximized window mode
+    WindowMaximize([<Cmd>])
+     - Switch maximized window mode (Cmd==0)
+     - Maximize window by width (Cmd==1) or height (Cmd==2)
        returns previous window mode
     WindowMinimize() or WindowMinimize(1)
      - Minimize ConEmu window ("1" means "minimize to the TSA")
