@@ -14,7 +14,7 @@ Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 mai
   * Issue 1301: Clink initialization method was changed.
   * Issue 1307: Some resize fixes in Quake mode.
   * Issue 1308: Copy text without HTML formatting by default.
-  * GuiMacro: Copy(<What>[,<Format>]). User may specify format regardless of current setting (choosed from menu).
+  * GuiMacro: `Copy(<What>[,<Format>])`. User may specify format regardless of current setting (choosed from menu).
 {{{
 0: plain text, not formatting; 1: copy HTML format; 2: copy as HTML.
 }}}
