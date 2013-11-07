@@ -9,7 +9,7 @@ This page describes possible variants of files layouts.
 || `.\Plugins\ConEmu\` || This folder contains Far Manager plugins. If you are not using Far Manager, you may delete `Plugins` folder ||
 
 =Plain structure=
-|| `.\ConEmu.exe` <br> `.\ConEmu64.exe` <br> `.\ConEmu\ConEmuC.exe` <br> `.\ConEmu\ConEmuCD.dll` <br> `.\ConEmu\ConEmuHk.dll` <br> `.\ConEmu\ConEmuC64.exe` <br> `.\ConEmu\ConEmuCD64.dll` <br> `.\ConEmu\ConEmuHk64.dll` || If you wish, you may put all !ConEmu files in one folder.<br> But! You must write post-update command to move<br> console-part files to root folder,<br> if you want to use «Autoupdate» feature. ||
+|| `.\ConEmu.exe` <br> `.\ConEmu64.exe` <br> `.\ConEmuC.exe` <br> `.\ConEmuCD.dll` <br> `.\ConEmuHk.dll` <br> `.\ConEmuC64.exe` <br> `.\ConEmuCD64.dll` <br> `.\ConEmuHk64.dll` || If you wish, you may put all !ConEmu files in one folder.<br> But! You must write post-update command to move<br> console-part files to root folder,<br> if you want to use «Autoupdate» feature. ||
 
 =MinGW structure=
 || `.\bin\ConEmu.exe` <br> `.\bin\ConEmu64.exe` || MinGW `bin` folder is located usually in `C:\MinGW\bin`. ||
