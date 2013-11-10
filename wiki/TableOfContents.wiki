@@ -4,6 +4,7 @@
     * General
       * [ConEmu ConEmu]
       * [x64_or_x86 x64 or x86]
+      * [StableVsPreview Stable or Preview]
       * [Certificate What is «Certificate»?]
       * [ConEmuTerms ConEmu Terms]
       * [ConEmuFolders Folders]

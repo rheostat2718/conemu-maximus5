@@ -5,6 +5,7 @@
     * General
       * [ConEmu ConEmu]
       * [x64_or_x86 x64 или x86]
+      * [StableVsPreview Stable или Preview]
       * [Certificate Что такое «Сертификат»?]
       * [ConEmuTerms Термины]
       * [ConEmuFolders Папки/файлы]

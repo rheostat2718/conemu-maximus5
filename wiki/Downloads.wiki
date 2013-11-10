@@ -1,0 +1,20 @@
+﻿=Which version to choose=
+«Preview» builds are recommended for most users.
+At the moment, last «Stable» is very old and «Preview» coming to be «Stable» soon.
+Read more aboue [StableVsPreview release stages].
+
+=Download mirrors (official)=
+  * [http://www.fosshub.com/ConEmu.html Fosshub.com]
+  * [http://code.google.com/p/conemu-maximus5/downloads/list Googlecode.com] - will be [http://google-opensource.blogspot.se/2013/05/a-change-to-google-code-download-service.html broken soon]
+  * [https://sourceforge.net/projects/conemu/files/ Sourceforge.com]
+  * [https://conemu.codeplex.com/releases/view/114530 CodePlex.com]
+
+==Searching for old versions==
+  * [http://code.google.com/p/conemu-maximus5/downloads/list?can=1&q=summary%3AConEmu Release archives]
+
+==Far Manager related==
+I have not updated yet some plugins released for Far Manager (2.0 and 3.0.2790).
+Due to breaking changes in Far API (Lua related) old plugins will not be working
+in the current builds of Far 3.x. But if you need them, you may download them here:
+
+  * [http://code.google.com/p/conemu-maximus5/downloads/list Old plugins, Far2bis, Far3bis]
