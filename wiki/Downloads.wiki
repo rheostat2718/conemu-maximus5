@@ -4,7 +4,12 @@ At the moment, last «Stable» is very old and «Preview» coming to be «Stable
 Read more aboue [StableVsPreview release stages].
 
 =Download mirrors (official)=
-  * <a href="http://www.fosshub.com/ConEmu.html"><img src="http://conemu-maximus5.googlecode.com/svn/files/Downloads.png" alt="Fosshub.com" title="Fosshub.com mirror"/></a> - Primary ([http://www.fosshub.com/ConEmu.html Fosshub.com])
+<table cellpadding="0" cellspacing="0" border="0">
+<tr>
+<td height="25" width="300" valign="center" align="left"><a href="http://www.fosshub.com/ConEmu.html"><img src="http://conemu-maximus5.googlecode.com/svn/files/Downloads.png" alt="Fosshub.com" title="Fosshub.com mirror"/></a></td>
+<td width="75" height="60" valign="center">Primary ([http://www.fosshub.com/ConEmu.html Fosshub.com])</td>
+</tr>
+</table>
   * [http://code.google.com/p/conemu-maximus5/downloads/list Googlecode.com] - will be [http://google-opensource.blogspot.se/2013/05/a-change-to-google-code-download-service.html broken soon]
   * [https://sourceforge.net/projects/conemu/files/ Sourceforge.com]
   * [https://conemu.codeplex.com/releases/view/114530 CodePlex.com]
