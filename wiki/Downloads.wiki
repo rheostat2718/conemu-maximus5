@@ -10,6 +10,7 @@ Read more aboue [StableVsPreview release stages].
 <td width="70" height="50" valign="center">Primary [http://www.fosshub.com/ConEmu.html Fosshub.com]</td>
 </tr>
 </table>
+===Alternative===
   * [http://code.google.com/p/conemu-maximus5/downloads/list Googlecode.com] - will be [http://google-opensource.blogspot.se/2013/05/a-change-to-google-code-download-service.html broken soon]
   * [https://sourceforge.net/projects/conemu/files/ Sourceforge.com]
   * [https://conemu.codeplex.com/releases/view/114530 CodePlex.com]
