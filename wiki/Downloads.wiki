@@ -6,8 +6,8 @@ Read more aboue [StableVsPreview release stages].
 =Download mirrors (official)=
 <table cellpadding="0" cellspacing="0" border="0">
 <tr>
-<td valign="center" align="left"><a href="http://www.fosshub.com/ConEmu.html"><img src="http://conemu-maximus5.googlecode.com/svn/files/Downloads.png" alt="Fosshub.com" title="Fosshub.com mirror"/></a></td>
-<td valign="center">Primary ([http://www.fosshub.com/ConEmu.html Fosshub.com])</td>
+<td width="300" valign="center" align="left"><a href="http://www.fosshub.com/ConEmu.html"><img src="http://conemu-maximus5.googlecode.com/svn/files/Downloads.png" alt="Fosshub.com" title="Fosshub.com mirror"/></a></td>
+<td valign="center">Primary<br>[http://www.fosshub.com/ConEmu.html Fosshub.com]</td>
 </tr>
 </table>
   * [http://code.google.com/p/conemu-maximus5/downloads/list Googlecode.com] - will be [http://google-opensource.blogspot.se/2013/05/a-change-to-google-code-download-service.html broken soon]
