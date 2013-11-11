@@ -34,6 +34,7 @@
       * [ConEmuEnvironment Environment variables]
     * Controls
       * [Tabs Tabs]
+      * [SplitScreen Splits (panes)]
       * [SystemMenu System menu]
       * [KeyboardShortcuts Keyboard shortcuts]
       * [UsingMouse Using mouse]

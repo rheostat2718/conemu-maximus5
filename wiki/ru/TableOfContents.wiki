@@ -35,6 +35,7 @@
       * [ConEmuEnvironment Переменные окружения]
     * Управление
       * [Tabs Закладки (табы)]
+      * [SplitScreen Splits (panes)]
       * [SystemMenu Системное меню]
       * [KeyboardShortcuts Клавиатура]
       * [UsingMouse Мышь]
