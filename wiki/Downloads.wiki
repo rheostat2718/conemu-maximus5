@@ -1,18 +1,17 @@
 ﻿<table cellpadding="0" cellspacing="0" border="0">
-<tr><td valign="top">
+<tr><td align="left" valign="top" colspan="3">
 =Which version to choose=
 «Preview» builds are recommended for most users.
 At the moment, last «Stable» is very old and «Preview» coming to be «Stable» soon.
 Read more aboue [StableVsPreview release stages].
 =Download mirrors (official)=
 </td>
-<td><a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml"><img border="0" src="http://s1.softpedia-static.com/base_img/softpedia_free_award_f.gif"/></a></td>
-</tr></table>
-
-<table cellpadding="0" cellspacing="0" border="0">
+<td align="left" valign="top" rowspan="2"><a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml"><img border="0" src="http://s1.softpedia-static.com/base_img/softpedia_free_award_f.gif"/></a></td>
+</tr>
 <tr>
-<td width="265" height="50" valign="center" align="left"><a href="http://www.fosshub.com/ConEmu.html"><img src="http://conemu-maximus5.googlecode.com/svn/files/Downloads.png" alt="Fosshub.com" title="Fosshub.com mirror"/></a></td>
-<td width="70" height="50" valign="center">Primary [http://www.fosshub.com/ConEmu.html Fosshub.com]</td>
+<td width="265" height="50" align="left" valign="center"><a href="http://www.fosshub.com/ConEmu.html"><img src="http://conemu-maximus5.googlecode.com/svn/files/Downloads.png" alt="Fosshub.com" title="Fosshub.com mirror"/></a></td>
+<td width="70" height="50" align="left" valign="center">Primary [http://www.fosshub.com/ConEmu.html Fosshub.com]</td>
+<td> </td>
 </tr>
 </table>
 ===Alternative===
