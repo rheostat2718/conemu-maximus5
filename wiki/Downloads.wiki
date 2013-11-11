@@ -11,7 +11,7 @@ Read more aboue [StableVsPreview release stages].
 <tr>
 <td width="265" height="50" align="left" valign="center"><a href="http://www.fosshub.com/ConEmu.html"><img src="http://conemu-maximus5.googlecode.com/svn/files/Downloads.png" alt="Fosshub.com" title="Fosshub.com mirror"/></a></td>
 <td width="70" height="50" align="left" valign="center">Primary [http://www.fosshub.com/ConEmu.html Fosshub.com]</td>
-<td width="200"> </td>
+<td width="315"> </td>
 </tr>
 </table>
 ===Alternative===
