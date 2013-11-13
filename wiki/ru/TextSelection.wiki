@@ -1,3 +1,5 @@
+Under construction, Issue 887, Issue 1292, Issue 1332
+
 !ConEmu allows marking console block (like real console *Mark* menu item, or Far Manager *!AltIns* feature)
 and text (like standard GUI text editors), copying marked text to Windows Clipboard,
 pasting from Clipboard to console.
