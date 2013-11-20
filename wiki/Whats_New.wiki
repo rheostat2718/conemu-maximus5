@@ -6,6 +6,36 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 131119==
+  * (Pull#2, ForNeVeR) ConEmuBg: Fit background text width.
+  * `VConGroup.SetConsoleSizes` fails on more than 2 splits.
+  * Fix close confirmation msg on WinXP.
+  * Default button set to Cancel in Assertion dialog.
+  * Issue 1345: Menu shortcuts &Edit and Sett&ings.
+
+
+==Build 131117==
+  * Live preview peeks were broken in Windows 8.
+  * New !ConEmu specific ANSI OSC.
+{{{
+ESC ] 9 ; 7 ; "cmd" ST - Run some process with arguments
+ESC ] 9 ; 8 ; "env" ST - Output value of environment variable
+Usage example:
+prompt $P$E]9;7;"cmd /cGitExportBranch.cmd"$e\$E]9;8;"gitbranch"$e\$g
+}}}
+  * Don't print "nothing to export" when exported variable is not defined.
+{{{
+ConEmuC /export=CON gitbranch
+}}}
+  * 60 sec delay between each OnInfo_ReportCrash.
+  * Helper batch file «cecho.cmd» may be used to colored print from batches. Call "cecho /?" for usage examples.
+
+
+==Build 131115==
+  * Issue 1339: Crash on close ConEmu window (multiple assertions actually, regression of 131114).
+  * ConEmuSetup.exe: `/p:x[86|64],adm` starts MSI as admin right away.
+
+
 ==Build 131114==
   * Issue 1333: Internal changes in !WndProc, GWLP_USERDATA is not used anymore.
   * Minor fix in "ConEmuC /export". Don't try to export to (a) direct parent of ConEmuC.exe process and (b) conhost.exe.
