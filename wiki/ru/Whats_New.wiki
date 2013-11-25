@@ -6,6 +6,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 131125==
+  * Issue 1367: `ConEmuArgs`, `ConEmuBaseDir`, `ConEmuConfig`, `ConEmuDir` was not initialized.
+  * Excess confirmations when closing Far consoles.
+
+
 ==Build 131124==
   * Crash fix on tabs closing.
   * Initialize predefined palettes with "/reset" or "/basic" switches.
