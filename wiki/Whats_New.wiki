@@ -6,6 +6,14 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 131202==
+  * Trying to fix MS bug with kernel crash in !ReadConsole.
+  * Some fixes in pipe processing.
+  * Issue 1381. Portable distribution contains *.map files (`ConEmu.Gui.map` and `ConEmu64.Gui.map`).
+  * Issue 1253: Add selection information to status bar (stream/block, coords, length).
+  * GuiMacro. "Close(2,1)" will close !ConEmu window, same as 'Cross' click, bug without confirmation.
+
+
 ==Build 131129==
   * Issue 1375. Xml file search priority changed. First found from following locations will be used:
 {{{
