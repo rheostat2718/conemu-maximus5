@@ -6,6 +6,16 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 131205==
+  * Some fixes in pipe processing.
+  * Some codeanalyze fixes.
+  * Some more debug info in MPipe.h.
+  * `IsConEmu.cmd` updated, returns errorlevel 0,1,2.
+  * Issue 881: !ConEmuHk causes IBM Java applications to crash.
+  * Issue 1236: Far Manager. Pathname not fit in left panel causes right mouse click failure.
+  * Issue 1358: Allow multiple selections in 'Attach To' window.
+
+
 ==Build 131202==
   * Trying to fix MS bug with kernel crash in !ReadConsole.
   * Some fixes in pipe processing.
