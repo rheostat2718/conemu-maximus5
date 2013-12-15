@@ -63,6 +63,11 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
        Relative==0: N - required font height in points
        Relative==1: N (+-1, +-2) - increase/decrease font height
        returns - "OK", or "InvalidArg"
+    HighlightMouse(0)
+     - Switch highlight under mouse cursor (off/row/col/row+col/...)
+    HighlightMouse(<What>,<Act>)
+     - What: 1 - row, 2 - col, 3 - row+col
+       Act:  0 - off, 1 - on,  2 - switch (default)
     IsConEmu
      - Returns "Yes" when console was started under !ConEmu
     IsConsoleActive
@@ -134,6 +139,10 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
      - start task with 1-based index
     Task("Name"[,"Dir"])
      - start task with specified name
+    Transparency(<Cmd>,<Value>)
+     - Change ConEmu window transparency level
+       Cmd = 0, Value = 40..255 (255==Opaque)
+       Cmd = 1, Value = <relative inc/dec>
     WindowFullscreen()
      - Switch fullscreen window mode
        returns previous window mode
