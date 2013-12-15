@@ -8,7 +8,7 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
 
 ==Build 131215==
   * Issue 1362: Hotkeys for inc/dec transparency
-    * GuiMacro: Transparency(<Cmd>,<Value>)
+    * GuiMacro: `Transparency(<Cmd>,<Value>)`
 {{{
 Cmd = 0, Value = 40..255 (255==Opaque)
 Cmd = 1, Value = <relative inc/dec>
@@ -17,7 +17,7 @@ Cmd = 1, Value = <relative inc/dec>
   * Issue 1391: Extended fonts not applied to first visible line of buffer (by rick.sladkey).
   * Highlighting row/col under mouse cursor.
     * Checkboxes on 'Highlight' settings page.
-    * GuiMacro "HighlightMouse(<What>[,<Act>])". Affect ACTIVE console only.
+    * GuiMacro `HighlightMouse(<What>[,<Act>])`. Affect ACTIVE console only.
 {{{
 HighlightMouse(0) switch off/row/col/row+col/off/...
 otherwise
