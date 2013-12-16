@@ -137,4 +137,4 @@ Most settings are configured using the Settings dialog, not from the command lin
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuItalic.png" title="FAR Manager + ConEmu" alt="FAR + ConEmu">
 </wiki:comment>
 
-[Screenshots More screenshots]
+[Screenshots More screenshots] and [Screencasts screencasts]
