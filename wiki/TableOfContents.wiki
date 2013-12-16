@@ -9,6 +9,7 @@
       * [ConEmuTerms ConEmu Terms]
       * [ConEmuFolders Folders]
       * [Screenshots Screenshots]
+      * [Screencasts Screencasts]
       * [ConEmuFAQ FAQ]
       * [Whats_New Whats new]
     * Launch apps

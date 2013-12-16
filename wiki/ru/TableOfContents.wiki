@@ -10,6 +10,7 @@
       * [ConEmuTerms Термины]
       * [ConEmuFolders Папки/файлы]
       * [Screenshots Скриншоты]
+      * [Screencasts Видео]
       * [ConEmuFAQ FAQ]
       * [Whats_New Whats new]
     * Запуск приложений
