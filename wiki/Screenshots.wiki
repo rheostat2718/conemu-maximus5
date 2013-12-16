@@ -1,4 +1,7 @@
-﻿===Far, cmd, Notepad and PUTTY started in !ConEmu===
+﻿===Screencast by Latish Sehgal===
+<wiki:video url="http://www.youtube.com/watch?v=DoXkqN8Hu74"/>
+
+===Far, cmd, Notepad and PUTTY started in !ConEmu===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAero.png" title="Far, cmd, Notepad and PUTTY started in ConEmu">
 
 ===!ConEmu Alpha transparency===
