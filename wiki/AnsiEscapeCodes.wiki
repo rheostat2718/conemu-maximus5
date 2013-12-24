@@ -74,12 +74,20 @@ if "%ConEmuANSI%"=="OFF" echo Disabled
 || ESC [ _n_ M || Delete _n_ (default 1) lines including current. ||
 || ESC [ _lines_ S || Scroll screen (whole buffer) up by _lines_. New lines are added at the bottom. ||
 || ESC [ _lines_ T || Scroll screen (whole buffer) down by _lines_. New lines are added at the top. ||
+|| ESC [ _n_ X || Erase _n_ (default 1) characters from cursor (fill with spaces and default attributes). ||
+|| ESC [ `>` c || Report `ESC > 67 ; build ; 0 c` ||
+|| ESC [ c || Report `ESC [ ? 1 ; 2 c` ||
 || ESC [ _row_ ; _col_ f || Set cursor position (same as H). The values _row_ and _col_ are 1-based. ||
 || ESC [ _a_ ; _b_ h || Set mode ([AnsiEscapeCodes#Terminal_modes see below]). ||
 || ESC [ _a_ ; _b_ l || Reset mode ([AnsiEscapeCodes#Terminal_modes see below]). ||
 || ESC [ _a_ ; _b_ ; _c_ m || Set SGR attributes ([AnsiEscapeCodes#SGR_(Select_Graphic_Rendition)_parameters see below]). ||
+|| ESC [ 5 n || Report status as "CSI 0 n" (OK) ||
+|| ESC [ 6 n || Report Cursor Position as `ESC [ row ; col R` ||
 || ESC [ _a_ ; _b_ r || Set scrolling region from top=_a_ to bottom=_b_. The values _a_ and _b_ are 1-based. Omit values to reset region. ||
 || ESC [ s || Save cursor position (can not be nested). ||
+|| ESC [ 1 8 t || Report the size of the text area in characters as `ESC [ 8 ; height ; width t` ||
+|| ESC [ 1 9 t || Report the size of the screen in characters as `ESC [ 9 ; height ; width t` ||
+|| ESC [ 2 1 t || Report window’s title as `ESC ] l title ESC \` ||
 || ESC [ u || Restore cursor position. ||
 
 ===Terminal modes===
