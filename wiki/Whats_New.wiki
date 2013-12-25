@@ -9,7 +9,7 @@ Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 mai
 ==Build 131225==
   * Issue 1406: Sources was converted to utf-8 (mostly by Rick Sladkey).
   * GCC makefiles and source fixes.
-  * DllMain was not called when compiled with GCC.
+  * !DllMain was not called when compiled with GCC.
   * InjectHookDLL cause crash in hooked process when compiled with GCC.
   * File ".editorconfig" added into "src" folder.
   * Issue 1404: Workaround for deadlock between !AltServerStop and !ReloadFullConsoleInfo (by Rick Sladkey).
