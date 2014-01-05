@@ -26,30 +26,68 @@ You may specify font face name and size to the real console.
 
 ===ConEmuC.exe command line switches===
 
-|| || *Show help screen* ||
-|| || `ConEmuC /?` ||
-|| || *Execute commands* ||
-|| || `ConEmuC [switches] /ROOT «program with arguments, far.exe for example»` ||
-|| || `ConEmuC [switches] [/U | /A] /C «command line, passed to %%COMSPEC%%»` ||
-|| || *Switches* ||
-|| `/[NO]CONFIRM` || `[`don't`]` confirm closing console on program termination ||
-|| `/ATTACH` || auto attach to !ConEmu GUI ||
-|| `/NOCMD` || attach current (existing) console to GUI ||
-|| `/B{W|H|Z}` || define window width, height and buffer height ||
-|| `/F{N|W|H}` || define console font name, width, height ||
-|| `/LOG[N]` || create (debug) log file, N is number from 0 to 3 ||
-|| || *Attach current console to !ConEmu GUI* ||
-|| || `ConEmuC /ATTACH /NOCMD` ||
-|| || *[GuiMacro ConEmu GUI macro command]* ||
-|| || `ConEmuC /GUIMACRO «GuiMacroString»` ||
-|| || *Start debugger or create memory dump* ||
-|| || `ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]` ||
-|| || *Start «command line» under debugger* ||
-|| || `ConEmuC /DEBUGEXE «command line»` ||
-|| || *Start «command line» under debugger, debug all children* ||
-|| || `ConEmuC /DEBUGTREE «command line»` ||
-|| || *[ConEmuEnvironment#Export_variables Export environment variable to the parent processes]* ||
-|| || `ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]` ||
+*Show help screen*
+{{{
+ConEmuC /?
+}}}
+
+*Useful checks*
+{{{
+ConEmuC /IsConEmu
+    returns 1 as errorlevel if running in ConEmu tab, 2 if not
+ConEmuC /IsAnsi
+    returns 1 as errorlevel if ANSI are processed, 2 if not
+ConEmuC /IsTerm
+    returns 1 as errorlevel if running in telnet, 2 if not
+}}}
+
+*Attach consoles to ConEmu*
+{{{
+ConEmuC /AUTOATTACH [/GHWND=NEW|<HWND>]
+    asynchronous attach to ConEmu GUI (for batches)
+    always returns 0 as errorlevel on exit (Issue 1003)
+ConEmuC /ATTACH /NOCMD [/GHWND=NEW|<HWND>]
+    asynchronous attach current (existing) console to ConEmu
+ConEmuC /ATTACH [/GHWND=NEW|<HWND>] /[FAR|CON|TRM]PID=<PID>
+    synchronous attach specified console process to ConEmu
+  Switches
+    /GHWND        - you may force new ConEmu window or attach to specific one
+    /PID=<PID>    - use <PID> as root process
+    /FARPID=<PID> - for internal use from Far plugin
+    /CONPID=<PID> - 'soft' mode, don't inject ConEmuHk into <PID>
+    /TRMPID=<PID> - called from *.vshost.exe when 'AllocConsole' just created
+}}}
+
+*[GuiMacro ConEmu GUI macro command]*
+{{{
+ConEmuC /GUIMACRO Function([Arg1[,Arg2[,...]])
+}}}
+
+*Debug and MiniDump*
+{{{
+ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]
+    start debugger or create memory dump
+ConEmuC /DEBUGEXE <command line>
+    start <command line> under debugger
+ConEmuC /DEBUGTREE <command line>
+    start <command line> under debugger, debug all children
+}}}
+
+*[ConEmuEnvironment#Export_variables Export environment variable to the parent processes]*
+{{{
+ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]
+}}}
+
+*Execute commands and create tabs (Internal use!)*
+{{{
+ConEmuC [switches] /ROOT <program with arguments, far.exe for example>
+ConEmuC [switches] [/U | /A] /C <command line, passed to %COMSPEC%>
+  Switches
+    /[NO]CONFIRM - [don't] confirm closing console on program termination
+    /B{W|H|Z}    - define window width, height and buffer height
+    /F{N|W|H}    - define console font name, width, height
+    /LOG[N]      - create (debug) log file, N is number from 0 to 3
+}}}
 
 ===-new_console and -cur_console switches===
 When you run application from !ConEmu console, you may use *[NewConsole -new_console]* or *[NewConsole -cur_console]* switches.
