@@ -19,7 +19,7 @@ ConEmuC /download [-login <name> -password <pwd>]
   * Issue 1410: Fix unexpected !SetCurrentConsoleFontEx from !PowerShell.
   * Issue 1415: Some console output of ConEmuC was not able to redirecting.
   * More information in "ConEmuC /?".
-  * Allow "ConEmuC /AUTOATTACH /GHWND=0x???" - attach to exact ConEmu instance.
+  * Allow "ConEmuC /AUTOATTACH /GHWND=0x???" - attach to exact !ConEmu instance.
 
 
 ==Build 131225==
