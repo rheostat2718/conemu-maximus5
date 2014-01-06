@@ -27,7 +27,11 @@ You may specify font face name and size to the real console.
 ===ConEmuC.exe command line switches===
 
 *Note* From build 140106 you may use '-'style switches with ConEmuC too,
-for example `"ConEmuC /IsConEmu"` and `"ConEmuC -IsConEmu"` both do the same action.
+for example, following commands acts the same.
+{{{
+ConEmuC /IsConEmu
+ConEmuC -IsConEmu
+}}}
 
 *Show help screen*
 {{{
