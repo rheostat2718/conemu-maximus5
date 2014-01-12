@@ -7,7 +7,7 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
 
 
 ==Build 140112a==
-  * Just for testing autoupdate from SourceForge.
+  * Just for testing autoupdate from !SourceForge.
 
 ==Build 140112==
   * Allow change of active VCon palette on the fly from Tab menu.
@@ -26,7 +26,7 @@ Palette([<Cmd>[,"<NewPalette>"]]) or Palette([<Cmd>[,<PaletteIndex>]])
   * Memory leak in macro execution.
   * GuiMacro. Parser refactoring, new syntax allowed.
     * Arguments may be delimited with spaces
-    * Several macros in one cmdline may be delimited with "-GuiMacro"
+    * Several macros in one cmdline may be delimited with "`-GuiMacro`"
 {{{
 Usage example:
 ConEmuC.exe -GuiMacro palette 1 "<Solarized>" -guimacro WindowMaximize
