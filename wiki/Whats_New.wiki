@@ -6,6 +6,14 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 140113==
+  * Quake contents was not painted during animation (Revert 4d4fec3f35).
+  * GuiMacro. Regression. Remove lags during Far F4 shell macro.
+  * `ConEmu.Editor.*` - F4 in panels. Execute in QSearch too.
+  * Issue 1214: MClick & RClick above tabs in fullscreen mode.
+  * Protect code from infinite close confirmations.
+
+
 ==Build 140112a==
   * Just for testing autoupdate from !SourceForge.
 
