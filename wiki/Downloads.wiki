@@ -22,7 +22,10 @@ Read more aboue [StableVsPreview release stages].
 ==Release archives==
 Searching for some old (exact) ConEmu build? All builds are available here:
 
+  * [http://sourceforge.net/projects/conemu/files/OldReleases/ConEmuPack/ Release archives]
+<wiki:comment>
   * [http://code.google.com/p/conemu-maximus5/downloads/list?can=1&q=summary%3AConEmu Release archives]
+</wiki:comment>
 
 ==Far Manager related==
 I have not updated yet some plugins released for Far Manager (2.0 and 3.0.2790).
