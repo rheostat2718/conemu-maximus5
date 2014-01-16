@@ -16,7 +16,7 @@ Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 mai
   * New tab template var: ‘%a’ - admin suffix.
     * Admin suffix must be enabled on ‘Tabs’ settings page;
     * If ‘%a’ was not specified explicitly, suffix appended at the end;
-    * If you don't need suffix in tab at all - clear �suffix� edit box.
+    * If you don't need suffix in tab at all - clear ‘suffix’ edit box.
   * Apply ‘Skip words from title’ to admin console titles, but not tabs only.
   * Some internal changes.
 
