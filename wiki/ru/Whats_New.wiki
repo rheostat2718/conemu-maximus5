@@ -6,6 +6,25 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 140116==
+  * Also show ANSI color indexes on ‘Colors’ settings page.
+  * Donate/flattr buttons in the ‘About’ dialog.
+  * Some more logging information to LogFiles.
+  * Issue 1430: Progress indicator for aria2 downloader (thecybershadow).
+  * Tab Admin shield/suffix. Separate settings, Shield was not be able to disabled.
+  * Tab templates. Avoid adding sequential spaces (e.g. if some vars was empty).
+  * New tab template var: ‘%a’ - admin suffix.
+    * Admin suffix must be enabled on ‘Tabs’ settings page;
+    * If ‘%a’ was not specified explicitly, suffix appended at the end;
+    * If you don't need suffix in tab at all - clear �suffix� edit box.
+  * Apply ‘Skip words from title’ to admin console titles, but not tabs only.
+  * Some internal changes.
+
+
+==Build 140114a==
+  * Fix. Autoupdate msg box info fixed.
+
+
 ==Build 140114==
   * Color artifacts in some cases after changing palette on-the-fly (cmd.exe).
   * Fix. ANSI. Wrong behavior of 'ESC [ n M' (VIM & xterm256).
