@@ -56,6 +56,14 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
     FindFarWindow(<WindowType>,"<WindowTitle>")
      - Returns "Found:<index of RealConsole>", "Active:<Far window number>", "Blocked", or "NotFound"
        <WindowType> is number from Far Manager enum WINDOWINFO_TYPE
+    Flash(<Cmd>[,<Flags>[,<Count>]])
+      - Allows to flash taskbar icon and/or window caption
+        Flash(0) - Stop all flashing
+        Flash(0,1) - Simple flashing (see MSDN FlashWindow)
+    Flash(1,<Flags>,<Count>)
+      - Special flashing (see MSDN FlashWindowEx)
+        Flags: 0 - stop, 1 - caption, 2 - taskbar, 3 - caption+taskbar, etc.
+        Count: the number of times to flash the window
     FontSetName("<FontFaceName>"[,FontHeight[,FontWidth]])
      - Change font face name and (optionally) height/width.
     FontSetSize(Relative,N)
