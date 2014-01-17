@@ -4,9 +4,12 @@ It's a !GuiMacro.
 ===Abstract===
 You can execute !ConEmu GUI macro from:
   * !ConEmu hotkey - set up «Macro 01» … «Macro 32» on «Keys» page of «Settings» dialog.
-  * command line (or batch file), i.e.:
+  * command line (or batch file), format is flexible, some examples:
 {{{
 "%ConEmuBaseDir%\ConEmuC.exe" /GUIMACRO WindowMinimize
+ConEmuC -GuiMacro palette 1 "<Solarized>" -guimacro WindowMaximize
+ConEmuC -guimacro status 1 test
+ConEmuC -Guimacro Flash(1,3,5) ; MsgBox("Notification text")
 }}}
   * ANSI X3.64 OSC code, i.e.:
 {{{
