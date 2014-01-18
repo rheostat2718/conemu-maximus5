@@ -169,7 +169,7 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
      - Returns or set current window mode
        "NOR", "MAX", "FS" (fullscreen), "MIN", "TSA"
        "TLEFT", "TRIGHT" (tile to left/right), "THEIGHT",
-       "MPREF", "MNEXT" (move ConEmu to prev/next monitor)
+       "MPREV", "MNEXT" (move ConEmu to prev/next monitor)
 }}}
 
 ===Examples===
