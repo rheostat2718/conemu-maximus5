@@ -97,18 +97,20 @@ if "%ConEmuANSI%"=="OFF" echo Disabled
 || ESC [ 25 l || Hide text cursor. ||
 
 ===SGR (Select Graphic Rendition) parameters===
-|| 0 || Reset current attributes ||
-|| 1 || Set !BrightOrBold ||
-|| 2 || Unset !BrightOrBold ||
-|| 3 || Set !ItalicOrInverse ||
-|| 4 || Set !BackOrUnderline ||
-|| 5 || Set !BackOrUnderline ||
-|| 30…37 || Set ANSI text color ||
-|| 38 ; 5 ; n || Set xterm text color, _n_ is color index from 0 to 255 ||
-|| 39 || Reset text color to defauls ||
-|| 40…47 || Set ANSI background color ||
-|| 48 ; 5 ; n || Set xterm background color, _n_ is color index from 0 to 255 ||
-|| 49 || Reset background color to defauls ||
+|| ESC [ 0 m || Reset current attributes ||
+|| ESC [ 1 m || Set !BrightOrBold ||
+|| ESC [ 2 m || Unset !BrightOrBold ||
+|| ESC [ 3 m || Set !ItalicOrInverse ||
+|| ESC [ 4 m || Set !BackOrUnderline ||
+|| ESC [ 5 m || Set !BackOrUnderline ||
+|| ESC [ 30…37 m || Set ANSI text color ||
+|| ESC [ 38 ; 5 ; _n_ m || Set xterm text color, _n_ is color index from 0 to 255 ||
+|| ESC [ 48 ; 2 ; _r_ ; _g_ ; _b_ m || Set xterm 24-bit text color, _r_, _g_, _b_ are from 0 to 255 ||
+|| ESC [ 39 m || Reset text color to defauls ||
+|| ESC [ 40…47 m || Set ANSI background color ||
+|| ESC [ 48 ; 5 ; _n_ m || Set xterm background color, _n_ is color index from 0 to 255 ||
+|| ESC [ 48 ; 2 ; _r_ ; _g_ ; _b_ m || Set xterm 24-bit background color, _r_, _g_, _b_ are from 0 to 255 ||
+|| ESC [ 49 m || Reset background color to defauls ||
 
 ==OSC (Operating system commands)==
 *Note*. These codes may ends with «ESC\» (two symbols - ESC and !BackSlash) or «BELL» (symbol with code \x07, same as «^a» in `*`nix).

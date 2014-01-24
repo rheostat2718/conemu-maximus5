@@ -6,6 +6,13 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 140124==
+  * Checkbox 'New window' in create dialog was ignored in 'Single instance mode'.
+  * Wrong error message was displayed if empty passwords are disabled in system policy.
+  * Use 'Fade when inactive' option for inactive splits.
+  * Ansi xterm 24-bit fails for RED=0..15.
+
+
 ==Build 140123==
   * Don't turn on ‘Quick edit mode’ in real console by default.
   * Underline hyperlinks internally (don't use fontmapper).
