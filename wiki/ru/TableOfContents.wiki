@@ -24,6 +24,7 @@
     * Настройка
       * [SettingsFast Первый запуск]
       * [Settings Настройка]
+        * [SettingsIntegration Integration]
       * [Fonts Шрифты]
     * Функции
       * [ExtendedConsole ExtendedConsole]

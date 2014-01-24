@@ -1,33 +1,33 @@
 ﻿=Integration=
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsIntegration.png" title="Integration page of ConEmu settings dialog">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsIntegration.png" title="Integration page of !ConEmu settings dialog">
 
 You may register here several menu items, which will be shown in the Explorer popup menu
 (used in folder background, folder items, libraries).
 
 Note! Your items are registered in Windows registry, they can't be ‘portable’.
 
-ConEmu offers two types of integration, registered separately:
+!ConEmu offers two types of integration, registered separately:
 
-  * ‘ConEmu Here’ (upper group) - classic mode, your shell will be started in normal ConEmu window;
-  * ‘ConEmu Inside’ (lower group) - your shell will be started in the pane of your Explorer window.
+  * ‘!ConEmu Here’ (upper group) - classic mode, your shell will be started in normal !ConEmu window;
+  * ‘!ConEmu Inside’ (lower group) - your shell will be started in the pane of your Explorer window.
 
-==ConEmu Inside==
-When you run one of ‘ConEmu inside’ items, ConEmu window will be started *inside*
+==!ConEmu Inside==
+When you run one of ‘!ConEmu inside’ items, !ConEmu window will be started *inside*
 your Explorer window.
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuInside.png" title="ConEmu inside Windows Explorer pane">
 
 But it is yours responsibility (on most of OS versions) to provide some free space
 in your Explorer. For example, turn on ‘View page’ or ‘Details pane’ in Win8's
-before calling one of ConEmu Inside items.
+before calling one of !ConEmu Inside items.
 
-In that mode, ConEmu can automatically sync directory (change folder in Explorer window and
-ConEmu will automatically ‘cd’ to this folder in your shell). To enable this mode - click
-on the ‘Sync’ item in the ConEmu status bar.
+In that mode, !ConEmu can automatically sync directory (change folder in Explorer window and
+!ConEmu will automatically ‘cd’ to this folder in your shell). To enable this mode - click
+on the ‘Sync’ item in the !ConEmu status bar.
 
-To pop up ConEmu system menu - right click on the leftmost part of the ConEmu status bar.
+To pop up !ConEmu system menu - right click on the leftmost part of the !ConEmu status bar.
 
-To pop up ConEmu ‘Tab’ menu - right click on the `[+]` item in the ConEmu status bar.
+To pop up !ConEmu ‘Tab’ menu - right click on the `[+]` item in the !ConEmu status bar.
 
 ==Items description==
 ===Menu item===

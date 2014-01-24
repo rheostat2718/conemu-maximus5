@@ -23,6 +23,7 @@
     * Settings
       * [SettingsFast First start]
       * [Settings Settings]
+        * [SettingsIntegration Integration]
       * [Fonts Fonts]
     * Features
       * [ExtendedConsole ExtendedConsole]
