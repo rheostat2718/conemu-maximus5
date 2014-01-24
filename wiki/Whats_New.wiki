@@ -6,6 +6,12 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 140123==
+  * Don't turn on ‘Quick edit mode’ in real console by default.
+  * Underline hyperlinks internally (don't use fontmapper).
+  * Some internal changes.
+
+
 ==Build 140122==
   * `SetOption(AlwaysOnTop)` described in the About dialog.
   * Issue 1336: Vim, xterm256 drawing issues (T,S,K,J,L,M CSI commands).

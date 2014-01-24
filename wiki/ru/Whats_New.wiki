@@ -6,6 +6,12 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 140123==
+  * Don't turn on ‘Quick edit mode’ in real console by default.
+  * Underline hyperlinks internally (don't use fontmapper).
+  * Some internal changes.
+
+
 ==Build 140122==
   * `SetOption(AlwaysOnTop)` described in the About dialog.
   * Issue 1336: Vim, xterm256 drawing issues (T,S,K,J,L,M CSI commands).
