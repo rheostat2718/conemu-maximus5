@@ -25,7 +25,7 @@ Take a look at [Screencasts screencasts].
 ===ANSI X3.64 and xterm 256 colors in !ConEmu===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAnsi.png" title="ANSI X3.64 and Xterm 256 colors in ConEmu">
 
-===!ConEmu inside Windows Explorer window===
+===[SettingsIntegration ConEmu inside] Windows Explorer window===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuInside.png" title="ConEmu inside Windows Explorer pane">
 
 ===Color prompt in !ConEmu (another ANSI x3.64)===
