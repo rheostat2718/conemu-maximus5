@@ -29,14 +29,25 @@ To pop up !ConEmu system menu - right click on the leftmost part of the !ConEmu 
 
 To pop up !ConEmu ‘Tab’ menu - right click on the `[+]` item in the !ConEmu status bar.
 
-==Items description==
+==‘Integration’ page items description==
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsIntegration2.png" title="Integration page items description">
+
 ===Menu item===
-What you will see in the Explorer popup menu
+What you will see in the Explorer popup menu.
+You can use `&` sign to set hotkey for the menu item.
+For example, register `ConEmu &Here` and you can press Alt+H
+to run it from keyboard. Of course, you need to pop up menu
+first. There is no way to register ‘global’ shortcut for these methods.
 
 ===Configuration===
-Especially for Inside mode. Supposing you may want to use different font, palette and other settings.
+Especially for Inside mode. Allows to set different font, palette and other settings for your ConEmu instance.
 
 ===Command====
+Specify your shell here (cmd, powershell, Far Manager, etc.)
+
+Use `%1` macro for ‘clicked’ item (this may be folder or file!)
+
 If you need to pass directory instead of right-clicked file, you can use ‘!ConEmuWorkDir!’ macro, example:
 {{{
 "C:\Program Files\Far Manager\Far.exe" "!ConEmuWorkDir!"
@@ -47,7 +58,24 @@ Want to run shell in the existing window instead of creating new one? Use ‘/si
 }}}
 
 ===Icon file===
-Examples: ‘T:\Far3\far.exe,0’, ‘powershell.exe’, ‘C:\Images\YourIcon.ico’.
+Examples: ‘C:\Far\far.exe,0’, ‘powershell.exe’, ‘C:\Images\YourIcon.ico’.
 
 ===Sync dir (Inside mode only)===
 Here you can choose special command for ‘cd’ in your shell.
+You may use following macro here
+{{{
+\e - Esc keypress
+\b - BackSpace keypress
+\n - Enter keypress
+\1 - "dir", for example "C:\Users\Max"
+\2 - "bash dir", for example "/C/Users/Max"
+}}}
+The default is
+{{{
+PowerShell:
+  \ecd \1\n
+Bash (bash.exe, sh.exe):
+  \e\bcd \2\n
+CMD and others:
+  \ecd /d \1\n
+}}}
