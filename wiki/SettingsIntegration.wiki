@@ -58,7 +58,7 @@ Want to run shell in the existing window instead of creating new one? Use ‘/si
 }}}
 
 ===Icon file===
-Examples: ‘C:\Far\far.exe,0’, ‘powershell.exe’, ‘C:\Images\YourIcon.ico’.
+Examples: ‘C:\Far\far.exe,0’, ‘powershell.exe’, ‘C:\Images\Icon.ico’.
 
 ===Sync dir (Inside mode only)===
 Here you can choose special command for ‘cd’ in your shell.
