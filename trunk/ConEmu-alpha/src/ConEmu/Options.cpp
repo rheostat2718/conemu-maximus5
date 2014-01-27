@@ -3751,7 +3751,7 @@ bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/)
 				}
 
 				if (!iAsked)
-					iAsked = MessageBox(L"Debugger was detected!\nDo you want to disable hooks to avoid lags?", MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle());
+					iAsked = MsgBox(L"Debugger was detected!\nDo you want to disable hooks to avoid lags?", MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle());
 				if (iAsked == IDYES)
 					return false;
 			}
@@ -3853,6 +3853,8 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 
 	LPCWSTR psCurCmd = gpSetCls->GetCurCmd();
 	if (psCurCmd && lstrcmp(psCurCmd, asCmd)==0)
+		return;
+	if (psCmdHistory && lstrcmp(psCmdHistory, asCmd)==0)
 		return;
 
 	HEAPVAL

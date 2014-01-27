@@ -312,7 +312,8 @@ CConEmuMain::CConEmuMain()
 	changeFromWindowMode = wmNotChanging;
 	//isRestoreFromMinimized = false;
 	WindowStartMinimized = false;
-	WindowStartTSA = false;
+	WindowStartTsa = false;
+	WindowStartNoClose = false;
 	ForceMinimizeToTray = false;
 	mb_InCreateWindow = true;
 	mb_InShowMinimized = false;
@@ -4473,7 +4474,7 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 	BOOL lbRc = FALSE;
 	bool bUseApi = true;
 
-	if (mb_InCreateWindow && (WindowStartTSA || (WindowStartMinimized && gpSet->isMinToTray())))
+	if (mb_InCreateWindow && (WindowStartTsa || (WindowStartMinimized && gpSet->isMinToTray())))
 	{
 		_ASSERTE(anCmdShow == SW_SHOWMINNOACTIVE || anCmdShow == SW_HIDE);
 		_ASSERTE(::IsWindowVisible(ghWnd) == FALSE);
@@ -6352,7 +6353,7 @@ void CConEmuMain::CheckTopMostState()
 			LogString(szInfo);
 		}
 
-		if (IDYES == MessageBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
+		if (IDYES == MsgBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
 		{
 	        //SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
 			OnAlwaysOnTop();
@@ -10717,7 +10718,7 @@ BOOL CConEmuMain::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int c
 
 	if (bInCreate)
 	{
-		if (WindowStartTSA || (WindowStartMinimized && gpSet->isMinToTray()))
+		if (WindowStartTsa || (WindowStartMinimized && gpSet->isMinToTray()))
 		{
 			uFlags |= SWP_NOACTIVATE;
 			uFlags &= ~SWP_SHOWWINDOW;
@@ -11173,7 +11174,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 				L"Choose your shell?",
 				szName, pszDataW ? L"is empty" : L"not found");
 
-			int nBtn = MessageBox(pszErrMsg, MB_YESNO|MB_ICONEXCLAMATION);
+			int nBtn = MsgBox(pszErrMsg, MB_YESNO|MB_ICONEXCLAMATION);
 
 			SafeFree(pszErrMsg);
 			SafeFree(pszDataW);
@@ -11511,13 +11512,15 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		if (WindowStartMinimized)
 		{
-			if (WindowStartTSA || gpConEmu->ForceMinimizeToTray)
+			_ASSERTE(!WindowStartNoClose || (WindowStartTsa && WindowStartNoClose));
+
+			if (WindowStartTsa || gpConEmu->ForceMinimizeToTray)
 			{
 				Icon.HideWindowToTray();
 
-				if (WindowStartTSA)
+				if (WindowStartNoClose)
 				{
-					LogString(L"Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1} due to WindowStartTSA");
+					LogString(L"Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1} due to WindowStartTsa & WindowStartNoClose");
 					//_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1}");
 					gpSet->isMultiLeaveOnClose = 1;
 					gpSet->isMultiHideOnClose = 1;
@@ -18092,6 +18095,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		DEBUGSTRMSG(szDbg);
 	}
 	#endif
+
+	PatchMsgBoxIcon(hWnd, messg, wParam, lParam);
 
 	if (messg == WM_SYSCHAR)  // Для пересылки в консоль не используется, но чтобы не пищало - необходимо
 		return TRUE;

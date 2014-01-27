@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCheck.h"
 #endif
 
+AppMsgBox_t AssertMsgBox = NULL;
+
 #ifdef _DEBUG
 bool gbInMyAssertTrap = false;
 bool gbInMyAssertPipe = false;
@@ -71,7 +73,8 @@ DWORD WINAPI MyAssertThread(LPVOID p)
 		#ifdef CONEMU_MINIMAL
 			GuiMessageBox(ghConEmuWnd, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL);
 		#else
-			MessageBoxW(NULL, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL);
+			AssertMsgBox ? AssertMsgBox(pa->szDebugInfo, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL, pa->szTitle, NULL, false) :
+			MessageBox(NULL, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL);
 		#endif
 			
 

@@ -2604,6 +2604,26 @@ bool CRealBuffer::ProcessFarHyperlink(bool bUpdateScreen)
 	return ProcessFarHyperlink(WM_MOUSEMOVE, mcr_LastMousePos, bUpdateScreen);
 }
 
+bool CRealBuffer::CanProcessHyperlink(const COORD& crMouse)
+{
+	if (!mp_RCon->isActive())
+		return false;
+
+	// Disallow hyperlinks on Far panels
+	if (mp_RCon->isFar())
+	{
+		RECT rc;
+		COORD crMap = BufferToScreen(crMouse);
+		if (isLeftPanel() && GetPanelRect(FALSE, &rc, TRUE, TRUE) && CoordInRect(crMap, rc))
+			return false;
+		if (isRightPanel() && GetPanelRect(TRUE, &rc, TRUE, TRUE) && CoordInRect(crMap, rc))
+			return false;
+	}
+
+	// Allow
+	return true;
+}
+
 bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScreen)
 {
 	if (!mp_RCon->IsFarHyperlinkAllowed(false))
@@ -2627,7 +2647,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 
 	COORD crEnd = crStart;
 	wchar_t szText[MAX_PATH+10];
-	ExpandTextRangeType rc = mp_RCon->isActive()
+	ExpandTextRangeType rc = CanProcessHyperlink(crStart)
 		? ExpandTextRange(crStart, crEnd, etr_FileAndLine, szText, countof(szText))
 		: etr_None;
 	if (memcmp(&crStart, &con.etr.mcr_FileLineStart, sizeof(crStart)) != 0
@@ -3328,8 +3348,14 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		BYTE bAction = (messg == WM_RBUTTONUP) ? gpSet->isCTSRBtnAction : gpSet->isCTSMBtnAction; // 0-off, 1-copy, 2-paste, 3-auto
 
 		// Только Copy. Делать Paste при наличии выделения - глупо. Так что только Copy.
-		BOOL bDoCopy = (bAction == 1) || (bAction == 3);
-		DoSelectionFinalize(bDoCopy);
+		bool bDoCopy = (bAction == 1) || (bAction == 3);
+		bool bCopyOk = DoSelectionFinalize(bDoCopy);
+
+		if (bCopyOk && (bAction == 3))
+		{
+			// Immediately paste into console ('Auto' mode)?
+			//-- mp_RCon->Paste();
+		}
 
 		return true;
 	}
@@ -5851,8 +5877,11 @@ bool CRealBuffer::FindRangeStart(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out
 			}
 
 			if ((crFrom.X >= 3)
-				&& ((pChar[crFrom.X-1] == L'/') && (pChar[crFrom.X-2] == L':')
-					&& wcschr(pszUrl, pChar[crFrom.X-3]))) // как минимум одна буква на протокол
+				&& ((pChar[crFrom.X-1] == L'/') // как минимум одна буква на протокол
+					&& (((pChar[crFrom.X-2] == L':') && wcschr(pszUrl, pChar[crFrom.X-3])) // http://www.ya.ru
+						|| ((crFrom.X >= 4) && (pChar[crFrom.X-2] == L'/') && (pChar[crFrom.X-3] == L':') && wcschr(pszUrl, pChar[crFrom.X-4])) // file:///c:\file.html
+					))
+				)
 			{
 				bUrlMode = true;
 				crTo.X = crFrom.X-2;
@@ -5911,29 +5940,14 @@ bool CRealBuffer::CheckValidUrl(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out]
 		if (((crTo.X+4) < nLen) && (pChar[crTo.X+1] == L'/') && (pChar[crTo.X+2] == L'/'))
 		{
 			bUrlMode = true;
-			if (wcschr(pszUrl+2 /*пропустить ":/"*/, pChar[crTo.X+3]))
+			if (wcschr(pszUrl+2 /*пропустить ":/"*/, pChar[crTo.X+3])
+				|| ((((crTo.X+5) < nLen) && (pChar[crTo.X+3] == L'/'))
+					&& wcschr(pszUrl+2 /*пропустить ":/"*/, pChar[crTo.X+4]))
+				)
 			{
-				if (((crTo.X+4) < nLen) // типа file://c:\xxx ?
-					&& ((pChar[crTo.X+3] >= L'a' && pChar[crTo.X+3] <= L'z')
-						|| (pChar[crTo.X+3] >= L'A' && pChar[crTo.X+3] <= L'Z'))
-					&& (pChar[crTo.X+4] == L':'))
-				{
-					if (((crTo.X+5) < nLen) && (pChar[crTo.X+5] == L'\\'))
-					{
-						_ASSERTE(*pszUrlDelim == L'\\');
-						pszUrlDelim++;
-					}
-					crTo.X += 3;
-					crFrom = crTo;
-					bUrlMode = false;
-				}
-
-				if (bUrlMode)
-				{
-					crFrom = crTo;
-					while ((crFrom.X > 0) && wcschr(pszProtocol, pChar[crFrom.X-1]))
-						crFrom.X--;
-				}
+				crFrom = crTo;
+				while ((crFrom.X > 0) && wcschr(pszProtocol, pChar[crFrom.X-1]))
+					crFrom.X--;
 			}
 			else
 			{
@@ -5994,14 +6008,15 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 								0};
 			const wchar_t* pszSpacing = L" \t\xB7\x2192"; //B7 - режим "Show white spaces", 2192 - символ табуляции там же
 			const wchar_t* pszSeparat = L" \t:(";
-			const wchar_t* pszTermint = L":),";
+			const wchar_t* pszTermint = L":)],";
 			const wchar_t* pszDigits  = L"0123456789";
 			const wchar_t* pszSlashes = L"/\\";
-			const wchar_t* pszUrl = L":/%#ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz;?@&=+$,-_.!~*'()0123456789";
+			const wchar_t* pszUrl = L":/\\:%#ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz;?@&=+$,-_.!~*'()0123456789";
 			const wchar_t* pszUrlTrimRight = L".,;";
 			const wchar_t* pszProtocol = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.";
 			const wchar_t* pszEMail = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
 			const wchar_t* pszUrlDelim = L"\\\"<>{}[]^`' \t\r\n";
+			const wchar_t* pszUrlFileDelim = L"\"<>^ \t\r\n";
 			int nColons = 0;
 			bool bUrlMode = false, bMaybeMail = false;
 			SHORT MailX = -1;
@@ -6033,6 +6048,8 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			// ConEmuC.cpp:49: error: 'qqq' does not name a type
 			// 1.c:3: some message
 			// file.cpp:29:29: error
+			// CPP Check
+			// [common\PipeServer.h:1145]: (style) C-style pointer casting
 			// Delphi
 			// T:\VCProject\FarPlugin\$FarPlugins\MaxRusov\far-plugins-read-only\FarLib\FarCtrl.pas(1002) Error: Undeclared identifier: 'PCTL_GETPLUGININFO'
 			// FPC
@@ -6058,11 +6075,11 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 			// Поехали
 			if (bUrlMode)
 			{
-				while (((lcrTo.X+1) < nLen) && !wcschr(pszUrlDelim, pChar[lcrTo.X+1]))
+				LPCWSTR pszDelim = (wcsncmp(pChar+lcrFrom.X, L"file://", 7) == 0) ? pszUrlFileDelim : pszUrlDelim;
+				while (((lcrTo.X+1) < nLen) && !wcschr(pszDelim, pChar[lcrTo.X+1]))
 					lcrTo.X++;
 			}
 			else while ((lcrTo.X+1) < nLen)
-				//&& ((pChar[lcrTo.X] != L':') || (pChar[lcrTo.X] == L':' && wcschr(pszDigits, pChar[lcrTo.X+1]))))
 			{
 				if ((pChar[lcrTo.X] == L'/') && ((lcrTo.X+1) < nLen) && (pChar[lcrTo.X+1] == L'/')
 					&& !((lcrTo.X > 1) && (pChar[lcrTo.X] == L':'))) // и НЕ URL адрес
@@ -6131,18 +6148,21 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 							bWasSeparator = (wcschr(pszSeparat, pChar[lcrTo.X]) != NULL);
 					}
 
-					// Расчитано на закрывающие : или ) или ,
-					_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L',' && pszTermint[3]==0);
+					// Расчитано на закрывающие : или ) или ] или ,
+					_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L']' && pszTermint[3]==L',' && pszTermint[5]==0);
 					if (bDigits && wcschr(pszTermint, pChar[lcrTo.X]) /*pChar[lcrTo.X] == L':'*/)
 					{
-						// Если номер строки обрамлен скобками - скобки должны быть сбалансированы
+						// Validation
 						if (((pChar[lcrTo.X] == L':')
 								&& (wcschr(pszSpacing, pChar[lcrTo.X+1])
 									|| wcschr(pszDigits, pChar[lcrTo.X+1])))
+						// Если номер строки обрамлен скобками - скобки должны быть сбалансированы
 						|| ((pChar[lcrTo.X] == L')') && (iBracket == 1)
 								&& ((pChar[lcrTo.X+1] == L':')
 									|| wcschr(pszSpacing, pChar[lcrTo.X+1])
 									|| wcschr(pszDigits, pChar[lcrTo.X+1])))
+						// [file.cpp:1234]: (cppcheck)
+						|| ((pChar[lcrTo.X] == L']') && (pChar[lcrTo.X+1] == L':'))
 							)
 						{
 							_ASSERTE(bLineNumberFound==false);
@@ -6154,6 +6174,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 
 					switch (pChar[lcrTo.X])
 					{
+					// Пока регулярок нет...
 					case L'(': iBracket++; break;
 					case L')': iBracket--; break;
 					case L'/': case L'\\': iBracket = 0; break;
@@ -6187,7 +6208,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 						break;
 					goto wrap; // Не оно
 				}
-			}
+			} // end of 'while ((lcrTo.X+1) < nLen)'
 
 			if (bUrlMode)
 			{
@@ -6202,7 +6223,12 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 				if (bLineNumberFound)
 					bMaybeMail = false;
 
-				if ((pChar[lcrTo.X] != L':' && pChar[lcrTo.X] != L' ' && !(pChar[lcrTo.X] == L')' && iBracket == 1)) || !bLineNumberFound || (nColons > 2))
+				if ((pChar[lcrTo.X] != L':'
+						&& pChar[lcrTo.X] != L' '
+						&& !((pChar[lcrTo.X] == L')') && iBracket == 1)
+						&& !((pChar[lcrTo.X] == L']') && (pChar[lcrTo.X+1] == L':'))
+					)
+					|| !bLineNumberFound || (nColons > 2))
 				{
 					if (!bMaybeMail)
 						goto wrap;
@@ -6227,6 +6253,9 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 					{
 						goto wrap; // Номера строки нет
 					}
+					// [file.cpp:1234]: (cppcheck) ?
+					if ((pChar[lcrTo.X+1] == L']') && (pChar[lcrFrom.X] == L'['))
+						lcrFrom.X++;
 					// Чтобы даты ошибочно не подсвечивать:
 					// 29.11.2011 18:31:47
 					{
