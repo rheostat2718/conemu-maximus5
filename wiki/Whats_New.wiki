@@ -6,6 +6,12 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 140128==
+  * New pasting mode ‘One line’ (useful with "git status" & "git add"). When ‘Right mouse button action’ is set to ‘Auto’ you may press it during selection (when Left mouse button is still pressed) to paste all copies lines as a ONE space-delimited line.
+  * Issue 1416: ReAttach after Detach fails for non-console applications
+  * One more icon fix in MessageBox dialogs
+
+
 ==Build 140127==
   * `AnsiColors24bit.ps1` - example how to print with 24bit color with !PowerShell script.
   * Support cppcheck erors in hyperlink detector.
