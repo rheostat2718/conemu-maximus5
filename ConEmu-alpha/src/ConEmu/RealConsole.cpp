@@ -1121,7 +1121,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 
 			if (CD)
 			{
-				pszFormat = gpConEmu->mp_Inside ? gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir : NULL; // \ecd /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
+				pszFormat = gpConEmu->mp_Inside ? gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir : NULL; // \ecd /d \1\n - \e - ESC, \b - BS, \n - ENTER, \1 - "dir", \2 - "bash dir"
 				if (!pszFormat || !*pszFormat)
 				{
 					LPCWSTR pszExe = GetActiveProcessName();
@@ -4260,7 +4260,7 @@ bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0
 		}
 		else
 		{
-			MessageBox(L"Return to Primary buffer first!", MB_ICONEXCLAMATION);
+			MsgBox(L"Return to Primary buffer first!", MB_ICONEXCLAMATION);
 			goto wrap;
 		}
 	}
@@ -8677,6 +8677,9 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	{
 		case WM_INITDIALOG:
 		{
+			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
 			gpConEmu->OnOurDialogOpened();
 			_ASSERTE(pRCon!=NULL);
 			SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)pRCon);
@@ -8814,7 +8817,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 	{
 		wchar_t szConfirm[255];
 		_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Do you want to duplicate tab with root '%s'?", p->Name);
-		if (bSkipMsg || ((MessageBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)))
+		if (bSkipMsg || ((MsgBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)))
 		{
 			bool bRootCmdRedefined = false;
 			RConStartArgs args;
@@ -9683,7 +9686,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 	PostConsoleMessage(hConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, (LPARAM)dwNewKeyboardLayout);
 }
 
-void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NULL*/, bool abNoConfirm /*= false*/, bool abCygWin /*= false*/)
+void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText /*= NULL*/, bool abNoConfirm /*= false*/, bool abCygWin /*= false*/)
 {
 	if (!this)
 		return;
@@ -9778,7 +9781,7 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 	wchar_t* pszRN = wcspbrk(pszBuf, L"\r\n");
 	if (pszRN && (pszRN < pszEnd))
 	{
-		if (abFirstLineOnly)
+		if (PasteMode == pm_FirstLine)
 		{
 			*pszRN = 0; // буфер наш, что хотим - то и делаем )
 			pszEnd = pszRN;
@@ -9787,7 +9790,7 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 		{
 			wcscpy_c(szMsg, L"Pasting text involves <Enter> keypress!\nContinue?");
 
-			if (MessageBox(ghWnd, szMsg, GetTitle(), MB_OKCANCEL) != IDOK)
+			if (MsgBox(szMsg, MB_OKCANCEL|MB_ICONEXCLAMATION, GetTitle()) != IDOK)
 			{
 				goto wrap;
 			}
@@ -9798,7 +9801,7 @@ void CRealConsole::Paste(bool abFirstLineOnly /*= false*/, LPCWSTR asText /*= NU
 	{
 		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Pasting text length is %u chars!\nContinue?", (DWORD)(pszEnd - pszBuf));
 
-		if (MessageBox(ghWnd, szMsg, GetTitle(), MB_OKCANCEL) != IDOK)
+		if (MsgBox(szMsg, MB_OKCANCEL|MB_ICONQUESTION, GetTitle()) != IDOK)
 		{
 			goto wrap;
 		}

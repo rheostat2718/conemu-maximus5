@@ -111,16 +111,18 @@ BOOL gbDebugShowRects = FALSE;
 CEStartupEnv* gpStartEnv = NULL;
 
 LONG DontEnable::gnDontEnable = 0;
+LONG DontEnable::gnDontEnableCount = 0;
 //LONG nPrev;   // Informational!
 //bool bLocked; // Proceed only main thread
-DontEnable::DontEnable()
+DontEnable::DontEnable(bool abLock /*= true*/)
 {
-	bLocked = gpConEmu->isMainThread();
+	bLocked = abLock && gpConEmu->isMainThread();
 	if (bLocked)
 	{
 		_ASSERTE(gnDontEnable>=0);
 		nPrev = InterlockedIncrement(&gnDontEnable) - 1;
 	}
+	InterlockedIncrement(&gnDontEnableCount);
 };
 DontEnable::~DontEnable()
 {
@@ -128,9 +130,10 @@ DontEnable::~DontEnable()
 	{
 		InterlockedDecrement(&gnDontEnable);
 	}
+	InterlockedDecrement(&gnDontEnableCount);
 	_ASSERTE(gnDontEnable>=0);
 };
-BOOL DontEnable::isDontEnable()
+bool DontEnable::isDontEnable()
 {
 	return (gnDontEnable > 0);
 };
@@ -1942,12 +1945,44 @@ void SkipOneShowWindow()
 	return;
 }
 
-int MessageBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND hParent /*= NULL*/)
+static HWND ghDlgPendingFrom = NULL;
+void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	DontEnable de;
+	if (!ghDlgPendingFrom)
+		return;
 
-	int nBtn = MessageBox(gbMessagingStarted ? (hParent ? hParent : ghWnd) : NULL,
-		lpText, lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
+	HWND hFore = GetForegroundWindow();
+	HWND hActive = GetActiveWindow();
+	if (hFore && (hFore != ghDlgPendingFrom))
+	{
+		DWORD nPID = 0;
+		GetWindowThreadProcessId(hFore, &nPID);
+		if (nPID == GetCurrentProcessId())
+		{
+			wchar_t szClass[32] = L""; GetClassName(hFore, szClass, countof(szClass));
+			if (lstrcmp(szClass, L"#32770") == 0)
+			{
+				SendMessage(hFore, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+				SendMessage(hFore, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+				ghDlgPendingFrom = NULL;
+			}
+		}
+	}
+}
+
+int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahParent /*= (HWND)-1*/, bool abModal /*= true*/)
+{
+	DontEnable de(abModal);
+
+	ghDlgPendingFrom = GetForegroundWindow();
+
+	HWND hParent = gbMessagingStarted
+		? ((ahParent == (HWND)-1) ? ghWnd :ahParent)
+		: NULL;
+
+	int nBtn = MessageBox(hParent, lpText, lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
+
+	ghDlgPendingFrom = NULL;
 
 	return nBtn;
 }
@@ -1995,7 +2030,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 		else
 		{
 			bInAssert = true;
-			nRet = MessageBox(NULL, pszFull, pszTitle, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL|MB_DEFBUTTON3);
+			nRet = MsgBox(pszFull, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL|MB_DEFBUTTON3, pszTitle, NULL);
 			bInAssert = false;
 			nPostCode = GetLastError();
 		}
@@ -2069,7 +2104,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 	WARNING("!!! Заменить MessageBox на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 
 	BOOL lb = gbInDisplayLastError; gbInDisplayLastError = TRUE;
-	nBtn = MessageBox(out ? out : asLabel, dwMsgFlags, asTitle, hParent);
+	nBtn = MsgBox(out ? out : asLabel, dwMsgFlags, asTitle, hParent);
 	gbInDisplayLastError = lb;
 
 	MCHKHEAP
@@ -3134,6 +3169,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
 	HeapInitialize();
 	RemoveOldComSpecC();
+	AssertMsgBox = MsgBox;
 
 	/* *** DEBUG PURPOSES */
 	gpStartEnv = LoadStartupEnv();
@@ -3647,10 +3683,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					WindowModeVal = rMaximized; WindowPrm = true;
 				}
-				else if (!klstricmp(curCommand, _T("/min")) || !klstricmp(curCommand, _T("/mintsa")))
+				else if (!klstricmp(curCommand, _T("/min"))
+					|| !klstricmp(curCommand, _T("/mintsa"))
+					|| !klstricmp(curCommand, _T("/starttsa")))
 				{
 					gpConEmu->WindowStartMinimized = true;
-					gpConEmu->WindowStartTSA = (klstricmp(curCommand, _T("/mintsa")) == 0);
+					if (klstricmp(curCommand, _T("/min")) != 0)
+					{
+						gpConEmu->WindowStartTsa = true;
+						gpConEmu->WindowStartNoClose = (klstricmp(curCommand, _T("/mintsa")) == 0);
+					}
 				}
 				else if (!klstricmp(curCommand, _T("/tsa")) || !klstricmp(curCommand, _T("/tray")))
 				{
