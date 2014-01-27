@@ -3344,7 +3344,7 @@ BOOL CRealConsole::StartProcess()
 
 		MCHKHEAP
 		//Box(psz);
-		int nBrc = MessageBox(NULL, psz, gpConEmu->GetDefaultTitle(), nButtons);
+		int nBrc = MsgBox(psz, nButtons, gpConEmu->GetDefaultTitle(), NULL, false);
 		Free(psz); Free(pszErr);
 
 		if (nBrc == IDYES)
@@ -9786,6 +9786,48 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 			*pszRN = 0; // буфер наш, что хотим - то и делаем )
 			pszEnd = pszRN;
 		}
+		else if (PasteMode == pm_OneLine)
+		{
+			const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
+			bool bTrimTailing = pApp ? (pApp->CTSTrimTrailing() != 0) : false;
+
+			//PRAGMA_ERROR("Неправильно вставляется, если в превой строке нет trailing space");
+
+			wchar_t *pszDst = pszBuf, *pszSrc = pszBuf, *pszEOL;
+			while (pszSrc < pszEnd)
+			{
+				// Find LineFeed
+				pszRN = wcspbrk(pszSrc, L"\r\n");
+				if (!pszRN) pszRN = pszSrc + _tcslen(pszSrc);
+				// Advance to next line
+				wchar_t* pszNext = pszRN;
+				if (*pszNext == L'\r') pszNext++;
+				if (*pszNext == L'\n') pszNext++;
+				// Find end of line, trim trailing spaces
+				pszEOL = pszRN;
+				if (bTrimTailing)
+				{
+					while ((pszEOL > pszSrc) && (*(pszEOL-1) == L' ')) pszEOL--;
+				}
+				// If line was not empty and there was already some changes
+				size_t cchLine = pszEOL - pszSrc;
+				if ((pszEOL > pszSrc) && (pszSrc != pszDst))
+				{
+					memmove(pszDst, pszSrc, cchLine * sizeof(*pszSrc));
+				}
+				// Move src pointer to next line
+				pszSrc = pszNext;
+				// Move Dest pointer and add one trailing space (line delimiter)
+				pszDst += cchLine;
+				if ((pszDst+1) < pszEnd)
+					*(pszDst++) = L' ';
+			}
+			// Z-terminate our string
+			*pszDst = 0;
+			// Done, it is ready to pasting
+			pszEnd = pszDst;
+			_ASSERTE(wcspbrk(pszBuf, L"\r\n") == NULL);
+		}
 		else if (gpSet->isPasteConfirmEnter && !abNoConfirm)
 		{
 			wcscpy_c(szMsg, L"Pasting text involves <Enter> keypress!\nContinue?");
@@ -9842,7 +9884,7 @@ bool CRealConsole::isConsoleClosing()
 			_wsprintf(szText, SKIPLEN(countof(szText))
 			          L"This is Debug message.\n\nServer hung. PID=%u\nm_ServerClosing.nServerPID=%u\n\nPress Ok to terminate server",
 			          mn_MainSrv_PID, m_ServerClosing.nServerPID);
-			MessageBox(NULL, szText, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+			MsgBox(szText, MB_ICONSTOP|MB_SYSTEMMODAL, szTitle);
 			#else
 			_ASSERTE(m_ServerClosing.nServerPID==0);
 			#endif
@@ -10055,7 +10097,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 					if (abConfirm)
 					{
 						DontEnable de;
-						nBtn = MessageBox(gbMessagingStarted ? ghWnd : NULL, szMsg, Title, MB_ICONEXCLAMATION|MB_OKCANCEL);
+						nBtn = MsgBox(szMsg, MB_ICONEXCLAMATION|MB_OKCANCEL, Title, gbMessagingStarted ? ghWnd : NULL, false);
 					}
 
 					if (nBtn == IDOK)
@@ -10167,9 +10209,10 @@ void CRealConsole::CloseTab()
 		{
 			wchar_t szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
-				L"Far Manager (PID=%u) is not alive.\nClose realconsole window instead of posting Macro?",
+				L"Far Manager (PID=%u) is not alive.\n"
+				L"Close realconsole window instead of posting Macro?",
 				GetFarPID(TRUE));
-			int nBrc = MessageBox(NULL, szInfo, gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+			int nBrc = MsgBox(szInfo, MB_ICONEXCLAMATION|MB_YESNOCANCEL, gpConEmu->GetDefaultTitle());
 			switch (nBrc)
 			{
 			case IDCANCEL:
@@ -12726,7 +12769,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	{
 		if (!bPosted)
 		{
-			if (MessageBox(NULL, L"Detach GUI application from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
+			if (MsgBox(L"Detach GUI application from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES)
 				return;
 
 			RECT rcGui = {}; //rcPreGuiWndRect;
@@ -12786,7 +12829,7 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	{
 		if (!bPosted)
 		{
-			if (MessageBox(NULL, L"Detach console from ConEmu?", GetTitle(), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2) != IDYES)
+			if (MsgBox(L"Detach console from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES)
 				return;
 
 			mp_VCon->PostDetach(bSendCloseConsole);
