@@ -6,8 +6,8 @@
 || /Dir _workdir_ || Set working (startup) directory for !ConEmu and console processes. This switch override !ConEmu startup directory (defined in the !ConEmu shortcut for example). ||
 || /FS | /Max | /Min || (Full screen), (Maximized) or (Minimized) mode ||
 || /TSA || Override (enable) minimize to taskbar status area (TSA) ||
-|| /MinTSA || Start ConEmu in TSA, but minimize to taskbar after restoring. Also ConEmu will *not* be exited after last console close, but hided to TSA. ||
-|| /StartTSA || Start ConEmu in TSA, but minimize to taskbar after restoring. ConEmu will be *exited* after last console close. ||
+|| /MinTSA || Start !ConEmu in TSA, but minimize to taskbar after restoring. Also !ConEmu will *not* be exited after last console close, but hided to TSA. ||
+|| /StartTSA || Start !ConEmu in TSA, but minimize to taskbar after restoring. !ConEmu will be *exited* after last console close. ||
 || /Icon _file_ || Take icon from file (exe, dll, ico) ||
 || /Title _title_ || Set *fixed* _title_ for !ConEmu window. You may use environment variables in _title_. ||
 || /Multi | /!NoMulti || Enable or disable multiconsole features ||
