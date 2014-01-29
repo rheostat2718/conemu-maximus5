@@ -1,0 +1,8 @@
+﻿ConEmu, cygwin/msys and ssh-agent
+
+Article is under construction
+
+This may be useful: [https://twitter.com/rootpd/status/428600352229687296 Tweet #1],
+[http://superuser.com/a/230872/234747 superuser answer],
+[https://twitter.com/factormystic/status/428610122001432576 Tweet #2],
+[https://code.google.com/p/conemu-maximus5/wiki/ConEmuEnvironment#Export_variables exporting environment].
