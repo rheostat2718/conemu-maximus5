@@ -1,0 +1,37 @@
+﻿Want to contribute? You may help with coding or documentation (wiki).
+
+=Sources=
+
+==[https://github.com/Maximus5/ConEmu Github (preferred mirror)]==
+Here you can find latest sources and all actual branches.
+{{{
+git clone https://github.com/Maximus5/ConEmu.git
+}}}
+
+==[https://code.google.com/p/conemu-maximus5/source/checkout Googlecode (svn)]==
+===Alpha branch===
+{{{
+svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-alpha/ ConEmu-alpha
+}}}
+===Preview branch===
+{{{
+svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-preview/ ConEmu-preview
+}}}
+===Stable version (may be old and obsolete)===
+{{{
+svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-stable/ ConEmu-stable
+}}}
+
+=Documentation=
+Oh, there are many docs and places with information about ConEmu, but not enough.
+
+For example, almost all Settings pages are not described in wiki, there are only
+English hints (tooltips) in the Settings dialog. I'm planning to create a script
+(powershell I think) to automate creating of wiki pages from 
+[https://github.com/Maximus5/ConEmu/blob/alpha/src/ConEmu/ConEmu.rc (dialogs)]
+and
+[https://github.com/Maximus5/ConEmu/blob/alpha/src/ConEmu/ConEmu.rc2 ConEmu.rc2 (hints)].
+
+And, of course, there are localization issues... Dialogs, hints, GUI and console messages...
+
+Also, in russian: ConEmuHelping.
