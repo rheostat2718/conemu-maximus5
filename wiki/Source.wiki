@@ -25,6 +25,13 @@ svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-stable/ ConEmu-sta
 =Documentation=
 Oh, there are many docs and places with information about !ConEmu, but not enough.
 
+  * [https://code.google.com/p/conemu-maximus5/wiki/ConEmu official wiki]
+  * [http://superuser.com/questions/tagged/conemu Questions on superuser.com]
+  * [http://stackoverflow.com/questions/tagged/conemu Questions on stackoverflow.com]
+  * [https://code.google.com/p/conemu-maximus5/issues/list?can=1&q=&sort=-id+-id&colspec=ID+Stars+Type+Status+Modified+Reporter+Summary&cells=tiles Issue tracker]
+  * [http://groups.google.com/group/conemu_ml mailing list]
+  * [http://www.conemu.ru/ russian mirror (under construction)]
+
 For example, almost all Settings pages are not described in wiki, there are only
 English hints (tooltips) in the Settings dialog. I'm planning to create a script
 (powershell I think) to automate creating of wiki pages from 
