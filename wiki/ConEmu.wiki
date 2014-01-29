@@ -45,7 +45,7 @@ If you notice lags while executing batches or commands (from cmd/git/bash/etc.) 
 <wiki:comment>
 <a href="http://code.google.com/p/conemu-maximus5/wiki/Awards"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2012SO.png" title="Community Promotion Ads - 2012"/></a>
 </wiki:comment>
-<a href="http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=Type%3DDocumentation+&sort=-modified"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2013.png" title="Helping with documentation"/></a><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3LV8XTRBK9K4E"><img src="https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif" alt="Donation" title="Donate ConEmu"/></a> <a href="http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub" target="_blank"><img src="http://api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0" /></a>
+<a href="http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=Type%3DDocumentation+&sort=-modified"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2014.png" title="Any help is appreciated"/></a><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3LV8XTRBK9K4E"><img src="https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif" alt="Donation" title="Donate ConEmu"/></a> <a href="http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub" target="_blank"><img src="http://api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0" /></a>
 </td></tr></table>
 
 <font size="3">*History*</font>
