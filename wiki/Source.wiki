@@ -23,12 +23,12 @@ svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-stable/ ConEmu-sta
 }}}
 
 =Documentation=
-Oh, there are many docs and places with information about ConEmu, but not enough.
+Oh, there are many docs and places with information about !ConEmu, but not enough.
 
 For example, almost all Settings pages are not described in wiki, there are only
 English hints (tooltips) in the Settings dialog. I'm planning to create a script
 (powershell I think) to automate creating of wiki pages from 
-[https://github.com/Maximus5/ConEmu/blob/alpha/src/ConEmu/ConEmu.rc (dialogs)]
+[https://github.com/Maximus5/ConEmu/blob/alpha/src/ConEmu/ConEmu.rc ConEmu.rc (dialogs)]
 and
 [https://github.com/Maximus5/ConEmu/blob/alpha/src/ConEmu/ConEmu.rc2 ConEmu.rc2 (hints)].
 
