@@ -6,6 +6,14 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 140202==
+  * New ‘Intelligent selection’ mode. Now, you may start both block or text selection with mouse without modifier pressed. Type of selection will be determined by the direction of LButton mouse drag, when you start drag vertically - block selection, horizontally - text selection. If you set up and press selection modifier - mouse selection will start even if ‘Intelligent selection’ is disabled with exceptions. New mode may be disabled ‘totally’ or for specified processes only. For example, Vim knows about text selection and can process mouse internally, and Far Manager can use mouse for dragging files or text selection in Editors. When "far" specified in the exceptions without extension, you can use new mode in the ‘User screen’ (panels are off) and in Viewers.
+  * So, ‘Mark/Copy’ settings page redesigned
+  * GuiMacro. Paste(9), Paste(10) - One-line paste with or without confirmation.
+  * ‘Change prompt position with LClick’ works on left button release.
+  * Some internal changes.
+
+
 ==Build 140128==
   * New pasting mode ‘One line’ (useful with "git status" & "git add"). When ‘Right mouse button action’ is set to ‘Auto’ you may press it during selection (when Left mouse button is still pressed) to paste all copies lines as a ONE space-delimited line.
   * Issue 1416: !ReAttach after Detach fails for non-console applications
