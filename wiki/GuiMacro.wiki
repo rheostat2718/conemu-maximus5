@@ -101,6 +101,8 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
        Cmd==6: select and parse cygwin file pathname, Text - default
        Cmd==7: select and parse cygwin folder pathname, Text - default
        Cmd==8: paste path from clipboard converted to CygWin style
+       Cmd==9: paste all lines space-separated
+       Cmd==10: paste all lines space-separated, without confirmations
     Print(["<Text>"])
      - Alias for Paste(2,"<Text>")
     Progress(<Type>[,<Value>])

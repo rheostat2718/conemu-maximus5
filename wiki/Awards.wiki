@@ -24,10 +24,10 @@
 ===Please, vote for !ConEmu===
 <wiki:comment>
 <a href="http://www.ohloh.net/stack_entries/new?project_id=conemu-maximus5&ref=sample">Ohloh</a>,
-</wiki:comment>
 <a href="http://redd.it/11k5oy">Reddit</a>,
-<a href="https://www.ohloh.net/p/conemu-maximus5/reviews">Ohloh</a>,
+</wiki:comment>
 <a href="http://alternativeto.net/software/conemu/">alternativeTo</a>,
+<a href="https://www.ohloh.net/p/conemu-maximus5/reviews">Ohloh</a>,
 <a href="https://sourceforge.net/projects/conemu/reviews/">!SourceForge</a>,
 <a href="http://www.facebook.com/ConEmu.Maximus5">Facebook</a>,
 
