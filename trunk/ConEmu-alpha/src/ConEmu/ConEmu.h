@@ -453,6 +453,12 @@ class CConEmuMain :
 			COORD crConsole;       // Console size in cells at storing moment
 			SIZE  csFont;          // VCon Font size (Width, Height) at storing moment
 		} mr_Ideal;
+		struct
+		{
+			BOOL  bChecked;
+			DWORD nReadyToSelNoEmpty;
+			DWORD nReadyToSel;
+		} m_Pressed;
 	public:
 		void StoreIdealRect();
 		RECT GetIdealRect();
@@ -579,9 +585,9 @@ class CConEmuMain :
 		void SetRunQueueTimer(bool bSet, UINT uElapse);
 
 		//
-		virtual void OnUseGlass(bool abEnableGlass);
-		virtual void OnUseTheming(bool abEnableTheming);
-		virtual void OnUseDwm(bool abEnableDwm);
+		virtual void OnUseGlass(bool abEnableGlass) override;
+		virtual void OnUseTheming(bool abEnableTheming) override;
+		virtual void OnUseDwm(bool abEnableDwm) override;
 
 		bool ExecuteProcessPrepare();
 		void ExecuteProcessFinished(bool bOpt);
@@ -624,6 +630,8 @@ class CConEmuMain :
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
 		void CheckUpdates(BOOL abShowMessages);
+		DWORD isSelectionModifierPressed(bool bAllowEmpty);
+		void ForceSelectionModifierPressed(DWORD nValue);
 		enum DragPanelBorder CheckPanelDrag(COORD crCon);
 		bool ConActivate(int nCon);
 		bool ConActivateNext(BOOL abNext);
@@ -786,6 +794,7 @@ class CConEmuMain :
 		static LRESULT CALLBACK WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		BOOL isDialogMessage(MSG &Msg);
 		BOOL setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
+		void PreWndProc(UINT messg);
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		void DoFullScreen();
@@ -826,7 +835,7 @@ class CConEmuMain :
 		LRESULT OnSize(bool bResizeRCon=true, WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
 		LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
 		LRESULT OnMoving(LPRECT prcWnd = NULL, bool bWmMove = false);
-		virtual LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		virtual LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 		LRESULT OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		void OnSizePanels(COORD cr);
 		LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);

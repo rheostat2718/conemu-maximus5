@@ -1944,9 +1944,6 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	BOOL lbScreenChanged = FALSE;
 	wchar_t* lpChar = con.pConChar;
 	WORD* lpAttr = con.pConAttr;
-	CONSOLE_SELECTION_INFO sel;
-	bool bSelectionPresent = GetConsoleSelectionInfo(&sel);
-	UNREFERENCED_PARAMETER(bSelectionPresent);
 
 	if (mp_RCon->mb_ResetStatusOnConsoleReady)
 	{
@@ -1997,8 +1994,6 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 		memmove(con.pDataCmp, pData, CharCount*sizeof(CHAR_INFO));
 		HEAPVAL;
 		CHAR_INFO* lpCur = con.pDataCmp;
-		//// Когда вернется возможность выделения - нужно сразу применять данные в атрибуты
-		//_ASSERTE(!bSelectionPresent); -- не нужно. Все сделает GetConsoleData
 		wchar_t ch;
 
 		// Расфуговка буфера CHAR_INFO на текст и атрибуты
@@ -2942,7 +2937,53 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 	mcr_LastMousePos = crMouse;
 
-	if (mp_RCon->isSelectionAllowed())
+	bool  bSelAllowed = isSelectionAllowed();
+
+	if (bSelAllowed && gpSet->isCTSIntelligent
+		&& !isSelectionPresent()
+		&& !gpConEmu->isSelectionModifierPressed(true))
+	{
+		if (messg == WM_LBUTTONDOWN)
+		{
+			con.mpt_IntelliLClick = MakePoint(x,y);
+			con.mb_IntelliStored = TRUE;
+		}
+		else if (con.mb_IntelliStored)
+		{
+			if (!isPressed(VK_LBUTTON))
+			{
+				con.mb_IntelliStored = FALSE;
+			}
+			else if (messg == WM_MOUSEMOVE)
+			{
+				int nMinX = gpSetCls->FontWidth();
+				int nMinY = gpSetCls->FontHeight();
+				int nMinDiff = max(nMinX, nMinY);
+				int nXdiff = x - con.mpt_IntelliLClick.x;
+				int nYdiff = y - con.mpt_IntelliLClick.y;
+				// Приоритет - текстовому выделению?
+				DWORD nForce = 0;
+				if (_abs(nXdiff) >= nMinDiff)
+					nForce = CONSOLE_TEXT_SELECTION;
+				else if (_abs(nYdiff) >= nMinDiff)
+					nForce = CONSOLE_BLOCK_SELECTION;
+				// GO!
+				if (nForce)
+				{
+					gpConEmu->ForceSelectionModifierPressed(nForce);
+					_ASSERTE((nForce & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)) == nForce);
+					con.m_sel.dwFlags |= (nForce & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION));
+					OnMouseSelection(WM_LBUTTONDOWN, wParam, con.mpt_IntelliLClick.x, con.mpt_IntelliLClick.y);
+				}
+			}
+		}
+	}
+	else
+	{
+		con.mb_IntelliStored = FALSE;
+	}
+
+	if (bSelAllowed)
 	{
 		if (messg == WM_LBUTTONDOWN)
 		{
@@ -2954,8 +2995,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		// Если выделение еще не начато, но удерживается модификатор - игнорировать WM_MOUSEMOVE
 		if (messg == WM_MOUSEMOVE && !con.m_sel.dwFlags)
 		{
-			if ((gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, false))
-				|| (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, false)))
+			if (gpConEmu->isSelectionModifierPressed(false))
 			{
 				// Пропустить, пользователь собирается начать выделение, не посылать движение мыши в консоль
 				return true;
@@ -3220,13 +3260,12 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		}
 		else
 		{
-			if (gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, true))
+			DWORD nPressed = gpConEmu->isSelectionModifierPressed(true);
+			if (nPressed)
 			{
-				lbStreamSelection = FALSE; vkMod = gpSet->GetHotkeyById(vkCTSVkBlock); // OK
-			}
-			else if (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, true))
-			{
-				lbStreamSelection = TRUE; vkMod = gpSet->GetHotkeyById(vkCTSVkText); // OK
+				// OK
+				lbStreamSelection = ((nPressed & CONSOLE_TEXT_SELECTION) != 0);
+				vkMod = gpSet->GetHotkeyById(lbStreamSelection ? vkCTSVkText : vkCTSVkBlock);
 			}
 			else
 			{
@@ -4287,24 +4326,23 @@ bool CRealBuffer::DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSele
 	return Result;
 }
 
+int CRealBuffer::GetSelectionCellsCount()
+{
+	int nCharCount = 0;
+	if (con.m_sel.dwFlags)
+	{
+		nCharCount = GetSelectionCharCount(isStreamSelection(),
+			con.m_sel.srSelection.Left, con.m_sel.srSelection.Top,
+			con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, NULL, NULL, 0);
+	}
+	return nCharCount;
+}
+
 // обновить на экране
 void CRealBuffer::UpdateSelection()
 {
 	// Show current selection state in the Status bar
-	wchar_t szSelInfo[128] = L"";
-	if (con.m_sel.dwFlags)
-	{
-		bool bStreamMode = isStreamSelection();
-		int  nCharCount = GetSelectionCharCount(bStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top,
-			con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, NULL, NULL, 0);
-
-		_wsprintf(szSelInfo, SKIPLEN(countof(szSelInfo)) L"%s selection {%i,%i}-{%i,%i} total %i chars",
-			bStreamMode ? L"Stream" : L"Block",
-			con.m_sel.srSelection.Left, con.m_sel.srSelection.Top,
-			con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom,
-			nCharCount);
-	}
-	mp_RCon->SetConStatus(szSelInfo);
+	mp_RCon->OnSelectionChanged();
 
 	TODO("Это корректно? Нужно обновить VCon");
 	con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
@@ -4340,7 +4378,7 @@ bool CRealBuffer::isStreamSelection()
 {
 	if (!this) return false;
 	
-	return ((con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION);
+	return ((con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) != 0);
 }
 
 // true - if clipboard was set successfully
@@ -5633,33 +5671,67 @@ bool CRealBuffer::isSelectionAllowed()
 	if (!this)
 		return false;
 
+	#ifdef _DEBUG
+	// Зачем звать эту функц из фоновых потоков?
+	if (!gpConEmu->isMainThread())
+	{
+		int nDbg = -1;
+	}
+	#endif
+
 	if (!con.pConChar || !con.pConAttr)
 		return false; // Если данных консоли еще нет
 
 	if (con.m_sel.dwFlags != 0)
 		return true; // Если выделение было запущено через меню
 
-	if (!gpSet->isConsoleTextSelection)
-		return false; // выделение мышкой запрещено в настройках
-	else if (gpSet->isConsoleTextSelection == 1)
-		return true; // разрешено всегда
-	else if (mp_RCon->isBufferHeight())
-	{
-		// иначе - только в режиме с прокруткой
-		//DWORD nFarPid = 0;
+	// Если УЖЕ удерживается модификатор - то не требуется проверять "Intelligent selection"
+	if (gpConEmu->isSelectionModifierPressed(true))
+		return true; // force selection mode
 
-		// Но в FAR2 появился новый ключик /w
-		if (!mp_RCon->isFarBufferSupported())
-			return true;
+	if (!gpSet->isCTSIntelligent)
+		return false; // Mouse selection was disabled
+	LPCWSTR pszPrcName = mp_RCon->GetActiveProcessName();
+	if (!pszPrcName)
+		return false; // No process - no selection
+	LPCWSTR pszExcl = gpSet->GetIntelligentExceptionsMSZ();
+	// Check exclusions
+	if (pszExcl)
+	{
+		while (*pszExcl)
+		{
+			if (lstrcmpi(pszExcl, L"far") == 0)
+			{
+				// Tricky a little
+				// Editor and panels - send mouse to console
+				// Userscreen and viewer - use mouse for selection
+				// If user want to send mouse to console always - set "far.exe" instead of "far"
+				if (mp_RCon->isFar())
+				{
+					if (mp_RCon->isViewer())
+						break; // Allow in viewer
+					else if (mp_RCon->isEditor() || mp_RCon->isFilePanel(true, true))
+						return false;
+					else
+					{
+						DWORD nDlgFlags = m_Rgn.GetFlags();
+						int nDialogs = m_Rgn.GetDetectedDialogs(3,NULL,NULL);
+						if ((nDialogs > 0) && !((nDialogs == 1) && (nDlgFlags == FR_MENUBAR)))
+							return false; // Any dialog on screen? Don't select
+					}
+				}
+			}
+			else if (lstrcmpi(pszExcl, pszPrcName) == 0)
+			{
+				// This app in the restricted list
+				// Seems like it uses mouse for internal selection, dragging and so on...
+				return false;
+			}
+			pszExcl += _tcslen(pszExcl)+1;
+		}
 	}
 
-	//if ((con.m_dwConsoleMode & ENABLE_QUICK_EDIT_MODE) == ENABLE_QUICK_EDIT_MODE)
-	//	return true;
-	//if (mp_ConsoleInfo && mp_RCon->isFar(TRUE)) {
-	//	if ((mp_ConsoleInfo->FarInfo.nFarInterfaceSettings & 4/*FIS_MOUSE*/) == 0)
-	//		return true;
-	//}
-	return false;
+	return true;
 }
 
 bool CRealBuffer::isSelectionPresent()
@@ -5670,21 +5742,31 @@ bool CRealBuffer::isSelectionPresent()
 	return (con.m_sel.dwFlags != 0);
 }
 
+bool CRealBuffer::isMouseSelectionPresent()
+{
+	if (!this)
+		return false;
+
+	return ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) != 0);
+}
+
 bool CRealBuffer::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
 {
 	if (!this)
 		return false;
 
-	if (!mp_RCon->isSelectionAllowed())
+	#if 0
+	// If it was already started - let it be... Don't look at settings
+	if (!isSelectionAllowed())
 		return false;
+	#endif
 
 	if (sel)
 	{
 		*sel = con.m_sel;
 	}
 
-	return (con.m_sel.dwFlags != 0);
-	//return (con.m_sel.dwFlags & CONSOLE_SELECTION_NOT_EMPTY) == CONSOLE_SELECTION_NOT_EMPTY;
+	return isSelectionPresent();
 }
 
 void CRealBuffer::ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)

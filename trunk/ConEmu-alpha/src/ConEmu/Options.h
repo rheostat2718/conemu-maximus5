@@ -181,6 +181,10 @@ struct Settings
 
 		ConEmuComspec ComSpec;
 
+		// Service functions
+		wchar_t* LineDelimited2MSZ(const wchar_t* apszApps); // "|"-delimited string -> MSZ
+		wchar_t* MSZ2LineDelimited(const wchar_t* apszApps); // MSZ -> "|"-delimited string
+
 		// Replace default terminal
 		bool isSetDefaultTerminal;
 		bool isRegisterOnOsStartup;
@@ -821,8 +825,16 @@ struct Settings
 		//reg->Load(L"DisableAllFlashing", isDisableAllFlashing); if (isDisableAllFlashing>2) isDisableAllFlashing = 2;
 		BYTE isDisableAllFlashing;
 		/* *** Text selection *** */
-		//reg->Load(L"ConsoleTextSelection", isConsoleTextSelection);
-		BYTE isConsoleTextSelection;
+		//reg->Load(L"CTSIntelligent", isCTSIntelligent);
+		bool isCTSIntelligent;
+		private:
+		//reg->Load(L"CTSIntelligentExceptions", &pszCTSIntelligentExceptions);
+		wchar_t* pszCTSIntelligentExceptions; // Don't use IntelliSel in these app-processes
+		public:
+		// Service functions
+		wchar_t* GetIntelligentExceptions(); // "|" delimited
+		const wchar_t* GetIntelligentExceptionsMSZ(); // "\0" delimited
+		void SetIntelligentExceptions(const wchar_t* apszApps); // "|" delimited
 		//reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
 		bool isCTSAutoCopy;
 		//reg->Load(L"CTS.IBeam", isCTSIBeam);
@@ -868,7 +880,7 @@ struct Settings
 		bool isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
 		//BYTE isFarGotoEditorVk; // Клавиша-модификатор для isFarGotoEditor
-		//reg->Load(L"FarGotoEditorPath", sFarGotoEditor);
+		//reg->Load(L"FarGotoEditorPath", &sFarGotoEditor);
 		wchar_t* sFarGotoEditor; // Команда запуска редактора
 		//reg->Load(L"HighlightMouseRow", isHighlightMouseRow);
 		bool isHighlightMouseRow;
@@ -876,7 +888,7 @@ struct Settings
 		bool isHighlightMouseCol;
 		
 		bool IsModifierPressed(int nDescrID, bool bAllowEmpty);
-		//bool isSelectionModifierPressed();
+		void IsModifierPressed(int nDescrID, bool* pbNoEmpty, bool* pbAllowEmpty);
 		//typedef struct tag_CharRanges
 		//{
 		//	bool bUsed;
