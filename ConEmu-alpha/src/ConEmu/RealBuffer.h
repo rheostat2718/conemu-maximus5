@@ -162,7 +162,9 @@ public:
 	
 	bool isSelectionAllowed();
 	bool isSelectionPresent();
+	bool isMouseSelectionPresent();
 	bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
+	int  GetSelectionCellsCount();
 	
 	void ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
 	void ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
@@ -235,6 +237,7 @@ protected:
 	{
 		CONSOLE_SELECTION_INFO m_sel;
 		DWORD m_SelClickTick, m_SelDblClickTick, m_SelLastScrollCheck;
+		BOOL mb_IntelliStored; POINT mpt_IntelliLClick; // Сохранить позицию клика для Intelligent selection
 		CONSOLE_CURSOR_INFO m_ci;
 		DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
 		CONSOLE_SCREEN_BUFFER_INFO m_sbi;

@@ -437,6 +437,7 @@ class CRealConsole
 		void ExpandSelection(SHORT anX, SHORT anY);
 		bool DoSelectionCopy(bool bCopyAll = false, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */);
 		void DoSelectionStop();
+		void OnSelectionChanged();
 		void DoFindText(int nDirection);
 		void DoEndFindText();
 		void CtrlWinAltSpace();
@@ -777,7 +778,6 @@ class CRealConsole
 		BOOL mb_InCloseConsole;
 		DWORD mn_CloseConfirmedTick;
 		bool mb_CloseFarMacroPosted;
-		bool mb_WasSendClickToReadCon;
 		// Логи
 		BYTE m_UseLogs;
 		//HANDLE mh_LogInput; wchar_t *mpsz_LogInputFile/*, *mpsz_LogPackets*/; //UINT mn_LogPackets;
@@ -909,6 +909,7 @@ class CRealConsole
 		//		bool bWasFrame[MAX_DETECTED_DIALOGS];
 		//	} m_DetectedDialogs;
 		bool mb_InPostCloseMacro;
+		bool mb_WasMouseSelection; // Useful to know when processing LBtnUp
 };
 
 //#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i\n\nPress <Retry> to report a bug (web page)", _T(#V), _T(__FILE__), __LINE__); CRealConsole::Box(szAMsg, MB_RETRYCANCEL); }

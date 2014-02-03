@@ -358,6 +358,7 @@ CConEmuMain::CConEmuMain()
 	ZeroStruct(mrc_FixPosAfterStyle);
 	mb_InImeComposition = false; mb_ImeMethodChanged = false;
 	ZeroStruct(mr_Ideal);
+	ZeroStruct(m_Pressed);
 	mn_InResize = 0;
 	mb_MouseCaptured = FALSE;
 	mb_HotKeyRegistered = false;
@@ -4289,8 +4290,10 @@ bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
 	if (!lpVCon)
 		return false;
 
+#if 0
 	HWND hView = lpVCon->GetView();
 	ScreenToClient(hView, pt);
+#endif
 
 	if (ppVCon)
 		*ppVCon = lpVCon;
@@ -15150,9 +15153,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	CVirtualConsole* pVCon = NULL;
 	CVConGuard VCon;
 
-	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon()->isMouseSelectionPresent())
-		pVCon = VCon.VCon();
-	else if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
+	if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
 		pVCon = VCon.VCon();
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
 	HWND hView = pVCon ? pVCon->GetView() : NULL;
@@ -16485,6 +16486,55 @@ void CConEmuMain::RequestPostUpdateTabs()
 	PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
 }
 
+DWORD CConEmuMain::isSelectionModifierPressed(bool bAllowEmpty)
+{
+	DWORD nResult;
+
+	if (m_Pressed.bChecked)
+	{
+		nResult = bAllowEmpty ? m_Pressed.nReadyToSel : m_Pressed.nReadyToSelNoEmpty;
+	}
+	else
+	{
+		DWORD nReadyToSel = 0, nReadyToSelNoEmpty = 0;
+		bool bNoEmptyPressed = false, bEmptyAllowed = false;
+
+		if (gpSet->isCTSSelectBlock)
+		{
+			gpSet->IsModifierPressed(vkCTSVkBlock, &bNoEmptyPressed, &bEmptyAllowed);
+			if (bNoEmptyPressed)
+				nReadyToSelNoEmpty = nReadyToSel = CONSOLE_BLOCK_SELECTION;
+			else if (bEmptyAllowed)
+				nReadyToSel = CONSOLE_BLOCK_SELECTION;
+		}
+
+		if (!nReadyToSelNoEmpty && gpSet->isCTSSelectText)
+		{
+			gpSet->IsModifierPressed(vkCTSVkText, &bNoEmptyPressed, &bEmptyAllowed);
+			if (bNoEmptyPressed)
+				nReadyToSelNoEmpty = nReadyToSel = CONSOLE_TEXT_SELECTION;
+			else if (bEmptyAllowed && !nReadyToSel)
+				nReadyToSel = CONSOLE_TEXT_SELECTION;
+			_ASSERTE(nReadyToSel || (nReadyToSelNoEmpty == nReadyToSel));
+		}
+
+		// Store it
+		m_Pressed.nReadyToSel = nReadyToSel;
+		m_Pressed.nReadyToSelNoEmpty = nReadyToSelNoEmpty;
+		m_Pressed.bChecked = TRUE;
+
+		nResult = bAllowEmpty ? nReadyToSel : nReadyToSelNoEmpty;
+	}
+
+	return nResult;
+}
+
+void CConEmuMain::ForceSelectionModifierPressed(DWORD nValue)
+{
+	m_Pressed.nReadyToSel = nValue;
+	m_Pressed.bChecked = TRUE;
+}
+
 enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 {
 	if (!gpSet->isDragPanel || isPictureView())
@@ -16504,9 +16554,8 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 	if (pRCon->isConSelectMode())
 		return DPB_NONE;
 
-	// Если удерживается модификатор запуска граббера
-	if ((gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, false))
-	        || (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, false)))
+	// Если удерживается модификатор запуска выделения текста
+	if (gpConEmu->isSelectionModifierPressed(false))
 		return DPB_NONE;
 
 	//CONSOLE_CURSOR_INFO ci;
@@ -16653,7 +16702,8 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 		}
 		else if (pRCon->isSelectionPresent())
 		{
-			hCur = mh_CursorIBeam; // LoadCursor(NULL, IDC_IBEAM);
+			if (gpSet->isCTSIBeam)
+				hCur = mh_CursorIBeam; // LoadCursor(NULL, IDC_IBEAM);
 		}
 		else if ((etr = pRCon->GetLastTextRangeType()) != etr_None)
 		{
@@ -16701,8 +16751,10 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 			// If mouse is used for selection, or specified modifier is pressed
 			if (!hCur && lbMeFore && gpSet->isCTSIBeam)
 			{
-				if ((gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, true))
-					|| (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, true)))
+				// Хм, если выделение настроено "всегда" и без модификатора -
+				// на экране всегда будет IBeam курсор, что может раздражать...
+				// Поэтому - false
+				if (isSelectionModifierPressed(false))
 				{
 					hCur = mh_CursorIBeam;
 				}
@@ -17918,6 +17970,9 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 {
 	LRESULT result = 0;
 
+	if (gpConEmu)
+		gpConEmu->PreWndProc(messg);
+
 	//if (messg == WM_CREATE)
 	//{
 	if (ghWnd == NULL)
@@ -17976,6 +18031,9 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	{
 		gpConEmu->LogMessage(hWnd, uMsg, wParam, lParam);
 	}
+
+	if (gpConEmu)
+		gpConEmu->PreWndProc(uMsg);
 
 	switch (uMsg)
 	{
@@ -18053,6 +18111,12 @@ UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal)
 		}
 	}
 	return RegisterMessage(asLocal);
+}
+
+// Speed up selection modifier checks
+void CConEmuMain::PreWndProc(UINT messg)
+{
+	m_Pressed.bChecked = FALSE;
 }
 
 // Window procedure for ghWnd

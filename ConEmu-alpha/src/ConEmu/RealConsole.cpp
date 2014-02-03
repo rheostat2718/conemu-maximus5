@@ -249,9 +249,9 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_SkipFarPidChange = FALSE;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
 	CloseConfirmReset();
-	mb_WasSendClickToReadCon = false;
 	mn_LastSetForegroundPID = 0;
 	mb_InPostCloseMacro = false;
+	mb_WasMouseSelection = false;
 
 	mn_TextColorIdx = 7; mn_BackColorIdx = 0;
 	mn_PopTextColorIdx = 5; mn_PopBackColorIdx = 15;
@@ -3846,6 +3846,10 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 
 	// Получить известные координаты символов
 	COORD crMouse = ScreenToBuffer(mp_VCon->ClientToConsole(x,y, bStrictMonospace));
+
+	// Do this BEFORE check in ABuf
+	if (messg == WM_LBUTTONDOWN)
+		mb_WasMouseSelection = false;
 	
 	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse, abFromTouch))
 		return; // В консоль не пересылать, событие обработал "сам буфер"
@@ -3899,15 +3903,15 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 
 
 	const Settings::AppSettings* pApp = NULL;
-	if ((messg == WM_LBUTTONDOWN) //&& gpSet->isCTSClickPromptPosition
+	if ((messg == WM_LBUTTONUP) && !mb_WasMouseSelection
 		&& ((pApp = gpSet->GetAppSettings(GetActiveAppSettingsId())) != NULL)
 		&& pApp->CTSClickPromptPosition()
 		&& gpSet->IsModifierPressed(vkCTSVkPromptClk, true))
 	{
 		DWORD nActivePID = GetActivePID();
+		bool bWasSendClickToReadCon = false;
 		if (nActivePID && (mp_ABuf->m_Type == rbt_Primary) && !isFar() && !isNtvdm())
 		{
-			mb_WasSendClickToReadCon = false; // сначала - сброс
 			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_MOUSECLICK, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PROMPTACTION));
 			if (pIn)
 			{
@@ -3919,24 +3923,15 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 				CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
 				if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
 				{
-					mb_WasSendClickToReadCon = (pOut->dwData[0] != 0);
+					bWasSendClickToReadCon = (pOut->dwData[0] != 0);
 				}
 				ExecuteFreeResult(pOut);
 				ExecuteFreeResult(pIn);
 			}
 
-			if (mb_WasSendClickToReadCon)
+			if (bWasSendClickToReadCon)
 				return; // уже клик обработали (перемещение текствого курсора в ReadConsoleW)
 		}
-		else
-		{
-			mb_WasSendClickToReadCon = false;
-		}
-	}
-	else if (messg == WM_LBUTTONUP && mb_WasSendClickToReadCon)
-	{
-		mb_WasSendClickToReadCon = false;
-		return; // однократно, клик пропускаем
 	}
 
 	// Если юзер запретил посылку мышиных событий в консоль
@@ -4232,6 +4227,28 @@ void CRealConsole::ExpandSelection(SHORT anX, SHORT anY)
 void CRealConsole::DoSelectionStop()
 {
 	mp_ABuf->DoSelectionStop();
+}
+
+void CRealConsole::OnSelectionChanged()
+{
+	// Show current selection state in the Status bar
+	wchar_t szSelInfo[128] = L"";
+	CONSOLE_SELECTION_INFO sel = {};
+	if (mp_ABuf->GetConsoleSelectionInfo(&sel))
+	{
+		if (sel.dwFlags & CONSOLE_MOUSE_SELECTION)
+			mb_WasMouseSelection = true;
+
+		bool bStreamMode = ((sel.dwFlags & CONSOLE_TEXT_SELECTION) != 0);
+		int  nCellsCount = mp_ABuf->GetSelectionCellsCount();
+
+		_wsprintf(szSelInfo, SKIPLEN(countof(szSelInfo)) L"%s selection {%i,%i}-{%i,%i} total %i chars",
+			bStreamMode ? L"Stream" : L"Block",
+			sel.srSelection.Left, sel.srSelection.Top,
+			sel.srSelection.Right, sel.srSelection.Bottom,
+			nCellsCount);
+	}
+	SetConStatus(szSelInfo);
 }
 
 bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */)
@@ -9707,7 +9724,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	{
 		if (!*asText)
 			return;
-		pszBuf = lstrdup(asText);
+		pszBuf = lstrdup(asText, 1); // Reserve memory for space-termination
 	}
 	else
 	{
@@ -9736,7 +9753,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		}
 		else
 		{
-			pszBuf = lstrdup(lptstr);
+			pszBuf = lstrdup(lptstr, 1); // Reserve memory for space-termination
 			GlobalUnlock(hglb);
 		}
 
@@ -9779,54 +9796,55 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 
 	// Смотрим первую строку / наличие второй
 	wchar_t* pszRN = wcspbrk(pszBuf, L"\r\n");
-	if (pszRN && (pszRN < pszEnd))
+	if (PasteMode == pm_OneLine)
+	{
+		const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
+		bool bTrimTailing = pApp ? (pApp->CTSTrimTrailing() != 0) : false;
+
+		//PRAGMA_ERROR("Неправильно вставляется, если в превой строке нет trailing space");
+
+		wchar_t *pszDst = pszBuf, *pszSrc = pszBuf, *pszEOL;
+		while (pszSrc < pszEnd)
+		{
+			// Find LineFeed
+			pszRN = wcspbrk(pszSrc, L"\r\n");
+			if (!pszRN) pszRN = pszSrc + _tcslen(pszSrc);
+			// Advance to next line
+			wchar_t* pszNext = pszRN;
+			if (*pszNext == L'\r') pszNext++;
+			if (*pszNext == L'\n') pszNext++;
+			// Find end of line, trim trailing spaces
+			pszEOL = pszRN;
+			if (bTrimTailing)
+			{
+				while ((pszEOL > pszSrc) && (*(pszEOL-1) == L' ')) pszEOL--;
+			}
+			// If line was not empty and there was already some changes
+			size_t cchLine = pszEOL - pszSrc;
+			if ((pszEOL > pszSrc) && (pszSrc != pszDst))
+			{
+				memmove(pszDst, pszSrc, cchLine * sizeof(*pszSrc));
+			}
+			// Move src pointer to next line
+			pszSrc = pszNext;
+			// Move Dest pointer and add one trailing space (line delimiter)
+			pszDst += cchLine;
+			// No need to check ptr, memory for space-termination was reserved
+			*(pszDst++) = L' ';
+		}
+		// Z-terminate our string
+		*pszDst = 0;
+		// Done, it is ready to pasting
+		pszEnd = pszDst;
+		// Bufer must not contain any line-feeds now! Safe for paste in command line!
+		_ASSERTE(wcspbrk(pszBuf, L"\r\n") == NULL);
+	}
+	else if (pszRN)
 	{
 		if (PasteMode == pm_FirstLine)
 		{
 			*pszRN = 0; // буфер наш, что хотим - то и делаем )
 			pszEnd = pszRN;
-		}
-		else if (PasteMode == pm_OneLine)
-		{
-			const Settings::AppSettings* pApp = gpSet->GetAppSettings(GetActiveAppSettingsId());
-			bool bTrimTailing = pApp ? (pApp->CTSTrimTrailing() != 0) : false;
-
-			//PRAGMA_ERROR("Неправильно вставляется, если в превой строке нет trailing space");
-
-			wchar_t *pszDst = pszBuf, *pszSrc = pszBuf, *pszEOL;
-			while (pszSrc < pszEnd)
-			{
-				// Find LineFeed
-				pszRN = wcspbrk(pszSrc, L"\r\n");
-				if (!pszRN) pszRN = pszSrc + _tcslen(pszSrc);
-				// Advance to next line
-				wchar_t* pszNext = pszRN;
-				if (*pszNext == L'\r') pszNext++;
-				if (*pszNext == L'\n') pszNext++;
-				// Find end of line, trim trailing spaces
-				pszEOL = pszRN;
-				if (bTrimTailing)
-				{
-					while ((pszEOL > pszSrc) && (*(pszEOL-1) == L' ')) pszEOL--;
-				}
-				// If line was not empty and there was already some changes
-				size_t cchLine = pszEOL - pszSrc;
-				if ((pszEOL > pszSrc) && (pszSrc != pszDst))
-				{
-					memmove(pszDst, pszSrc, cchLine * sizeof(*pszSrc));
-				}
-				// Move src pointer to next line
-				pszSrc = pszNext;
-				// Move Dest pointer and add one trailing space (line delimiter)
-				pszDst += cchLine;
-				if ((pszDst+1) < pszEnd)
-					*(pszDst++) = L' ';
-			}
-			// Z-terminate our string
-			*pszDst = 0;
-			// Done, it is ready to pasting
-			pszEnd = pszDst;
-			_ASSERTE(wcspbrk(pszBuf, L"\r\n") == NULL);
 		}
 		else if (gpSet->isPasteConfirmEnter && !abNoConfirm)
 		{
@@ -11706,7 +11724,10 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 
 void CRealConsole::CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 {
-	//WARNING!! Same as "GuiAttach.cpp: CorrectGuiChildRect"
+	//Chrome: Styles: 0x16FF0000, ExStyles: 0x00000100
+
+	//These shift values are used in "GuiAttach.cpp: CorrectGuiChildRect" too
+
 	int nX = 0, nY = 0, nY0 = 0;
 	if (anStyle & WS_THICKFRAME)
 	{
@@ -11882,10 +11903,9 @@ bool CRealConsole::isSelectionPresent()
 
 bool CRealConsole::isMouseSelectionPresent()
 {
-	CONSOLE_SELECTION_INFO sel;
-	if (!GetConsoleSelectionInfo(&sel))
+	if (!this)
 		return false;
-	return ((sel.dwFlags & CONSOLE_MOUSE_SELECTION) == CONSOLE_MOUSE_SELECTION);
+	return mp_ABuf->isMouseSelectionPresent();
 }
 
 bool CRealConsole::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
