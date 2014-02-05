@@ -3273,7 +3273,7 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 
 	checkDlgButton(hWnd2, cbOneTabPerGroup, gpSet->isOneTabPerGroup);
 
-	checkDlgButton(hWnd2, cbActivateSplitMouseOver, gpSet->isActivateSplitMouseOver);
+	checkDlgButton(hWnd2, cbActivateSplitMouseOver, gpSet->bActivateSplitMouseOver);
 
 	checkDlgButton(hWnd2, cbTabSelf, gpSet->isTabSelf);
 
@@ -5276,7 +5276,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbActivateSplitMouseOver:
 			GetCursorPos(&gpConEmu->mouse.ptLastSplitOverCheck);
-			gpSet->isActivateSplitMouseOver = IsChecked(hWnd2, cbActivateSplitMouseOver);
+			gpSet->bActivateSplitMouseOver = IsChecked(hWnd2, cbActivateSplitMouseOver);
+			gpConEmu->OnActivateSplitChanged();
 			break;
 		case cbTabSelf:
 			gpSet->isTabSelf = IsChecked(hWnd2, cbTabSelf);
@@ -14538,7 +14539,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 	}
 
 	// WinPE may not have "Lucida Console" preinstalled
-	if (gpSetCls->nConFontError && !asCheckName && gpStartEnv && gpStartEnv->bIsWinPE && (lstrcmpi(LF.lfFaceName, gsAltConFont) != 0))
+	if (gpSetCls->nConFontError && !asCheckName && gpStartEnv && (gpStartEnv->bIsWinPE == 1) && (lstrcmpi(LF.lfFaceName, gsAltConFont) != 0))
 	{
 		DWORD errSave = gpSetCls->nConFontError;
 		if (CheckConsoleFontFast(gsAltConFont))
