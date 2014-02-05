@@ -659,14 +659,17 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_HwndFore] = true;
 	isStatusColumnHidden[csi_HwndFocus] = true;
 	isStatusColumnHidden[csi_ConEmuPID] = true;
-	isStatusColumnHidden[csi_CursorInfo] = true;
+	//isStatusColumnHidden[csi_CursorInfo] = true; -- show one info col instead of three cursor columns (by default)
+	isStatusColumnHidden[csi_CursorX] = true;
+	isStatusColumnHidden[csi_CursorY] = true;
+	isStatusColumnHidden[csi_CursorSize] = true;
 	isStatusColumnHidden[csi_ConEmuHWND] = true;
 	isStatusColumnHidden[csi_ConEmuView] = true;
 	isStatusColumnHidden[csi_ServerHWND] = true;
 	isStatusColumnHidden[csi_Time] = true;
 
 	isTabs = 1; nTabsLocation = 0; isTabIcons = true; isOneTabPerGroup = false;
-	isActivateSplitMouseOver = false;
+	bActivateSplitMouseOver = 2; // Regarding Windows settings (Active window tracking)
 	isTabSelf = true; isTabRecent = true; isTabLazy = true;
 	nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION; nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
 	ilDragHeight = 10;
@@ -775,6 +778,20 @@ bool Settings::isIntegralSize()
 	#endif
 
 	return true;
+}
+
+bool Settings::isActivateSplitMouseOver()
+{
+	if (bActivateSplitMouseOver == 2)
+	{
+		BOOL bTracking = FALSE;
+		SystemParametersInfo(SPI_GETACTIVEWINDOWTRACKING, 0, &bTracking, 0);
+		return (bTracking != 0);
+	}
+	else
+	{
+		return (bActivateSplitMouseOver == 1);
+	}
 }
 
 bool Settings::isAdminShield()
@@ -2698,7 +2715,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"TabsLocation", nTabsLocation);
 		reg->Load(L"TabIcons", isTabIcons);
 		reg->Load(L"OneTabPerGroup", isOneTabPerGroup);
-		reg->Load(L"ActivateSplitMouseOver", isActivateSplitMouseOver);
+		reg->Load(L"ActivateSplitMouseOver", bActivateSplitMouseOver); MinMax(bActivateSplitMouseOver, 2);
 		reg->Load(L"TabSelf", isTabSelf);
 		reg->Load(L"TabLazy", isTabLazy);
 		reg->Load(L"TabRecent", isTabRecent);
@@ -3512,7 +3529,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"TabsLocation", nTabsLocation);
 		reg->Save(L"TabIcons", isTabIcons);
 		reg->Save(L"OneTabPerGroup", isOneTabPerGroup);
-		reg->Save(L"ActivateSplitMouseOver", isActivateSplitMouseOver);
+		reg->Save(L"ActivateSplitMouseOver", bActivateSplitMouseOver);
 		reg->Save(L"TabSelf", isTabSelf);
 		reg->Save(L"TabLazy", isTabLazy);
 		reg->Save(L"TabRecent", isTabRecent);
