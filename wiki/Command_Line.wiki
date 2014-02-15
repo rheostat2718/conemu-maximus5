@@ -12,6 +12,7 @@
 || /Title _title_ || Set *fixed* _title_ for !ConEmu window. You may use environment variables in _title_. ||
 || /Multi | /!NoMulti || Enable or disable multiconsole features ||
 || /Single || New console will be started in new tab of existing !ConEmu ||
+|| /!NoSingle || Force new !ConEmu window even if single mode is selected in the Settings ||
 || /!ShowHide | /ShowHideTSA || May be used with !AutoHotKey or desktop shortcuts. Works like «Minimize/Restore» global hotkey. ||
 || /!NoUpdate || Disable automatic checking for updates on startup ||
 || /CT`[0|1]` || Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - clear type ||
@@ -99,6 +100,7 @@ start "Three tabs" "C:\Program Files\ConEmu\ConEmu.exe" /cmdlist ^> cmd /k color
 || /autosetup 1 | 0 || Install or remove !ConEmu autostart with cmd.exe ||
 || /visible || Starts with visible real console ||
 || /detached || Starts with no console, !ConEmu is ready for attaching from another real console or FAR manager ||
+|| /nocascade || Disable ‘Cascade’ option may be set in the Settings ||
 || /nodefterm || Don't start initialization procedure for setting up !ConEmu as default terminal ||
 || /nokeyhooks || Disable !SetWindowsHookEx and global hotkeys ||
 || /nomacro || Disable hotkeys with GuiMacro actions ||
