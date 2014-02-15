@@ -175,6 +175,7 @@ BOOL    gbAlienMode = FALSE;  // сервер НЕ является владел
 BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
+wchar_t* gpszForcedTitle = NULL;
 LPCWSTR gpszCheck4NeedCmd = NULL; // Для отладки
 wchar_t gszComSpec[MAX_PATH+1] = {0};
 BOOL    gbRunInBackgroundTab = FALSE;
@@ -1979,7 +1980,8 @@ wrap:
 	SafeCloseHandle(ghFarInExecuteEvent);
 #endif
 
-	if (gpszRunCmd) { delete gpszRunCmd; gpszRunCmd = NULL; }
+	SafeFree(gpszRunCmd);
+	SafeFree(gpszForcedTitle);
 
 	CommonShutdown();
 
@@ -3603,6 +3605,11 @@ BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle)
 
 void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bExpandVars)
 {
+	if (gpszForcedTitle)
+	{
+		lsCmdLine = gpszForcedTitle;
+	}
+
 	// Сменим заголовок консоли
 	if (*lsCmdLine == L'"' && lsCmdLine[1])
 	{
@@ -4713,7 +4720,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			// Console may be started as follows:
 			// "set PATH=C:\Program Files;%PATH%" & set abc=def & cmd
-			ProcessSetEnvCmd(lsCmdLine, true);
+			CmdArg lsForcedTitle;
+			ProcessSetEnvCmd(lsCmdLine, true, &lsForcedTitle);
+			if (!lsForcedTitle.IsEmpty())
+				gpszForcedTitle = lsForcedTitle.Detach();
 		}
 
 		gpszCheck4NeedCmd = lsCmdLine; // Для отладки
@@ -8797,7 +8807,11 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		if (gpSrv->dwRefreshThread && dwCurThId != gpSrv->dwRefreshThread)
 		{
 			ResetEvent(gpSrv->hReqSizeChanged);
-			gpSrv->nRequestChangeSize++;
+			if (InterlockedIncrement(&gpSrv->nRequestChangeSize) <= 0)
+			{
+				_ASSERTE(FALSE && "gpSrv->nRequestChangeSize has invalid value");
+				gpSrv->nRequestChangeSize = 1;
+			}
 			//dwWait = WaitForSingleObject(gpSrv->hReqSizeChanged, REQSIZE_TIMEOUT);
 			// Ожидание, пока сработает RefreshThread
 			HANDLE hEvents[2] = {ghQuitEvent, gpSrv->hReqSizeChanged};
@@ -8810,13 +8824,17 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 
 			dwWait = WaitForMultipleObjects(2, hEvents, FALSE, nSizeTimeout);
 
-			if (gpSrv->nRequestChangeSize > 0)
+			// Generally, it must be decremented by RefreshThread...
+			if ((dwWait == WAIT_TIMEOUT) && (gpSrv->nRequestChangeSize > 0))
 			{
-				gpSrv->nRequestChangeSize --;
+				InterlockedDecrement(&gpSrv->nRequestChangeSize);
 			}
-			else
+			// Checking invalid value...
+			if (gpSrv->nRequestChangeSize < 0)
 			{
-				_ASSERTE(gpSrv->nRequestChangeSize>0);
+				// Decremented by RefreshThread and CurrentThread? Must not be...
+				_ASSERTE(gpSrv->nRequestChangeSize >= 0);
+				gpSrv->nRequestChangeSize = 0;
 			}
 
 			if (dwWait == WAIT_OBJECT_0)

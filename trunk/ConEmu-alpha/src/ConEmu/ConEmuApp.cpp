@@ -1945,7 +1945,7 @@ void SkipOneShowWindow()
 	return;
 }
 
-static HWND ghDlgPendingFrom = NULL;
+HWND ghDlgPendingFrom = NULL;
 void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	if (!ghDlgPendingFrom)
@@ -2172,22 +2172,16 @@ void MessageLoop()
 		}
 		#endif
 
-		BOOL lbDlgMsg = FALSE;
-
 		if (gpConEmu)
-			lbDlgMsg = gpConEmu->isDialogMessage(Msg);
-
-		//if (Msg.message == WM_INITDIALOG)
-		//{
-		//	SendMessage(Msg.hwnd, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-		//	SendMessage(Msg.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
-		//}
-
-		if (!lbDlgMsg)
 		{
-			TranslateMessage(&Msg);
-			DispatchMessage(&Msg);
+			if (gpConEmu->isDialogMessage(Msg))
+				continue;
+			if ((Msg.message == WM_SYSCOMMAND) && gpConEmu->isSkipNcMessage(Msg))
+				continue;
 		}
+
+		TranslateMessage(&Msg);
+		DispatchMessage(&Msg);
 	}
 
 	gbMessagingStarted = FALSE;

@@ -422,7 +422,8 @@ void Settings::InitSettings()
 	//Issue 577: Для иероглифов - по умолчанию отключим моноширность
 	isMonospace = bIsDbcs ? 0 : 1;
 
-	mb_MinToTray = false; isAlwaysShowTrayIcon = false;
+	mb_MinToTray = false;
+	mb_AlwaysShowTrayIcon = false;
 	//memset(&rcTabMargins, 0, sizeof(rcTabMargins));
 	//isFontAutoSize = false; mn_AutoFontWidth = mn_AutoFontHeight = -1;
 
@@ -567,6 +568,7 @@ void Settings::InitSettings()
 	isRegisterOnOsStartup = false;
 	isRegisterOnOsStartupTSA = true;
 	isDefaultTerminalNoInjects = false;
+	isDefaultTerminalNewWindow = false;
 	nDefaultTerminalConfirmClose = 1 /* Always */;
 	SetDefaultTerminalApps(L"explorer.exe"/* to default value */); // "|"-delimited string -> MSZ
 
@@ -2294,6 +2296,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"SetDefaultTerminalStartup", isRegisterOnOsStartup);
 		reg->Load(L"SetDefaultTerminalStartupTSA", isRegisterOnOsStartupTSA);
 		reg->Load(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
+		reg->Load(L"DefaultTerminalNewWindow", isDefaultTerminalNewWindow);
 		reg->Load(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
 		wchar_t* pszApps = NULL;
@@ -2626,7 +2629,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 
 		reg->Load(L"Min2Tray", mb_MinToTray);
-		reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
+		reg->Load(L"AlwaysShowTrayIcon", mb_AlwaysShowTrayIcon);
 
 		reg->Load(L"SafeFarClose", isSafeFarClose);
 		if (!reg->Load(L"SafeFarCloseMacro", &sSafeFarCloseMacro) || (sSafeFarCloseMacro && !*sSafeFarCloseMacro)) { SafeFree(sSafeFarCloseMacro); }
@@ -3294,6 +3297,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"SetDefaultTerminalStartup", isRegisterOnOsStartup);
 		reg->Save(L"SetDefaultTerminalStartupTSA", isRegisterOnOsStartupTSA);
 		reg->Save(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
+		reg->Save(L"DefaultTerminalNewWindow", isDefaultTerminalNewWindow);
 		reg->Save(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
 		wchar_t* pszApps = GetDefaultTerminalApps(); // MSZ -> "|"-delimited string
@@ -3499,7 +3503,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"SendCtrlEsc", isSendCtrlEsc);
 		//reg->Save(L"SendAltF9", isSendAltF9);
 		reg->Save(L"Min2Tray", mb_MinToTray);
-		reg->Save(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
+		reg->Save(L"AlwaysShowTrayIcon", mb_AlwaysShowTrayIcon);
 		reg->Save(L"SafeFarClose", isSafeFarClose);
 		reg->Save(L"SafeFarCloseMacro", sSafeFarCloseMacro);
 		reg->Save(L"FARuseASCIIsort", isFARuseASCIIsort);
@@ -4275,6 +4279,12 @@ bool Settings::isHideCaptionAlways()
 bool Settings::isForcedHideCaptionAlways()
 {
 	return (isUserScreenTransparent || isQuakeStyle);
+}
+
+bool Settings::isAlwaysShowTrayIcon()
+{
+	// Issue 1431
+	return (mb_AlwaysShowTrayIcon || isDesktopMode || (isQuakeStyle && !isTabsOnTaskBar()));
 }
 
 bool Settings::isMinimizeOnLoseFocus()

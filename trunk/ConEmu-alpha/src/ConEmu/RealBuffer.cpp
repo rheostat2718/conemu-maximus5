@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE2(s) DEBUGSTR(s) // Warning level
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
@@ -1112,16 +1113,23 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 	if ((gpConEmu->mouse.state & MOUSE_SIZING_BEGIN)
 		&& (!mp_RCon->GuiWnd() && !mp_RCon->GetFarPID()))
 	{
-		if (gpSetCls->isAdvLogging) mp_RCon->LogString("SetConsoleSize skipped until LMouseButton not released");
+		if (anCmdID==CECMD_CMDSTARTED || anCmdID==CECMD_CMDFINISHED)
+		{
+			_ASSERTE(FALSE && "MOUSE_SIZING_BEGIN was not cleared!");
+		}
+		else
+		{
+			if (gpSetCls->isAdvLogging) mp_RCon->LogString("SetConsoleSize skipped until LMouseButton not released");
+			DEBUGSTRSIZE2(L"!!! SetConsoleSize skipped until LMouseButton not released !!!\n");
+			goto wrap;
+		}
 	}
-	else
-	{
-		// Чтобы ВО время ресайза пакеты НЕ обрабатывались
-		ResetEvent(con.hInSetSize); con.bInSetSize = TRUE;
-		lbRc = SetConsoleSizeSrv(sizeX, sizeY, sizeBuffer, anCmdID);
-		con.bInSetSize = FALSE; SetEvent(con.hInSetSize);
-		HEAPVAL;
-	}
+
+	// Чтобы ВО время ресайза пакеты НЕ обрабатывались
+	ResetEvent(con.hInSetSize); con.bInSetSize = TRUE;
+	lbRc = SetConsoleSizeSrv(sizeX, sizeY, sizeBuffer, anCmdID);
+	con.bInSetSize = FALSE; SetEvent(con.hInSetSize);
+	HEAPVAL;
 
 #if 0
 	if (lbRc && mp_RCon->isActive())
@@ -1140,7 +1148,7 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 		//gpConEmu->UpdateStatusBar();
 	}
 #endif
-
+wrap:
 	HEAPVAL;
 	DEBUGSTRSIZE(L"SetConsoleSize.finalizing\n");
 	return lbRc;
@@ -3622,7 +3630,7 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	if (abByMouse)
 	{
 		Assert(!(gpConEmu->mouse.state & (DRAG_L_STARTED|DRAG_R_STARTED)));
-		gpConEmu->mouse.state &= ~(DRAG_L_ALLOWED | DRAG_R_STARTED);
+		gpConEmu->mouse.state &= ~(DRAG_L_STARTED|DRAG_L_ALLOWED|DRAG_R_STARTED|DRAG_R_ALLOWED);
 	}
 
 	if (!(con.m_sel.dwFlags & (CONSOLE_BLOCK_SELECTION|CONSOLE_TEXT_SELECTION)) && gpSet->isCTSFreezeBeforeSelect)
@@ -5693,7 +5701,7 @@ bool CRealBuffer::isSelectionAllowed()
 		return false; // Mouse selection was disabled
 	LPCWSTR pszPrcName = mp_RCon->GetActiveProcessName();
 	if (!pszPrcName)
-		return false; // No process - no selection
+		return true; // Starting or terminated state? Allow selection
 	LPCWSTR pszExcl = gpSet->GetIntelligentExceptionsMSZ();
 	// Check exclusions
 	if (pszExcl)
@@ -5708,10 +5716,14 @@ bool CRealBuffer::isSelectionAllowed()
 				// If user want to send mouse to console always - set "far.exe" instead of "far"
 				if (mp_RCon->isFar())
 				{
-					if (mp_RCon->isViewer())
-						break; // Allow in viewer
-					else if (mp_RCon->isEditor() || mp_RCon->isFilePanel(true, true))
+					// Don't allow:
+					// in Far Viewer - click&drag is used for content scrolling
+					// in Far Editor - used for text selection
+					// in Far Panels - used for file drag&drop (ConEmu's or Far internal)
+					if (mp_RCon->isViewer() || mp_RCon->isEditor() || mp_RCon->isFilePanel(true, true))
+					{
 						return false;
+					}
 					else
 					{
 						DWORD nDlgFlags = m_Rgn.GetFlags();
