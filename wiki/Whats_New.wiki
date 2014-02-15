@@ -16,7 +16,7 @@ cmd /k title Your title
 powershell -noexit -command "$host.UI.RawUI.WindowTitle='Your title'"
 }}}
   * Add ‘Tasks’ page to the ‘About’ dialog.
-  * Fix caption icon in the close confirmation TaskDialogIndirect.
+  * Fix caption icon in the close confirmation !TaskDialogIndirect.
   * Force show icon in the TSA if taskbar icon is hidden (‘Desktop’ and ‘Quake’ modes).
   * Fix ‘Intelligent selection’ conditions
     * Don't use in Far Manager viewers
