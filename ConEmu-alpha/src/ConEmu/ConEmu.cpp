@@ -2668,6 +2668,9 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	}
 	if (gpSet->isDefaultTerminalNoInjects)
 		*(pszOpt++) = L'i';
+	if (gpSet->isDefaultTerminalNewWindow)
+		*(pszOpt++) = L'N';
+	_ASSERTE(pszOpt < (szOpt+countof(szOpt)));
 	// Preparing arguments
 	m_GuiInfo.sDefaultTermArg[0] = 0;
 	if (pszConfig && *pszConfig)
@@ -16964,6 +16967,8 @@ void CConEmuMain::OnDesktopMode()
 {
 	if (!this) return;
 
+	Icon.SettingsChanged();
+
 	if (WindowStartMinimized || ForceMinimizeToTray)
 		return;
 
@@ -17017,7 +17022,7 @@ void CConEmuMain::OnDesktopMode()
 			// Все эти окна принадлежат одному процессу explorer.exe
 			HWND hShell = FindWindowEx(hDesktop, NULL, L"WorkerW", NULL);
 
-			while(hShell)
+			while (hShell)
 			{
 				// У него должны быть дочерние окна
 				if (IsWindowVisible(hShell) && FindWindowEx(hShell, NULL, NULL, NULL))
@@ -17478,9 +17483,10 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 
 void CConEmuMain::OnActivateSplitChanged()
 {
-	DWORD nTimeout = 0;
+	DWORD nTimeout = TIMER_ACTIVATESPLIT_ELAPSE;
 	bool bActive = gpSet->isActivateSplitMouseOver();
-	if (bActive)
+	// Try to get system default timeout only if 'system' options is used
+	if (gpSet->bActivateSplitMouseOver == 2)
 	{
 		if (!SystemParametersInfo(SPI_GETACTIVEWNDTRKTIMEOUT, 0, &nTimeout, 0))
 			nTimeout = TIMER_ACTIVATESPLIT_ELAPSE;
@@ -18059,6 +18065,27 @@ BOOL CConEmuMain::isDialogMessage(MSG &Msg)
 	}
 
 	return lbDlgMsg;
+}
+
+bool CConEmuMain::isSkipNcMessage(const MSG& Msg)
+{
+	// When some GuiChild applications has focus (e.g. PuTTY)
+	// Pressing Alt+F4 enexpectedly close all ConEmu's tabs instead of active (PuTTY) only
+	if ((Msg.message == WM_SYSCOMMAND) && (Msg.wParam == SC_CLOSE))
+	{
+		// Message was posted by system?
+		if (Msg.time)
+		{
+			CVConGuard VCon; HWND hGuiChild;
+			if ((GetActiveVCon(&VCon) >= 0) && ((hGuiChild = VCon->GuiWnd()) != NULL))
+			{
+				VCon->RCon()->PostConsoleMessage(hGuiChild, Msg.message, Msg.wParam, Msg.lParam);
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 // Window procedure for ghWndWork

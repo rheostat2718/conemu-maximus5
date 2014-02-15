@@ -190,6 +190,7 @@ struct Settings
 		bool isRegisterOnOsStartup;
 		bool isRegisterOnOsStartupTSA;
 		bool isDefaultTerminalNoInjects;
+		bool isDefaultTerminalNewWindow;
 		BYTE nDefaultTerminalConfirmClose; // "Press Enter to close console". 0 - Auto, 1 - Always, 2 - Never
 		wchar_t* GetDefaultTerminalApps(); // "|" delimited
 		const wchar_t* GetDefaultTerminalAppsMSZ(); // "\0" delimited
@@ -964,8 +965,9 @@ struct Settings
 		bool mb_MinToTray;
 		bool isMinToTray(bool bRawOnly = false);
 		void SetMinToTray(bool bMinToTray);
-		//reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
-		bool isAlwaysShowTrayIcon;
+		//reg->Load(L"AlwaysShowTrayIcon", mb_AlwaysShowTrayIcon);
+		bool mb_AlwaysShowTrayIcon;
+		bool isAlwaysShowTrayIcon();
 		//bool isForceMonospace, isProportional;
 		//reg->Load(L"Monospace", isMonospace)
 		BYTE isMonospace; // 0 - proportional, 1 - monospace, 2 - forcemonospace
