@@ -13,18 +13,18 @@ This dialog may be opened from:
 
 Well, what you can do with this dialog?
   * Choose command line and startup directory for new process (you may use environment variables in both fields).
-  * Choose another user name and password, «Restricted current user» account or «Run as administrator» feature.
+  * Choose another user name and password, ‘Restricted current user’ account or ‘Run as administrator’ feature.
   * You may split active tab vertically or horizontally (you need last alpha versions for this feature).
   * And it is possible to start new tab in the new !ConEmu window (new `ConEmu.exe` process will be started).
-  * Dialog's system menu contains «Reset command history» menu item.
+  * Dialog's system menu contains ‘Reset command history’ menu item.
 
-Similar dialog may be opened when you [RestartTab «Restart current console»].
+Similar dialog may be opened when you [RestartTab ‘Restart current console’].
 
 ==Create new console without dialog==
-You may switch off create new console confirmation, just disable «Create confirmation» checkbox
-on [Settings#Tabs Tabs] settings page.
+You may switch off create new console confirmation, just disable ‘Create confirmation’ checkbox
+on [Settings#Appearance Appearance] settings page.
 
-*Note*. You may pop up confirmation dialog even if «Create confirmation» unchecked.
+*Note*. You may pop up confirmation dialog even if ‘Create confirmation’ unchecked.
 Just hold Shift while creating console from toolbar, System menu, or Keyboard (Win+Shift+W by default).
 
 ==Create new tab from existing one==
@@ -38,25 +38,25 @@ and it will be launched in the new tab of !ConEmu.
 
 -new_console works even in batch files.
 
-*Note*. Option «Inject !ConEmuHk» must be turned on (Settings -> Features).
+*Note*. Option ‘Inject !ConEmuHk’ must be turned on (Settings -> Features).
 
 ==Duplicate root==
 Well, this interesting feature offers a way to duplicate shell (root process of current tab) state
 to the new !ConEmu tab.
 For example, you have started `cmd.exe`, set up environment variables, cd somewhere,
-run any program (vim for example) and call «Duplicate root» from tab popup menu. This will
-create «copy» of `cmd.exe` at most recent state (when possible).
+run any program (vim for example) and call ‘Duplicate root’ from tab popup menu. This will
+create ‘copy’ of `cmd.exe` at most recent state (when possible).
 
 ==Default terminal feature==
 This allows to seize creation of console processes from many (selected by user) applications.
-For example, when you run «Command prompt» shortcut from «Start menu» cmd.exe may start in the new !ConEmu tab.
+For example, when you run ‘Command prompt’ shortcut from ‘Start menu’ cmd.exe may start in the new !ConEmu tab.
 Read more about [DefaultTerminal Default terminal feature].
 
 ==Attach existing console or GUI application==
-Choose «Attach...» from [SystemMenu system menu].
+Choose ‘Attach...’ from [SystemMenu system menu].
 
 ==Attach from command prompt==
-Batch file «Attach.cmd» ships with !ConEmu package. Run this file from any cmd.exe to attach this console
+Batch file ‘Attach.cmd’ ships with !ConEmu package. Run this file from any cmd.exe to attach this console
 into the new !ConEmu tab. This batch just run following command
 {{{
 ConEmuC.exe /ATTACH /NOCMD
@@ -64,13 +64,13 @@ ConEmuC.exe /ATTACH /NOCMD
 which you may run from any other console shell or even from your own console application.
 
 ==Automatic attach of cmd==
-Mostly like as «Attach from command prompt» but you may set up automatic execution of «Attach» on cmd.exe startup.
-This also works with TCC/LE. Set up feature on «!ComSpec» page of «Settings» dialog.
+Mostly like as ‘Attach from command prompt’ but you may set up automatic execution of ‘Attach’ on cmd.exe startup.
+This also works with TCC/LE. Set up feature on ‘!ComSpec’ page of ‘Settings’ dialog.
 
 ==Gui Macro==
 You may set up several most used shells or build environments via GuiMacro.
-Example: open «Keys & Macro» settings page, click «Macros» radio (it filters long key list)
-and in the free «Macro XX» slot type
+Example: open ‘Keys & Macro’ settings page, click ‘Macros’ radio (it filters long key list)
+and in the free ‘Macro XX’ slot type
 {{{
 shell("","C:\Windows\System32\cmd.exe /E:ON /V:ON /T:0E /K ""C:\\Program Files\\Microsoft SDKs\\Windows\\v7.1\\Bin\\SetEnv.cmd"" /Release /x86")
 }}}
