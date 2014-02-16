@@ -6,6 +6,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 140216==
+  * Fix crash after resizing ConEmu window in some cases.
+
+
 ==Build 140214==
   * RClick on Max caption button - Fullscreen switch.
   * Restore default split mouse hover activation timeout to 500ms.
