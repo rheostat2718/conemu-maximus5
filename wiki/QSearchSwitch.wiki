@@ -7,7 +7,7 @@ Some users want to QSearch in panels without holding Alt key.
 
 This mini-plugin invert Alt behaviour, when you type letters QSearch appears.
 
-If you want to type in Far !CommandLine - press Alt+«letter». After first symbol (when !CommandLine is not empty)
+If you want to type in Far !CommandLine - press Alt+‘letter’. After first symbol (when !CommandLine is not empty)
 you may release Alt.
 
 ===Installation===

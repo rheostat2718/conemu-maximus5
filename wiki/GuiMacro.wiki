@@ -3,7 +3,7 @@ It's a !GuiMacro.
 
 ===Abstract===
 You can execute !ConEmu GUI macro from:
-  * !ConEmu hotkey - set up «Macro 01» … «Macro 32» on «Keys» page of «Settings» dialog.
+  * !ConEmu hotkey - set up ‘Macro 01’ … ‘Macro 32’ on ‘Keys’ page of ‘Settings’ dialog.
   * command line (or batch file), format is flexible, some examples:
 {{{
 "%ConEmuBaseDir%\ConEmuC.exe" /GUIMACRO WindowMinimize
@@ -13,7 +13,7 @@ ConEmuC -Guimacro Flash(1,3,5) ; MsgBox("Notification text")
 }}}
   * ANSI X3.64 OSC code, i.e.:
 {{{
-rem Replace «^e» with real ESC code (symbol with ASCII \x1B)
+rem Replace ‘^e’ with real ESC code (symbol with ASCII \x1B)
 echo ^e]9;6;"IsConEmu"^e\
 if "%ConEmuMacroResult%"=="Yes" echo ConEmu found!
 }}}
@@ -129,8 +129,8 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
          Shell("new_console:sV")
          Shell("new_console:Ibn","cmd","/k start explorer \"%CD%\" && exit")
     Split(<Cmd>,<Horz>,<Vert>)
-     - Cmd=0, Horz=1..99, Vert=0: Duplicate active «shell» split to right, same as Shell("new_console:s50Hn")
-       Cmd=0, Horz=0, Vert=1..99: Duplicate active «shell» split to bottom, same as Shell("new_console:s50Vn")
+     - Cmd=0, Horz=1..99, Vert=0: Duplicate active ‘shell’ split to right, same as Shell("new_console:s50Hn")
+       Cmd=0, Horz=0, Vert=1..99: Duplicate active ‘shell’ split to bottom, same as Shell("new_console:s50Vn")
        Cmd=1, Horz=-1..1, Vert=-1..1: Move splitter between panes (aka resize panes)
        Cmd=2, Horz=-1..1, Vert=-1..1: Put cursor to the nearest pane (preferred direction may be choosed).
     Status(0[,<Parm>])

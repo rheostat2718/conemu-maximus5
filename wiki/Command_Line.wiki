@@ -13,7 +13,7 @@
 || /Multi | /!NoMulti || Enable or disable multiconsole features ||
 || /Single || New console will be started in new tab of existing !ConEmu ||
 || /!NoSingle || Force new !ConEmu window even if single mode is selected in the Settings ||
-|| /!ShowHide | /ShowHideTSA || May be used with !AutoHotKey or desktop shortcuts. Works like «Minimize/Restore» global hotkey. ||
+|| /!ShowHide | /ShowHideTSA || May be used with !AutoHotKey or desktop shortcuts. Works like ‘Minimize/Restore’ global hotkey. ||
 || /!NoUpdate || Disable automatic checking for updates on startup ||
 || /CT`[0|1]` || Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - clear type ||
 || /Font _fontname_ || Specify the font name ||
@@ -106,7 +106,7 @@ start "Three tabs" "C:\Program Files\ConEmu\ConEmu.exe" /cmdlist ^> cmd /k color
 || /nomacro || Disable hotkeys with GuiMacro actions ||
 || /nohotkey || Disable all hotkeys ||
 || /noregfonts || Disable auto register fonts (font files from !ConEmu folder) ||
-|| /inside<br>/insidepid _PID_<br>/insidewnd x<i>HWND</i> || Starts !ConEmu in «inside» mode (act as child window of parent process) ||
+|| /inside<br>/insidepid _PID_<br>/insidewnd x<i>HWND</i> || Starts !ConEmu in ‘inside’ mode (act as child window of parent process) ||
 || /demote || Run command de-elevated, using Task Sheduler. May be useful in Vista and higher with UAC enabled. Example: ConEmu.exe /demote /cmd powershell.exe ||
 || /resetdefault || Same as /reset *and* don't show [SettingsFast fast configuration] dialog. ||
-|| /basic || Same as /resetdefault *and* disable «Save settings» button in [Settings Settings] dialog. ||
+|| /basic || Same as /resetdefault *and* disable ‘Save settings’ button in [Settings Settings] dialog. ||

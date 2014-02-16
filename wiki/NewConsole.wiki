@@ -2,9 +2,9 @@
 <wiki:toc max_depth="3" /> 
 
 =Syntax=
-When you run application from existing !ConEmu tab, or starting new tab from !ConEmu interface, you may use «-new_console» or «-cur_console» switches.
+When you run application from existing !ConEmu tab, or starting new tab from !ConEmu interface, you may use ‘-new_console’ or ‘-cur_console’ switches.
 
-*Warning* «-new_console», «-cur_console» and all subswitches are *case sensitive*.
+*Warning* ‘-new_console’, ‘-cur_console’ and all subswitches are *case sensitive*.
 
 {{{
   -new_console[:switches]
@@ -32,43 +32,43 @@ When you run application from existing !ConEmu tab, or starting new tab from !Co
      z - Don't use 'Default terminal' feature for this command
 }}}
 
-*Note* These switches are shown in !ConEmu «About» dialog.
+*Note* These switches are shown in !ConEmu ‘About’ dialog.
 
-*Note* The «s» switch is complicated, look at examples below.
+*Note* The ‘s’ switch is complicated, look at examples below.
 
-Btw, «-new_console» is one of the ways to start *GUI* application from existing tab in the new !ConEmu tab.
+Btw, ‘-new_console’ is one of the ways to start *GUI* application from existing tab in the new !ConEmu tab.
 
-Several switches in one command may be used, «-new_console:b -new_console:h9999» and «-new_console:bh9999» are equal.
+Several switches in one command may be used, ‘-new_console:b -new_console:h9999’ and ‘-new_console:bh9999’ are equal.
 
-While you create new tab from !ConEmu GUI interface, «-new_console» and «-cur_console» have the same effect.
+While you create new tab from !ConEmu GUI interface, ‘-new_console’ and ‘-cur_console’ have the same effect.
 
 *Note* These are NOT a switches of ConEmuC, specify them as application (far, vim, putty, etc.) switches.
 
-*Warning* Take into account «MUST BE LAST OPTION» comments. You can't use «u:...» and «d:...» together,
+*Warning* Take into account ‘MUST BE LAST OPTION’ comments. You can't use ‘u:...’ and ‘d:...’ together,
 correct notation will be `"-new_console:d:c:\users\Pete" "-new_console:u:Pete:password"`.
 
-*Warning* Option «Inject !ConEmuHk» must be enabled in !ConEmu settings!
+*Warning* Option ‘Inject !ConEmuHk’ must be enabled in !ConEmu settings!
 
-==What is the difference between «-new_console» and «-cur_console»?==
-«-new_console» always creates new tab in !ConEmu, while «-cur_console» not. So, some of switches used with «-cur_console» does not have any effect.
+==What is the difference between ‘-new_console’ and ‘-cur_console’?==
+‘-new_console’ always creates new tab in !ConEmu, while ‘-cur_console’ not. So, some of switches used with ‘-cur_console’ does not have any effect.
 
 <wiki:comment>
 ==If you need to pass same name argument to console program==
 Hm, in this really rare case (I have not know any program at that moment) you may use following form
 {{{
-program.exe -new_console:- -new_console «other arguments»
+program.exe -new_console:- -new_console ‘other arguments’
 }}}
 !ConEmu will strip "`-new_console:-`" and stop processing of command line, so real command will be executed
 {{{
-program.exe -new_console «other arguments»
+program.exe -new_console ‘other arguments’
 }}}
 </wiki:comment>
 
 =Examples=
 
-*Note*. In some cases «-new_console» can not be intercepted
+*Note*. In some cases ‘-new_console’ can not be intercepted
 (e.g. starting batches or internal commands from command processor itself).
-In this cases you owe to use the «prefix» before actual command!
+In this cases you owe to use the ‘prefix’ before actual command!
 
 ==Example 1==
 Starts "`dir c:\ /s" in new background !ConEmu tab, set buffer height to 9999 lines, do not close tab after "dir" completion.

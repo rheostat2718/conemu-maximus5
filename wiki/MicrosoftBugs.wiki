@@ -8,7 +8,7 @@ http://social.msdn.microsoft.com/Forums/en-US/40c8e395-cca9-45c8-b9b8-2fbe6782ac
 http://conemu-maximus5.googlecode.com/svn/files/BugReports/
 
 ==Workaround==
-Turn on «Inject !ConEmuHk» option.
+Turn on ‘Inject !ConEmuHk’ option.
 
 ==Related issues==
 Issue 1060, Issue 1061, Issue 1146, Issue 1190, Issue 1203, Issue 1204
@@ -27,14 +27,14 @@ http://social.msdn.microsoft.com/Forums/en-US/ec363615-397c-42a8-84d2-38a70e4f8a
 Issue 65, Issue 107, Issue 529, Issue 669, Issue 910, Issue 1023, Issue 1081
 
 ==Workaround==
-Turn on «Inject !ConEmuHk» option. Workaround was first created in !ConEmu build 120509a.
+Turn on ‘Inject !ConEmuHk’ option. Workaround was first created in !ConEmu build 120509a.
 
 
 
 <br>
 
 =Conclusion=
-My (and not only) experience in «bug reporting» suggests that Microsoft won't fix reported bugs in current versions of Windows.
+My (and not only) experience in ‘bug reporting’ suggests that Microsoft won't fix reported bugs in current versions of Windows.
 
 Wondering, what are service packs for?
 

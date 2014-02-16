@@ -33,7 +33,7 @@ when !BufferHeight is enabled. On systems prior to Windows 7 you may switch !Buf
 mode by [KeyboardShortcuts#Configurable_hotkeys Win-A] hotkey.
 
 ===[Tabs Tab]===
-When [Settings#Tabs tabs are visible], each tab represents one «window».
+When [Settings#Tabs tabs are visible], each tab represents one ‘window’.
 Each window may be [ConEmuTerms#RealConsole RealConsole] (running any console application),
 or Far Manager editor/viewer.
 

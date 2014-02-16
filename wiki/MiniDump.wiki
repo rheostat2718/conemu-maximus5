@@ -23,7 +23,7 @@ A. Windows 7 and up.
    Open Windows' Task Manager, switch to the "Processes" tab, right-click the process, and select "Create dump file".
 
 A. Process Explorer.
-   «Process Explorer» can also create minidumps, however _it will also fail to create a correct minidump for a 32-bit process on a 64-bit system_.
+   ‘Process Explorer’ can also create minidumps, however _it will also fail to create a correct minidump for a 32-bit process on a 64-bit system_.
 
 =How to find Process ID (PID)=
 A. You can find the Process ID near to Process Name (!ConEmu.exe, cmd.exe, etc.)
@@ -32,5 +32,5 @@ A. You can find the Process ID near to Process Name (!ConEmu.exe, cmd.exe, etc.)
   * in the Info page of !ConEmu [Settings#Info Settings] dialog.
 
 *Note!* Sometimes PID column in the Task Manager window may be hidden, enable it in Task manager settings.
-  * Windows 7 and below: Task Manager -> Processes tab -> Menu -> View -> Select Columns -> Check «PID».
-  * Windows 8: Task Manager -> Show «More details» -> Processes tab -> Right click on column title -> Check «PID».
+  * Windows 7 and below: Task Manager -> Processes tab -> Menu -> View -> Select Columns -> Check ‘PID’.
+  * Windows 8: Task Manager -> Show ‘More details’ -> Processes tab -> Right click on column title -> Check ‘PID’.

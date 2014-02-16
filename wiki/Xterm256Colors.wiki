@@ -1,6 +1,6 @@
 ﻿=How to enable xterm 256 colors in !ConEmu=
 
-Note. If «Inject !ConEmuHk» is off, you can still use ANSI in vim (or any other application)
+Note. If ‘Inject !ConEmuHk’ is off, you can still use ANSI in vim (or any other application)
 if you run them via ConEmuC.exe but not directly. For example, run vim from bash
 {{{
 conemuc //c C:\\GIT\\share\\vim\\vim73\\vim.exe 1.cpp
@@ -12,10 +12,10 @@ For any other application - you must do it yourself.
 
 ==xterm 256 color mode requirements==
   * Options must be turned on
-    * «!TrueMod (24bit color) support» on [Settings#Colors Colors] page
-    * «ANSI X3.64 / xterm 256 colors» on [Settings#Features Features] page
-    * «Inject !ConEmuHk» on [Settings#Features Features] page (required for second level programs)
-  * Turn off scrolling (extended attributes works only in the «work» area - the bottom of the console)
+    * ‘!TrueMod (24bit color) support’ on [Settings#Colors Colors] page
+    * ‘ANSI X3.64 / xterm 256 colors’ on [Settings#Features Features] page
+    * ‘Inject !ConEmuHk’ on [Settings#Features Features] page (required for second level programs)
+  * Turn off scrolling (extended attributes works only in the ‘work’ area - the bottom of the console)
 
 ===Example 1: Vim===
 {{{
@@ -29,8 +29,8 @@ Script [http://www.frexx.de/xterm-256-notes/data/256colors2.pl 256colors2.pl] mu
 }}}
 
 ===Example 3: scroll console to the bottom===
-When you run *not* «fullscreen» application (not Far/Vim/Hiew/...),
-you may scroll console to the bottom («^[» must be replaced with real ESC symbol, ASCII code \x1B):
+When you run *not* ‘fullscreen’ application (not Far/Vim/Hiew/...),
+you may scroll console to the bottom (‘^[’ must be replaced with real ESC symbol, ASCII code \x1B):
 {{{
 echo ^[[9999;1H
 }}}

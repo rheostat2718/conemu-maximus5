@@ -8,7 +8,7 @@
 svn checkout http://conemu-maximus5.googlecode.com/svn/trunk/ conemu-maximus5-read-only
 }}}
 
-Русские версии страничек лежат в подпапке «ru».
+Русские версии страничек лежат в подпапке ‘ru’.
 
 Диалоги (настройка) содержатся в файле
 [https://github.com/Maximus5/ConEmu/blob/alpha/src/ConEmu/ConEmu.rc ConEmu.rc]

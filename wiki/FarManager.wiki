@@ -19,7 +19,7 @@ And yes, plugins compiled for x86 does not works in x64 Far Manager and vice ver
 Most developers creates binaries with obvious names.
 
 This is the general mistake of new users. They install x64 Far Manager and try to use x86 versions of plugins.
-So, they asks «Why plugin does not appears in the list?»
+So, they asks ‘Why plugin does not appears in the list?’
 
 IMHO, there is no considerable difference between them, but not every plugin has x64 version.
 
@@ -28,7 +28,7 @@ I'm using Far 3.0 x86 version (my primary OS is Win 7 x64).
 ==There are three (already) branches of Far Manager==
   * 1.x (closed) oldschool version. It is ANSI (OEM to be more precise),
 so it can't deal with unicode characters out of system OEM codetable.
-However, some users believe «the best the enemy of good» and do not switch to newer versions.
+However, some users believe ‘the best the enemy of good’ and do not switch to newer versions.
 All settings are stored in registry `HKEY_CURRENT_USER\Software\Far`.
   * 2.x (closed). General difference - unicode support (file system, editor, viewer).
 There was API break, but 2.x natively supports most of 1.x plugins via internal plugin wrapper.
@@ -36,7 +36,7 @@ All settings are stored in registry `HKEY_CURRENT_USER\Software\Far2`.
   * 3.x (curren). General difference - Far Manager settings and native (3.x) plugins settings are stored in SQLiteDB.
 API was completely redesigned (and is not stable for current day). Many bugfixes and improvements.
 Far 3.x can still deal with ANSI plugins (from Far 1.x),
-but due to API break can't work with «old» unicode plugins (from Far 2.x).
+but due to API break can't work with ‘old’ unicode plugins (from Far 2.x).
 However! There is [http://code.google.com/p/conemu-maximus5/wiki/Far3Wrapper external plugin wrapper].
 Through it you can use many plugins from Far 2.x.
 
@@ -44,14 +44,14 @@ Through it you can use many plugins from Far 2.x.
   * *Panels*. This is most common type. Examples:
     * Miscellaneous archives: Arclite, [http://forum.farmanager.com/viewtopic.php?f=11&t=4643 Observer], [http://www.farmanager.com/files/Far175b2634.x86.20110203.7z MultiArc] (from Far 1.7x) - these are the basic
     * Remote access: Network, Pocket and Phone, [http://forum.farmanager.com/viewtopic.php?p=81676#p81676 Shell extension], [http://forum.farmanager.com/viewtopic.php?f=11&t=6316 SFTP/SCP/FTP/FTPS/WebDAV], [http://code.google.com/p/conemu-maximus5/wiki/RegEditor Registry] and so on
-  * *C0 panel plugins*. These plugins works in panels, but does not emulates virtual file system. They provide data for special «С0» column for real file system:
+  * *C0 panel plugins*. These plugins works in panels, but does not emulates virtual file system. They provide data for special ‘С0’ column for real file system:
     * ver_c0 - show versions for PE files (exe, dll, sys, ocx, ...)
     * svn_c0 - revision and status, only svn 1.6.x
     * pdf_c0, html_c0 - show title of document
     * mp3_c0 - artist/title for MP3 files (ID1)
     * diz_c0 - descript.ion, files.bbs, etc.
   * *Modal*. In most cases these plugins executes some specific action. Examples:
-    * Uninstall - display list of installed applications and allows Modify/Repair/Uninstall. This is the same as Windows «Uninstall or change a program» but much faster and support fast filtering.
+    * Uninstall - display list of installed applications and allows Modify/Repair/Uninstall. This is the same as Windows ‘Uninstall or change a program’ but much faster and support fast filtering.
     * !HexEditors - as is :)
     * Bulk file renamers
     * Picture viewers, Audio/Video players, yes, it is possible in console :)
@@ -75,18 +75,18 @@ After installing (unpacking) Far Manager you have such directory structure (by e
 =2. Install plugins to your's mind=
 There thousands of plugins written for many years. There many sources, where you can download them.
 
-Installing choosen plugin (in most cases) means create subfolder in «Plugins» and unpack plugin distribution to this folder.
+Installing choosen plugin (in most cases) means create subfolder in ‘Plugins’ and unpack plugin distribution to this folder.
 
 To make Far Manager load new plugins you may:
  * Simply restart Far Manager
- * or, for [http://code.google.com/p/conemu-maximus5/downloads/list bis] versions, press !AltShiftF9 in panels to open «Plugins configuration» menu, and press CtrlR
- * or, navigate to plugin folder, type in command prompt «load:plugin_file_name.dll» and press Enter.
+ * or, for [http://code.google.com/p/conemu-maximus5/downloads/list bis] versions, press !AltShiftF9 in panels to open ‘Plugins configuration’ menu, and press CtrlR
+ * or, navigate to plugin folder, type in command prompt ‘load:plugin_file_name.dll’ and press Enter.
 
 ==Examples==
-  #. You have downloaded [https://sourceforge.net/projects/colorer/files/FAR%20Colorer/ FarColorer_far3_1.0.3.10.7z] (syntax hilighting in editor). This archive already contans root folder «FarColorer». So, just unpack 7z package to «Plugins» and restart far. Note, this 7z package contains both x86 and x64 versions of !FarColorer.
-  #. You have downloaded [http://code.google.com/p/conemu-maximus5/wiki/RegEditor RegEdit3.1.1.36.2580.7z]. This package does not have root folder, so create and unpack package files to «Plugins\!RegEdit». Note, this 7z package contains both x86 and x64 versions of plugin.
+  #. You have downloaded [https://sourceforge.net/projects/colorer/files/FAR%20Colorer/ FarColorer_far3_1.0.3.10.7z] (syntax hilighting in editor). This archive already contans root folder ‘FarColorer’. So, just unpack 7z package to ‘Plugins’ and restart far. Note, this 7z package contains both x86 and x64 versions of !FarColorer.
+  #. You have downloaded [http://code.google.com/p/conemu-maximus5/wiki/RegEditor RegEdit3.1.1.36.2580.7z]. This package does not have root folder, so create and unpack package files to ‘Plugins\!RegEdit’. Note, this 7z package contains both x86 and x64 versions of plugin.
   #. You have downloaded [http://code.google.com/p/conemu-maximus5/wiki/ImpEx ImpEx.0.8.10.7z] (PE file browser). You owe to use [http://code.google.com/p/conemu-maximus5/wiki/Far3Wrapper Far3wrap] with Far 3.x. So:
-    * Unpack !ImpEx.0.8.10.7z to «Plugins\!ImpEx»
+    * Unpack !ImpEx.0.8.10.7z to ‘Plugins\!ImpEx’
 
 ==Main plugins sources==
   * [http://forum.farmanager.com/viewforum.php?f=11 Plugin announces (russian)]
@@ -143,19 +143,19 @@ This is *very* breaf list of key kombos, read F1 for more information.
 One of most powerful options of Far Manager are Macros. There are two styles of Macro
   * Sequence of recorded keypresses. This is very useful, when you need to repeat multiple times one routine operation, or for simplifying access to most useful operations.
     * For example, how to create oldschool keymapping - Esc turns panels on/off.
-      * Press Ctrl+. (Ctrl and Dot on main keyboard) to start recording (red «R» lights in upper-left corner)
+      * Press Ctrl+. (Ctrl and Dot on main keyboard) to start recording (red ‘R’ lights in upper-left corner)
       * Press keys, the sequence: Ctrl+O
-      * Press Ctrl+. again, recording stopped, Far show small dialog «Press the desired key». 
-        * Some «keys» may be selected only from drop-down list. Choose «Esc» from there.
-      * Press «Enter» to confirm key selection.
+      * Press Ctrl+. again, recording stopped, Far show small dialog ‘Press the desired key’. 
+        * Some ‘keys’ may be selected only from drop-down list. Choose ‘Esc’ from there.
+      * Press ‘Enter’ to confirm key selection.
     * If you want to use recored macro in future sessions, you owe to save it
       * Press !ShiftF9 in panels and confirm saving
-      * or, type in command line «macro:save» and press «Enter».
+      * or, type in command line ‘macro:save’ and press ‘Enter’.
     * If you do not need recorded macro anymore
       * Press (twice) Ctrl+. Ctrl+.
       * Choose macro key
-      * Press «Enter», confirm deletion
+      * Press ‘Enter’, confirm deletion
   * Scripts, written on [http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fapi.farmanager.com%2Fru2%2Fmacro%2Fmacrocmd%2Findex.html Macro language]. There are several ways to create such macros
-    * Press «Ctrl+.» any keys («Space» for example) «Ctrl+Shift+.» choose key «Enter». Far opens dialog with recorded key sequence. You can modify it there.
+    * Press ‘Ctrl+.’ any keys (‘Space’ for example) ‘Ctrl+Shift+.’ choose key ‘Enter’. Far opens dialog with recorded key sequence. You can modify it there.
     * Use [http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Ffar-plugins%2Fwiki%2FMacroLib MacroLib]. This plugin (my choice) simplify creation, editing, maintaning and calling Far Macros. Read plugin documentation for description of fml (text) file format.
     * Use `*.farconfig` files. Generally, these files may contain any Far Manager settings, not Macros only. Import them with command `far.exe /import <farconfig-file>`.

@@ -2,7 +2,7 @@
 
 ===About===
 !UnInstall is Far Manager plugin, which allows You easily remove installed program.
-It works like «Programs and features» applet from Windows Control Panel, 
+It works like ‘Programs and features’ applet from Windows Control Panel, 
 but this plugin have several benefits:
   * program list loading is fast;
   * quick filter of the list;

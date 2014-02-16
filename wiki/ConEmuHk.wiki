@@ -24,7 +24,7 @@ is created in the !ConEmu console. It is really small (about 60 ms per process o
 User may notice that lag in the only case of running hundreds and thousands of processes.
 
 ==Third party problems==
-I had bunches of issues about «crashes in !ConEmu». Really? And what are the causes?
+I had bunches of issues about ‘crashes in !ConEmu’. Really? And what are the causes?
 
   * MicrosoftBugs. Windows kernel has several bugs leading to crashes, hungs and black screens. Microsoft fix bugs in next windows versions only. Great, user needs to buy new Windows... Workaround? Injects only.
   * Third party tools run injects too. Several injection systems will conflict each other. The result? Crash! One system tries to execute !LoadLibrary in the external process, but it think that !LoadLibrary is located in the other module than kernel32.dll. Sadly.
@@ -37,7 +37,7 @@ I had bunches of issues about «crashes in !ConEmu». Really? And what are the c
 Do you think still you have no need in !ConEmuHk?
 Well, you may *completely* disable them, but *don't complain* of arisen problems which are absent when injects are enabled.
 
-  * Uncheck «Inject !ConEmuHk»
+  * Uncheck ‘Inject !ConEmuHk’
   * Physically delete files !ConEmuHk.dll and !ConEmuHk64.dll.
 
 At last, I have some plans about rewritting hooks code using different technique. But it will take time

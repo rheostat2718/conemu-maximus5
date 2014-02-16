@@ -1,8 +1,8 @@
-﻿!ConEmu is distributes as msi package «`ConEmuSetup.*.exe`», or archive named «`ConEmuPack.*.7z`».
+﻿!ConEmu is distributes as msi package ‘`ConEmuSetup.*.exe`’, or archive named ‘`ConEmuPack.*.7z`’.
 Both of them contains x86 (aka x32) and x64 versions of all !ConEmu binaries.
 
 Also, the archive and the installer contains both x86 and x64 versions of !ConEmu FAR plugins
-(«`Plugins\ConEmu\ConEmu.dll`» and «`Plugins\ConEmu\ConEmu.x64.dll`» for example).
+(‘`Plugins\ConEmu\ConEmu.dll`’ and ‘`Plugins\ConEmu\ConEmu.x64.dll`’ for example).
 
 So, You can simply unpack downloaded archive or install !ConEmu to the
 [http://www.farmanager.com/download.php?l=en Far Manager] folder

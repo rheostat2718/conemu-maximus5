@@ -1,7 +1,7 @@
 ﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=summary:MMView Download (Far1/Far2 x86/x64)]
 
 ===About===
-«Multimedia Viewer» Far Manager plugin allows you to view pictures, video and listen audio without leaving FAR or launching any external programs.
+‘Multimedia Viewer’ Far Manager plugin allows you to view pictures, video and listen audio without leaving FAR or launching any external programs.
 Note, that it does not works in *real* fullscreen mode (this restriction is removed in !ConEmu).
 
 Plugin plays sounds and videos via Windows !DirectShow. So, when file is not recognized, you must install required codecs.

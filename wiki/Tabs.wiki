@@ -24,8 +24,8 @@ Also, you may strip superfluous "Administrator:" prefix from console title [http
 You may use `Win-Number` to activate consoles:
   * When console count less then 11'th: Win+1 activates first console, Win+9 - ninth, Win+0 - tenth.
   * Otherwise - one-number and two-number activations are allowed. Example:
-  * «Win(down) 1 5» - activates 15'th console;
-  * «Win(down) 1 Win(up)» - activates 1'th console.
+  * ‘Win(down) 1 5’ - activates 15'th console;
+  * ‘Win(down) 1 Win(up)’ - activates 1'th console.
 
 Win is default [ConEmuTerms#Host_key HostKey], You may select yours convinent combination (up to 3 keys) from Win, Ctrl, Alt, Shift and Apps.
 

@@ -1,15 +1,15 @@
 ﻿=Unix like sudo command on Windows=
 
-Common question: «Is there any 'sudo' command for Windows?»
+Common question: ‘Is there any 'sudo' command for Windows?’
 
 One of the answers is here. 
 
 !ConEmu package contains (started from build 121028) batch file
-«%!ConEmuBaseDir%\[http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/csudo.cmd csudo.cmd]».
-When checkbox «Add %!ConEmuBaseDir% to %PATH%» is On («!ComSpec» page),
+‘%!ConEmuBaseDir%\[http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/csudo.cmd csudo.cmd]’.
+When checkbox ‘Add %!ConEmuBaseDir% to %PATH%’ is On (‘!ComSpec’ page),
 you may just type csudo in non-elevated prompt in your shell.
 
-*Note* You may also rename «csudo.cmd» to «sudo.cmd» if you like simple «sudo» notation.
+*Note* You may also rename ‘csudo.cmd’ to ‘sudo.cmd’ if you like simple ‘sudo’ notation.
 And you must rename it if you like to change its contents to avoid loosing your changes
 when new update of !ConEmu arrives.
 
@@ -21,7 +21,7 @@ csudo dism /online /enable-feature /featurename:NetFX3 /All /Source:D:\sources\s
 }}}
 
 ==Screenshots==
-Let type in command prompt «csudo diskpart»
+Let type in command prompt ‘csudo diskpart’
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuSuDo1.png" title="Running csudo command">
 
@@ -40,7 +40,7 @@ Here we are, diskpart started elevated in a split
 ==Batch file contents==
 As you can see, batch contains two parameters, which you may redefine: !ConEmuSplit and !ConfirmClose.
 For example, if you want to start elevated command in new tab rather than in split - just
-change «`set ConEmuSplit=VERT`» to «`set ConEmuSplit=NO`».
+change ‘`set ConEmuSplit=VERT`’ to ‘`set ConEmuSplit=NO`’.
 
 *csudo.cmd*
 
