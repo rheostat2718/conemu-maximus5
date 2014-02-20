@@ -6,6 +6,17 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 140220==
+  * Issue 1477: Fix Far panels detection (No column titles and No sort letter).
+  * Many changes within "-new_console" and "-cur_console" switches processor.
+    * Allow multiple quoted switches in one -new_console:d:"C:\My folder":t:"My title"
+    * Simple switches may be separated too: -new_console:c:b:a
+    * Issue 1354: Switches will not be processed AFTER ConEmu's executables, read more in [NewConsole#Exclusions wiki]
+    * Internal refactoring (allow ‘concatenate’ or ‘apply’ them correctly) and unit tests.
+  * Issue 1478: Allow !ChildGui activation with LClick.
+  * Some internal changes.
+
+
 ==Build 140216==
   * Fix crash after resizing ConEmu window in some cases.
 
@@ -384,8 +395,8 @@ set term=msys & "set PATH=C:\Program Files\GIT\bin;%PATH%" & powershell
   * Crash fix on tabs closing.
   * Initialize predefined palettes with "/reset" or "/basic" switches.
   * Setupper. Featute name «clink readme» and «Show git branch».
-  * Issue1354. Checkbox «Process new_console switches».
-  * New possible env values `"ConEmuHooks=OFF,NOARG"`.
+  * Issue 1354: Checkbox «Process -new_console and -cur_console switches».
+  * New possible env values `"ConEmuHooks=OFF,NOARG"` to temporarily disable processing of -new_console and -cur_console switches.
   * Clear `"ConEmuFakeDT"`, `"ConEmuHooks"` on !ConEmu.exe startup.
   * `ConEmuRelyDT` renamed to `ConEmuFakeDT`.
   * Some fixes in CSettings::!GetString.

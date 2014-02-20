@@ -1,6 +1,69 @@
 ﻿<font size="5">*-new_console and -cur_console switches*</font>
 <wiki:toc max_depth="3" /> 
 
+=Purpose=
+‘-new_console’ and ‘-cur_console’ switches used to modify behavior of the !ConEmu tabs and splits (new or existing).
+Few examples below.
+
+Within !ConEmu Tasks you may explicitly set color palette for creating tab:
+{{{
+sh.exe --login -i -new_console:P:"Palette"
+}}}
+
+Or, from your shell prompt (e.g. cmd.exe started in !ConEmu) you can start PuTTY
+(or any other simple GUI applications) in the new !ConEmu tab (or split):
+{{{
+PuTTY.exe -new_console -load "yourserver"
+}}}
+
+Or, if you need to run some script with disabled ‘[ConEmuHk Inject ConEmuHk]’ from your shell prompt running in the !ConEmu tab,
+you may use ‘-cur_console:i’ switch.
+{{{
+cmd /c -cur_console:i MyBatch.cmd BatchArg1 ... BatchArgN
+}}}
+
+Switches may be used in the:
+
+  * !ConEmu command line (`/cmd` or `/cmdlist` from [Command_Line ConEmu.exe arguments] or ‘Command line’ from the [Settings#Startup Settings]);
+  * !ConEmu [Settings#Tasks Tasks] (commands area);
+  * your shell prompt started in !ConEmu (‘[ConEmuHk Inject ConEmuHk]’ must be enabled in the [Settings#Features Settings]);
+  * and at last within switches of console application running with Default terminal feature.
+
+You must *not* specify them as !ConEmu(64).exe or ConEmuC(64).exe arguments.
+Specify them AFTER `/cmd` or `/cmdlist` (!ConEmu.exe) and `/c` or `/k` (ConEmuC.exe)
+if you need to use them with !ConEmu's executables command line.
+{{{
+ConEmu.exe /cmdlist cmd ||| powershell -new_console:sV
+}}}
+
+
+=Exclusions=
+Sometimes, you may need to disable processing of ‘-new_console’ and ‘-cur_console’ switches at all.
+For example, you need to create git commit with `-new_console` in the commit message,
+or create string value in the registry, using `reg.exe` tool. There are several ways to
+disable or skip processing of these switches.
+
+  * Option ‘Process -new_console and -cur_console switches’ on the [Settings#Features Features] Settings page. When you disable that option swithes will not be processed when you run something from your shell prompt or scripts (inside !ConEmu tabs).
+  * Using single quotes or backslashes, examples below.
+{{{
+git commit -m "Fix behavior of the '-new_console' switches"
+reg.exe add "HKCU\command" /ve /t REG_EXPAND_SZ /d "\"C:\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f
+}}}
+  * Switches will not be processed *after* the one of the !ConEmu's executables: `ConEmu(64).exe`, `ConEmuC(64).exe` or `ConEmuPortable.exe`. For example, when you run `ConEmu.exe` from your shell prompt, switch ‘-new_console’ will be applied to the tab started in the *new* !ConEmu window, and doesn't create new tab with one !ConEmu window *inside* another !ConEmu window. *Note* This behavior first introduced in the build 140220.
+{{{
+ConEmu /cmd PowerShell.exe -new_console:h9999
+}}}
+  * Using [ConEmuEnvironment environment] shell variable `ConEmuHooks` within your scripts (`rungit.cmd` for example).
+{{{
+rem Call "setlocal" to restrict environment change to that batch only
+setlocal
+rem Disable processing of the -new_console switch
+set ConEmuHooks=NOARG
+rem And now you are safe to run your command
+git -am "Commit message with -new_console argument"
+}}}
+
+
 =Syntax=
 When you run application from existing !ConEmu tab, or starting new tab from !ConEmu interface, you may use ‘-new_console’ or ‘-cur_console’ switches.
 
@@ -32,7 +95,7 @@ When you run application from existing !ConEmu tab, or starting new tab from !Co
      z - Don't use 'Default terminal' feature for this command
 }}}
 
-*Note* These switches are shown in !ConEmu ‘About’ dialog.
+*Note* These switches are shown in !ConEmu ‘About’ dialog (Win+Alt+A).
 
 *Note* The ‘s’ switch is complicated, look at examples below.
 
@@ -44,13 +107,14 @@ While you create new tab from !ConEmu GUI interface, ‘-new_console’ and ‘-
 
 *Note* These are NOT a switches of ConEmuC, specify them as application (far, vim, putty, etc.) switches.
 
-*Warning* Take into account ‘MUST BE LAST OPTION’ comments. You can't use ‘u:...’ and ‘d:...’ together,
-correct notation will be `"-new_console:d:c:\users\Pete" "-new_console:u:Pete:password"`.
+*Note* You may put multiple simple or quoted string switches delimited with colon, example:
+`cmd -new_console:a:bc:d:"c:\users\Pete":u:"Pete:password"`.
 
-*Warning* Option ‘Inject !ConEmuHk’ must be enabled in !ConEmu settings!
+*Warning* Option ‘[ConEmuHk Inject ConEmuHk]’ must be enabled in !ConEmu settings if you want to use these switches in your shell prompt (CLI).
 
 ==What is the difference between ‘-new_console’ and ‘-cur_console’?==
 ‘-new_console’ always creates new tab in !ConEmu, while ‘-cur_console’ not. So, some of switches used with ‘-cur_console’ does not have any effect.
+On the other hand, using them in !ConEmu's tasks or command line, both ‘-new_console’ and ‘-cur_console’ has the same effect.
 
 <wiki:comment>
 ==If you need to pass same name argument to console program==
