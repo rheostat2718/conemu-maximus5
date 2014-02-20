@@ -765,6 +765,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgDeleteVConMainThread = RegisterMessage("DeleteVConMainThread");
 	mn_MsgReqChangeCurPalette = RegisterMessage("ChangeCurrentPalette");
 	mn_MsgMacroExecSync = RegisterMessage("MacroExecSync");
+	mn_MsgActivateVCon = RegisterMessage("ActivateVCon");
 }
 
 bool CConEmuMain::isMingwMode()
@@ -7035,7 +7036,28 @@ void CConEmuMain::OnActiveConWndStore(HWND hConWnd)
 
 BOOL CConEmuMain::Activate(CVirtualConsole* apVCon)
 {
-	return CVConGroup::Activate(apVCon);
+	BOOL lbRc;
+	if (!isMainThread())
+	{
+		LRESULT lRc;
+		if (apVCon->GuiWnd())
+		{
+			// We can lock, if Activate VCon is called from ChildGui.
+			// That's why - PostMessage instead of SendMessage
+			PostMessage(ghWnd, mn_MsgActivateVCon, 0, (LPARAM)apVCon);
+			lRc = 0;
+		}
+		else
+		{
+			lRc = SendMessage(ghWnd, mn_MsgActivateVCon, 0, (LPARAM)apVCon);
+		}
+		lbRc = (lRc == (LRESULT)apVCon);
+	}
+	else
+	{
+		lbRc = CVConGroup::Activate(apVCon);
+	}
+	return lbRc;
 }
 
 void CConEmuMain::MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward)
@@ -7166,14 +7188,14 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 		_wcscat_c(pszCmdLine, cchMaxLen, L"/nosingle ");
 		_wcscat_c(pszCmdLine, cchMaxLen, L"/cmd ");
 		_wcscat_c(pszCmdLine, cchMaxLen, args->pszSpecialCmd);
-		if (args->bRunAsAdministrator || args->bRunAsRestricted || args->pszUserName)
+		if ((args->RunAsAdministrator == crb_On) || (args->RunAsRestricted == crb_On) || args->pszUserName)
 		{
-			if (args->bRunAsAdministrator)
+			if (args->RunAsAdministrator == crb_On)
 			{
 				// Create ConEmu.exe with current credentials, implying elevation for the console
 				_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:a");
 			}
-			else if (args->bRunAsRestricted)
+			else if (args->RunAsRestricted == crb_On)
 			{
 				_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:r");
 			}
@@ -7184,7 +7206,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 			//}
 		}
 
-		if (!args->bRunAsAdministrator && !args->bRunAsRestricted && (args->pszUserName && *args->pszUserName))
+		if ((args->RunAsAdministrator != crb_On) && (args->RunAsRestricted != crb_On) && (args->pszUserName && *args->pszUserName))
 			bStart = CreateProcessWithLogonW(args->pszUserName, args->pszDomain, args->szUserPassword,
 		                           LOGON_WITH_PROFILE, NULL, pszCmdLine,
 		                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
@@ -7341,7 +7363,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 					SafeFree(args.pszStartupDir);
 
 				if (lbRunAdmin) // don't reset one that may come from apDefArgs
-					args.bRunAsAdministrator = true;
+					args.RunAsAdministrator = crb_On;
 
 				pVCon = CreateCon(&args, false, true);
 
@@ -7360,7 +7382,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 					lbOneCreated = TRUE;
 
 					const RConStartArgs& modArgs = pVCon->RCon()->GetArgs();
-					if (modArgs.bForegroungTab)
+					if (modArgs.ForegroungTab == crb_On)
 						lbSetActive = true;
 
 					pLastVCon = pVCon;
@@ -8480,8 +8502,20 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 	FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
 	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
 	RConStartArgs args;
+
+	if (aRecreate == cra_RecreateTab)
+	{
+		CVConGuard VCon;
+		if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
+		{
+			const RConStartArgs& CurArgs = VCon->RCon()->GetArgs();
+			args.AssignFrom(&CurArgs);
+			//args.pszSpecialCmd = CurArgs.CreateCommandLine();
+		}
+	}
+
 	args.aRecreate = aRecreate;
-	args.bRunAsAdministrator = abRunAs;
+	args.RunAsAdministrator = abRunAs ? crb_On : crb_Off;
 
 	WARNING("При переходе на новую обработку кнопок больше не нужно");
 	//if (!abConfirm && isPressed(VK_SHIFT))
@@ -8563,7 +8597,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 		CVConGuard VCon;
 		if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
 		{
-			args.bRunAsAdministrator = abRunAs || VCon->RCon()->isAdministrator();
+			args.RunAsAdministrator = (abRunAs || VCon->RCon()->isAdministrator()) ? crb_On : crb_Off;
 
 			if (abConfirm)
 			{
@@ -11449,9 +11483,9 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			if (!lbCreated && !gpConEmu->mb_StartDetached)
 			{
 				RConStartArgs args;
-				args.bDetached = gpConEmu->mb_StartDetached;
+				args.Detached = gpConEmu->mb_StartDetached ? crb_On : crb_Off;
 
-				if (!args.bDetached)
+				if (args.Detached != crb_On)
 				{
 					args.pszSpecialCmd = lstrdup(gpSetCls->GetCmd());
 
@@ -18956,6 +18990,18 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					lDelRc = 1;
 				}
 				return lDelRc;
+			}
+			else if (messg == this->mn_MsgActivateVCon)
+			{
+				LRESULT lActivateRc = 0;
+				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
+				if (CVConGroup::isValid(pVCon))
+				{
+					BOOL bActivateRc = this->Activate(pVCon);
+					if (bActivateRc)
+						lActivateRc = (LRESULT)pVCon;
+				}
+				return lActivateRc;
 			}
 
 			//else if (messg == this->mn_MsgCmdStarted || messg == this->mn_MsgCmdStopped) {
