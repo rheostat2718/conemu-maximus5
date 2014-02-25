@@ -9,7 +9,7 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
 ==Build 140225==
   * Log Lock/Unlock/Logoff events.
   * GuiMacro. `Keys("Combo1"[,"Combo2"[,...]])`. Combo syntax is mostly similar to !AutoHotKey syntax: `[Mod1[Mod2[Mod3]]]Key`. Where ‘Mod’ may be: `^ - LCtrl, >^ - RCtrl, ! - LAlt, >! - RAlt, + - Shift`. For example, if you want to ‘`Ctrl+/`’ post ‘`Ctrl+_`’ - use macro: `Keys("^_")`.
-  * Support "`\b`", "`\xFF`" and "`\xFFFF`" in GuiMacro strings. Hexadecimal parser stops on first NON hexadecimal character. So, avoid ambiguous strings like "\x05five", this will be parsed as two strings "`\x05f`" and "`ive`"
+  * Support "`\b`", "`\xFF`" and "`\xFFFF`" in GuiMacro strings. Hexadecimal parser stops on first NON hexadecimal character. So, avoid ambiguous strings like "`\x05five`", this will be parsed as two strings "`\x05f`" and "`ive`"
   * Support more that one string argument in Paste and Print GuiMacro functions. All strings will be concatenated before pasting into console.
 {{{
 Syntax:
@@ -23,7 +23,7 @@ print("123","\x1F","abc","def")
 
 ==Build 140223==
   * Hook abnormal termination of child processes (cygwin, mintty, vim, etc.)
-  * Issue 713: Far. After ConsoleDetach, 1st console does not work correctly.
+  * Issue 713: Far. After !ConsoleDetach, 1st console does not work correctly.
 
 
 ==Build 140220==
@@ -31,14 +31,14 @@ print("123","\x1F","abc","def")
   * Many changes within "-new_console" and "-cur_console" switches processor.
     * Allow multiple quoted switches in one -new_console:d:"C:\My folder":t:"My title"
     * Simple switches may be separated too: -new_console:c:b:a
-    * Issue 1354: Switches will not be processed AFTER ConEmu's executables, read more in [NewConsole#Exclusions wiki]
+    * Issue 1354: Switches will not be processed AFTER !ConEmu's executables, read more in [NewConsole#Exclusions wiki]
     * Internal refactoring (allow ‘concatenate’ or ‘apply’ them correctly) and unit tests.
   * Issue 1478: Allow !ChildGui activation with LClick.
   * Some internal changes.
 
 
 ==Build 140216==
-  * Fix crash after resizing ConEmu window in some cases.
+  * Fix crash after resizing !ConEmu window in some cases.
 
 
 ==Build 140214==
