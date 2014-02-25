@@ -1,7 +1,7 @@
 ﻿There is an easy way to control (a little) !ConEmu window from console applications or additional hotkeys.
 It's a !GuiMacro.
 
-===Abstract===
+==Abstract==
 You can execute !ConEmu GUI macro from:
   * !ConEmu hotkey - set up ‘Macro 01’ … ‘Macro 32’ on ‘Keys’ page of ‘Settings’ dialog.
   * command line (or batch file), format is flexible, some examples:
@@ -25,16 +25,81 @@ F11 -> ConEmu -> Execute ConEmu macro
     * *Far2*: callplugin(0x43454D55,"!IsConEmu()")
     * *Far3*: Plugin.Call("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","!IsConEmu()"), _callplugin is alias of Plugin.Call_
 
+==Syntax==
+!ConEmu !GuiMacro parser is flexible and support different styles.
 
-===Command line behaviour===
+===Styles of arguments specification===
+
+  * surrounded by brackets: `Function(Arguments)`
+  * delimited by space: `Function Arguments`
+  * delimited by colon (and space optionally): `Function: Arguments`
+
+===Specifying more that a one argument===
+
+  * delimited by commas: `Function(Arg1,Arg2,Arg3)`
+  * delimited by spaces: `Function Arg1 Arg2 Arg3`
+
+===Executing several functions at once===
+
+  * delimited by semicolons:
+{{{
+print("abc"); keys("^_"); print("def")
+}}}
+  * delimited by `-GuiMacro` when called from your shell prompt
+{{{
+ConEmuC -GuiMacro print abc -GuiMacro keys "^_" -GuiMacro print def
+}}}
+
+===Numerical arguments===
+
+  * decimal form with leading optional ‘+’ or ‘-’: `FontSetSize(1,-1)`
+  * hexadecimal form with ‘0x’ or ‘0X’ prefix: `MsgBox("Text","Title",0x132)`
+
+===String arguments===
+It is recommended to put string arguments in doublequotes, but in fact that is not required for ‘one-word’ arguments.
+
+====C-style strings====
+Backslashes and doublequotes must be escaped with backslashes.
+
+Special symbols can be specified using escaped form:
+{{{
+\\  --> \
+\"  --> "
+\r  --> Carriage return (ASCII 13)
+\n  --> New line (ASCII 10)
+\t  --> Horizontal tab (ASCII 9)
+\b  --> Backspace (ASCII 8)
+\e  --> Escape (ASCII 27)
+\a  --> Alert (ASCII 7)
+}}}
+
+And hexadecimal form `"\xNNNN"` (up to 4 digits) may be used to specify exact unicode character:
+{{{
+\x1B   --> same as \e (ASCII 27)
+\x044F --> russian ‘я’ letter
+}}}
+
+Example:
+{{{
+print("\eCD /d \"C:\\Users\"\n")
+}}}
+
+====Verbatim strings====
+No ‘escaped’ symbols, with the only exception of doublequote - they must be doubled.
+
+{{{
+print(@"CD /d ""C:\Users""")
+}}}
+
+==Command line behaviour==
 When GUI macro executed successfully, ConEmuC.exe set errorlevel to 0 and write result to !StdOut.
 
-===Far plugin behaviour===
+==Far plugin behaviour==
 When you call plugin menu, result is show in the dialog field,
 
 When you use far manager macro - result is placed to the '!ConEmuMacroResult' environment variable.
 
-===List of functions===
+==List of functions==
 <wiki:comment> !!! when modifying - add same functions to "src\ConEmu\About.h" !!! </wiki:comment>
 {{{
     Close(<What>[,<Flags>])
@@ -85,11 +150,16 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
      - Check, is RealConsole active or not, "Yes"/"No"
     IsRealVisible
      - Check, is RealConsole visible or not, "Yes"/"No"
+    Keys("<Combo1>"[,"<Combo2>"[,...]])
+     - Post special keystrokes to the console (AutoHotKey syntax)
+       "[Mod1[Mod2[Mod3]]]Key"
+       Mod: ^ - LCtrl, >^ - RCtrl, ! - LAlt, >! - RAlt, + - Shift
+       Example: Keys("^_") will post ‘Ctrl+_’
     MsgBox("<Text>","<Title>",<ButtonType>)
      - Show modal GUI MessageBox, returns clicked button name
        ("Ok", "Cancel", "Retry", etc.),
        ButtonType (number) is from Windows SDK.
-    Paste(<Cmd>[,"<Text>"])
+    Paste(<Cmd>[,"<Text>"[,"<Text2>"[...]]])
      - When <Text> is omitted - paste from Windows clipboard,
        otherwise - paste specified text
        Cmd==0: paste all lines
@@ -103,7 +173,7 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
        Cmd==8: paste path from clipboard converted to CygWin style
        Cmd==9: paste all lines space-separated
        Cmd==10: paste all lines space-separated, without confirmations
-    Print(["<Text>"])
+    Print(["<Text>"[,"<Text2>"[...]]])
      - Alias for Paste(2,"<Text>")
     Progress(<Type>[,<Value>])
      - Set progress state on taskbar and !ConEmu title
@@ -174,14 +244,14 @@ When you use far manager macro - result is placed to the '!ConEmuMacroResult' en
        "MPREV", "MNEXT" (move ConEmu to prev/next monitor)
 }}}
 
-===Examples===
-====Far2====
+==Examples==
+===Far2===
 {{{
 $if (callplugin(0x43454D55,"IsConEmu()")!=0 && env("ConEmuMacroResult")=="Yes")
   MsgBox("Macro", "Far started under ConEmu")
 $end
 }}}
-====Far3====
+===Far3===
 {{{
 $if (callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()")!=0 && env("ConEmuMacroResult")=="Yes")
   MsgBox("Macro", "Far started under ConEmu")
@@ -193,7 +263,7 @@ callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"open\",\""+env("FARHO
 {{{
 callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"new_console\",\""+env("FARHOME")+"\\far.exe\")")
 }}}
-====Far1====
+===Far1===
 This is most complicated, cause of 'callplugin' absence in the Far 1.x
 {{{
 F11

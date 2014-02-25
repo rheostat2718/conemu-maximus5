@@ -106,6 +106,7 @@ start "Three tabs" "C:\Program Files\ConEmu\ConEmu.exe" /cmdlist ^> cmd /k color
 || /nomacro || Disable hotkeys with GuiMacro actions ||
 || /nohotkey || Disable all hotkeys ||
 || /noregfonts || Disable auto register fonts (font files from !ConEmu folder) ||
+|| /nocloseconfirm || Disable confirmation of !ConEmu's window closing ||
 || /inside<br>/insidepid _PID_<br>/insidewnd x<i>HWND</i> || Starts !ConEmu in ‘inside’ mode (act as child window of parent process) ||
 || /demote || Run command de-elevated, using Task Sheduler. May be useful in Vista and higher with UAC enabled. Example: ConEmu.exe /demote /cmd powershell.exe ||
 || /resetdefault || Same as /reset *and* don't show [SettingsFast fast configuration] dialog. ||
