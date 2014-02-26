@@ -618,32 +618,38 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 
 		_ASSERTE(pszSrc != pszDst);
 
-		switch (*pszSrc)
+		wchar_t wc = *pszSrc;
+		switch (wc)
 		{
-			case L'"':
+			case L'"': // 34
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'"';
 				pszSrc++;
 				break;
-			case L'\\':
+			case L'\\': // 92
 				*(pszDst++) = L'\\';
 				pszSrc++;
 				if (!*pszSrc || !wcschr(pszCtrl, *pszSrc))
 					*(pszDst++) = L'\\';
 				break;
-			case L'\r':
+			case L'\r': // 13
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'r';
 				pszSrc++;
 				break;
-			case L'\n':
+			case L'\n': // 10
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'n';
 				pszSrc++;
 				break;
-			case L'\t':
+			case L'\t': // 9
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L't';
+				pszSrc++;
+				break;
+			case L'\b': // 8 (BS)
+				*(pszDst++) = L'\\';
+				*(pszDst++) = L'b';
 				pszSrc++;
 				break;
 			case 27: //ESC
@@ -651,18 +657,32 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 				*(pszDst++) = L'e';
 				pszSrc++;
 				break;
-			case L'\a': //BELL
+			case L'\a': // 7 (BELL)
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'a';
 				pszSrc++;
 				break;
 			default:
+				// Escape (if possible) ASCII symbols with codes 01..31 (dec)
+				if (wc < L' ')
+				{
+					wchar_t wcn = pszSrc[1];
+					// If next string character is 'hexadecimal' digit - back conversion will be ambiguous
+					if (!((wcn >= L'0' && wcn <= L'9') || (wcn >= L'a' && wcn <= L'f') || (wcn >= L'A' && wcn <= L'F')))
+					{
+						*(pszDst++) = L'\\';
+						*(pszDst++) = L'x';
+						msprintf(pszDst, 3, L"%02X", (UINT)wc);
+						pszDst+=2;
+						break;
+					}
+				}
 				*(pszDst++) = *(pszSrc++);
 		}
 	}
 	else
 	{
-		// Remove escapes: "\\r" --> wchar(13)
+		// Remove escapes: "\\r" --> wchar(13), etc.
 
 		if (*pszSrc == L'\\')
 		{
@@ -689,6 +709,10 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 					*(pszDst++) = L'\t';
 					pszSrc += 2;
 					break;
+				case L'b': case L'B':
+					*(pszDst++) = L'\b';
+					pszSrc += 2;
+					break;
 				case L'e': case L'E':
 					*(pszDst++) = 27; // ESC
 					pszSrc += 2;
@@ -697,6 +721,22 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 					*(pszDst++) = L'\a'; // BELL
 					pszSrc += 2;
 					break;
+				case L'x':
+				{
+					wchar_t sTemp[5] = L"", *pszEnd = NULL;
+					lstrcpyn(sTemp, pszSrc+2, 5);
+					UINT wc = wcstoul(sTemp, &pszEnd, 16);
+					if (pszEnd > sTemp)
+					{
+						*(pszDst++) = LOWORD(wc);
+						pszSrc += (pszEnd - sTemp) + 2;
+					}
+					else
+					{
+						*(pszDst++) = *(pszSrc++);
+					}
+					break;
+				}
 				default:
 					*(pszDst++) = *(pszSrc++);
 			}
@@ -3720,6 +3760,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					|| !klstricmp(curCommand, _T("/nokeybhooks")))
 				{
 					gpConEmu->DisableKeybHooks = true;
+				}
+				else if (!klstricmp(curCommand, _T("/nocloseconfirm")))
+				{
+					gpConEmu->DisableCloseConfirm = true;
 				}
 				else if (!klstricmp(curCommand, _T("/nomacro")))
 				{
