@@ -19,7 +19,7 @@ Example:
 print("123","\x1F","abc","def")
 }}}
   * Command line switch "`ConEmu.exe /NoCloseConfirm`" to disable confirmation of !ConEmu's window closing.
-  * Issue 1488: Ctrl+Shift+O fails in ‘Cmd_Autorun’ consoles.
+  * Issue 1488: Ctrl+Shift+O fails in ‘`Cmd_Autorun`’ consoles.
 
 
 ==Build 140223==
