@@ -89,6 +89,7 @@ struct GuiMacro
 	wchar_t* AsString();
 	bool GetIntArg(size_t idx, int& val);
 	bool GetStrArg(size_t idx, LPWSTR& val);
+	bool GetRestStrArgs(size_t idx, LPWSTR& val);
 	bool IsIntArg(size_t idx);
 	bool IsStrArg(size_t idx);
 };
@@ -215,6 +216,7 @@ namespace ConEmuMacro
 		{Paste, {L"Paste"}},
 		{Palette, {L"Palette"}},
 		{Print, {L"Print"}},
+		{Keys, {L"Keys"}},
 		{Progress, {L"Progress"}},
 		{Rename, {L"Rename"}},
 		{Shell, {L"Shell", L"ShellExecute"}},
@@ -273,8 +275,8 @@ wchar_t* GuiMacro::AsString()
 				cchTotal += _tcslen(szNum)+1;
 				break;
 			case gmt_Str:
-				// + " ... ", + escaped (double len in maximum)
-				pszArgs[i] = (wchar_t*)malloc((3+(argv[i].Str ? _tcslen(argv[i].Str)*2 : 0))*sizeof(*argv[i].Str));
+				// + " ... ", + escaped (4x len in maximum for "\xFF" form)
+				pszArgs[i] = (wchar_t*)malloc((3+(argv[i].Str ? _tcslen(argv[i].Str)*4 : 0))*sizeof(*argv[i].Str));
 				if (pszArgs[i])
 				{
 					LPCWSTR pszSrc = argv[i].Str;
@@ -391,6 +393,29 @@ bool GuiMacro::GetStrArg(size_t idx, LPWSTR& val)
 	}
 
 	val = argv[idx].Str;
+	return true;
+}
+
+bool GuiMacro::GetRestStrArgs(size_t idx, LPWSTR& val)
+{
+	if (!GetStrArg(idx, val))
+		return false;
+	if (!IsStrArg(idx+1))
+		return true; // No more string arguments!
+	// Concatenate string (memory was allocated continuously for all arguments)
+	LPWSTR pszEnd = val + _tcslen(val);
+	for (size_t i = idx+1; i < argc; i++)
+	{
+		LPWSTR pszAdd;
+		if (!GetStrArg(i, pszAdd))
+			break;
+		size_t iLen = _tcslen(pszAdd);
+		if (pszEnd < pszAdd)
+			wmemmove(pszEnd, pszAdd, iLen+1);
+		pszEnd += iLen;
+	}
+	// Trim argument list, there is only one returned string left...
+	argc = idx+1;
 	return true;
 }
 
@@ -1559,7 +1584,7 @@ LPWSTR ConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	return lstrdup(L"InvalidArg");
 }
 
-// Paste (<Cmd>[,"<Text>"])
+// Paste (<Cmd>[,"<Text>"[,"<Text2>"[...]]])
 LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nCommand = 0;
@@ -1580,7 +1605,7 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			return lstrdup(L"InvalidArg");
 		}
 
-		if (p->GetStrArg(1, pszText))
+		if (p->GetRestStrArgs(1, pszText))
 		{
 			// Пустая строка допускается только при выборе файла/папки для вставки
 			if (!*pszText && !((nCommand >= 4) && (nCommand <= 7)))
@@ -1624,14 +1649,14 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	return lstrdup(L"InvalidArg");
 }
 
-// print("<Text>") - alias for Paste(2,"<Text>")
+// print("<Text>"[,"<Text2>"[...]]) - alias for Paste(2,"<Text>")
 LPWSTR ConEmuMacro::Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	if (!apRCon)
 		return lstrdup(L"InvalidArg");
 
 	LPWSTR pszText = NULL;
-	if (p->GetStrArg(0, pszText))
+	if (p->GetRestStrArgs(0, pszText))
 	{
 		if (!*pszText)
 			return lstrdup(L"InvalidArg");
@@ -1652,6 +1677,94 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	// Наверное имеет смысл поддержать синтаксис AHK (допускаю, что многие им пользуются)
 	// Но по хорошему, проще всего разрешить что-то типа
 	// Keys("CtrlC","ControlV","ShiftIns")
+
+	if (!apRCon)
+		return lstrdup(L"RConRequired");
+
+	LPWSTR pszKey;
+	int iKeyNo = 0;
+
+	while (p->GetStrArg(iKeyNo++, pszKey))
+	{
+		// Modifiers (for Example RCtrl+Shift+LAlt)
+		DWORD dwControlState = 0, dwScan = 0;
+		int iScanCode = -1;
+		bool  bRight = false;
+		// + the key
+		UINT VK = 0;
+		// Parse modifiers
+		while (pszKey[0] && pszKey[1])
+		{
+			switch (*pszKey)
+			{
+			case L'<':
+				bRight = false;
+				break;
+			case L'>':
+				bRight = true;
+				break;
+			case L'^':
+				dwControlState |= bRight ? RIGHT_CTRL_PRESSED : LEFT_CTRL_PRESSED;
+				bRight = false;
+				break;
+			case L'!':
+				dwControlState |= bRight ? RIGHT_ALT_PRESSED : LEFT_ALT_PRESSED;
+				bRight = false;
+				break;
+			case L'+':
+				dwControlState |= SHIFT_PRESSED;
+				bRight = false;
+				break;
+			default:
+				// Post {pszKey + dwControlState} to console
+				goto DoPost;
+			}
+			if (!pszKey)
+				break;
+			pszKey++;
+		}
+
+	DoPost:
+		VK = ConEmuHotKey::GetVkByKeyName(pszKey, &iScanCode, &dwControlState);
+		switch (VK)
+		{
+		case VK_WHEEL_UP: case VK_WHEEL_DOWN: case VK_WHEEL_LEFT: case VK_WHEEL_RIGHT:
+			return lstrdup(L"NotImplementedYet");
+		}
+		if (VK || (iScanCode != -1))
+		{
+			wchar_t szSeq[4];
+			if (pszKey[1] != 0)
+				pszKey = NULL;
+
+			if (dwControlState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
+			{
+				BYTE pressed[256] = {};
+				if (dwControlState & RIGHT_ALT_PRESSED)  { pressed[VK_MENU] = 0x81;    pressed[VK_RMENU] = 0x81; }
+				if (dwControlState & LEFT_ALT_PRESSED)   { pressed[VK_MENU] = 0x81;    pressed[VK_LMENU] = 0x81; }
+				if (dwControlState & RIGHT_CTRL_PRESSED) { pressed[VK_CONTROL] = 0x81; pressed[VK_RCONTROL] = 0x81; }
+				if (dwControlState & LEFT_CTRL_PRESSED)  { pressed[VK_CONTROL] = 0x81; pressed[VK_LCONTROL] = 0x81; }
+				if (dwControlState & SHIFT_PRESSED)      { pressed[VK_SHIFT] = 0x81;   pressed[VK_LSHIFT] = 0x81; }
+
+				if (VK > 0 && VK <= 255)
+					pressed[VK] = 0x81;
+
+				int iMapRc = ToUnicode(VK, (iScanCode != -1) ? iScanCode : 0, pressed, szSeq, countof(szSeq), 0);
+
+				if (iMapRc == 1)
+					pszKey = szSeq;
+				else
+					pszKey = NULL;
+			}
+
+			// Send it...
+			apRCon->PostKeyPress(VK, dwControlState, pszKey ? *pszKey : 0, iScanCode);
+			continue;
+		}
+		return lstrdup(L"UnknownKey");
+	}
+
+	return lstrdup(L"OK");
 
 	// Префиксы:
 	//	# - Win
@@ -1761,8 +1874,6 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	SCnnn Specify for nnn the scan code of a key. Recognizes unusual keys not mentioned above. See Special Keys for details. 
 	VKnn Specify for nn the hexadecimal virtual key code of a key. 
 	*/
-
-	return lstrdup(L"NotImplementedYet");
 }
 
 // Palette([<Cmd>[,"<NewPalette>"]])
