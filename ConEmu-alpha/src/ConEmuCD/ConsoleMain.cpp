@@ -2226,7 +2226,15 @@ void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=NULL*
 	{
 		_wcscpy_c(lpInfo, nCchMax, L"\nCurrent directory:\n");
 			_ASSERTE(nCchMax>=(MAX_PATH*2+32));
-		GetCurrentDirectory(MAX_PATH*2, lpInfo+lstrlen(lpInfo));
+		if (gpStartEnv && gpStartEnv->pszWorkDir)
+		{
+			_wcscat_c(lpInfo, nCchMax, gpStartEnv->pszWorkDir);
+		}
+		else
+		{
+			_ASSERTE(gpStartEnv && gpStartEnv->pszWorkDir);
+			GetCurrentDirectory(MAX_PATH*2, lpInfo+lstrlen(lpInfo));
+		}
 		_wcscat_c(lpInfo, nCchMax, L"\n");
 		_wprintf(lpInfo);
 		free(lpInfo);
@@ -2420,8 +2428,9 @@ int CheckAttachProcess()
 	return 0; // OK
 }
 
-// Возвращает CERR_UNICODE_CHK_OKAY, если консоль поддерживает отображение
-// юникодных символов. Иначе - CERR_UNICODE_CHK_FAILED
+// Возвращает CERR_UNICODE_CHK_OKAY(142), если консоль поддерживает отображение
+// юникодных символов. Иначе - CERR_UNICODE_CHK_FAILED(141)
+// This function is called by: ConEmuC.exe /CHECKUNICODE
 int CheckUnicodeFont()
 {
 	int iRc = CERR_UNICODE_CHK_FAILED;
@@ -2430,6 +2439,7 @@ int CheckUnicodeFont()
 	
 
 	wchar_t szText[80] = UnicodeTestString;
+	wchar_t szColor[32] = ColorTestString;
 	CHAR_INFO cWrite[80];
 	CHAR_INFO cRead[80] = {};
 	WORD aWrite[80], aRead[80] = {};
@@ -2438,6 +2448,8 @@ int CheckUnicodeFont()
 	wchar_t szCheck[80] = L"", szBlock[80] = L"";
 	BOOL bInfo = FALSE, bWrite = FALSE, bRead = FALSE, bCheck = FALSE;
 	DWORD nLen = lstrlen(szText), nWrite = 0, nRead = 0, nErr = 0;
+	WORD nDefColor = 7;
+	DWORD nColorLen = lstrlen(szColor);
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	_ASSERTE(nLen<=35); // ниже на 2 буфер множится
 
@@ -2523,6 +2535,20 @@ int CheckUnicodeFont()
 		}
 		WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
     }
+
+
+	// Simlify checking of ConEmu's "colorization"
+	if (GetConsoleScreenBufferInfo(hOut, &csbi))
+		nDefColor = csbi.wAttributes;
+	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
+	WORD nColor = 7;
+	for (DWORD n = 0; n < nColorLen; n++)
+	{
+		SetConsoleTextAttribute(hOut, nColor);
+		WriteConsoleW(hOut, szColor+n, 1, &nTmp, NULL);
+		nColor++; if (nColor == 16) nColor = 7;
+	}
+	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
 
 
     WriteConsoleW(hOut, L"\r\nCheck ", 8, &nTmp, NULL);
@@ -3416,8 +3442,37 @@ wrap:
 	return iRc;
 }
 
+struct FindTopGuiOrConsoleArg
+{
+	HWND  hMacroInstance;
+	DWORD nPID;
+};
+
+BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
+{
+	FindTopGuiOrConsoleArg* p = (FindTopGuiOrConsoleArg*)lParam;
+	wchar_t szClass[MAX_PATH];
+	if (GetClassName(hWnd, szClass, countof(szClass)) < 1)
+		return TRUE; // continue search
+
+	if ((lstrcmp(szClass, VirtualConsoleClassMain) != 0) && !isConsoleClass(szClass))
+		return TRUE; // continue search
+
+	DWORD nTestPID = 0; GetWindowThreadProcessId(hWnd, &nTestPID);
+	if (nTestPID == p->nPID || !p->nPID)
+	{
+		p->hMacroInstance = hWnd;
+		return FALSE; // Found! stop search
+	}
+
+	return TRUE; // continue search
+}
+
 int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
 {
+	// If neither hMacroInstance nor ghConEmuWnd was set - Macro will fails most likely
+	_ASSERTE(hMacroInstance!=NULL || ghConEmuWnd!=NULL);
+
 	HWND hCallWnd = hMacroInstance ? hMacroInstance : ghConWnd;
 
 	// Все что в asCmdArg - выполнить в Gui
@@ -3434,10 +3489,14 @@ int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
 	{
 		if (pOut->GuiMacro.nSucceeded)
 		{
-			// Передать переменную в родительский процесс
-			// Сработает только если включены хуки (Inject ConEmuHk)
-			// И может игнорироваться некоторыми шеллами (если победить не удастся)
-			DoExportEnv(CEGUIMACRORETENVVAR, ea_ExportCon, true/*bSilent*/);
+			// Только если текущая консоль запущена В ConEmu
+			if (ghConEmuWnd)
+			{
+				// Передать переменную в родительский процесс
+				// Сработает только если включены хуки (Inject ConEmuHk)
+				// И может игнорироваться некоторыми шеллами (если победить не удастся)
+				DoExportEnv(CEGUIMACRORETENVVAR, ea_ExportCon, true/*bSilent*/);
+			}
 
 			// Show macro result in StdOutput	
 			_wprintf(pOut->GuiMacro.sMacro);
@@ -3809,24 +3868,22 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				else
 				{
 					// Если тут передать "0" - то выполняем в первом попавшемся (наверное в верхнем окне ConEmu)
-					DWORD nPID = wcstoul(pszID+1, &pszEnd, 10);
-					HWND hFind = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
-					while (hFind)
-					{
-						DWORD nTestPID = 0; GetWindowThreadProcessId(hFind, &nTestPID);
-						if (nTestPID == nPID || !nPID)
-						{
-							hMacroInstance = hFind;
-							break;
-						}
-						hFind = FindWindowEx(NULL, hFind, VirtualConsoleClassMain, NULL);
-					}
+					FindTopGuiOrConsoleArg args = {NULL};
+					args.nPID = wcstoul(pszID, &pszEnd, 10);
+					EnumWindows(FindTopGuiOrConsole, (LPARAM)&args);
+					hMacroInstance = args.hMacroInstance;
 				}
 
+				// This may be VirtualConsoleClassMain or RealConsoleClass...
 				if (hMacroInstance)
 				{
-					DWORD nGuiPID = 0; GetWindowThreadProcessId(hMacroInstance, &nGuiPID);
-					AllowSetForegroundWindow(nGuiPID);
+					// Has no effect, if hMacroInstance == RealConsoleClass
+					wchar_t szClass[MAX_PATH];
+					if ((GetClassName(hMacroInstance, szClass, countof(szClass)) > 0) && (lstrcmp(szClass, VirtualConsoleClassMain) == 0))
+					{
+						DWORD nGuiPID = 0; GetWindowThreadProcessId(hMacroInstance, &nGuiPID);
+						AllowSetForegroundWindow(nGuiPID);
+					}
 				}
 			}
 			break;

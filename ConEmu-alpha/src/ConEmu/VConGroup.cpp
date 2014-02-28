@@ -79,7 +79,7 @@ CGroupGuard::~CGroupGuard()
 {
 	Release();
 }
-	
+
 void CGroupGuard::Release()
 {
 	if (mp_Ref)
@@ -113,7 +113,7 @@ bool CGroupGuard::Attach(CVConGroup* apRef)
 
 	return (mp_Ref != NULL);
 }
-	
+
 // Dereference
 CVConGroup* CGroupGuard::operator->() const
 {
@@ -172,14 +172,14 @@ CVConGroup* CVConGroup::SplitVConGroup(RConStartArgs::SplitType aSplitType /*eSp
 		_ASSERTE(mp_Item && "VCon was not associated");
 		return NULL;
 	}
-	
+
 	// Разбивать можно только то, что еще не разбито ("листья")
 	if (m_SplitType != RConStartArgs::eSplitNone)
 	{
 		MBoxAssert(m_SplitType == RConStartArgs::eSplitNone && "Can't split this pane");
 		return CreateVConGroup();
 	}
-	
+
 	// Создать две пустых панели без привязки
 	_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
 	mp_Grp1 = new CVConGroup(this);
@@ -251,7 +251,7 @@ CVirtualConsole* CVConGroup::CreateVCon(RConStartArgs *args, CVirtualConsole*& p
 				pActiveGroupVConPtr = ((CVConGroup*)VCon->mp_Group)->mp_ActiveGroupVConPtr;
 			}
 		}
-		
+
 		_ASSERTE((pGroup!=NULL) && "No active VCon?");
 	}
 	// Check
@@ -320,7 +320,7 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 
 
 	MSectionLockSimple lockGroups; lockGroups.Lock(&gcs_VGroups);
-	
+
 	bool bAdded = false;
 	for (size_t i = 0; i < countof(gp_VGroups); i++)
 	{
@@ -487,7 +487,7 @@ void CVConGroup::MoveToParent(CVConGroup* apParent)
 	_ASSERTE((mp_Item!=NULL) != (mp_Grp1!=NULL || mp_Grp2!=NULL));
 
 	apParent->SetResizeFlags();
-	
+
 	apParent->mp_Item = mp_Item;
 	apParent->m_SplitType = m_SplitType; // eSplitNone/eSplitHorz/eSplitVert
 	apParent->mn_SplitPercent10 = mn_SplitPercent10; // (0.1% - 99.9%)*10
@@ -553,7 +553,7 @@ void CVConGroup::GetAllTextSize(SIZE& sz, bool abMinimal /*= false*/)
 		CVConGuard VCon1(mp_Grp1 ? mp_Grp1->mp_Item : NULL);
 		CVConGuard VCon2(mp_Grp2 ? mp_Grp2->mp_Item : NULL);
 		SIZE sz1 = {MIN_CON_WIDTH,MIN_CON_HEIGHT}, sz2 = {MIN_CON_WIDTH,MIN_CON_HEIGHT};
-		
+
 		if (mp_Grp1)
 		{
 			mp_Grp1->GetAllTextSize(sz1, abMinimal);
@@ -893,7 +893,7 @@ bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int 
 		_ASSERTE(apVCon && (iHorz || iVert));
 		return false;
 	}
-	
+
 	CVConGuard VCon(apVCon);
 	if (!apVCon->mp_Group)
 	{
@@ -1751,7 +1751,7 @@ bool CVConGroup::isNtvdm(BOOL abCheckAllConsoles/*=FALSE*/)
 	{
 		CVConGuard VCon(gp_VActive);
 		CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
-		
+
 		if (pRCon && pRCon->isNtvdm())
 			return true;
 	}
@@ -1776,7 +1776,7 @@ bool CVConGroup::isOurConsoleWindow(HWND hCon)
 {
 	if (!hCon)
 		return false;
-	
+
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		CVConGuard VCon(gp_VCon[i]);
@@ -1787,7 +1787,7 @@ bool CVConGroup::isOurConsoleWindow(HWND hCon)
 		if (pRCon->ConWnd() == hCon)
 			return true;
 	}
-	
+
 	return false;
 }
 
@@ -1980,7 +1980,7 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 
 		if (VCon.VCon() != NULL && VCon->isVisible())
 		{
-			
+
 			HWND hView = VCon->GetView();
 			HWND hBack = VCon->GetBack();
 			if (hView && hBack)
@@ -2394,7 +2394,7 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 
 	// Сохраним размер перед закрытием консолей, а то они могут напакостить и "вернуть" старый размер
 	gpSet->SaveSettingsOnExit();
-		
+
 	for (int i = (int)(countof(gp_VCon)-1); i >= 0; i--)
 	{
 		if (gp_VCon[i] && gp_VCon[i]->RCon())
@@ -2783,11 +2783,11 @@ HWND CVConGroup::DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const 
 			{
 				iFound = i;
 				t1 = timeGetTime();
-				
+
 				pRCon->OnServerStarted(hWndCon, nServerPID, dwKeybLayout);
-				
+
 				t2 = timeGetTime();
-				
+
 				hWndDC = pVCon->GetView();
 				hWndBack = pVCon->GetBack();
 
@@ -2802,86 +2802,106 @@ HWND CVConGroup::DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const 
 
 CVConGroup* CVConGroup::FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/)
 {
-	CVConGroup* pNext = this;
-	CVConGroup* pCmp = this;
+	CVConGroup* pNext = NULL;
+	int iMinDistance = 0;
+	MArray<CVConGuard*> Panes;
+	int nGroupPanes;
+	int iPrevX, iPrevY;
 
-	if (nHorz == 0 && nVert != 0)
+	_ASSERTE(this!=NULL && this->mp_Grp1==NULL && this->mp_Grp2==NULL && this->mp_Item);
+
+	if (!nHorz && !nVert)
 	{
-		if (pNext->mp_Parent->m_SplitType != RConStartArgs::eSplitVert)
-		{
-			// We need nearest vertical split, find it
-			while (pNext->mp_Parent && pNext->mp_Parent->mp_Parent && (pNext->mp_Parent->m_SplitType != RConStartArgs::eSplitVert))
-			{
-				pCmp = pNext;
-				pNext = pNext->mp_Parent;
-			}
-		}
-
-		if (pNext->mp_Parent && pNext->mp_Parent->m_SplitType == RConStartArgs::eSplitVert)
-		{
-			if (pNext == pNext->mp_Parent->mp_Grp1 && nVert > 0)
-			{
-				pNext = pNext->mp_Parent->mp_Grp2->FindNextPane(rcPrev, 0, 0);
-				goto wrap;
-			}
-			if (pNext == pNext->mp_Parent->mp_Grp2 && nVert < 0)
-			{
-				pNext = pNext->mp_Parent->mp_Grp1->FindNextPane(rcPrev, 0, 0);
-				goto wrap;
-			}
-		}
+		// Just find nearest opposite
+		if (!mp_Parent)
+			goto wrap;
+		// Look at parent split
+		if (mp_Parent->m_SplitType == RConStartArgs::eSplitVert)
+			// Panes are above and below splitter
+			nVert = (this == mp_Parent->mp_Grp1) ? 1 : -1;
+		else if (mp_Parent->m_SplitType == RConStartArgs::eSplitHorz)
+			// Panes are leftward and rightward of splitter
+			nHorz = (this == mp_Parent->mp_Grp1) ? 1 : -1;
+		else
+			goto wrap;
 	}
 
-	if (nVert == 0 && nHorz != 0)
-	{
-		if (pNext->mp_Parent->m_SplitType != RConStartArgs::eSplitHorz)
-		{
-			// We need nearest horizontal split, find it
-			while (pNext->mp_Parent && pNext->mp_Parent->mp_Parent && (pNext->mp_Parent->m_SplitType != RConStartArgs::eSplitHorz))
-			{
-				pCmp = pNext;
-				pNext = pNext->mp_Parent;
-			}
-		}
-
-		if (pNext->mp_Parent && pNext->mp_Parent->m_SplitType == RConStartArgs::eSplitHorz)
-		{
-			if (pNext == pNext->mp_Parent->mp_Grp1 && nHorz > 0)
-			{
-				pNext = pNext->mp_Parent->mp_Grp2->FindNextPane(rcPrev, 0, 0);
-				goto wrap;
-			}
-			if (pNext == pNext->mp_Parent->mp_Grp2 && nHorz < 0)
-			{
-				pNext = pNext->mp_Parent->mp_Grp1->FindNextPane(rcPrev, 0, 0);
-				goto wrap;
-			}
-		}
-	}
-
-
-	if (pNext && (pNext->mp_Grp1 && pNext->mp_Grp2))
-	{
-		int iCenterNeed = (pNext->m_SplitType == RConStartArgs::eSplitHorz) ? ((rcPrev.right+rcPrev.left)>>1) : ((rcPrev.bottom+rcPrev.top)>>1);
-		RECT rc1 = pNext->mp_Grp1->mrc_Full;
-		RECT rc2 = pNext->mp_Grp2->mrc_Full;
-		int iCenter1 = (pNext->m_SplitType == RConStartArgs::eSplitHorz) ? ((rc1.right+rc1.left)>>1) : ((rc1.bottom+rc1.top)>>1);
-		int iCenter2 = (pNext->m_SplitType == RConStartArgs::eSplitHorz) ? ((rc2.right+rc2.left)>>1) : ((rc2.bottom+rc2.top)>>1);
-
-		if (_abs(iCenter1-iCenterNeed) < _abs(iCenter2-iCenterNeed))
-			pNext = pNext->mp_Grp1->FindNextPane(rcPrev, 0, 0);
-		else if (pNext->mp_Grp2)
-			pNext = pNext->mp_Grp2->FindNextPane(rcPrev, 0, 0);
+	// Get all panes from this grand-group
+	nGroupPanes = GetRootGroup()->GetGroupPanes(&Panes);
+	if (nGroupPanes < 2)
 		goto wrap;
-	}
 
-	if (pNext && pNext->mp_Parent)
+	// Eval the center of our pane
+	iPrevX = ((rcPrev.right+rcPrev.left)>>1);
+	iPrevY = ((rcPrev.bottom+rcPrev.top)>>1);
+
+	for (int i = 0; i < nGroupPanes; i++)
 	{
-		pNext = (pNext->mp_Parent->mp_Grp1 == pNext) ? pNext->mp_Parent->mp_Grp2 : pNext->mp_Parent->mp_Grp1;
-		goto wrap;
+		CVConGroup* pGrp = (CVConGroup*)(Panes[i]->VCon()->mp_Group);
+		if (pGrp == this)
+			continue;
+		RECT rc = pGrp->mrc_Full;
+
+		// Drop conditions
+		if (nHorz && !nVert)
+		{
+			if (nHorz < 0)
+			{
+				// Must be on the left of our pane
+				if (rc.right > rcPrev.left)
+					continue;
+			}
+			else
+			{
+				// Must be on the right of our pane
+				if (rc.left < rcPrev.right)
+					continue;
+			}
+		}
+		else if (nVert && !nHorz)
+		{
+			if (nVert < 0)
+			{
+				// Must be above our pane
+				if (rc.bottom > rcPrev.top)
+					continue;
+			}
+			else
+			{
+				// Must be below our pane
+				if (rc.top < rcPrev.bottom)
+					continue;
+			}
+		}
+
+		// Drop if direction does not match {nHorz,nVert}
+		int iX = ((rc.right+rc.left)>>1);
+		int iY = ((rc.bottom+rc.top)>>1);
+		if ((nHorz < 0) && (iX > iPrevX))
+			continue;
+		if ((nHorz > 0) && (iX < iPrevX))
+			continue;
+		if ((nVert < 0) && (iY > iPrevY))
+			continue;
+		if ((nVert > 0) && (iY < iPrevY))
+			continue;
+
+		// Well, look at "distance"
+		int iDX = (iX - iPrevX);
+		int iDY = (iY - iPrevY);
+		int iDist = iDX*iDX + iDY*iDY;
+		// And find the nearest pane
+		if (!pNext || (iMinDistance > iDist))
+		{
+			pNext = pGrp;
+			iMinDistance = iDist;
+		}
 	}
 
 wrap:
+	FreePanesArray(Panes);
+	if (!pNext)
+		pNext = this;
 	return pNext;
 }
 
@@ -2905,7 +2925,8 @@ bool CVConGroup::ActivateNextPane(CVirtualConsole* apVCon, int nHorz /*= 0*/, in
 		}
 		else
 		{
-			_ASSERTE((pNext != pGrp) && (pNext->mp_Item));
+			//_ASSERTE(pNext != pGrp); -- that means, no pane in requested direction...
+			_ASSERTE(pNext->mp_Item);
 		}
 	}
 
@@ -3146,7 +3167,7 @@ CRealConsole* CVConGroup::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppP
 				return pRCon;
 		}
 	}
-	
+
 	return NULL;
 }
 
@@ -3271,9 +3292,9 @@ bool CVConGroup::PaneActivateNext(bool abNext)
 	CVirtualConsole* pVCon = VCon.VCon();
 	CVConGroup* pActiveGroup = GetRootOfVCon(gp_VActive);
 	MArray<CVConGuard*> Panes;
-	
+
 	int nCount = pActiveGroup->GetGroupPanes(&Panes);
-	
+
 	if (nCount > 1)
 	{
 		CVirtualConsole* pVNext = NULL;
@@ -3301,7 +3322,7 @@ bool CVConGroup::PaneActivateNext(bool abNext)
 			}
 		}
 
-		
+
 		if (pVNext)
 		{
 			bOk = Activate(pVNext);
@@ -3623,7 +3644,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 
 				_ASSERTE(gp_VCon[i] == pVCon);
 				gp_VCon[i] = pVCon;
-				
+
 				if (!lbInBackground)
 				{
 					gp_VActive = pVCon;
@@ -3632,7 +3653,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 				{
 					_ASSERTE(gp_VActive==pOldActive);
 				}
-				
+
 				pVCon->InitGhost();
 
 				if (!lbInBackground)
@@ -3785,7 +3806,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				rcAddShift.bottom = nDeltaY;
 		}
 	}
-	
+
 	switch (tWhat)
 	{
 		//case CER_BACK: // switch (tWhat)
@@ -4973,7 +4994,7 @@ bool CVConGroup::isGroup(CVirtualConsole* apVCon, CVConGroup** rpRoot /*= NULL*/
 	int nGroupPanes = pGr->GetGroupPanes(NULL);
 	if (nGroupPanes <= 1)
 		return false;
-	
+
 	if (rpRoot)
 		*rpRoot = pGr;
 
@@ -4984,7 +5005,7 @@ bool CVConGroup::isGroup(CVirtualConsole* apVCon, CVConGroup** rpRoot /*= NULL*/
 		else
 			*rpActiveVCon = (CVirtualConsole*)pGr->mp_ActiveGroupVConPtr;
 	}
-	
+
 	return true;
 }
 

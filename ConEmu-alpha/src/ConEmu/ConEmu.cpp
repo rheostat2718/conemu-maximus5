@@ -495,9 +495,6 @@ CConEmuMain::CConEmuMain()
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 	*pszSlash = 0;
 
-	// Чтобы не блокировать папку запуска - CD
-	SetCurrentDirectory(ms_ConEmuExeDir);
-
 	bool lbBaseFound = false;
 
 	// Mingw/msys installation?
@@ -1000,7 +997,8 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/)
 	}
 
 
-	//wcscpy_c(szPath, asFilePath);
+	//The path must be already in full form, call GetFullPathName just for ensure (but it may return wrong path)
+	_ASSERTE((asFilePath[1]==L':' && asFilePath[2]==L'\\') || (asFilePath[0]==L'\\' && asFilePath[1]==L'\\'));
 	wchar_t* pszFilePart;
 	nLen = GetFullPathName(asFilePath, countof(szPath), szPath, &pszFilePart);
 	if ((nLen <= 0) || (nLen >= (INT_PTR)countof(szPath)))
@@ -1265,6 +1263,9 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 BOOL CConEmuMain::Init()
 {
 	_ASSERTE(mp_TabBar == NULL);
+
+	// Чтобы не блокировать папку запуска - CD
+	SetCurrentDirectory(ms_ConEmuExeDir);
 
 	// Только по настройке, а то дочерние процессы с тем же Affinity запускаются...
 	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-за глюков в железе могут быть ошибки подсчета производительности, если этого не сделать
@@ -11851,9 +11852,14 @@ void CConEmuMain::OnOurDialogClosed()
 	CheckAllowAutoChildFocus((DWORD)-1);
 }
 
+bool CConEmuMain::isMenuActive()
+{
+	return (mp_Menu->GetTrackMenuPlace() != tmp_None);
+}
+
 bool CConEmuMain::CanSetChildFocus()
 {
-	if (mp_Menu->GetTrackMenuPlace() != tmp_None)
+	if (isMenuActive())
 		return false;
 	return true;
 }
@@ -15133,7 +15139,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (gpSetCls->isAdvLogging)
 		CVConGroup::LogInput(messg, wParam, lParam);
 
-	if (mp_Menu->GetTrackMenuPlace() != tmp_None)
+	if (isMenuActive())
 	{
 		if (mp_Tip)
 		{
@@ -15141,7 +15147,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 
 		if (gpSetCls->isAdvLogging)
-			LogString("Mouse event skipped due to (mp_Menu->GetTrackMenuPlace() != tmp_None)");
+			LogString("Mouse event skipped due to (isMenuActive())");
 
 		return 0;
 	}
@@ -16702,7 +16708,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 
 	POINT ptCur; GetCursorPos(&ptCur);
 	// Если сейчас идет trackPopupMenu - то на выход
-	CVirtualConsole* pVCon = (mp_Menu->GetTrackMenuPlace() == tmp_None) ? GetVConFromPoint(ptCur) : NULL;
+	CVirtualConsole* pVCon = isMenuActive() ? NULL : GetVConFromPoint(ptCur);
 	if (pVCon && !isActive(pVCon, false))
 		pVCon = NULL;
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
@@ -16783,7 +16789,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	BOOL lbMeFore = TRUE;
 	ExpandTextRangeType etr = etr_None;
 
-	if (mp_Menu->GetTrackMenuPlace())
+	if (isMenuActive())
 	{
 		goto DefaultCursor;
 	}
@@ -17532,7 +17538,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	}
 	#endif
 
-	if (mp_Menu->GetTrackMenuPlace() != tmp_None && mp_Tip)
+	if (isMenuActive() && mp_Tip)
 	{
 		POINT ptCur; GetCursorPos(&ptCur);
 		HWND hPoint = WindowFromPoint(ptCur);
@@ -17593,7 +17599,7 @@ void CConEmuMain::OnTimer_ActivateSplit()
 		return;
 	}
 
-	if (mp_Menu->GetTrackMenuPlace() != tmp_None)
+	if (isMenuActive())
 	{
 		return;
 	}
@@ -17758,7 +17764,7 @@ void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*=
 		// Запомнить
 		mb_LastTransparentFocused = bActive;
 
-		if (mp_Menu->GetTrackMenuPlace() == tmp_None)
+		if (!isMenuActive())
 		{
 			OnSetCursor();
 		}
