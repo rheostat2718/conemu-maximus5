@@ -137,13 +137,13 @@ specify exact instance with `PID` or `HWND`.
 `PID` must be decimal number. `HWND` must be specified as hexadecimal number (window descriptor) with ‘x’ prefix.
 Exact value you may see in the !ConEmu status bar, in the Windows Task Manager, or find yourself using Windows API.
 
-|| *PID* || ||
+|| *PID* || ‘Process ID’, decimal number ||
 || 0 || Special value means ‘Use active tab/split of the first found !ConEmu window ||
-|| !ConEmu GUI PID || ‘Process ID’ of `ConEmu.exe` or `ConEmu64.exe`, macro will be executed in the *active* tab/split ||
-|| Console server PID || ‘Process ID’ of `ConEmuC.exe` or `ConEmuC64.exe` started with `/ROOT` argument ||
-|| *HWND* || ||
+|| !ConEmu GUI PID || `ConEmu.exe` or `ConEmu64.exe`, macro will be executed in the *active* tab/split ||
+|| Console server PID || `ConEmuC.exe` or `ConEmuC64.exe` started with `/ROOT` argument ||
+|| *HWND* || Window descriptor, hexadecimal number with `x` prefix ||
 || !ConEmu GUI HWND || Main !ConEmu window, macro will be executed in the *active* tab/split ||
-|| Console server HWND || Descriptor of hidden real console window ||
+|| Console server HWND || The hidden real console window ||
 
 Few examples:
 {{{
