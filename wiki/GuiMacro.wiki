@@ -140,8 +140,8 @@ Exact value you may see in the !ConEmu status bar, in the Windows Task Manager, 
 || *PID* || ||
 || 0 || Special value means ‘Use active tab/split of the first found !ConEmu window ||
 || !ConEmu GUI PID || ‘Process ID’ of `ConEmu.exe` or `ConEmu64.exe`, macro will be executed in the *active* tab/split ||
-|| *HWND* || ||
 || Console server PID || ‘Process ID’ of `ConEmuC.exe` or `ConEmuC64.exe` started with `/ROOT` argument ||
+|| *HWND* || ||
 || !ConEmu GUI HWND || Main !ConEmu window, macro will be executed in the *active* tab/split ||
 || Console server HWND || Descriptor of hidden real console window ||
 
