@@ -134,16 +134,16 @@ to execute macro) is *not* a !ConEmu console.
 So, if you need to execute macro from any external application (Visual Studio, Sublime text, even from `Win+R`) you may
 specify exact instance with `PID` or `HWND`. 
 
-`PID` must be decimal number:
+`PID` must be decimal number. `HWND` must be specified as hexadecimal number (window descriptor) with ‘x’ prefix.
+Exact value you may see in the !ConEmu status bar, in the Windows Task Manager, or find yourself using Windows API.
+
+|| *PID* || ||
 || 0 || Special value means ‘Use active tab/split of the first found !ConEmu window ||
 || !ConEmu GUI PID || ‘Process ID’ of `ConEmu.exe` or `ConEmu64.exe`, macro will be executed in the *active* tab/split ||
+|| *HWND* || ||
 || Console server PID || ‘Process ID’ of `ConEmuC.exe` or `ConEmuC64.exe` started with `/ROOT` argument ||
-Exact value you may see in the !ConEmu status bar or in the Windows Task Manager.
-
-`HWND` must be specified as hexadecimal number (window descriptor) with ‘x’ prefix:
 || !ConEmu GUI HWND || Main !ConEmu window, macro will be executed in the *active* tab/split ||
 || Console server HWND || Descriptor of hidden real console window ||
-Exact value you may see in the !ConEmu status bar or find yourself using Windows API.
 
 Few examples:
 {{{
