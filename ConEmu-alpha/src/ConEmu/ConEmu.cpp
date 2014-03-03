@@ -85,6 +85,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRMOUSEWHEEL(s) DEBUGSTR(s)
 #define DEBUGSTRRCLICK(s) //DEBUGSTR(s)
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRIME(s) //DEBUGSTR(s)
@@ -15159,19 +15160,79 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		return lRc;
 	#endif
 
+	#ifdef _DEBUG
+	wchar_t szDbg[200];
+	#endif
 
 	//2010-05-20 все-таки будем ориентироваться на lParam, потому что
 	//  только так ConEmuTh может передать корректные координаты
 	//POINT ptCur = {-1, -1}; GetCursorPos(&ptCur);
 	POINT ptCurClient = {(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)};
 	POINT ptCurScreen = ptCurClient;
+	// MouseWheel event must get SCREEN coordinates
+	if (messg == WM_MOUSEWHEEL || messg == WM_MOUSEHWHEEL)
+	{
+		POINT ptRealScreen; GetCursorPos(&ptRealScreen);
+
+		#ifdef _DEBUG
+		wchar_t szKeys[100] = L"";
+		if (wParam & MK_CONTROL)  wcscat_c(szKeys, L" Ctrl");
+		if (wParam & MK_LBUTTON)  wcscat_c(szKeys, L" LBtn");
+		if (wParam & MK_MBUTTON)  wcscat_c(szKeys, L" MBtn");
+		if (wParam & MK_RBUTTON)  wcscat_c(szKeys, L" RBtn");
+		if (wParam & MK_XBUTTON1) wcscat_c(szKeys, L" XBtn1");
+		if (wParam & MK_XBUTTON2) wcscat_c(szKeys, L" XBtn2");
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg))
+			L"%s Dir:%i%s LParam:{%i,%i} Real:{%i,%i}\n",
+			(messg == WM_MOUSEWHEEL) ? L"Wheel" : L"HWheel",
+			(int)(short)HIWORD(wParam), szKeys,
+			(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam),
+			ptRealScreen.x, ptRealScreen.y);
+		DEBUGSTRMOUSEWHEEL(szDbg);
+		#endif
+
+		// Still not clear why, but when Wheel event is redirected to (inactive) mintty,
+		// we get series of broken Wheel events (wrong coordinates)
+		/*
+		16:52:50.071(gui.10984.8268) Wheel Dir:-120 LParam:{500,237} Real:{500,213}
+		16:52:50.072(gui.10984.8268) Wheel Dir:-120 LParam:{500,261} Real:{500,213}
+		16:52:50.073(gui.10984.8268) Wheel Dir:-120 LParam:{500,285} Real:{500,213}
+		16:52:50.075(gui.10984.8268) Wheel Dir:-120 LParam:{500,309} Real:{500,213}
+		16:52:50.076(gui.10984.8268) Wheel Dir:-120 LParam:{500,333} Real:{500,213}
+		16:52:50.077(gui.10984.8268) Wheel Dir:-120 LParam:{500,357} Real:{500,213}
+		16:52:50.078(gui.10984.8268) Wheel Dir:-120 LParam:{500,381} Real:{500,213}
+		16:52:50.079(gui.10984.8268) Wheel Dir:-120 LParam:{500,405} Real:{500,213}
+		*/
+		static bool bWasSendToChildGui = false;
+		if (bWasSendToChildGui)
+		{
+			bWasSendToChildGui = false;
+			if (((int)(short)HIWORD(lParam) - ptRealScreen.y) > 10)
+			{
+				LogString(L"Mouse event (wheel) skipped due to invalid coordinates (redirection to ChildGui detected)");
+				return 0;
+			}
+		}
+
+		CVConGuard VCon;
+		if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
+		{
+			HWND hGuiChild = VCon->RCon()->GuiWnd();
+			if (hGuiChild)
+			{
+				// Just resend it to child GUI
+				bWasSendToChildGui = true;
+				VCon->RCon()->PostConsoleMessage(hGuiChild, messg, wParam, lParam);
+				return 0;
+			}
+		}
+	}
 
 	// Коррекция координат или пропуск сообщений
 	bool isPrivate = false;
 	bool bContinue = PatchMouseEvent(messg, ptCurClient, ptCurScreen, wParam, isPrivate);
 
 #ifdef _DEBUG
-	wchar_t szDbg[128];
 	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI::Mouse %s at screen {%ix%i} x%08X%s\n",
 		(messg==WM_MOUSEMOVE) ? L"WM_MOUSEMOVE" :
 		(messg==WM_LBUTTONDOWN) ? L"WM_LBUTTONDOWN" :
