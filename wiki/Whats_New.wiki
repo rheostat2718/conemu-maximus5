@@ -10,7 +10,7 @@ Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 mai
   * Issue 1490: Fix crash on ANSI scrolling sequences.
   * Issue 1491: Don't erase customized directories when updating !ConEmu !PortableApps.
   * Overflow of internally registered windows messages.
-  * !AnsiDbg. Send predefined *.ans files to srv by Ctrl+1/2/3.
+  * !AnsiDbg. Send predefined `*.ans` files to srv by Ctrl+1/2/3.
 
 
 ==Build 140302==
