@@ -6,6 +6,13 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 140303==
+  * Issue 1490: Fix crash on ANSI scrolling sequences.
+  * Issue 1491: Don't erase customized directories when updating !ConEmu !PortableApps.
+  * Overflow of internally registered windows messages.
+  * !AnsiDbg. Send predefined *.ans files to srv by Ctrl+1/2/3.
+
+
 ==Build 140302==
   * Regression 131211. (Issue 158) !ConEmu !PanelView was not updated after panel change.
   * Internal. !AnsiDebugger added to src folder.
