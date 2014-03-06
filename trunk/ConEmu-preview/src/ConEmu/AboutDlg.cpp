@@ -77,9 +77,10 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 	{
 		{L"About", pAbout},
 		{L"Command line", pCmdLine},
-		{L"Macro", pGuiMacro},
-		{L"Console", pConsoleHelpFull},
+		{L"Tasks", pAboutTasks},
 		{L"-new_console", pNewConsoleHelpFull},
+		{L"Console", pConsoleHelpFull},
+		{L"Macro", pGuiMacro},
 		{L"DosBox", pDosBoxHelpFull},
 		{L"Contributors", pAboutContributors},
 		{L"License", pAboutLicense},
@@ -91,6 +92,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
 		return TRUE;
 	}
+
+	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
 
 	switch (messg)
 	{
@@ -250,7 +253,7 @@ void ConEmuAbout::InitCommCtrls()
 
 void ConEmuAbout::OnInfo_Donate()
 {
-	int nBtn = MessageBox(
+	int nBtn = MsgBox(
 		L"You can show your appreciation and support future development by donating.\n\n"
 		L"Open PayPal website?"
 		//L"Donate (PayPal) button located on project website\r\n"
@@ -321,8 +324,8 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 			szTitle,
 			MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), 0, NULL, LANG_NEUTRAL
 		};
-		MessageBoxIndirectW(&mb);
-		//MessageBoxW(ghWnd, pHelp, szTitle, MB_ICONQUESTION);
+		// Use MessageBoxIndirect instead of MessageBox to show our icon instead of std ICONINFORMATION
+		MessageBoxIndirect(&mb);
 	}
 }
 
@@ -429,7 +432,7 @@ void ConEmuAbout::OnInfo_ReportCrash(LPCWSTR asDumpWasCreatedMsg)
 	}
 	else if (asDumpWasCreatedMsg)
 	{
-		MessageBox(asDumpWasCreatedMsg, MB_OK|MB_ICONEXCLAMATION|MB_SYSTEMMODAL);
+		MsgBox(asDumpWasCreatedMsg, MB_OK|MB_ICONEXCLAMATION|MB_SYSTEMMODAL);
 	}
 
 	nLastCrashReported = GetTickCount();
@@ -439,7 +442,7 @@ void ConEmuAbout::OnInfo_ThrowTrapException(bool bMainThread)
 {
 	if (bMainThread)
 	{
-		if (MessageBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's main thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
+		if (MsgBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's main thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
 		{
 			//#ifdef _DEBUG
 			//MyAssertTrap();
@@ -452,7 +455,7 @@ void ConEmuAbout::OnInfo_ThrowTrapException(bool bMainThread)
 	}
 	else
 	{
-		if (MessageBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's monitor thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
+		if (MsgBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's monitor thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
 		{
 			CVConGuard VCon;
 			if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())

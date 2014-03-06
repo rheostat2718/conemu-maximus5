@@ -542,7 +542,7 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 	{
 		pObj->m_RowMarks.SaveRow[i] = -1;
 		pObj->m_RowMarks.RowId[i] = 0;
-		
+
 		if (crPos[i].X < 4 || crPos[i].Y < 0)
 			continue;
 
@@ -565,7 +565,7 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 	}
 
 	// Succeesfull mark?
-	_ASSERTEX((pObj->m_RowMarks.RowId[0] || pObj->m_RowMarks.RowId[1]) && (pObj->m_RowMarks.RowId[0] != pObj->m_RowMarks.RowId[1]));
+	_ASSERTEX(((pObj->m_RowMarks.RowId[0] || pObj->m_RowMarks.RowId[1]) && (pObj->m_RowMarks.RowId[0] != pObj->m_RowMarks.RowId[1])) || (!csbi.dwCursorPosition.X && !csbi.dwCursorPosition.Y));
 }
 void CEAnsi::OnReadConsoleAfter(bool bFinal)
 {
@@ -1094,7 +1094,9 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					//if (((Code.Second < 64) || (Code.Second > 95)) && (Code.Second != 124/* '|' - vim-xterm-emulation */))
 					if (!wcschr(L"[]|=>", Code.Second))
 					{
-						_ASSERTEX(FALSE && "Unsupported control sequence?");
+						// Don't assert on rawdump of KeyEvents.exe Esc key presses
+						// 10:00:00 KEY_EVENT_RECORD: Dn, 1, Vk="VK_ESCAPE" [27/0x001B], Scan=0x0001 uChar=[U='\x1b' (0x001B): A='\x1b' (0x1B)]
+						_ASSERTEX((lpStart < lpSaveStart) && (*(lpSaveStart-1) == L'\'' && Code.Second == L'\'') && "Unsupported control sequence?");
 						continue; // invalid code
 					}
 
@@ -1253,7 +1255,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 				{
 					if (ReEntrance)
 					{
-						_ASSERTEX(!ReEntrance && "Need to be checked!");
+						//_ASSERTEX(!ReEntrance && "Need to be checked!"); -- seems to be OK
 
 						// gsPrevAnsiPart2 stored for debug purposes only (fully excess)
 						wmemmove(gsPrevAnsiPart2, lpEscStart, nLeft);
@@ -1358,8 +1360,8 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const int LinesCount)
 	else
 	{
 		TODO("What we need to scroll? Buffer or visible rect?");
-		TopLine = 0;
-		BottomLine = csbi.srWindow.Bottom - csbi.srWindow.Top;
+		TopLine = csbi.dwCursorPosition.Y;
+		BottomLine = csbi.dwSize.Y - 1;
 	}
 
 	// Apply default color before scrolling!
@@ -1392,8 +1394,9 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const int LinesCount)
 	}
 	else
 	{
-		TopLine = csbi.srWindow.Top;
-		BottomLine = csbi.srWindow.Bottom;
+		TODO("What we need to scroll? Buffer or visible rect?");
+		TopLine = csbi.dwCursorPosition.Y;
+		BottomLine = csbi.dwSize.Y - 1;
 	}
 
 	if (BottomLine < TopLine)
@@ -1608,7 +1611,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 
 	while (lpBuffer < lpEnd)
 	{
-		LPCWSTR lpStart, lpNext;
+		LPCWSTR lpStart = NULL, lpNext = NULL; // Required to be NULL-initialized
 
 		// '^' is ESC
 		// ^[0;31;47m   $E[31;47m   ^[0m ^[0;1;31;47m  $E[1;31;47m  ^[0m
@@ -1743,7 +1746,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 		}
 		else
 		{
-			_ASSERTEX(lpNext > lpBuffer);
+			_ASSERTEX(lpNext > lpBuffer || lpNext == NULL);
 			++lpBuffer;
 		}
 	}
@@ -1762,6 +1765,24 @@ wrap:
 
 void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
 {
+	/*
+
+CSI ? P m h			DEC Private Mode Set (DECSET)
+	P s = 4 7 → Use Alternate Screen Buffer (unless disabled by the titeInhibit resource)
+	P s = 1 0 4 7 → Use Alternate Screen Buffer (unless disabled by the titeInhibit resource)
+	P s = 1 0 4 8 → Save cursor as in DECSC (unless disabled by the titeInhibit resource)
+	P s = 1 0 4 9 → Save cursor as in DECSC and use Alternate Screen Buffer, clearing it first (unless disabled by the titeInhibit resource). This combines the effects of the 1 0 4 7 and 1 0 4 8 modes. Use this with terminfo-based applications rather than the 4 7 mode.
+
+CSI ? P m l			DEC Private Mode Reset (DECRST)
+	P s = 4 7 → Use Normal Screen Buffer
+	P s = 1 0 4 7 → Use Normal Screen Buffer, clearing screen first if in the Alternate Screen (unless disabled by the titeInhibit resource)
+	P s = 1 0 4 8 → Restore cursor as in DECRC (unless disabled by the titeInhibit resource)
+	P s = 1 0 4 9 → Use Normal Screen Buffer and restore cursor as in DECRC (unless disabled by the titeInhibit resource). This combines the effects of the 1 0 4 7 and 1 0 4 8 modes. Use this with terminfo-based applications rather than the 4 7 mode.
+
+
+CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
+
+	*/
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 
 	switch (Code.Action) // case sensitive
@@ -2648,6 +2669,10 @@ BOOL /*WINAPI*/ CEAnsi::OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 			if (IsOutputHandle(hConsoleHandle))
 			{
 				dwMode |= ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT;
+			}
+			else
+			{
+				dwMode |= ENABLE_WINDOW_INPUT;
 			}
 		}
 	}

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -201,7 +201,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				if (bCreateTab && pIn->NewCmd.szCommand[0])
 				{
 					RConStartArgs *pArgs = new RConStartArgs;
-					pArgs->bDetached = (pIn->NewCmd.ShowHide == sih_StartDetached);
+					pArgs->Detached = (pIn->NewCmd.ShowHide == sih_StartDetached) ? crb_On : crb_Off;
 					pArgs->pszSpecialCmd = lstrdup(pIn->NewCmd.szCommand);
 					if (pIn->NewCmd.szCurDir[0] == 0)
 					{
@@ -589,6 +589,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				ppReply->GuiMacro.nSucceeded = 0;
 			}
 
+			lbRc = TRUE;
 			break;
 		} // CECMD_GUIMACRO
 
@@ -630,7 +631,7 @@ BOOL CGuiServer::OnGuiServerConnected(LPVOID pInst, LPARAM lParam)
 	{
 		wchar_t szMsg[128];
 		msprintf(szMsg, countof(szMsg), L"CGuiServer::OnGuiServerConnected.\nGUI TID=%u", GetCurrentThreadId());
-		MessageBox(szMsg, MB_ICONINFORMATION);
+		MsgBox(szMsg, MB_ICONINFORMATION);
 	}
 	#endif
 	return TRUE;

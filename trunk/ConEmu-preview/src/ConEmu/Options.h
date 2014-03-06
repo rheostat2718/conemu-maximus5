@@ -181,11 +181,16 @@ struct Settings
 
 		ConEmuComspec ComSpec;
 
+		// Service functions
+		wchar_t* LineDelimited2MSZ(const wchar_t* apszApps); // "|"-delimited string -> MSZ
+		wchar_t* MSZ2LineDelimited(const wchar_t* apszApps); // MSZ -> "|"-delimited string
+
 		// Replace default terminal
 		bool isSetDefaultTerminal;
 		bool isRegisterOnOsStartup;
 		bool isRegisterOnOsStartupTSA;
 		bool isDefaultTerminalNoInjects;
+		bool isDefaultTerminalNewWindow;
 		BYTE nDefaultTerminalConfirmClose; // "Press Enter to close console". 0 - Auto, 1 - Always, 2 - Never
 		wchar_t* GetDefaultTerminalApps(); // "|" delimited
 		const wchar_t* GetDefaultTerminalAppsMSZ(); // "\0" delimited
@@ -521,7 +526,7 @@ struct Settings
 				CmdArg szArg;
 				while (0 == NextArg(&pszArgs, szArg))
 				{
-					if (lstrcmpi(szArg, L"/dir") == 0)
+					if (lstrcmpi(szArg, L"/dir") == 0 || lstrcmpi(szArg, L"-dir") == 0)
 					{
 						if (0 != NextArg(&pszArgs, szArg))
 							break;
@@ -538,7 +543,7 @@ struct Settings
 							*pszDir = pszExpand ? pszExpand : lstrdup(szArg);
 						}
 					}
-					else if (lstrcmpi(szArg, L"/icon") == 0)
+					else if (lstrcmpi(szArg, L"/icon") == 0 || lstrcmpi(szArg, L"-icon") == 0)
 					{
 						if (0 != NextArg(&pszArgs, szArg))
 							break;
@@ -821,8 +826,16 @@ struct Settings
 		//reg->Load(L"DisableAllFlashing", isDisableAllFlashing); if (isDisableAllFlashing>2) isDisableAllFlashing = 2;
 		BYTE isDisableAllFlashing;
 		/* *** Text selection *** */
-		//reg->Load(L"ConsoleTextSelection", isConsoleTextSelection);
-		BYTE isConsoleTextSelection;
+		//reg->Load(L"CTSIntelligent", isCTSIntelligent);
+		bool isCTSIntelligent;
+		private:
+		//reg->Load(L"CTSIntelligentExceptions", &pszCTSIntelligentExceptions);
+		wchar_t* pszCTSIntelligentExceptions; // Don't use IntelliSel in these app-processes
+		public:
+		// Service functions
+		wchar_t* GetIntelligentExceptions(); // "|" delimited
+		const wchar_t* GetIntelligentExceptionsMSZ(); // "\0" delimited
+		void SetIntelligentExceptions(const wchar_t* apszApps); // "|" delimited
 		//reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
 		bool isCTSAutoCopy;
 		//reg->Load(L"CTS.IBeam", isCTSIBeam);
@@ -868,7 +881,7 @@ struct Settings
 		bool isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
 		//reg->Load(L"FarGotoEditorVk", isFarGotoEditorVk);
 		//BYTE isFarGotoEditorVk; // Клавиша-модификатор для isFarGotoEditor
-		//reg->Load(L"FarGotoEditorPath", sFarGotoEditor);
+		//reg->Load(L"FarGotoEditorPath", &sFarGotoEditor);
 		wchar_t* sFarGotoEditor; // Команда запуска редактора
 		//reg->Load(L"HighlightMouseRow", isHighlightMouseRow);
 		bool isHighlightMouseRow;
@@ -876,7 +889,7 @@ struct Settings
 		bool isHighlightMouseCol;
 		
 		bool IsModifierPressed(int nDescrID, bool bAllowEmpty);
-		//bool isSelectionModifierPressed();
+		void IsModifierPressed(int nDescrID, bool* pbNoEmpty, bool* pbAllowEmpty);
 		//typedef struct tag_CharRanges
 		//{
 		//	bool bUsed;
@@ -952,8 +965,9 @@ struct Settings
 		bool mb_MinToTray;
 		bool isMinToTray(bool bRawOnly = false);
 		void SetMinToTray(bool bMinToTray);
-		//reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
-		bool isAlwaysShowTrayIcon;
+		//reg->Load(L"AlwaysShowTrayIcon", mb_AlwaysShowTrayIcon);
+		bool mb_AlwaysShowTrayIcon;
+		bool isAlwaysShowTrayIcon();
 		//bool isForceMonospace, isProportional;
 		//reg->Load(L"Monospace", isMonospace)
 		BYTE isMonospace; // 0 - proportional, 1 - monospace, 2 - forcemonospace
@@ -1038,8 +1052,9 @@ struct Settings
 		bool isTabIcons;
 		//reg->Load(L"OneTabPerGroup", isOneTabPerGroup);
 		bool isOneTabPerGroup;
-		//reg->Load(L"ActivateSplitMouseOver", isActivateSplitMouseOver);
-		bool isActivateSplitMouseOver;
+		//reg->Load(L"ActivateSplitMouseOver", bActivateSplitMouseOver);
+		BYTE bActivateSplitMouseOver;
+		bool isActivateSplitMouseOver();
 		//reg->Load(L"TabSelf", isTabSelf);
 		bool isTabSelf;
 		//reg->Load(L"TabRecent", isTabRecent);
@@ -1296,7 +1311,7 @@ struct Settings
 		//bool isLangChangeWsPlugin;
 		
 		//reg->Load(L"MonitorConsoleLang", isMonitorConsoleLang);
-		BYTE isMonitorConsoleLang;
+		BYTE isMonitorConsoleLang; // bitmask. 1 - follow up console HKL (e.g. after XLat in Far Manager), 2 - use one HKL for all tabs
 		
 		//reg->Load(L"SleepInBackground", isSleepInBackground);
 		bool isSleepInBackground;
@@ -1365,7 +1380,7 @@ struct Settings
 		//HotGuiMacro Macros[24];
 		
 	public:
-		void LoadSettings(bool *rbNeedCreateVanilla);
+		void LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* apStorage = NULL);
 		void InitSettings();
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadPalettes(SettingsBase* reg);

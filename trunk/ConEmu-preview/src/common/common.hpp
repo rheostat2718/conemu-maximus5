@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -332,7 +332,7 @@ const CECMD
 	CECMD_SAVEALIASES    = 26,
 	CECMD_GETALIASES     = 27,
 	CECMD_SETSIZENOSYNC  = 28, // Почти CECMD_SETSIZE. Вызывается из плагина.
-	CECMD_SETDONTCLOSE   = 29,
+	CECMD_FARDETACHED    = 29,
 	CECMD_REGPANELVIEW   = 30,
 	CECMD_ONACTIVATION   = 31, // Для установки флажка ConsoleInfo->bConsoleActive
 	CECMD_SETWINDOWPOS   = 32, // CESERVER_REQ_SETWINDOWPOS. //-V112

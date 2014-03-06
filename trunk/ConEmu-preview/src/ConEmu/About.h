@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"ConEmu.exe /font \"Consolas\" /size 16 /bufferheight 9999 /cmd powershell\r\n" \
 	L"ConEmu.exe /config \"Hiew\" /cmd \"C:\\Tools\\HIEW32.EXE\"\r\n" \
 	L"ConEmu.exe /cmd {Shells}\r\n" \
-	L"ConEmu.exe /tsa /min /icon \"cmd.exe\" /cmd cmd /c dir c:\\ /s\r\n" \
+	L"ConEmu.exe /nosingle /cmdlist cmd ||| cmd -new_console:sV ||| cmd -new_console:sH\r\n" \
+	L"ConEmu.exe /noupdate /tsa /min /icon \"cmd.exe\" /cmd cmd /c dir c:\\ /s\r\n" \
 	L"\r\n"\
 	L"By default (started without args) this program launches \"Far.exe\", \"tcc.exe\" or \"cmd.exe\" (which can be found).\r\n" \
 	L"\r\n" \
@@ -52,17 +53,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/Dir <workdir> - Set startup directory for ConEmu and consoles.\r\n" \
 	L"/FS | /Max | /Min - (Full screen), (Maximized) or (Minimized) mode.\r\n" \
 	L"/TSA - Override (enable) minimize to taskbar status area.\r\n" \
-	L"/MinTSA - start minimized in taskbar status area on startup only.\r\n" \
+	L"/MinTSA - start minimized in taskbar status area, hide to TSA after console close.\r\n" \
+	L"/StartTSA - start minimized in taskbar status area, exit after console close.\r\n" \
 	L"/Detached - start ConEmu without consoles.\r\n" \
 	L"/Icon <file> - Take icon from file (exe, dll, ico).\r\n" \
 	L"/Title <title> - Set fixed(!) title for ConEmu window. You may use environment variables in <title>.\r\n" \
 	L"/Multi | /NoMulti - Enable or disable multiconsole features.\r\n" \
 	L"/Single - New console will be started in new tab of existing ConEmu.\r\n" \
+	L"/NoSingle - Force new ConEmu window even if single mode is selected in the Settings.\r\n" \
 	L"/ShowHide | /ShowHideTSA - Works like \"Minimize/Restore\" global hotkey.\r\n" \
+	L"/NoCascade - Disable ‘Cascade’ option may be set in the Settings.\r\n" \
 	L"/NoDefTerm - Don't start initialization procedure for setting up ConEmu as default terminal.\r\n" \
 	L"/NoKeyHooks - Disable !SetWindowsHookEx and global hotkeys.\r\n" \
 	L"/NoRegFonts - Disable auto register fonts (font files from ConEmu folder).\r\n" \
 	L"/NoUpdate - Disable automatic checking for updates on startup\r\n" \
+	L"/NoCloseConfirm - Disable confirmation of ConEmu's window closing\r\n" \
 	L"/CT[0|1] - Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - cleartype.\r\n" \
 	L"/Font <fontname> - Specify the font name.\r\n" \
 	L"/Size <fontsize> - Specify the font size.\r\n" \
@@ -81,8 +86,36 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/cmd <commandline>|@<taskfile>|{taskname} - Command line to start. This must be the last used switch.\r\n" \
 	L"\r\n" \
 	L"Read more online: http://code.google.com/p/conemu-maximus5/wiki/Command_Line\r\n"
-	//L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n"
-	//CECOPYRIGHTSTRING_W /*\x00A9 2009-2011 ConEmu.Maximus5@gmail.com*/ L"\r\n"
+
+#define pAboutTasks \
+	L"You may set up most used shells as ConEmu's ‘Tasks’ (‘Settings’ dialog ‘Tasks’ page).\r\n" \
+	L"\r\n" \
+	L"Each Task may contains one or more commands, " \
+	L"each command will be started in separate ConEmu tab or pane.\r\n" \
+	L"Delimit Task Commands with empty lines.\r\n" \
+	L"\r\n" \
+	L"Mark ‘Run as Admin’ tabs/consoles with '*' prefix.\r\n" \
+	L"When Task contains more then one command, you may mark active console tab/pane with '>' prefix.\r\n" \
+	L"Example:\r\n" \
+	L"   *cmd\r\n" \
+	L"   *>cmd -new_console:sV\r\n" \
+	L"   cmd -new_console:s1TH\r\n" \
+	L"\r\n" \
+	L"You may use \"-new_console\" switches to set up advanced properties of each command:\r\n" \
+	L"startup directory, palette, wallpaper, tab title, split configuration and so on.\r\n" \
+	L"More information here under the ‘-new_console’ label.\r\n" \
+	L"\r\n" \
+	L"Also, ConEmu can process some directives internally before executing your shell:\r\n" \
+	L"   \"set name=long value\"\r\n" \
+	L"   set name=value\r\n" \
+	L"   chcp <utf8|ansi|oem|#>\r\n" \
+	L"   title \"Your shell\"\r\n" \
+	L"Example:\r\n" \
+	L"   chcp 1251 & set TERM=MSYS & cmd\r\n" \
+	L"\r\n" \
+	L"Note! ‘title’ is useless with most of shells like cmd, powershell or Far! You need to change title within your shell:\r\n" \
+	L"   cmd /k title Your title\r\n" \
+	L"   powershell -noexit -command \"$host.UI.RawUI.WindowTitle='Your title'\"\r\n"
 
 #define pAboutContributors \
 	L"Thanks to all testers and reporters! You help to make the ConEmu better.\r\n" \
@@ -156,8 +189,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	pDosBoxHelp
 
 #define pGuiMacro \
-	L"Sort of simple macro language, read more online:\r\n" \
-	L"http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
+	L"Sort of simple macro language, use them with hotkeys or from your shell CLI.\r\n" \
+	L"CLI example: ConEmuC -GuiMacro Rename 0 PoSh\r\n" \
+	L"Read more online: http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"Close(<What>[,<Flags>])\r\n" \
 	L"  - close current console (0), without confirmation (0,1),\r\n" \
@@ -207,6 +241,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"  - Check, is RealConsole active or not, \"Yes\"/\"No\"\r\n" \
 	L"IsRealVisible\r\n" \
 	L"  - Check, is RealConsole visible or not, \"Yes\"/\"No\"\r\n" \
+	L"    Keys(\"<Combo1>\"[,\"<Combo2>\"[,...]])\r\n" \
+	L"     - Post special keystrokes to the console (AutoHotKey syntax)\r\n" \
+	L"       \"[Mod1[Mod2[Mod3]]]Key\"\r\n" \
+	L"       Mod: ^ - LCtrl, >^ - RCtrl, ! - LAlt, >! - RAlt, + - Shift\r\n" \
+	L"       Example: Keys(\"^_\") will post ‘Ctrl+_’\r\n" \
 	L"MsgBox(\"<Text>\",\"<Title>\",<ButtonType>)\r\n" \
 	L"  - Show modal GUI MessageBox, returns clicked button name (\"Ok\", \"Cancel\", \"Retry\", etc.),\r\n" \
 	L"     ButtonType (number) is from Windows SDK.\r\n" \
@@ -218,7 +257,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==3: change palette in current console, returns prev palette\r\n" \
 	L"     NewPalette: palette name (string)\r\n" \
 	L"     NewPaletteIndex: 0-based index (number)\r\n" \
-	L"Paste(<Cmd>[,\"<Text>])\r\n" \
+	L"Paste(<Cmd>[,\"<Text>\"[,\"<Text2>\"[...]]])\r\n" \
 	L"  - When <Text> is omitted - paste from Windows clipboard, otherwise - paste <Text>\r\n" \
 	L"     Cmd==0: paste all lines\r\n" \
 	L"     Cmd==1: paste first line\r\n" \
@@ -229,7 +268,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==6: select and parse cygwin file pathname, Text - default\r\n" \
 	L"     Cmd==7: select and parse cygwin folder pathname, Text - default\r\n" \
 	L"     Cmd==8: paste path from clipboard converted to CygWin style\r\n" \
-	L"Print([\"<Text>\"])\r\n" \
+	L"     Cmd==9: paste all lines space-separated\r\n" \
+	L"     Cmd==10: paste all lines space-separated, without confirmations\r\n" \
+	L"Print([\"<Text>\"[,\"<Text2>\"[...]]])\r\n" \
 	L"  - Alias for Paste(2,\"<Text>\")\r\n" \
 	L"Progress(<Type>[,<Value>])\r\n" \
 	L"  - Set progress state on taskbar and ConEmu title\r\n" \

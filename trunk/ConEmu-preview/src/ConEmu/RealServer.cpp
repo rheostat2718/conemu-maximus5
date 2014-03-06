@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -353,8 +353,8 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			//_ASSERTE(mn_ConEmuC_Input_TID==0 || mn_ConEmuC_Input_TID==nInputTID);
 			//mn_ConEmuC_Input_TID = nInputTID;
 			//
-			if (!mp_RCon->m_Args.bRunAsAdministrator && bUserIsAdmin)
-				mp_RCon->m_Args.bRunAsAdministrator = TRUE;
+			if ((mp_RCon->m_Args.RunAsAdministrator != crb_On) && bUserIsAdmin)
+				mp_RCon->m_Args.RunAsAdministrator = crb_On;
 
 			if (mp_RCon->mn_InRecreate>=1)
 				mp_RCon->mn_InRecreate = 0; // корневой процесс успешно пересоздался
@@ -665,6 +665,11 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	else if (nStarted == sst_App16Start || nStarted == sst_App16Stop)
 	{
 		mp_RCon->OnDosAppStartStop((enum StartStopType)nStarted, nPID);
+	}
+	else if (nStarted == sst_AppStop && pIn->StartStop.nSubSystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+	{
+		_ASSERTE(mp_RCon->GuiWnd()!=NULL);
+		mp_RCon->setGuiWnd(NULL);
 	}
 	
 	// Готовим результат к отправке
@@ -1041,9 +1046,10 @@ CESERVER_REQ* CRealServer::cmdResources(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		//}
 	}
 
-	mp_RCon->UpdateFarSettings(mp_RCon->mn_FarPID_PluginDetected);
+	size_t cchRet = sizeof(CESERVER_REQ_HDR) + sizeof(FAR_REQ_FARSETCHANGED);
+	pOut = ExecuteNewCmd(pIn->hdr.nCmd, cchRet);
 
-	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
+	mp_RCon->UpdateFarSettings(mp_RCon->mn_FarPID_PluginDetected, &pOut->FarSetChanged);
 
 	return pOut;
 }

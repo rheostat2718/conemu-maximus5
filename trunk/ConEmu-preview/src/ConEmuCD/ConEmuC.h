@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -122,6 +122,7 @@ extern bool    gbQuit;           // когда мы в процессе закр
 extern int     gnConfirmExitParm;
 extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
 extern int     gbRootWasFoundInCon;
+extern BOOL    gbComspecInitCalled;
 enum AttachModeEnum
 {
 	am_None = 0,
@@ -130,12 +131,13 @@ enum AttachModeEnum
 	am_Admin,     // Special "attach" when ConEmu is run under "User" and console "As admin"
 };
 extern AttachModeEnum gbAttachMode; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console)
+extern BOOL    gbAlternativeAttach; // TRUE - Подцепиться к существующей консоли, без внедрения в процесс ConEmuHk.dll
 extern BOOL    gbAlienMode;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
 extern BOOL    gbForceHideConWnd;
 extern DWORD   gdwMainThreadId;
 //int       gnBufferHeight = 0;
 extern wchar_t* gpszRunCmd;
-extern BOOL    gbRunInBackgroundTab;
+extern bool    gbRunInBackgroundTab;
 extern DWORD   gnImageSubsystem;
 //HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
 extern HANDLE ghHeap; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
@@ -509,7 +511,7 @@ struct SrvInfo
 	#endif
 	BOOL bForceConsoleRead; // Пнуть нить опроса консоли RefreshThread чтобы она без задержек перечитала содержимое
 	// Смена размера консоли через RefreshThread
-	int nRequestChangeSize;
+	LONG nRequestChangeSize;
 	BOOL bRequestChangeSizeResult;
 	USHORT nReqSizeBufferHeight;
 	COORD crReqSizeNewSize;
