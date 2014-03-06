@@ -278,6 +278,7 @@ class CRealConsole
 		//CESERVER_REQ_CONINFO* pConsoleData;
 		//void CloseMapping();
 		void setGuiWndPID(DWORD anPID, LPCWSTR asProcessName);
+		void setGuiWnd(HWND ahGuiWnd);
 
 	public:
 		HWND    ConWnd();  // HWND RealConsole
@@ -437,6 +438,7 @@ class CRealConsole
 		void ExpandSelection(SHORT anX, SHORT anY);
 		bool DoSelectionCopy(bool bCopyAll = false, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */);
 		void DoSelectionStop();
+		void OnSelectionChanged();
 		void DoFindText(int nDirection);
 		void DoEndFindText();
 		void CtrlWinAltSpace();
@@ -498,7 +500,7 @@ class CRealConsole
 		void CloseTab();
 		bool isConsoleClosing();
 		void OnServerClosing(DWORD anSrvPID);
-		void Paste(bool abFirstLineOnly = false, LPCWSTR asText = NULL, bool abNoConfirm = false, bool abCygWin = false);
+		void Paste(CEPasteMode PasteMode = pm_Standard, LPCWSTR asText = NULL, bool abNoConfirm = false, bool abCygWin = false);
 		void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
 		void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
 		bool isActive(bool abAllowGroup = false);
@@ -515,11 +517,11 @@ class CRealConsole
 		LPCWSTR GetCmd(bool bThisOnly = false);
 		LPCWSTR GetStartupDir();
 		wchar_t* CreateCommandLine(bool abForTasks = false);
-		BOOL GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, BOOL* pbRestricted);
+		bool GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, bool* pbRestricted);
 		short GetProgress(int* rpnState/*1-error,2-ind*/, BOOL* rpbNotFromTitle = NULL);
 		bool SetProgress(short nState, short nValue, LPCWSTR pszName = NULL);
 		void UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo);
-		void UpdateFarSettings(DWORD anFarPID=0);
+		void UpdateFarSettings(DWORD anFarPID = 0, FAR_REQ_FARSETCHANGED* rpSetEnvVar = NULL);
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 		int CoordInPanel(COORD cr, BOOL abIncludeEdges = FALSE);
 		BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE, BOOL abIncludeEdges = FALSE);
@@ -640,7 +642,7 @@ class CRealConsole
 
 		// Нить наблюдения за консолью
 		static DWORD WINAPI MonitorThread(LPVOID lpParameter);
-		DWORD MonitorThreadWorker(BOOL bDetached, BOOL& rbChildProcessCreated);
+		DWORD MonitorThreadWorker(bool bDetached, bool& rbChildProcessCreated);
 		static int WorkerExFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep, LPCTSTR szFile, UINT nLine);
 		HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID; BOOL mb_WasForceTerminated;
 		HANDLE mh_MonitorThreadEvent;
@@ -658,8 +660,9 @@ class CRealConsole
 		BOOL mb_StartResult, mb_WaitingRootStartup;
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
+		CmdArg ms_DefTitle;
 		wchar_t ms_ProfilePathTemp[MAX_PATH+1];
-		BOOL mb_WasStartDetached;
+		bool mb_WasStartDetached;
 		wchar_t ms_RootProcessName[MAX_PATH];
 		int mn_RootProcessIcon;
 		// Replace in asCmd some env.vars (!ConEmuBackHWND! and so on)
@@ -671,8 +674,6 @@ class CRealConsole
 
 		//BOOL RetrieveConsoleInfo(/*BOOL bShortOnly,*/ UINT anWaitSize);
 		BOOL WaitConsoleSize(int anWaitSize, DWORD nTimeout);
-		BOOL InitBuffers(DWORD OneBufferSize);
-		BOOL LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
 	private:
 		friend class CRealBuffer;
 		CRealBuffer* mp_RBuf; // Реальный буфер консоли
@@ -687,37 +688,6 @@ class CRealConsole
 		BOOL mb_DebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
 		#endif
 		
-		//// Эти переменные инициализируются в RetrieveConsoleInfo()
-		//MSection csCON; //DWORD ncsT;
-		//struct RConInfo
-		//{
-		//	CONSOLE_SELECTION_INFO m_sel;
-		//	CONSOLE_CURSOR_INFO m_ci;
-		//	DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
-		//	CONSOLE_SCREEN_BUFFER_INFO m_sbi;
-		//	COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
-		//	USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
-		//	wchar_t *pConChar;
-		//	WORD  *pConAttr;
-		//	COORD mcr_FileLineStart, mcr_FileLineEnd; // Подсветка строк ошибок компиляторов
-		//	//CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
-		//	CHAR_INFO *pDataCmp;
-		//	int nTextWidth, nTextHeight, nBufferHeight;
-		//	BOOL bLockChange2Text;
-		//	int nChange2TextWidth, nChange2TextHeight;
-		//	BOOL bBufferHeight; // TRUE, если есть прокрутка
-		//	//DWORD nPacketIdx;
-		//	DWORD_PTR dwKeybLayout;
-		//	BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
-		//	COORD crRBtnDrag;
-		//	BOOL bInSetSize; HANDLE hInSetSize;
-		//	int DefaultBufferHeight;
-		//	BOOL bConsoleDataChanged;
-		//	DWORD nLastInactiveRgnCheck;
-		//	#ifdef _DEBUG
-		//	BOOL bDebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
-		//	#endif
-		//} con;
 		
 		//BOOL mb_ThawRefreshThread;
 		struct ServerClosing
@@ -777,7 +747,6 @@ class CRealConsole
 		BOOL mb_InCloseConsole;
 		DWORD mn_CloseConfirmedTick;
 		bool mb_CloseFarMacroPosted;
-		bool mb_WasSendClickToReadCon;
 		// Логи
 		BYTE m_UseLogs;
 		//HANDLE mh_LogInput; wchar_t *mpsz_LogInputFile/*, *mpsz_LogPackets*/; //UINT mn_LogPackets;
@@ -909,6 +878,7 @@ class CRealConsole
 		//		bool bWasFrame[MAX_DETECTED_DIALOGS];
 		//	} m_DetectedDialogs;
 		bool mb_InPostCloseMacro;
+		bool mb_WasMouseSelection; // Useful to know when processing LBtnUp
 };
 
 //#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i\n\nPress <Retry> to report a bug (web page)", _T(#V), _T(__FILE__), __LINE__); CRealConsole::Box(szAMsg, MB_RETRYCANCEL); }

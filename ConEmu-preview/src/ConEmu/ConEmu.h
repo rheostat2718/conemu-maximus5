@@ -40,6 +40,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define GET_X_LPARAM(inPx) ((int)(short)LOWORD(inPx))
 #define GET_Y_LPARAM(inPy) ((int)(short)HIWORD(inPy))
 
+#ifndef __GNUC__
+#include <intrin.h>
+#else
+#define _InterlockedIncrement InterlockedIncrement
+#endif
+
 //#define RCLICKAPPSTIMEOUT 600
 //#define RCLICKAPPS_START 100 // начало отрисовки кружка вокруг курсора
 //#define RCLICKAPPSTIMEOUT_MAX 10000
@@ -244,7 +250,8 @@ class CConEmuMain :
 		int    wndX, wndY;           // в пикселях
 
 		bool  WindowStartMinimized; // ключик "/min" или "Свернуть" в свойствах ярлыка
-		bool  WindowStartTSA;       // ключик "/mintsa"
+		bool  WindowStartTsa;       // ключики "/StartTSA" или "/MinTSA"
+		bool  WindowStartNoClose;   // ключик "/MinTSA"
 		bool  ForceMinimizeToTray;  // ключики "/tsa" или "/tray"
 		bool  DisableAutoUpdate;    // ключик "/noupdate"
 		bool  DisableKeybHooks;     // ключик "/nokeyhook"
@@ -252,6 +259,7 @@ class CConEmuMain :
 		bool  DisableAllHotkeys;    // ключик "/nohotkey"
 		bool  DisableSetDefTerm;    // ключик "/nodeftrm"
 		bool  DisableRegisterFonts; // ключик "/noregfont"
+		bool  DisableCloseConfirm;  // ключик "/nocloseconfirm"
 
 		BOOL  mb_ExternalHidden;
 		
@@ -328,16 +336,31 @@ class CConEmuMain :
 			WPARAM  wState;     // session state change event
 			LPARAM  lSessionID; // session ID
 
+			#define SESSION_LOG_SIZE 128
+			struct EvtLog {
+				DWORD  nTick;
+				DWORD  wState;     // session state change event
+				LPARAM lSessionID; // session ID
+			} g_evt[SESSION_LOG_SIZE];
+			LONG g_evtidx;
+			inline void Log(WPARAM State, LPARAM SessionID)
+			{
+				LONG i = _InterlockedIncrement(&g_evtidx);
+				EvtLog evt = {GetTickCount(), (DWORD)State, SessionID};
+				// Write a message at this index
+				g_evt[i & (SESSION_LOG_SIZE - 1)] = evt;
+			}
+
 			bool Connected()
 			{
 				return (wState!=7/*WTS_SESSION_LOCK*/);
 			}
 
-			LRESULT SessionChanged(WPARAM State, LPARAM SessionID)
+			void SessionChanged(WPARAM State, LPARAM SessionID)
 			{
 				wState = State;
 				lSessionID = SessionID;
-				return 0;
+				Log(State, SessionID);
 			}
 
 			void SetSessionNotification(bool bSwitch)
@@ -405,6 +428,7 @@ class CConEmuMain :
 		void OnOurDialogOpened();
 		void OnOurDialogClosed();
 		void CheckAllowAutoChildFocus(DWORD nDeactivatedTID);
+		bool isMenuActive();
 		bool CanSetChildFocus();
 		void SetScClosePending(bool bFlag);
 		bool OnScClose();
@@ -452,6 +476,12 @@ class CConEmuMain :
 			COORD crConsole;       // Console size in cells at storing moment
 			SIZE  csFont;          // VCon Font size (Width, Height) at storing moment
 		} mr_Ideal;
+		struct
+		{
+			BOOL  bChecked;
+			DWORD nReadyToSelNoEmpty;
+			DWORD nReadyToSel;
+		} m_Pressed;
 	public:
 		void StoreIdealRect();
 		RECT GetIdealRect();
@@ -519,8 +549,9 @@ class CConEmuMain :
 		void UpdateWinHookSettings();
 		void CtrlWinAltSpace();
 		void DeleteVConMainThread(CVirtualConsole* apVCon);
+		UINT GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
+	private:
 		UINT RegisterMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
-		UINT GetRegisteredMessage(LPCSTR asLocal);
 	protected:
 		friend class CConEmuCtrl;
 		friend class CRunQueue;
@@ -574,13 +605,14 @@ class CConEmuMain :
 		UINT mn_MsgDeleteVConMainThread;
 		UINT mn_MsgReqChangeCurPalette;
 		UINT mn_MsgMacroExecSync;
+		UINT mn_MsgActivateVCon;
 
 		void SetRunQueueTimer(bool bSet, UINT uElapse);
 
 		//
-		virtual void OnUseGlass(bool abEnableGlass);
-		virtual void OnUseTheming(bool abEnableTheming);
-		virtual void OnUseDwm(bool abEnableDwm);
+		virtual void OnUseGlass(bool abEnableGlass) override;
+		virtual void OnUseTheming(bool abEnableTheming) override;
+		virtual void OnUseDwm(bool abEnableDwm) override;
 
 		bool ExecuteProcessPrepare();
 		void ExecuteProcessFinished(bool bOpt);
@@ -623,6 +655,8 @@ class CConEmuMain :
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
 		void CheckUpdates(BOOL abShowMessages);
+		DWORD isSelectionModifierPressed(bool bAllowEmpty);
+		void ForceSelectionModifierPressed(DWORD nValue);
 		enum DragPanelBorder CheckPanelDrag(COORD crCon);
 		bool ConActivate(int nCon);
 		bool ConActivateNext(BOOL abNext);
@@ -784,7 +818,9 @@ class CConEmuMain :
 		static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		static LRESULT CALLBACK WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		BOOL isDialogMessage(MSG &Msg);
+		bool isSkipNcMessage(const MSG& Msg);
 		BOOL setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
+		void PreWndProc(UINT messg);
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		void DoFullScreen();
@@ -825,18 +861,22 @@ class CConEmuMain :
 		LRESULT OnSize(bool bResizeRCon=true, WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
 		LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
 		LRESULT OnMoving(LPRECT prcWnd = NULL, bool bWmMove = false);
-		virtual LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		virtual LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 		LRESULT OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		LRESULT OnQueryEndSession(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		LRESULT OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		void OnSizePanels(COORD cr);
 		LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);
 		UINT_PTR SetKillTimer(bool bEnable, UINT nTimerID, UINT nTimerElapse);
 		LRESULT OnTimer(WPARAM wParam, LPARAM lParam);
 		void OnTimer_Main(CVirtualConsole* pVCon);
+		void OnTimer_ActivateSplit();
 		void OnTimer_ConRedraw(CVirtualConsole* pVCon);
 		void OnTimer_FrameAppearDisappear(WPARAM wParam);
 		void OnTimer_RClickPaint();
 		void OnTimer_AdmShield();
 		void OnTimer_QuakeFocus();
+		void OnActivateSplitChanged();
 		void OnTransparent();
 		void OnTransparent(bool abFromFocus/* = false*/, bool bSetFocus/* = false*/);
 		void OnTransparentSeparate(bool bSetFocus);
@@ -881,12 +921,6 @@ class CConEmuMain :
 			bool wait;
 		} m_LockConhostStart;
 };
-
-#ifndef __GNUC__
-#include <intrin.h>
-#else
-#define _InterlockedIncrement InterlockedIncrement
-#endif
 
 // Message Logger
 // Originally from http://preshing.com/20120522/lightweight-in-memory-logging

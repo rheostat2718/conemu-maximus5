@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012 Maximus5
+Copyright (c) 2012-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -327,7 +327,9 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 
 		if (TaskDialogIndirect_f)
 		{
+			ghDlgPendingFrom = GetForegroundWindow();
 			HRESULT hr = TaskDialogIndirect_f(&config, &nButtonPressed, NULL, &lbCheckBox);
+			ghDlgPendingFrom = NULL;
 
 			if (hr == S_OK)
 			{
@@ -389,7 +391,8 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 			L"\r\nProceed with close ConEmu?");
 	}
 
-	nBtn = MessageBoxW(ghWnd, szText, gpConEmu->GetDefaultTitle(), (/*rpPanes ? MB_OKCANCEL :*/ (Parm.nConsoles>1) ? MB_YESNOCANCEL : MB_OKCANCEL)|MB_ICONEXCLAMATION);
+	nBtn = MsgBox(szText, (/*rpPanes ? MB_OKCANCEL :*/ (Parm.nConsoles>1) ? MB_YESNOCANCEL : MB_OKCANCEL)|MB_ICONEXCLAMATION,
+		gpConEmu->GetDefaultTitle(), ghWnd);
 
 	if (nBtn == IDOK)
 	{

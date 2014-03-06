@@ -85,6 +85,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRMOUSEWHEEL(s) DEBUGSTR(s)
 #define DEBUGSTRRCLICK(s) //DEBUGSTR(s)
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRIME(s) //DEBUGSTR(s)
@@ -101,6 +102,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMSG2(s) //DEBUGSTR(s)
 #define DEBUGSTRANIMATE(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
+#define DEBUGSTRSESS(s) DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -108,7 +110,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define PROCESS_WAIT_START_TIME 1000
 
 #define DRAG_DELTA 5
-#define SPLITOVERCHECK_DELTA 5 // gpSet->isActivateSplitMouseOver
+#define SPLITOVERCHECK_DELTA 5 // gpSet->isActivateSplitMouseOver()
 
 #define PTDIFFTEST(C,D) PtDiffTest(C, ptCur.x, ptCur.y, D)
 //(((abs(C.x-(short)LOWORD(lParam)))<D) && ((abs(C.y-(short)HIWORD(lParam)))<D))
@@ -312,7 +314,8 @@ CConEmuMain::CConEmuMain()
 	changeFromWindowMode = wmNotChanging;
 	//isRestoreFromMinimized = false;
 	WindowStartMinimized = false;
-	WindowStartTSA = false;
+	WindowStartTsa = false;
+	WindowStartNoClose = false;
 	ForceMinimizeToTray = false;
 	mb_InCreateWindow = true;
 	mb_InShowMinimized = false;
@@ -329,6 +332,7 @@ CConEmuMain::CConEmuMain()
 	DisableAllHotkeys = false;
 	DisableSetDefTerm = false;
 	DisableRegisterFonts = false;
+	DisableCloseConfirm = false;
 	//mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	//mb_PassSysCommand = false;
 	mb_ExternalHidden = FALSE;
@@ -357,6 +361,7 @@ CConEmuMain::CConEmuMain()
 	ZeroStruct(mrc_FixPosAfterStyle);
 	mb_InImeComposition = false; mb_ImeMethodChanged = false;
 	ZeroStruct(mr_Ideal);
+	ZeroStruct(m_Pressed);
 	mn_InResize = 0;
 	mb_MouseCaptured = FALSE;
 	mb_HotKeyRegistered = false;
@@ -490,9 +495,6 @@ CConEmuMain::CConEmuMain()
 	wcscpy_c(ms_ConEmuExeDir, ms_ConEmuExe);
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 	*pszSlash = 0;
-
-	// Чтобы не блокировать папку запуска - CD
-	SetCurrentDirectory(ms_ConEmuExeDir);
 
 	bool lbBaseFound = false;
 
@@ -763,6 +765,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgDeleteVConMainThread = RegisterMessage("DeleteVConMainThread");
 	mn_MsgReqChangeCurPalette = RegisterMessage("ChangeCurrentPalette");
 	mn_MsgMacroExecSync = RegisterMessage("MacroExecSync");
+	mn_MsgActivateVCon = RegisterMessage("ActivateVCon");
 }
 
 bool CConEmuMain::isMingwMode()
@@ -995,7 +998,8 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/)
 	}
 
 
-	//wcscpy_c(szPath, asFilePath);
+	//The path must be already in full form, call GetFullPathName just for ensure (but it may return wrong path)
+	_ASSERTE((asFilePath[1]==L':' && asFilePath[2]==L'\\') || (asFilePath[0]==L'\\' && asFilePath[1]==L'\\'));
 	wchar_t* pszFilePart;
 	nLen = GetFullPathName(asFilePath, countof(szPath), szPath, &pszFilePart);
 	if ((nLen <= 0) || (nLen >= (INT_PTR)countof(szPath)))
@@ -1260,6 +1264,9 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 BOOL CConEmuMain::Init()
 {
 	_ASSERTE(mp_TabBar == NULL);
+
+	// Чтобы не блокировать папку запуска - CD
+	SetCurrentDirectory(ms_ConEmuExeDir);
 
 	// Только по настройке, а то дочерние процессы с тем же Affinity запускаются...
 	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-за глюков в железе могут быть ошибки подсчета производительности, если этого не сделать
@@ -2666,6 +2673,9 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	}
 	if (gpSet->isDefaultTerminalNoInjects)
 		*(pszOpt++) = L'i';
+	if (gpSet->isDefaultTerminalNewWindow)
+		*(pszOpt++) = L'N';
+	_ASSERTE(pszOpt < (szOpt+countof(szOpt)));
 	// Preparing arguments
 	m_GuiInfo.sDefaultTermArg[0] = 0;
 	if (pszConfig && *pszConfig)
@@ -4288,8 +4298,10 @@ bool CConEmuMain::ScreenToVCon(LPPOINT pt, CVirtualConsole** ppVCon)
 	if (!lpVCon)
 		return false;
 
+#if 0
 	HWND hView = lpVCon->GetView();
 	ScreenToClient(hView, pt);
+#endif
 
 	if (ppVCon)
 		*ppVCon = lpVCon;
@@ -4473,7 +4485,7 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 	BOOL lbRc = FALSE;
 	bool bUseApi = true;
 
-	if (mb_InCreateWindow && (WindowStartTSA || (WindowStartMinimized && gpSet->isMinToTray())))
+	if (mb_InCreateWindow && (WindowStartTsa || (WindowStartMinimized && gpSet->isMinToTray())))
 	{
 		_ASSERTE(anCmdShow == SW_SHOWMINNOACTIVE || anCmdShow == SW_HIDE);
 		_ASSERTE(::IsWindowVisible(ghWnd) == FALSE);
@@ -4608,6 +4620,12 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpSet->SetMinToTray(true);
 	}
 
+	if (NewQuakeMode && gpSet->isDesktopMode)  // этот режим с Desktop несовместим
+	{
+		gpSet->isDesktopMode = false;
+		gpConEmu->OnDesktopMode();
+	}
+
 	HWND hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Show] : NULL; // Страничка с настройками
 	if (hWnd2)
 	{
@@ -4621,6 +4639,8 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		
 		EnableWindow(GetDlgItem(hWnd2, cbSingleInstance), (gpSet->isQuakeStyle == 0));
 		gpSetCls->checkDlgButton(hWnd2, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
+
+		gpSetCls->checkDlgButton(hWnd2, cbDesktopMode, gpSet->isDesktopMode);
 	}
 
 	hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_SizePos] : NULL; // Страничка с настройками
@@ -6352,7 +6372,7 @@ void CConEmuMain::CheckTopMostState()
 			LogString(szInfo);
 		}
 
-		if (IDYES == MessageBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
+		if (IDYES == MsgBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
 		{
 	        //SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
 			OnAlwaysOnTop();
@@ -6826,6 +6846,57 @@ LRESULT CConEmuMain::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	return result;
 }
 
+LRESULT CConEmuMain::OnQueryEndSession(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	wchar_t szSession[128];
+	_wsprintf(szSession, SKIPLEN(countof(szSession)) L"Session End:%s%s%s\r\n",
+		(lParam & ENDSESSION_CLOSEAPP) ? L" ENDSESSION_CLOSEAPP" : L"",
+		(lParam & ENDSESSION_CRITICAL) ? L" ENDSESSION_CRITICAL" : L"",
+		(lParam & ENDSESSION_LOGOFF)   ? L" ENDSESSION_LOGOFF" : L"");
+	LogString(szSession, true, false);
+	DEBUGSTRSESS(szSession);
+
+	return ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	session.SessionChanged(wParam, lParam);
+
+	wchar_t szInfo[128], szState[32];
+	switch (LOWORD(wParam))
+	{
+		//0x1 The session identified by lParam was connected to the console terminal or RemoteFX session.
+		case WTS_CONSOLE_CONNECT: wcscpy_c(szState, L"WTS_CONSOLE_CONNECT"); break;
+		//0x2 The session identified by lParam was disconnected from the console terminal or RemoteFX session.
+		case WTS_CONSOLE_DISCONNECT: wcscpy_c(szState, L"WTS_CONSOLE_DISCONNECT"); break;
+		//0x3 The session identified by lParam was connected to the remote terminal.
+		case WTS_REMOTE_CONNECT: wcscpy_c(szState, L"WTS_REMOTE_CONNECT"); break;
+		//0x4 The session identified by lParam was disconnected from the remote terminal.
+		case WTS_REMOTE_DISCONNECT: wcscpy_c(szState, L"WTS_REMOTE_DISCONNECT"); break;
+		//0x5 A user has logged on to the session identified by lParam.
+		case WTS_SESSION_LOGON: wcscpy_c(szState, L"WTS_SESSION_LOGON"); break;
+		//0x6 A user has logged off the session identified by lParam.
+		case WTS_SESSION_LOGOFF: wcscpy_c(szState, L"WTS_SESSION_LOGOFF"); break;
+		//0x7 The session identified by lParam has been locked.
+		case WTS_SESSION_LOCK: wcscpy_c(szState, L"WTS_SESSION_LOCK"); break;
+		//0x8 The session identified by lParam has been unlocked.
+		case WTS_SESSION_UNLOCK: wcscpy_c(szState, L"WTS_SESSION_UNLOCK"); break;
+		//0x9 The session identified by lParam has changed its remote controlled status. To determine the status, call GetSystemMetrics and check the SM_REMOTECONTROL metric.
+		case WTS_SESSION_REMOTE_CONTROL: wcscpy_c(szState, L"WTS_SESSION_REMOTE_CONTROL"); break;
+		//0xA Reserved for future use.
+		case 0xA/*WTS_SESSION_CREATE*/: wcscpy_c(szState, L"WTS_SESSION_CREATE"); break;
+		//0xB Reserved for future use.
+		case 0xB/*WTS_SESSION_TERMINATE*/: wcscpy_c(szState, L"WTS_SESSION_TERMINATE"); break;
+		default: _wsprintf(szState, SKIPLEN(countof(szState)) L"x%08X", (DWORD)wParam);
+	}
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Session State (#%i): %s\r\n", (int)lParam, szState);
+	LogString(szInfo, true, false);
+	DEBUGSTRSESS(szInfo);
+
+	return 0; // Return value ignored
+}
+
 void CConEmuMain::OnSizePanels(COORD cr)
 {
 	INPUT_RECORD r;
@@ -7020,7 +7091,28 @@ void CConEmuMain::OnActiveConWndStore(HWND hConWnd)
 
 BOOL CConEmuMain::Activate(CVirtualConsole* apVCon)
 {
-	return CVConGroup::Activate(apVCon);
+	BOOL lbRc;
+	if (!isMainThread())
+	{
+		LRESULT lRc;
+		if (apVCon->GuiWnd())
+		{
+			// We can lock, if Activate VCon is called from ChildGui.
+			// That's why - PostMessage instead of SendMessage
+			PostMessage(ghWnd, mn_MsgActivateVCon, 0, (LPARAM)apVCon);
+			lRc = 0;
+		}
+		else
+		{
+			lRc = SendMessage(ghWnd, mn_MsgActivateVCon, 0, (LPARAM)apVCon);
+		}
+		lbRc = (lRc == (LRESULT)apVCon);
+	}
+	else
+	{
+		lbRc = CVConGroup::Activate(apVCon);
+	}
+	return lbRc;
 }
 
 void CConEmuMain::MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward)
@@ -7151,14 +7243,14 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 		_wcscat_c(pszCmdLine, cchMaxLen, L"/nosingle ");
 		_wcscat_c(pszCmdLine, cchMaxLen, L"/cmd ");
 		_wcscat_c(pszCmdLine, cchMaxLen, args->pszSpecialCmd);
-		if (args->bRunAsAdministrator || args->bRunAsRestricted || args->pszUserName)
+		if ((args->RunAsAdministrator == crb_On) || (args->RunAsRestricted == crb_On) || args->pszUserName)
 		{
-			if (args->bRunAsAdministrator)
+			if (args->RunAsAdministrator == crb_On)
 			{
 				// Create ConEmu.exe with current credentials, implying elevation for the console
 				_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:a");
 			}
-			else if (args->bRunAsRestricted)
+			else if (args->RunAsRestricted == crb_On)
 			{
 				_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:r");
 			}
@@ -7169,7 +7261,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 			//}
 		}
 
-		if (!args->bRunAsAdministrator && !args->bRunAsRestricted && (args->pszUserName && *args->pszUserName))
+		if ((args->RunAsAdministrator != crb_On) && (args->RunAsRestricted != crb_On) && (args->pszUserName && *args->pszUserName))
 			bStart = CreateProcessWithLogonW(args->pszUserName, args->pszDomain, args->szUserPassword,
 		                           LOGON_WITH_PROFILE, NULL, pszCmdLine,
 		                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
@@ -7326,7 +7418,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 					SafeFree(args.pszStartupDir);
 
 				if (lbRunAdmin) // don't reset one that may come from apDefArgs
-					args.bRunAsAdministrator = true;
+					args.RunAsAdministrator = crb_On;
 
 				pVCon = CreateCon(&args, false, true);
 
@@ -7345,7 +7437,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 					lbOneCreated = TRUE;
 
 					const RConStartArgs& modArgs = pVCon->RCon()->GetArgs();
-					if (modArgs.bForegroungTab)
+					if (modArgs.ForegroungTab == crb_On)
 						lbSetActive = true;
 
 					pLastVCon = pVCon;
@@ -8465,8 +8557,20 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 	FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
 	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
 	RConStartArgs args;
+
+	if (aRecreate == cra_RecreateTab)
+	{
+		CVConGuard VCon;
+		if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
+		{
+			const RConStartArgs& CurArgs = VCon->RCon()->GetArgs();
+			args.AssignFrom(&CurArgs);
+			//args.pszSpecialCmd = CurArgs.CreateCommandLine();
+		}
+	}
+
 	args.aRecreate = aRecreate;
-	args.bRunAsAdministrator = abRunAs;
+	args.RunAsAdministrator = abRunAs ? crb_On : crb_Off;
 
 	WARNING("При переходе на новую обработку кнопок больше не нужно");
 	//if (!abConfirm && isPressed(VK_SHIFT))
@@ -8548,7 +8652,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, B
 		CVConGuard VCon;
 		if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
 		{
-			args.bRunAsAdministrator = abRunAs || VCon->RCon()->isAdministrator();
+			args.RunAsAdministrator = (abRunAs || VCon->RCon()->isAdministrator()) ? crb_On : crb_Off;
 
 			if (abConfirm)
 			{
@@ -10704,7 +10808,7 @@ void CConEmuMain::SetScClosePending(bool bFlag)
 
 bool CConEmuMain::isCloseConfirmed()
 {
-	return gpSet->isCloseConsoleConfirm ? mb_ScClosePending : true;
+	return (gpSet->isCloseConsoleConfirm && !DisableCloseConfirm) ? mb_ScClosePending : true;
 }
 
 BOOL CConEmuMain::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
@@ -10717,7 +10821,7 @@ BOOL CConEmuMain::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int c
 
 	if (bInCreate)
 	{
-		if (WindowStartTSA || (WindowStartMinimized && gpSet->isMinToTray()))
+		if (WindowStartTsa || (WindowStartMinimized && gpSet->isMinToTray()))
 		{
 			uFlags |= SWP_NOACTIVATE;
 			uFlags &= ~SWP_SHOWWINDOW;
@@ -11173,7 +11277,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 				L"Choose your shell?",
 				szName, pszDataW ? L"is empty" : L"not found");
 
-			int nBtn = MessageBox(pszErrMsg, MB_YESNO|MB_ICONEXCLAMATION);
+			int nBtn = MsgBox(pszErrMsg, MB_YESNO|MB_ICONEXCLAMATION);
 
 			SafeFree(pszErrMsg);
 			SafeFree(pszDataW);
@@ -11308,7 +11412,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		//SetWindowRgn(ghWnd, CreateWindowRgn(), TRUE);
 
-		if (gpSetCls->szFontError[0] && !(gpStartEnv && (gpStartEnv->bIsWinPE || gpStartEnv->bIsWine)))
+		if (gpSetCls->szFontError[0] && !(gpStartEnv && ((gpStartEnv->bIsWinPE == 1) || (gpStartEnv->bIsWine == 1))))
 		{
 			MBoxA(gpSetCls->szFontError);
 			gpSetCls->szFontError[0] = 0;
@@ -11434,9 +11538,9 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			if (!lbCreated && !gpConEmu->mb_StartDetached)
 			{
 				RConStartArgs args;
-				args.bDetached = gpConEmu->mb_StartDetached;
+				args.Detached = gpConEmu->mb_StartDetached ? crb_On : crb_Off;
 
-				if (!args.bDetached)
+				if (args.Detached != crb_On)
 				{
 					args.pszSpecialCmd = lstrdup(gpSetCls->GetCmd());
 
@@ -11511,13 +11615,15 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		if (WindowStartMinimized)
 		{
-			if (WindowStartTSA || gpConEmu->ForceMinimizeToTray)
+			_ASSERTE(!WindowStartNoClose || (WindowStartTsa && WindowStartNoClose));
+
+			if (WindowStartTsa || gpConEmu->ForceMinimizeToTray)
 			{
 				Icon.HideWindowToTray();
 
-				if (WindowStartTSA)
+				if (WindowStartNoClose)
 				{
-					LogString(L"Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1} due to WindowStartTSA");
+					LogString(L"Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1} due to WindowStartTsa & WindowStartNoClose");
 					//_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1}");
 					gpSet->isMultiLeaveOnClose = 1;
 					gpSet->isMultiHideOnClose = 1;
@@ -11542,6 +11648,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		#endif
 		n = SetKillTimer(true, TIMER_CONREDRAW_ID, CON_REDRAW_TIMOUT*2);
 		UNREFERENCED_PARAMETER(n);
+		OnActivateSplitChanged();
 
 		if (gpSet->isTaskbarShield && gpConEmu->mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
 		{
@@ -11676,6 +11783,7 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
 	SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
 	SetKillTimer(false, TIMER_QUAKE_AUTOHIDE_ID, 0);
+	SetKillTimer(false, TIMER_ACTIVATESPLIT_ID, 0);
 	PostQuitMessage(0);
 	return 0;
 }
@@ -11745,9 +11853,14 @@ void CConEmuMain::OnOurDialogClosed()
 	CheckAllowAutoChildFocus((DWORD)-1);
 }
 
+bool CConEmuMain::isMenuActive()
+{
+	return (mp_Menu->GetTrackMenuPlace() != tmp_None);
+}
+
 bool CConEmuMain::CanSetChildFocus()
 {
-	if (mp_Menu->GetTrackMenuPlace() != tmp_None)
+	if (isMenuActive())
 		return false;
 	return true;
 }
@@ -14897,7 +15010,7 @@ bool CConEmuMain::PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurSc
 
 	if (mb_MouseCaptured
 		|| (messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN) || (messg == WM_MBUTTONDOWN)
-		/*|| ((messg == WM_MOUSEMOVE) && gpSet->isActivateSplitMouseOver)*/)
+		)
 	{
 		HWND hChild = ::ChildWindowFromPointEx(ghWnd, ptCurClient, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
 
@@ -15027,7 +15140,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (gpSetCls->isAdvLogging)
 		CVConGroup::LogInput(messg, wParam, lParam);
 
-	if (mp_Menu->GetTrackMenuPlace() != tmp_None)
+	if (isMenuActive())
 	{
 		if (mp_Tip)
 		{
@@ -15035,7 +15148,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		}
 
 		if (gpSetCls->isAdvLogging)
-			LogString("Mouse event skipped due to (mp_Menu->GetTrackMenuPlace() != tmp_None)");
+			LogString("Mouse event skipped due to (isMenuActive())");
 
 		return 0;
 	}
@@ -15047,19 +15160,79 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		return lRc;
 	#endif
 
+	#ifdef _DEBUG
+	wchar_t szDbg[200];
+	#endif
 
 	//2010-05-20 все-таки будем ориентироваться на lParam, потому что
 	//  только так ConEmuTh может передать корректные координаты
 	//POINT ptCur = {-1, -1}; GetCursorPos(&ptCur);
 	POINT ptCurClient = {(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)};
 	POINT ptCurScreen = ptCurClient;
+	// MouseWheel event must get SCREEN coordinates
+	if (messg == WM_MOUSEWHEEL || messg == WM_MOUSEHWHEEL)
+	{
+		POINT ptRealScreen; GetCursorPos(&ptRealScreen);
+
+		#ifdef _DEBUG
+		wchar_t szKeys[100] = L"";
+		if (wParam & MK_CONTROL)  wcscat_c(szKeys, L" Ctrl");
+		if (wParam & MK_LBUTTON)  wcscat_c(szKeys, L" LBtn");
+		if (wParam & MK_MBUTTON)  wcscat_c(szKeys, L" MBtn");
+		if (wParam & MK_RBUTTON)  wcscat_c(szKeys, L" RBtn");
+		if (wParam & MK_XBUTTON1) wcscat_c(szKeys, L" XBtn1");
+		if (wParam & MK_XBUTTON2) wcscat_c(szKeys, L" XBtn2");
+		_wsprintf(szDbg, SKIPLEN(countof(szDbg))
+			L"%s Dir:%i%s LParam:{%i,%i} Real:{%i,%i}\n",
+			(messg == WM_MOUSEWHEEL) ? L"Wheel" : L"HWheel",
+			(int)(short)HIWORD(wParam), szKeys,
+			(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam),
+			ptRealScreen.x, ptRealScreen.y);
+		DEBUGSTRMOUSEWHEEL(szDbg);
+		#endif
+
+		// Still not clear why, but when Wheel event is redirected to (inactive) mintty,
+		// we get series of broken Wheel events (wrong coordinates)
+		/*
+		16:52:50.071(gui.10984.8268) Wheel Dir:-120 LParam:{500,237} Real:{500,213}
+		16:52:50.072(gui.10984.8268) Wheel Dir:-120 LParam:{500,261} Real:{500,213}
+		16:52:50.073(gui.10984.8268) Wheel Dir:-120 LParam:{500,285} Real:{500,213}
+		16:52:50.075(gui.10984.8268) Wheel Dir:-120 LParam:{500,309} Real:{500,213}
+		16:52:50.076(gui.10984.8268) Wheel Dir:-120 LParam:{500,333} Real:{500,213}
+		16:52:50.077(gui.10984.8268) Wheel Dir:-120 LParam:{500,357} Real:{500,213}
+		16:52:50.078(gui.10984.8268) Wheel Dir:-120 LParam:{500,381} Real:{500,213}
+		16:52:50.079(gui.10984.8268) Wheel Dir:-120 LParam:{500,405} Real:{500,213}
+		*/
+		static bool bWasSendToChildGui = false;
+		if (bWasSendToChildGui)
+		{
+			bWasSendToChildGui = false;
+			if (((int)(short)HIWORD(lParam) - ptRealScreen.y) > 10)
+			{
+				LogString(L"Mouse event (wheel) skipped due to invalid coordinates (redirection to ChildGui detected)");
+				return 0;
+			}
+		}
+
+		CVConGuard VCon;
+		if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
+		{
+			HWND hGuiChild = VCon->RCon()->GuiWnd();
+			if (hGuiChild)
+			{
+				// Just resend it to child GUI
+				bWasSendToChildGui = true;
+				VCon->RCon()->PostConsoleMessage(hGuiChild, messg, wParam, lParam);
+				return 0;
+			}
+		}
+	}
 
 	// Коррекция координат или пропуск сообщений
 	bool isPrivate = false;
 	bool bContinue = PatchMouseEvent(messg, ptCurClient, ptCurScreen, wParam, isPrivate);
 
 #ifdef _DEBUG
-	wchar_t szDbg[128];
 	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI::Mouse %s at screen {%ix%i} x%08X%s\n",
 		(messg==WM_MOUSEMOVE) ? L"WM_MOUSEMOVE" :
 		(messg==WM_LBUTTONDOWN) ? L"WM_LBUTTONDOWN" :
@@ -15147,9 +15320,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	CVirtualConsole* pVCon = NULL;
 	CVConGuard VCon;
 
-	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon()->isMouseSelectionPresent())
-		pVCon = VCon.VCon();
-	else if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
+	if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
 		pVCon = VCon.VCon();
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
 	HWND hView = pVCon ? pVCon->GetView() : NULL;
@@ -16482,6 +16653,55 @@ void CConEmuMain::RequestPostUpdateTabs()
 	PostMessage(ghWnd, mn_MsgUpdateTabs, 0, 0);
 }
 
+DWORD CConEmuMain::isSelectionModifierPressed(bool bAllowEmpty)
+{
+	DWORD nResult;
+
+	if (m_Pressed.bChecked)
+	{
+		nResult = bAllowEmpty ? m_Pressed.nReadyToSel : m_Pressed.nReadyToSelNoEmpty;
+	}
+	else
+	{
+		DWORD nReadyToSel = 0, nReadyToSelNoEmpty = 0;
+		bool bNoEmptyPressed = false, bEmptyAllowed = false;
+
+		if (gpSet->isCTSSelectBlock)
+		{
+			gpSet->IsModifierPressed(vkCTSVkBlock, &bNoEmptyPressed, &bEmptyAllowed);
+			if (bNoEmptyPressed)
+				nReadyToSelNoEmpty = nReadyToSel = CONSOLE_BLOCK_SELECTION;
+			else if (bEmptyAllowed)
+				nReadyToSel = CONSOLE_BLOCK_SELECTION;
+		}
+
+		if (!nReadyToSelNoEmpty && gpSet->isCTSSelectText)
+		{
+			gpSet->IsModifierPressed(vkCTSVkText, &bNoEmptyPressed, &bEmptyAllowed);
+			if (bNoEmptyPressed)
+				nReadyToSelNoEmpty = nReadyToSel = CONSOLE_TEXT_SELECTION;
+			else if (bEmptyAllowed && !nReadyToSel)
+				nReadyToSel = CONSOLE_TEXT_SELECTION;
+			_ASSERTE(nReadyToSel || (nReadyToSelNoEmpty == nReadyToSel));
+		}
+
+		// Store it
+		m_Pressed.nReadyToSel = nReadyToSel;
+		m_Pressed.nReadyToSelNoEmpty = nReadyToSelNoEmpty;
+		m_Pressed.bChecked = TRUE;
+
+		nResult = bAllowEmpty ? nReadyToSel : nReadyToSelNoEmpty;
+	}
+
+	return nResult;
+}
+
+void CConEmuMain::ForceSelectionModifierPressed(DWORD nValue)
+{
+	m_Pressed.nReadyToSel = nValue;
+	m_Pressed.bChecked = TRUE;
+}
+
 enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 {
 	if (!gpSet->isDragPanel || isPictureView())
@@ -16501,9 +16721,8 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 	if (pRCon->isConSelectMode())
 		return DPB_NONE;
 
-	// Если удерживается модификатор запуска граббера
-	if ((gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, false))
-	        || (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, false)))
+	// Если удерживается модификатор запуска выделения текста
+	if (gpConEmu->isSelectionModifierPressed(false))
 		return DPB_NONE;
 
 	//CONSOLE_CURSOR_INFO ci;
@@ -16550,7 +16769,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 
 	POINT ptCur; GetCursorPos(&ptCur);
 	// Если сейчас идет trackPopupMenu - то на выход
-	CVirtualConsole* pVCon = (mp_Menu->GetTrackMenuPlace() == tmp_None) ? GetVConFromPoint(ptCur) : NULL;
+	CVirtualConsole* pVCon = isMenuActive() ? NULL : GetVConFromPoint(ptCur);
 	if (pVCon && !isActive(pVCon, false))
 		pVCon = NULL;
 	CRealConsole *pRCon = pVCon ? pVCon->RCon() : NULL;
@@ -16631,7 +16850,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	BOOL lbMeFore = TRUE;
 	ExpandTextRangeType etr = etr_None;
 
-	if (mp_Menu->GetTrackMenuPlace())
+	if (isMenuActive())
 	{
 		goto DefaultCursor;
 	}
@@ -16650,7 +16869,8 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 		}
 		else if (pRCon->isSelectionPresent())
 		{
-			hCur = mh_CursorIBeam; // LoadCursor(NULL, IDC_IBEAM);
+			if (gpSet->isCTSIBeam)
+				hCur = mh_CursorIBeam; // LoadCursor(NULL, IDC_IBEAM);
 		}
 		else if ((etr = pRCon->GetLastTextRangeType()) != etr_None)
 		{
@@ -16698,8 +16918,10 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 			// If mouse is used for selection, or specified modifier is pressed
 			if (!hCur && lbMeFore && gpSet->isCTSIBeam)
 			{
-				if ((gpSet->isCTSSelectBlock && gpSet->IsModifierPressed(vkCTSVkBlock, true))
-					|| (gpSet->isCTSSelectText && gpSet->IsModifierPressed(vkCTSVkText, true)))
+				// Хм, если выделение настроено "всегда" и без модификатора -
+				// на экране всегда будет IBeam курсор, что может раздражать...
+				// Поэтому - false
+				if (isSelectionModifierPressed(false))
 				{
 					hCur = mh_CursorIBeam;
 				}
@@ -16899,6 +17121,8 @@ void CConEmuMain::OnDesktopMode()
 {
 	if (!this) return;
 
+	Icon.SettingsChanged();
+
 	if (WindowStartMinimized || ForceMinimizeToTray)
 		return;
 
@@ -16952,7 +17176,7 @@ void CConEmuMain::OnDesktopMode()
 			// Все эти окна принадлежат одному процессу explorer.exe
 			HWND hShell = FindWindowEx(hDesktop, NULL, L"WorkerW", NULL);
 
-			while(hShell)
+			while (hShell)
 			{
 				// У него должны быть дочерние окна
 				if (IsWindowVisible(hShell) && FindWindowEx(hShell, NULL, NULL, NULL))
@@ -17129,6 +17353,10 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 		case TIMER_FAILED_TABBAR_ID:
 			mp_TabBar->OnTimer(wParam);
 			break;
+
+		case TIMER_ACTIVATESPLIT_ID:
+			OnTimer_ActivateSplit();
+			break;
 	}
 
 	mb_InTimer = FALSE;
@@ -17187,50 +17415,6 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	if (bForeground && !m_GuiInfo.bGuiActive)
 	{
 		UpdateGuiInfoMappingActive(true);
-	}
-
-	CVConGuard VConFromPoint;
-	// bForeground - does not fit our needs (it ignores GUI children)
-	// 130821 - Don't try to change focus during popup menu active!
-	if (gpSet->isActivateSplitMouseOver && (mp_Menu->GetTrackMenuPlace() == tmp_None))
-	{
-		POINT ptCur; GetCursorPos(&ptCur);
-		if (!PTDIFFTEST(mouse.ptLastSplitOverCheck, SPLITOVERCHECK_DELTA))
-		{
-			mouse.ptLastSplitOverCheck = ptCur;
-			if (!isIconic() && (hForeWnd == ghWnd || CVConGroup::isOurGuiChildWindow(hForeWnd)))
-			{
-				// Курсор над ConEmu?
-				RECT rcClient = CalcRect(CER_MAIN);
-				// Проверяем, в какой из VCon попадает курсор?
-				if (PtInRect(&rcClient, ptCur))
-				{
-					if (CVConGroup::GetVConFromPoint(ptCur, &VConFromPoint))
-					{
-						bool bActive = isActive(VConFromPoint.VCon(), false);
-						if (!bActive)
-						{
-							// Если был активирован GUI CHILD - то фокус нужно сначала поставить в ConEmu
-							if (!bForeground && pVCon && pVCon->RCon()->GuiWnd())
-							{
-								apiSetForegroundWindow(ghWnd);
-							}
-
-							if (Activate(VConFromPoint.VCon()))
-							{
-								pVCon = VConFromPoint.VCon();
-							}
-
-							// Если был активен GUI CHILD - то ConEmu может НЕ активироваться
-							if (!bForeground && !VConFromPoint.VCon()->RCon()->GuiWnd())
-							{
-								apiSetForegroundWindow(ghWnd);
-							}
-						}
-					}
-				}
-			}
-		}
 	}
 
 	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
@@ -17415,7 +17599,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	}
 	#endif
 
-	if (mp_Menu->GetTrackMenuPlace() != tmp_None && mp_Tip)
+	if (isMenuActive() && mp_Tip)
 	{
 		POINT ptCur; GetCursorPos(&ptCur);
 		HWND hPoint = WindowFromPoint(ptCur);
@@ -17449,6 +17633,82 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		gpSet->UpdSet.CheckHourlyUpdate();
 	}
 
+}
+
+void CConEmuMain::OnActivateSplitChanged()
+{
+	DWORD nTimeout = TIMER_ACTIVATESPLIT_ELAPSE;
+	bool bActive = gpSet->isActivateSplitMouseOver();
+	// Try to get system default timeout only if 'system' options is used
+	if (gpSet->bActivateSplitMouseOver == 2)
+	{
+		if (!SystemParametersInfo(SPI_GETACTIVEWNDTRKTIMEOUT, 0, &nTimeout, 0))
+			nTimeout = TIMER_ACTIVATESPLIT_ELAPSE;
+		else if (nTimeout < 25)
+			nTimeout = 25;
+		else if (nTimeout > 2500)
+			nTimeout = 2500;
+	}
+	SetKillTimer(bActive, TIMER_ACTIVATESPLIT_ID, nTimeout);
+}
+
+void CConEmuMain::OnTimer_ActivateSplit()
+{
+	if (!gpSet->isActivateSplitMouseOver())
+	{
+		SetKillTimer(false, TIMER_ACTIVATESPLIT_ID, 0);
+		return;
+	}
+
+	if (isMenuActive())
+	{
+		return;
+	}
+
+	HWND hForeWnd = NULL;
+	bool bForeground = isMeForeground(false, true, &hForeWnd);
+
+	CVConGuard VConFromPoint;
+	// bForeground - does not fit our needs (it ignores GUI children)
+	// 130821 - Don't try to change focus during popup menu active!
+	POINT ptCur; GetCursorPos(&ptCur);
+	if (!PTDIFFTEST(mouse.ptLastSplitOverCheck, SPLITOVERCHECK_DELTA))
+	{
+		mouse.ptLastSplitOverCheck = ptCur;
+		if (!isIconic() && (hForeWnd == ghWnd || CVConGroup::isOurGuiChildWindow(hForeWnd)))
+		{
+			// Курсор над ConEmu?
+			RECT rcClient = CalcRect(CER_MAIN);
+			// Проверяем, в какой из VCon попадает курсор?
+			if (PtInRect(&rcClient, ptCur))
+			{
+				if (CVConGroup::GetVConFromPoint(ptCur, &VConFromPoint))
+				{
+					bool bActive = isActive(VConFromPoint.VCon(), false);
+					if (!bActive)
+					{
+						CVConGuard VCon;
+						// Если был активирован GUI CHILD - то фокус нужно сначала поставить в ConEmu
+						if (!bForeground && (GetActiveVCon(&VCon) >= 0) && VCon->RCon()->GuiWnd())
+						{
+							apiSetForegroundWindow(ghWnd);
+						}
+
+						if (Activate(VConFromPoint.VCon()))
+						{
+							// Если был активен GUI CHILD - то ConEmu может НЕ активироваться
+							if (!bForeground && !VConFromPoint.VCon()->RCon()->GuiWnd())
+							{
+								apiSetForegroundWindow(ghWnd);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	UNREFERENCED_PARAMETER(bForeground);
 }
 
 void CConEmuMain::OnTimer_ConRedraw(CVirtualConsole* pVCon)
@@ -17565,7 +17825,7 @@ void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*=
 		// Запомнить
 		mb_LastTransparentFocused = bActive;
 
-		if (mp_Menu->GetTrackMenuPlace() == tmp_None)
+		if (!isMenuActive())
 		{
 			OnSetCursor();
 		}
@@ -17892,6 +18152,8 @@ void CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	CASE_MSG(WM_VSCROLL);
 	CASE_MSG(WM_GETICON);
 	CASE_MSG(WM_SETTEXT);
+	CASE_MSG(WM_QUERYENDSESSION);
+	CASE_MSG(WM_ENDSESSION);
 	default:
 		{
 			LPCSTR pszReg = NULL;
@@ -17914,6 +18176,9 @@ void CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
+
+	if (gpConEmu)
+		gpConEmu->PreWndProc(messg);
 
 	//if (messg == WM_CREATE)
 	//{
@@ -17958,6 +18223,27 @@ BOOL CConEmuMain::isDialogMessage(MSG &Msg)
 	return lbDlgMsg;
 }
 
+bool CConEmuMain::isSkipNcMessage(const MSG& Msg)
+{
+	// When some GuiChild applications has focus (e.g. PuTTY)
+	// Pressing Alt+F4 enexpectedly close all ConEmu's tabs instead of active (PuTTY) only
+	if ((Msg.message == WM_SYSCOMMAND) && (Msg.wParam == SC_CLOSE))
+	{
+		// Message was posted by system?
+		if (Msg.time)
+		{
+			CVConGuard VCon; HWND hGuiChild;
+			if ((GetActiveVCon(&VCon) >= 0) && ((hGuiChild = VCon->GuiWnd()) != NULL))
+			{
+				VCon->RCon()->PostConsoleMessage(hGuiChild, Msg.message, Msg.wParam, Msg.lParam);
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 // Window procedure for ghWndWork
 LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -17973,6 +18259,9 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	{
 		gpConEmu->LogMessage(hWnd, uMsg, wParam, lParam);
 	}
+
+	if (gpConEmu)
+		gpConEmu->PreWndProc(uMsg);
 
 	switch (uMsg)
 	{
@@ -18035,7 +18324,7 @@ UINT CConEmuMain::RegisterMessage(LPCSTR asLocal, LPCWSTR asGlobal)
 	return nMsg;
 }
 
-UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal)
+UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal)
 {
 	UINT nMsg = 0; LPCSTR pszMsg = NULL;
 	if (m__AppMsgs.GetNext(NULL, &nMsg, &pszMsg))
@@ -18049,7 +18338,13 @@ UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal)
 				break;
 		}
 	}
-	return RegisterMessage(asLocal);
+	return RegisterMessage(asLocal, asGlobal);
+}
+
+// Speed up selection modifier checks
+void CConEmuMain::PreWndProc(UINT messg)
+{
+	m_Pressed.bChecked = FALSE;
 }
 
 // Window procedure for ghWnd
@@ -18093,6 +18388,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 	#endif
 
+	PatchMsgBoxIcon(hWnd, messg, wParam, lParam);
+
 	if (messg == WM_SYSCHAR)  // Для пересылки в консоль не используется, но чтобы не пищало - необходимо
 		return TRUE;
 
@@ -18117,7 +18414,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_WTSSESSION_CHANGE:
-			result = this->session.SessionChanged(wParam, lParam);
+			result = OnSessionChanged(hWnd, messg, wParam, lParam);
+			break;
+
+		case WM_QUERYENDSESSION:
+			result = OnQueryEndSession(hWnd, messg, wParam, lParam);
 			break;
 
 		case WM_NOTIFY:
@@ -18815,6 +19116,18 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 					lDelRc = 1;
 				}
 				return lDelRc;
+			}
+			else if (messg == this->mn_MsgActivateVCon)
+			{
+				LRESULT lActivateRc = 0;
+				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
+				if (CVConGroup::isValid(pVCon))
+				{
+					BOOL bActivateRc = this->Activate(pVCon);
+					if (bActivateRc)
+						lActivateRc = (LRESULT)pVCon;
+				}
+				return lActivateRc;
 			}
 
 			//else if (messg == this->mn_MsgCmdStarted || messg == this->mn_MsgCmdStopped) {

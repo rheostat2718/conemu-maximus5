@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1261,6 +1261,22 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		iRc = ServerInitAttach2Gui();
 		if (iRc != 0)
 			goto wrap;
+		// ConEmuHk еще не загружен, а он необходим для многих функций
+		if (!gbAlternativeAttach && gbNoCreateProcess && gbAlienMode)
+		{
+			if (gpSrv->dwRootProcess)
+			{
+				int iRemote = InjectRemote(gpSrv->dwRootProcess);
+				if (iRemote != 0)
+				{
+					_printf("ServerInit warning: InjectRemote failed, Code=%i\n", iRemote);
+				}
+			}
+			else
+			{
+				_printf("ServerInit warning: gpSrv->dwRootProcess==0\n", 0);
+			}
+		}
 	}
 
 	// Запустить нить наблюдения за консолью
@@ -3427,7 +3443,7 @@ static int ReadConsoleInfo()
 		int nWndHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
 
 		if (gpSrv->sbi.dwSize.Y > (max(gcrVisibleSize.Y,nWndHeight)+200)
-		        || (gpSrv->nRequestChangeSize && gpSrv->nReqSizeBufferHeight))
+		        || ((gpSrv->nRequestChangeSize > 0) && gpSrv->nReqSizeBufferHeight))
 		{
 			// Приложение изменило размер буфера!
 
@@ -4041,8 +4057,9 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 		// Из другой нити поступил запрос на изменение размера консоли
 		// 120507 - Если крутится альт.сервер - то игнорировать
-		if (!nAltWait && gpSrv->nRequestChangeSize)
+		if (!nAltWait && (gpSrv->nRequestChangeSize > 0))
 		{
+			InterlockedDecrement(&gpSrv->nRequestChangeSize);
 			// AVP гундит... да вроде и не нужно
 			//DWORD dwSusp = 0, dwSuspErr = 0;
 			//if (gpSrv->hRootThread) {

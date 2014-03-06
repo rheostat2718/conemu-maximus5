@@ -2,9 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by ConEmu.rc
 //
-#ifndef IDC_STATIC
-#define IDC_STATIC                     -1
-#endif
+#define IDC_STATIC                      -1
 #define IDI_ICON1                       1
 #define IDI_ICON2                       2
 #define IDI_ICON3                       3
@@ -250,9 +248,6 @@
 #define tFadeLow                        1624
 #define tFadeHigh                       1625
 #define cbToolbar                       1626
-#define rbCTSNever                      1627
-#define rbCTSAlways                     1628
-#define rbCTSBufferOnly                 1629
 #define cbCTSTextSelection              1630
 #define lbCTSMBtnAction                 1631
 #define lbCTSRBtnAction                 1632
@@ -772,9 +767,6 @@
 #define IDC_ATTACH_ALT                  2405
 #define cbInsideName                    2406
 #define cbHereName                      2407
-#define rbSettingsReg                   2408
-#define rbSettingsXml                   2409
-#define rbSettingsIni                   2410
 #define cbCmdAutorunNewWnd              2411
 #define cbCTSEndOnTyping                2412
 #define vkMinimizeRestor2               2413
@@ -994,6 +986,14 @@
 #define pLinkFlattr                     2650
 #define pIconCtrl                       2651
 #define cbTaskbarProgress               2656
+#define cbCTSIntelligent                2657
+#define tCTSIntelligentExceptions       2658
+#define stCTSIntelligentExceptions      2659
+#define gbDefaultTermConfClose          2660
+#define cbDefaultTerminalUseExisting    2661
+#define stDefaultTerminalSwitchInfo     2662
+#define stDefaultTerminal               2663
+#define bImportSettings                 2664
 
 // Next default values for new objects
 // 
@@ -1001,7 +1001,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        224
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2657
+#define _APS_NEXT_CONTROL_VALUE         2665
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

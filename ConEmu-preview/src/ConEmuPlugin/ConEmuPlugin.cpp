@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -746,6 +746,13 @@ void OnConsolePeekReadInput(BOOL abPeek)
 				dwLastTickCount = GetTickCount();
 				CESERVER_REQ_HDR in;
 				ExecutePrepareCmd(&in, CECMD_SETFARPID, sizeof(CESERVER_REQ_HDR));
+				WARNING("Overhead and hung possibility");
+				// Если ActiveServerPID() возвращает PID самого фара (current AlternativeServer) - то это overhead,
+				// т.к. альт.сервер крутится в ЭТОМ же потоке, и его можно "позвать" напрямую.
+				// Но дергать здесь ExecuteSrvCmd(gpConMapInfo->nServerPID) - НЕЛЬЗЯ, т.к.
+				// в этом случае будет рассинхронизация серверных потоков этого процесса,
+				// в итоге nActiveFarPID может никогда не обновиться...
+				// Возможность подвисания - это если в nAltServerPID будет "зависший" или закрывающийся процесс (не мы).
 				CESERVER_REQ *pOut = ExecuteSrvCmd(gpConMapInfo->ActiveServerPID(), (CESERVER_REQ*)&in, FarHwnd);
 				if (pOut)
 					ExecuteFreeResult(pOut);
@@ -3275,7 +3282,7 @@ BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
 		else
 		{
 			CESERVER_REQ In, *pOut = NULL;
-			ExecutePrepareCmd(&In, CECMD_SETDONTCLOSE, sizeof(CESERVER_REQ_HDR));
+			ExecutePrepareCmd(&In, CECMD_FARDETACHED, sizeof(CESERVER_REQ_HDR));
 			pOut = ExecuteSrvCmd(gdwServerPID, &In, FarHwnd);
 
 			if (pOut) ExecuteFreeResult(pOut);
@@ -5233,7 +5240,14 @@ void InitResources()
 		pIn->hdr.cbSize = (DWORD)(((LPBYTE)pszRes) - ((LPBYTE)pIn));
 		CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 
-		if (pOut) ExecuteFreeResult(pOut);
+		if (pOut)
+		{
+			if (pOut->DataSize() >= sizeof(FAR_REQ_FARSETCHANGED))
+			{
+				cmd_FarSetChanged(&pOut->FarSetChanged);
+			}
+			ExecuteFreeResult(pOut);
+		}
 
 		Free(pIn);
 		GetEnvironmentVariable(L"FARLANG", gsFarLang, 63);

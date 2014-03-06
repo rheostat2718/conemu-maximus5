@@ -52,102 +52,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 void RConStartArgs::RunArgTests()
 {
-	struct { LPCWSTR pszArg, pszNeed; } cTests[] = {
-		{
-			L"\"c:\\cmd.exe\" \"-new_console\" \"c:\\file.txt\"",
-			L"\"c:\\cmd.exe\" \"c:\\file.txt\""
-		},
-		{
-			L"\"c:\\cmd.exe\" -new_console:n \"c:\\file.txt\"",
-			L"\"c:\\cmd.exe\" \"c:\\file.txt\""
-		},
-		{
-			L"\"c:\\cmd.exe\" \"-new_console:n\" \"c:\\file.txt\"",
-			L"\"c:\\cmd.exe\" \"c:\\file.txt\""
-		},
-		{
-			L"c:\\cmd.exe \"-new_console:n\" \"c:\\file.txt\"",
-			L"c:\\cmd.exe \"c:\\file.txt\""
-		},
-		{
-			L"\"c:\\cmd.exe\" \"-new_console:n\" c:\\file.txt",
-			L"\"c:\\cmd.exe\" c:\\file.txt"
-		},
-		{
-			L"c:\\file.txt -cur_console",
-			L"c:\\file.txt"
-		},
-		{
-			L"\"c:\\file.txt\" -cur_console",
-			L"\"c:\\file.txt\""
-		},
-		{
-			L" -cur_console \"c:\\file.txt\"",
-			L" \"c:\\file.txt\""
-		},
-		{
-			L"-cur_console \"c:\\file.txt\"",
-			L"\"c:\\file.txt\""
-		},
-		{
-			L"-cur_console c:\\file.txt",
-			L"c:\\file.txt"
-		},
-	};
-
-	for (size_t i = 0; i < countof(cTests); i++)
-	{
-		RConStartArgs arg;
-		arg.pszSpecialCmd = lstrdup(cTests[i].pszArg);
-		arg.ProcessNewConArg();
-		if (lstrcmp(arg.pszSpecialCmd, cTests[i].pszNeed) != 0)
-		{
-			//_ASSERTE(FALSE && "arg.ProcessNewConArg failed");
-			OutputDebugString(L"arg.ProcessNewConArg failed\n");
-		}
-		int nDbg = 0;
-	}
-
-	for (size_t i = 0; i <= 4; i++)
-	{
-		RConStartArgs arg;
-		switch (i)
-		{
-		case 0: arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:d:C:\\John Doe\\Home\" "); break;
-		case 1: arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u"); break;
-		case 2: arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max"); break;
-		case 3: arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max:"); break;
-		case 4: arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:P:^<Power\"\"Shell^>\""); break;
-		}
-
-		arg.ProcessNewConArg();
-		int nDbg = lstrcmp(arg.pszSpecialCmd, i ? L"cmd" : L"cmd ");
-		_ASSERTE(nDbg==0);
-
-		switch (i)
-		{
-		case 0:
-			nDbg = lstrcmp(arg.pszStartupDir, L"C:\\John Doe\\Home");
-			_ASSERTE(nDbg==0);
-			break;
-		case 1:
-			_ASSERTE(arg.pszUserName==NULL && arg.pszDomain==NULL && arg.bForceUserDialog);
-			break;
-		case 2:
-			nDbg = lstrcmp(arg.pszUserName,L"Max");
-			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && arg.bForceUserDialog);
-			break;
-		case 3:
-			nDbg = lstrcmp(arg.pszUserName,L"Max");
-			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && !arg.bForceUserDialog);
-			break;
-		case 4:
-			nDbg = lstrcmp(arg.pszPalette, L"<Power\"Shell>");
-			_ASSERTE(nDbg==0);
-			break;
-		}
-	}
-
 	CmdArg s;
 	s.Set(L"Abcdef", 3);
 	int nDbg = lstrcmp(s, L"Abc");
@@ -160,7 +64,11 @@ void RConStartArgs::RunArgTests()
 	nDbg = s.ms_Arg ? lstrcmp(s, L"") : -2;
 	_ASSERTE(nDbg==0);
 
-	struct { LPCWSTR pszWhole; LPCWSTR pszCmp[5]; } lsArgTest[] = {
+	struct { LPCWSTR pszWhole; LPCWSTR pszCmp[10]; } lsArgTest[] = {
+		{L"\"C:\\ConEmu\\ConEmuC64.exe\"  /PARENTFARPID=1 /C \"C:\\GIT\\cmdw\\ad.cmd CE12.sln & ci -m \"Solution debug build properties\"\"",
+			{L"C:\\ConEmu\\ConEmuC64.exe", L"/PARENTFARPID=1", L"/C", L"C:\\GIT\\cmdw\\ad.cmd", L"CE12.sln", L"&", L"ci", L"-m", L"Solution debug build properties"}},
+		{L"/C \"C:\\ad.cmd file.txt & ci -m \"Commit message\"\"",
+			{L"/C", L"C:\\ad.cmd", L"file.txt", L"&", L"ci", L"-m", L"Commit message"}},
 		{L"\"This is test\" Next-arg \t\n \"Third Arg +++++++++++++++++++\" ++", {L"This is test", L"Next-arg", L"Third Arg +++++++++++++++++++"}},
 		{L"\"\"cmd\"\"", {L"cmd"}},
 		{L"\"\"c:\\Windows\\System32\\cmd.exe\" /?\"", {L"c:\\Windows\\System32\\cmd.exe", L"/?"}},
@@ -169,6 +77,12 @@ void RConStartArgs::RunArgTests()
 		{L"First \"Fo\"\"rth\"", {L"First", L"Fo\"\"rth"}},
 		// Multiple commands
 		{L"set ConEmuReportExe=VIM.EXE & SH.EXE", {L"set", L"ConEmuReportExe=VIM.EXE", L"&", L"SH.EXE"}},
+		// Inside escaped arguments
+		{L"reg.exe add \"HKCU\\command\" /ve /t REG_EXPAND_SZ /d \"\\\"C:\\ConEmu\\ConEmuPortable.exe\\\" /Dir \\\"%V\\\" /cmd \\\"cmd.exe\\\" \\\"-new_console:nC:cmd.exe\\\" \\\"-cur_console:d:%V\\\"\" /f",
+			// Для наглядности:
+			// reg.exe add "HKCU\command" /ve /t REG_EXPAND_SZ
+			//    /d "\"C:\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f
+			{L"reg.exe", L"add", L"HKCU\\command", L"/ve", L"/t", L"REG_EXPAND_SZ", L"/d", L"\\\"C:\\ConEmu\\ConEmuPortable.exe\\\" /Dir \\\"%V\\\" /cmd \\\"cmd.exe\\\" \\\"-new_console:nC:cmd.exe\\\" \\\"-cur_console:d:%V\\\"", L"/f"}},
 		{NULL}
 	};
 	for (int i = 0; lsArgTest[i].pszWhole; i++)
@@ -190,6 +104,147 @@ void RConStartArgs::RunArgTests()
 		}
 	}
 
+	bool bTest = true;
+	for (size_t i = 0; bTest; i++)
+	{
+		RConStartArgs arg;
+		int nDbg;
+		LPCWSTR pszCmp;
+
+		switch (i)
+		{
+		case 21:
+			pszCmp = L"cmd '-new_console' `-new_console` \\\"-new_console\\\"";
+			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, pszCmp) && arg.NewConsole==crb_Undefined);
+			break;
+		case 20:
+			arg.pszSpecialCmd = lstrdup(L"\"c:\\cmd.exe\" \"-new_console\" \"c:\\file.txt\"");
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\cmd.exe\" \"c:\\file.txt\""));
+			break;
+		case 19:
+			arg.pszSpecialCmd = lstrdup(L"\"c:\\cmd.exe\" -new_console:n \"c:\\file.txt\"");
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\cmd.exe\" \"c:\\file.txt\""));
+			break;
+		case 18:
+			arg.pszSpecialCmd = lstrdup(L"\"c:\\cmd.exe\" \"-new_console:n\" \"c:\\file.txt\"");
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\cmd.exe\" \"c:\\file.txt\""));
+			break;
+		case 17:
+			arg.pszSpecialCmd = lstrdup(L"c:\\cmd.exe \"-new_console:n\" \"c:\\file.txt\"");
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"c:\\cmd.exe \"c:\\file.txt\""));
+			break;
+		case 16:
+			arg.pszSpecialCmd = lstrdup(L"\"c:\\cmd.exe\" \"-new_console:n\" c:\\file.txt");
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\cmd.exe\" c:\\file.txt"));
+			break;
+		case 15:
+			arg.pszSpecialCmd = lstrdup(L"c:\\file.txt -cur_console");
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"c:\\file.txt"));
+			break;
+		case 14:
+			arg.pszSpecialCmd = lstrdup(L"\"c:\\file.txt\" -cur_console");
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\file.txt\""));
+			break;
+		case 13:
+			arg.pszSpecialCmd = lstrdup(L" -cur_console \"c:\\file.txt\"");
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\file.txt\""));
+			break;
+		case 12:
+			arg.pszSpecialCmd = lstrdup(L"-cur_console \"c:\\file.txt\"");
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"\"c:\\file.txt\""));
+			break;
+		case 11:
+			arg.pszSpecialCmd = lstrdup(L"-cur_console c:\\file.txt");
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"c:\\file.txt"));
+			break;
+		case 10:
+			pszCmp = L"reg.exe add \"HKCU\\command\" /ve /t REG_EXPAND_SZ /d \"\\\"C:\\ConEmu\\ConEmuPortable.exe\\\" /Dir \\\"%V\\\" /cmd \\\"cmd.exe\\\" \\\"-new_console:nC:cmd.exe\\\" \\\"-cur_console:d:%V\\\"\" /f";
+			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, pszCmp)==0 && arg.NewConsole==crb_Undefined);
+			break;
+		case 9:
+			pszCmp = L"\"C:\\Windows\\system32\\cmd.exe\" /C \"\"C:\\Python27\\python.EXE\"\"";
+			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, pszCmp)==0);
+			break;
+		case 8:
+			arg.pszSpecialCmd = lstrdup(L"cmd --new_console -cur_console:a");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd --new_console")==0 && arg.NewConsole==crb_Undefined && arg.RunAsAdministrator==crb_On);
+			break;
+		case 7:
+			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:d:\"C:\\My docs\":t:\"My title\" \"-cur_console:C:C:\\my cmd.ico\" -cur_console:P:\"<PowerShell>\":a /k ver");
+			arg.ProcessNewConArg();
+			pszCmp = L"cmd /k ver";
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, pszCmp)==0);
+			_ASSERTE(arg.pszRenameTab && arg.pszPalette && arg.pszIconFile && arg.pszStartupDir && arg.NewConsole==crb_Undefined && lstrcmp(arg.pszRenameTab, L"My title")==0 && lstrcmp(arg.pszPalette, L"<PowerShell>")==0 && lstrcmp(arg.pszStartupDir, L"C:\\My docs")==0 && lstrcmp(arg.pszIconFile, L"C:\\my cmd.ico")==0);
+			break;
+		case 6:
+			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:b:P:\"^<Power\"\"Shell^>\":t:\"My title\" /k ConEmuC.exe -Guimacro print(\"-new_console:a\")");
+			arg.ProcessNewConArg();
+			pszCmp = L"cmd /k ConEmuC.exe -Guimacro print(\"-new_console:a\")";
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, pszCmp)==0);
+			_ASSERTE(arg.pszRenameTab && arg.pszPalette && arg.BackgroundTab==crb_On && arg.NewConsole==crb_Undefined && arg.RunAsAdministrator==crb_Undefined && lstrcmp(arg.pszRenameTab, L"My title")==0 && lstrcmp(arg.pszPalette, L"<Power\"Shell>")==0);
+			break;
+		case 5:
+			arg.pszSpecialCmd = lstrdup(L"cmd \"-cur_console:t:My title\" /k ver");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd /k ver")==0);
+			_ASSERTE(arg.pszRenameTab && lstrcmp(arg.pszRenameTab, L"My title")==0 && arg.NewConsole==crb_Undefined);
+			break;
+		case 4:
+			arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:P:^<Power\"\"Shell^>\"");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd")==0);
+			nDbg = lstrcmp(arg.pszPalette, L"<Power\"Shell>");
+			_ASSERTE(nDbg==0 && arg.NewConsole==crb_On);
+			break;
+		case 3:
+			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max:");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd")==0);
+			nDbg = lstrcmp(arg.pszUserName,L"Max");
+			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && arg.ForceUserDialog==crb_Off && arg.NewConsole!=crb_On);
+			break;
+		case 2:
+			arg.pszSpecialCmd = lstrdup(L"cmd -cur_console:u:Max -new_console");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd")==0);
+			nDbg = lstrcmp(arg.pszUserName,L"Max");
+			_ASSERTE(nDbg==0 && arg.pszDomain==NULL && !*arg.szUserPassword && arg.ForceUserDialog==crb_On && arg.NewConsole==crb_On);
+			break;
+		case 1:
+			arg.pszSpecialCmd = lstrdup(L"cmd -new_console:u -cur_console:h0");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd")==0);
+			_ASSERTE(arg.pszUserName==NULL && arg.pszDomain==NULL && arg.ForceUserDialog==crb_On && arg.NewConsole==crb_On && arg.BufHeight==crb_On && arg.nBufHeight==0);
+			break;
+		case 0:
+			arg.pszSpecialCmd = lstrdup(L"cmd \"-new_console:d:C:\\John Doe\\Home\" ");
+			arg.ProcessNewConArg();
+			_ASSERTE(lstrcmp(arg.pszSpecialCmd, L"cmd ")==0);
+			nDbg = lstrcmp(arg.pszStartupDir, L"C:\\John Doe\\Home");
+			_ASSERTE(nDbg==0 && arg.NewConsole==crb_On);
+			break;
+		default:
+			bTest = false; // Stop tests
+		}
+	}
+
 	nDbg = -1;
 }
 #endif
@@ -198,22 +253,28 @@ void RConStartArgs::RunArgTests()
 // If you add some members - don't forget them in RConStartArgs::AssignFrom!
 RConStartArgs::RConStartArgs()
 {
-	bDetached = bRunAsAdministrator = bRunAsRestricted = bNewConsole = FALSE;
-	bForceUserDialog = bBackgroundTab = bForegroungTab = bNoDefaultTerm = bForceDosBox = bForceInherit = FALSE;
+	Detached = RunAsAdministrator = RunAsRestricted = NewConsole = crb_Undefined;
+	ForceUserDialog = BackgroundTab = ForegroungTab = NoDefaultTerm = ForceDosBox = ForceInherit = crb_Undefined;
 	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = pszRenameTab = NULL;
 	pszIconFile = pszPalette = pszWallpaper = NULL;
-	bBufHeight = FALSE; nBufHeight = 0; bLongOutputDisable = FALSE;
-	bOverwriteMode = FALSE; nPTY = 0;
-	bInjectsDisable = FALSE;
+	BufHeight = crb_Undefined; nBufHeight = 0; LongOutputDisable = crb_Undefined;
+	OverwriteMode = crb_Undefined;
+	nPTY = 0;
+	InjectsDisable = crb_Undefined;
+	ForceNewWindow = crb_Undefined;
 	eConfirmation = eConfDefault;
 	szUserPassword[0] = 0;
-	bUseEmptyPassword = FALSE;
+	UseEmptyPassword = crb_Undefined;
 	//hLogonToken = NULL;
+	#if 0
+	hShlwapi = NULL; WcsStrI = NULL;
+	#endif
 }
 
-bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
+#ifndef CONEMU_MINIMAL
+bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /*= false*/)
 {
 	_ASSERTE(args!=NULL);
 
@@ -244,6 +305,9 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 
 	for (CopyValues* p = values; p->ppDst; p++)
 	{
+		if (abConcat && *p->ppDst && !p->pSrc)
+			continue;
+
 		SafeFree(*p->ppDst);
 		if (p->pSrc)
 		{
@@ -253,8 +317,15 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 		}
 	}
 
-	this->bRunAsRestricted = args->bRunAsRestricted;
-	this->bRunAsAdministrator = args->bRunAsAdministrator;
+	if (!abConcat || (args->RunAsRestricted || args->RunAsAdministrator || args->pszUserName))
+	{
+		this->RunAsRestricted = args->RunAsRestricted;
+		this->RunAsAdministrator = args->RunAsAdministrator;
+	}
+	else
+	{
+		goto SkipUserName;
+	}
 	SafeFree(this->pszUserName); //SafeFree(this->pszUserPassword);
 	SafeFree(this->pszDomain);
 	//SafeFree(this->pszUserProfile);
@@ -266,9 +337,9 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 		if (args->pszDomain)
 			this->pszDomain = lstrdup(args->pszDomain);
 		lstrcpy(this->szUserPassword, args->szUserPassword);
-		this->bUseEmptyPassword = args->bUseEmptyPassword;
+		this->UseEmptyPassword = args->UseEmptyPassword;
 		//this->pszUserProfile = args->pszUserProfile ? lstrdup(args->pszUserProfile) : NULL;
-		
+
 		//SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
 
 		//this->pszUserPassword = lstrdup(args->pszUserPassword ? args->pszUserPassword : L"");
@@ -277,25 +348,47 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args)
 		if (!this->pszUserName /*|| !*this->szUserPassword*/)
 			return false;
 	}
+SkipUserName:
 
-	this->bBackgroundTab = args->bBackgroundTab;
-	this->bForegroungTab = args->bForegroungTab;
-	this->bNoDefaultTerm = args->bNoDefaultTerm; _ASSERTE(args->bNoDefaultTerm == FALSE);
-	this->bBufHeight = args->bBufHeight;
-	this->nBufHeight = args->nBufHeight;
-	this->eConfirmation = args->eConfirmation;
-	this->bForceUserDialog = args->bForceUserDialog;
-	this->bInjectsDisable = args->bInjectsDisable;
-	this->bLongOutputDisable = args->bLongOutputDisable;
-	this->bOverwriteMode = args->bOverwriteMode;
-	this->nPTY = args->nPTY;
+	if (!abConcat || args->BackgroundTab || args->ForegroungTab)
+	{
+		this->BackgroundTab = args->BackgroundTab;
+		this->ForegroungTab = args->ForegroungTab;
+	}
+	if (!abConcat || args->NoDefaultTerm)
+	{
+		this->NoDefaultTerm = args->NoDefaultTerm; _ASSERTE(args->NoDefaultTerm == crb_Undefined);
+	}
+	if (!abConcat || args->BufHeight)
+	{
+		this->BufHeight = args->BufHeight;
+		this->nBufHeight = args->nBufHeight;
+	}
+	if (!abConcat || args->eConfirmation)
+		this->eConfirmation = args->eConfirmation;
+	if (!abConcat || args->ForceUserDialog)
+		this->ForceUserDialog = args->ForceUserDialog;
+	if (!abConcat || args->InjectsDisable)
+		this->InjectsDisable = args->InjectsDisable;
+	if (!abConcat || args->ForceNewWindow)
+		this->ForceNewWindow = args->ForceNewWindow;
+	if (!abConcat || args->LongOutputDisable)
+		this->LongOutputDisable = args->LongOutputDisable;
+	if (!abConcat || args->OverwriteMode)
+		this->OverwriteMode = args->OverwriteMode;
+	if (!abConcat || args->nPTY)
+		this->nPTY = args->nPTY;
 
-	this->eSplit = args->eSplit;
-	this->nSplitValue = args->nSplitValue;
-    this->nSplitPane = args->nSplitPane;
+	if (!abConcat)
+	{
+		this->eSplit = args->eSplit;
+		this->nSplitValue = args->nSplitValue;
+		this->nSplitPane = args->nSplitPane;
+	}
 
 	return true;
 }
+#endif
 
 RConStartArgs::~RConStartArgs()
 {
@@ -313,35 +406,46 @@ RConStartArgs::~RConStartArgs()
 	if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
 
 	//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
+
+	#if 0
+	if (hShlwapi)
+		FreeLibrary(hShlwapi);
+	hShlwapi = NULL;
+	WcsStrI = NULL;
+	#endif
 }
 
-wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
+#ifndef CONEMU_MINIMAL
+wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 {
 	wchar_t* pszFull = NULL;
 	size_t cchMaxLen =
 				 (pszSpecialCmd ? (lstrlen(pszSpecialCmd) + 3) : 0); // только команда
 	cchMaxLen += (pszStartupDir ? (lstrlen(pszStartupDir) + 20) : 0); // "-new_console:d:..."
-	cchMaxLen += (pszRenameTab  ? (lstrlen(pszRenameTab)*2 + 20) : 0); // "-new_console:t:..."
 	cchMaxLen += (pszIconFile   ? (lstrlen(pszIconFile) + 20) : 0); // "-new_console:C:..."
-	cchMaxLen += (pszPalette    ? (lstrlen(pszPalette)*2 + 20) : 0); // "-new_console:P:..."
 	cchMaxLen += (pszWallpaper  ? (lstrlen(pszWallpaper) + 20) : 0); // "-new_console:W:..."
-	cchMaxLen += (bRunAsAdministrator ? 15 : 0); // -new_console:a
-	cchMaxLen += (bRunAsRestricted ? 15 : 0); // -new_console:r
+	// Some values may contain 'invalid' symbols (like '<', '>' and so on). They will be escaped. Thats why "len*2".
+	cchMaxLen += (pszRenameTab  ? (lstrlen(pszRenameTab)*2 + 20) : 0); // "-new_console:t:..."
+	cchMaxLen += (pszPalette    ? (lstrlen(pszPalette)*2 + 20) : 0); // "-new_console:P:..."
+	cchMaxLen += 15;
+	if (RunAsAdministrator == crb_On) cchMaxLen++; // -new_console:a
+	if (RunAsRestricted == crb_On) cchMaxLen++; // -new_console:r
 	cchMaxLen += (pszUserName ? (lstrlen(pszUserName) + 32 // "-new_console:u:<user>:<pwd>"
 						+ (pszDomain ? lstrlen(pszDomain) : 0)
 						+ (szUserPassword ? lstrlen(szUserPassword) : 0)) : 0);
-	cchMaxLen += (bForceUserDialog ? 15 : 0); // -new_console:u
-	cchMaxLen += (bBackgroundTab ? 15 : 0); // -new_console:b
-	cchMaxLen += (bForegroungTab ? 15 : 0); // -new_console:f
-	cchMaxLen += (bBufHeight ? 32 : 0); // -new_console:h<lines>
-	cchMaxLen += (bLongOutputDisable ? 15 : 0); // -new_console:o
-	cchMaxLen += (bOverwriteMode ? 15 : 0); // -new_console:w
+	if (ForceUserDialog == crb_On) cchMaxLen++; // -new_console:u
+	if (BackgroundTab == crb_On) cchMaxLen++; // -new_console:b
+	if (ForegroungTab == crb_On) cchMaxLen++; // -new_console:f
+	if (BufHeight == crb_On) cchMaxLen += 32; // -new_console:h<lines>
+	if (LongOutputDisable == crb_On) cchMaxLen++; // -new_console:o
+	if (OverwriteMode == crb_On) cchMaxLen++; // -new_console:w
 	cchMaxLen += (nPTY ? 15 : 0); // -new_console:e
-	cchMaxLen += (bInjectsDisable ? 15 : 0); // -new_console:i
-	cchMaxLen += (eConfirmation ? 15 : 0); // -new_console:c / -new_console:n
-	cchMaxLen += (bForceDosBox ? 15 : 0); // -new_console:x
-	cchMaxLen += (bForceInherit ? 15 : 0); // -new_console:I
-	cchMaxLen += (eSplit ? 64 : 0); // -new_console:s[<SplitTab>T][<Percents>](H|V)
+	if (InjectsDisable == crb_On) cchMaxLen++; // -new_console:i
+	if (ForceNewWindow == crb_On) cchMaxLen++; // -new_console:N
+	if (eConfirmation) cchMaxLen++; // -new_console:c / -new_console:n
+	if (ForceDosBox == crb_On) cchMaxLen++; // -new_console:x
+	if (ForceInherit == crb_On) cchMaxLen++; // -new_console:I
+	if (eSplit) cchMaxLen += 64; // -new_console:s[<SplitTab>T][<Percents>](H|V)
 
 	pszFull = (wchar_t*)malloc(cchMaxLen*sizeof(*pszFull));
 	if (!pszFull)
@@ -352,7 +456,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 
 	if (pszSpecialCmd)
 	{
-		if (bRunAsAdministrator && abForTasks)
+		if ((RunAsAdministrator == crb_On) && abForTasks)
 			_wcscpy_c(pszFull, cchMaxLen, L"*");
 		else
 			*pszFull = 0;						
@@ -372,46 +476,49 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	}
 
 	wchar_t szAdd[128] = L"";
-	if (bRunAsAdministrator)
+	if (RunAsAdministrator == crb_On)
 		wcscat_c(szAdd, L"a");
-	else if (bRunAsRestricted)
+	else if (RunAsRestricted == crb_On)
 		wcscat_c(szAdd, L"r");
-	
-	if (bForceUserDialog && !(pszUserName && *pszUserName))
+
+	if ((ForceUserDialog == crb_On) && !(pszUserName && *pszUserName))
 		wcscat_c(szAdd, L"u");
 
-	if (bBackgroundTab)
+	if (BackgroundTab == crb_On)
 		wcscat_c(szAdd, L"b");
-	else if (bForegroungTab)
+	else if (ForegroungTab == crb_On)
 		wcscat_c(szAdd, L"f");
 
-	if (bForceDosBox)
+	if (ForceDosBox == crb_On)
 		wcscat_c(szAdd, L"x");
 
-	if (bForceInherit)
+	if (ForceInherit == crb_On)
 		wcscat_c(szAdd, L"I");
-	
+
 	if (eConfirmation == eConfAlways)
 		wcscat_c(szAdd, L"c");
 	else if (eConfirmation == eConfNever)
 		wcscat_c(szAdd, L"n");
 
-	if (bLongOutputDisable)
+	if (LongOutputDisable == crb_On)
 		wcscat_c(szAdd, L"o");
 
-	if (bOverwriteMode)
+	if (OverwriteMode == crb_On)
 		wcscat_c(szAdd, L"w");
 
 	if (nPTY)
 		wcscat_c(szAdd, (nPTY == 1) ? L"p1" : (nPTY == 2) ? L"p2" : L"p0");
 
-	if (bInjectsDisable)
+	if (InjectsDisable == crb_On)
 		wcscat_c(szAdd, L"i");
 
-	if (bBufHeight)
+	if (ForceNewWindow == crb_On)
+		wcscat_c(szAdd, L"N");
+
+	if (BufHeight == crb_On)
 	{
 		if (nBufHeight)
-			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"h%u", nBufHeight);
+			msprintf(szAdd+lstrlen(szAdd), 16, L"h%u", nBufHeight);
 		else
 			wcscat_c(szAdd, L"h");
 	}
@@ -421,18 +528,18 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	{
 		wcscat_c(szAdd, L"s");
 		if (nSplitPane)
-			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"%uT", nSplitPane);
+			msprintf(szAdd+lstrlen(szAdd), 16, L"%uT", nSplitPane);
 		if (nSplitValue > 0 && nSplitValue < 1000)
 		{
 			UINT iPercent = (1000-nSplitValue)/10;
-			_wsprintf(szAdd+lstrlen(szAdd), SKIPLEN(16) L"%u", max(1,min(iPercent,99)));
+			msprintf(szAdd+lstrlen(szAdd), 16, L"%u", max(1,min(iPercent,99)));
 		}
 		wcscat_c(szAdd, (eSplit == eSplitHorz) ? L"H" : L"V");
 	}
 
 	if (szAdd[0])
 	{
-		_wcscat_c(pszFull, cchMaxLen, bNewConsole ? L" -new_console:" : L" -cur_console:");
+		_wcscat_c(pszFull, cchMaxLen, (NewConsole == crb_On) ? L" -new_console:" : L" -cur_console:");
 		_wcscat_c(pszFull, cchMaxLen, szAdd);
 	}
 
@@ -454,10 +561,10 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 			bool bQuot = wcspbrk(p->pVal, L" \"") != NULL;
 
 			if (bQuot)
-				msprintf(szCat, countof(szCat), bNewConsole ? L" \"-new_console:%c:" : L" \"-cur_console:%c:", p->cOpt);
+				msprintf(szCat, countof(szCat), (NewConsole == crb_On) ? L" \"-new_console:%c:" : L" \"-cur_console:%c:", p->cOpt);
 			else
-				msprintf(szCat, countof(szCat), bNewConsole ? L" -new_console:%c:" : L" -cur_console:%c:", p->cOpt);
-			
+				msprintf(szCat, countof(szCat), (NewConsole == crb_On) ? L" -new_console:%c:" : L" -cur_console:%c:", p->cOpt);
+
 			_wcscat_c(pszFull, cchMaxLen, szCat);
 
 			if (p->bEscape)
@@ -486,14 +593,14 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 	// "-new_console:u:<user>:<pwd>"
 	if (pszUserName && *pszUserName)
 	{
-		_wcscat_c(pszFull, cchMaxLen, bNewConsole ? L" \"-new_console:u:" : L" \"-cur_console:u:");
+		_wcscat_c(pszFull, cchMaxLen, (NewConsole == crb_On) ? L" \"-new_console:u:" : L" \"-cur_console:u:");
 		if (pszDomain && *pszDomain)
 		{
 			_wcscat_c(pszFull, cchMaxLen, pszDomain);
 			_wcscat_c(pszFull, cchMaxLen, L"\\");
 		}
 		_wcscat_c(pszFull, cchMaxLen, pszUserName);
-		if (*szUserPassword || !bForceUserDialog)
+		if (*szUserPassword || (ForceUserDialog != crb_On))
 		{
 			_wcscat_c(pszFull, cchMaxLen, L":");
 		}
@@ -506,6 +613,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/)
 
 	return pszFull;
 }
+#endif
 
 void RConStartArgs::AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax)
 {
@@ -514,14 +622,15 @@ void RConStartArgs::AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax)
 	else if (eConfirmation == RConStartArgs::eConfNever)
 		_wcscat_c(rsServerCmdLine, cchMax, L" /NOCONFIRM");
 
-	if (bInjectsDisable)
+	if (InjectsDisable == crb_On)
 		_wcscat_c(rsServerCmdLine, cchMax, L" /NOINJECT");
 }
 
+#ifndef CONEMU_MINIMAL
 bool RConStartArgs::CheckUserToken(HWND hPwd)
 {
 	//SafeFree(pszUserProfile);
-	bUseEmptyPassword = FALSE;
+	UseEmptyPassword = crb_Undefined;
 
 	//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
 	if (!pszUserName || !*pszUserName)
@@ -533,7 +642,11 @@ bool RConStartArgs::CheckUserToken(HWND hPwd)
 	if (!GetWindowText(hPwd, szUserPassword, MAX_PATH-1))
 	{
 		szUserPassword[0] = 0;
-		bUseEmptyPassword = TRUE;
+		UseEmptyPassword = crb_On;
+	}
+	else
+	{
+		UseEmptyPassword = crb_Off;
 	}
 
 	SafeFree(pszDomain);
@@ -560,7 +673,7 @@ HANDLE RConStartArgs::CheckUserToken()
 	// aka: code 1327 (ERROR_ACCOUNT_RESTRICTION)
 	// gpedit.msc - Конфигурация компьютера - Конфигурация Windows - Локальные политики - Параметры безопасности - Учетные записи
 	// Ограничить использование пустых паролей только для консольного входа -> "Отключить". 
-	LPWSTR pszPassword = bUseEmptyPassword ? NULL : szUserPassword;
+	LPWSTR pszPassword = (UseEmptyPassword == crb_On) ? NULL : szUserPassword;
 	DWORD nFlags = LOGON32_LOGON_INTERACTIVE;
 	BOOL lbRc = LogonUser(pszUserName, pszDomain, pszPassword, nFlags, LOGON32_PROVIDER_DEFAULT, &hLogonToken);
 
@@ -571,6 +684,7 @@ HANDLE RConStartArgs::CheckUserToken()
 
 	return hLogonToken;
 }
+#endif
 
 // Returns ">0" - when changes was made
 //  0 - no changes
@@ -579,7 +693,7 @@ HANDLE RConStartArgs::CheckUserToken()
 //   при запуске Tasks из GUI
 int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 {
-	bNewConsole = FALSE;
+	NewConsole = crb_Undefined;
 
 	if (!pszSpecialCmd || !*pszSpecialCmd)
 	{
@@ -588,24 +702,39 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 	}
 
 	int nChanges = 0;
-	
-	// 120115 - Если первый аргумент - "ConEmu.exe" или "ConEmu64.exe" - не обрабатывать "-cur_console" и "-new_console"
+
+	// 140219 - Остановить обработку, если встретим любой из: ConEmu[.exe], ConEmu64[.exe], ConEmuC[.exe], ConEmuC64[.exe]
+	LPCWSTR pszStopAt = NULL;
 	{
 		LPCWSTR pszTemp = pszSpecialCmd;
+		LPCWSTR pszSave = pszSpecialCmd;
+		LPCWSTR pszName;
 		CmdArg szExe;
-		if (0 == NextArg(&pszTemp, szExe))
+		LPCWSTR pszWords[] = {L"ConEmu", L"ConEmu.exe", L"ConEmu64", L"ConEmu64.exe", L"ConEmuC", L"ConEmuC.exe", L"ConEmuC64", L"ConEmuC64.exe", L"ConEmuPortable.exe", L"ConEmuPortable", NULL};
+		while (!pszStopAt && (0 == NextArg(&pszTemp, szExe)))
 		{
-			pszTemp = PointToName(szExe);
-			if (lstrcmpi(pszTemp, L"ConEmu.exe") == 0
-				|| lstrcmpi(pszTemp, L"ConEmu") == 0
-				|| lstrcmpi(pszTemp, L"ConEmu64.exe") == 0
-				|| lstrcmpi(pszTemp, L"ConEmu64") == 0)
+			pszName = PointToName(szExe);
+			for (size_t i = 0; pszWords[i]; i++)
 			{
-				return 0;
+				if (lstrcmpi(pszName, pszWords[i]) == 0)
+				{
+					pszStopAt = pszSave;
+					break;
+				}
 			}
+			pszSave = pszTemp;
 		}
 	}
-	
+
+	#if 0
+	// 140219 - Остановить обработку, если встретим любой из: ConEmu[.exe], ConEmu64[.exe], ConEmuC[.exe], ConEmuC64[.exe]
+	if (!hShlwapi)
+	{
+		hShlwapi = LoadLibrary(L"Shlwapi.dll");
+		WcsStrI = hShlwapi ? (StrStrI_t)GetProcAddress(hShlwapi, "StrStrIW") : NULL;
+	}
+	#endif
+
 
 	// 111211 - здесь может быть передан "-new_console:..."
 	LPCWSTR pszNewCon = L"-new_console";
@@ -613,36 +742,72 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 	LPCWSTR pszCurCon = L"-cur_console";
 	int nNewConLen = lstrlen(pszNewCon);
 	_ASSERTE(lstrlen(pszCurCon)==nNewConLen);
-	bool bStop = false;
 
 	wchar_t* pszFrom = pszSpecialCmd;
 
+	bool bStop = false;
 	while (!bStop)
 	{
-		wchar_t* pszFindNew = wcsstr(pszFrom, pszNewCon);
-		wchar_t* pszFind = pszFindNew ? pszFindNew : wcsstr(pszFrom, pszCurCon);
-		if (pszFindNew)
-			bNewConsole = TRUE;
-		else if (!pszFind)
+		wchar_t* pszSwitch = wcschr(pszFrom, L'-');
+		if (!pszSwitch)
+			break;
+		// Pre-validation
+		if (((pszSwitch[1] != L'n') && (pszSwitch[1] != L'c')) // -new_... or -cur_...
+			|| (((pszSwitch != /* > */ pszFrom) // If it is started from pszFrom - no need to check previous symbols
+				&& (*(pszSwitch-1) != L'"') || (((pszSwitch-2) >= pszFrom) && (*(pszSwitch-2) == L'\\'))) // Found: \"-new...
+				&& (*(pszSwitch-1) != L' '))) // Prev symbol was space
+		{
+			// НЕ наш аргумент
+			pszSwitch = wcschr(pszSwitch+1, L' ');
+			if (!pszSwitch)
+				break;
+			pszFrom = pszSwitch;
+			continue;
+		}
+
+		wchar_t* pszFindNew = NULL;
+		wchar_t* pszFind = NULL;
+		wchar_t szTest[12]; lstrcpyn(szTest, pszSwitch+1, countof(szTest));
+
+		if (lstrcmp(szTest, L"new_console") == 0)
+			pszFindNew = pszFind = pszSwitch;
+		else if (lstrcmp(szTest, L"cur_console") == 0)
+			pszFind = pszSwitch;
+		else
+		{
+			// НЕ наш аргумент
+			pszSwitch = wcschr(pszSwitch+1, L' ');
+			if (!pszSwitch)
+				break;
+			pszFrom = pszSwitch;
+			continue;
+		}
+
+		if (!pszFind)
+			break;
+		if (pszStopAt && (pszFind >= pszStopAt))
 			break;
 
 		// Проверка валидности
 		_ASSERTE(pszFind >= pszSpecialCmd);
-		if (!(((pszFind == pszFrom) || (*(pszFind-1) == L'"') || (*(pszFind-1) == L' ')) // начало аргумента
-			&& (pszFind[nNewConLen] == L' ' || pszFind[nNewConLen] == L':' 
-				|| pszFind[nNewConLen] == L'"' || pszFind[nNewConLen] == 0)))
+		if ((pszFind[nNewConLen] != L' ') && (pszFind[nNewConLen] != L':')
+			&& (pszFind[nNewConLen] != L'"') && (pszFind[nNewConLen] != 0))
 		{
 			// НЕ наш аргумент
 			pszFrom = pszFind+nNewConLen;
 		}
 		else
 		{
+			if (pszFindNew)
+				NewConsole = crb_On;
+
 			// -- не будем пока, мешает. например, при запуске задач
 			//// По умолчанию, принудительно включить "Press Enter or Esc to close console"
 			//if (!bForceCurConsole)
 			//	eConfirmation = eConfAlways;
-		
+
 			bool lbQuot = (*(pszFind-1) == L'"');
+			bool lbWasQuot = lbQuot;
 			const wchar_t* pszEnd = pszFind+nNewConLen;
 			//wchar_t szNewConArg[MAX_PATH+1];
 			if (lbQuot)
@@ -670,6 +835,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 				// Найти конец аргумента
 				const wchar_t* pszArgEnd = pszEnd;
+				bool lbLocalQuot = false;
 				while (*pszArgEnd)
 				{
 					switch (*pszArgEnd)
@@ -679,12 +845,30 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						break;
 					case L'"':
 						if (*(pszArgEnd+1) == L'"')
-							pszArgEnd++; // Skip qoubled qouble quote
-						else
-							goto EndFound;
-						break;
-					case L' ':
+						{
+							pszArgEnd += 2; // Skip qoubled qouble quote
+							continue;
+						}
 						if (!lbQuot)
+						{
+							if (!lbLocalQuot && (*(pszArgEnd-1) == L':'))
+							{
+								lbLocalQuot = true;
+								pszArgEnd++;
+								continue;
+							}
+							if (lbLocalQuot)
+							{
+								if (*(pszArgEnd+1) != L':')
+									goto EndFound;
+								lbLocalQuot = false;
+								pszArgEnd += 2;
+								continue;
+							}
+						}
+						goto EndFound;
+					case L' ':
+						if (!lbQuot && !lbLocalQuot)
 							goto EndFound;
 						break;
 					case 0:
@@ -699,50 +883,62 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 				bool lbReady = false;
 				while (!lbReady && *pszEnd)
 				{
+					_ASSERTE(pszEnd <= pszArgEnd);
 					wchar_t cOpt = *(pszEnd++);
+
 					switch (cOpt)
 					{
 					//case L'-':
 					//	bStop = true; // следующие "-new_console" - не трогать!
 					//	break;
 					case L'"':
+						_ASSERTE(pszEnd > pszArgEnd);
+						lbReady = true;
+						break;
 					case L' ':
 					case 0:
 						lbReady = true;
 						break;
-						
+
+					case L':':
+						// Just skip ':'. Delimiter between switches: -new_console:c:b:a
+						// Revert stored value to lbQuot. We need to "cut" last double quote in the first two cases
+						// cmd -cur_console:d:"C:\users":t:"My title" "-cur_console:C:C:\cmd.ico" -cur_console:P:"<PowerShell>":a /k ver
+						lbWasQuot = lbQuot;
+						break;
+
 					case L'b':
 						// b - background, не активировать таб
-						bBackgroundTab = TRUE; bForegroungTab = FALSE;
+						BackgroundTab = crb_On; ForegroungTab = crb_Off;
 						break;
 					case L'f':
 						// f - foreground, активировать таб (аналог ">" в Tasks)
-						bForegroungTab = TRUE; bBackgroundTab = FALSE;
+						ForegroungTab = crb_On; BackgroundTab = crb_Off;
 						break;
 
 					case L'z':
 						// z - don't use "Default terminal" feature
-						bNoDefaultTerm = TRUE;
+						NoDefaultTerm = crb_On;
 						break;
-						
+
 					case L'a':
 						// a - RunAs shell verb (as admin on Vista+, login/password in WinXP-)
-						bRunAsAdministrator = TRUE;
+						RunAsAdministrator = crb_On;
 						break;
-						
+
 					case L'r':
 						// r - run as restricted user
-						bRunAsRestricted = TRUE;
+						RunAsRestricted = crb_On;
 						break;
-						
+
 					case L'o':
 						// o - disable "Long output" for next command (Far Manager)
-						bLongOutputDisable = TRUE;
+						LongOutputDisable = crb_On;
 						break;
 
 					case L'w':
 						// e - enable "Overwrite" mode in console prompt
-						bOverwriteMode = TRUE;
+						OverwriteMode = crb_On;
 						break;
 
 					case L'p':
@@ -771,13 +967,18 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 					case L'i':
 						// i - don't inject ConEmuHk into the starting application
-						bInjectsDisable = TRUE;
+						InjectsDisable = crb_On;
+						break;
+
+					case L'N':
+						// N - Force new ConEmu window with Default terminal
+						ForceNewWindow = crb_On;
 						break;
 
 					case L'h':
 						// "h0" - отключить буфер, "h9999" - включить буфер в 9999 строк
 						{
-							bBufHeight = TRUE;
+							BufHeight = crb_On;
 							if (isDigit(*pszEnd))
 							{
 								wchar_t* pszDigits = NULL;
@@ -791,27 +992,27 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							}
 						} // L'h':
 						break;
-						
+
 					case L'n':
 						// n - отключить "Press Enter or Esc to close console"
 						eConfirmation = eConfNever;
 						break;
-						
+
 					case L'c':
 						// c - принудительно включить "Press Enter or Esc to close console"
 						eConfirmation = eConfAlways;
 						break;
-						
+
 					case L'x':
 						// x - Force using dosbox for .bat files
-						bForceDosBox = TRUE;
+						ForceDosBox = crb_On;
 						break;
 
 					case L'I':
 						// I - tell GuiMacro to execute new command inheriting active process state. This is only usage ATM.
-						bForceInherit = TRUE;
+						ForceInherit = crb_On;
 						break;
-						
+
 					// "Long" code blocks below: 'd', 'u', 's' and so on (in future)
 
 					case L's':
@@ -920,7 +1121,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							{
 								if (cOpt == L'u')
 								{
-									bForceUserDialog = TRUE;
+									ForceUserDialog = crb_On;
 									break;
 								}
 							}
@@ -952,13 +1153,40 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 									//wmemmove(*pptr, pszTab, cchLen);
 									wchar_t* pD = *pptr;
 									const wchar_t* pS = pszTab;
+
+									if (lbQuot)
+									{
+										lbLocalQuot = false;
+									}
+									else if (*pS == L'"' && *(pS+1) != L'"')
+									{
+										// Remember, that last processed switch was local-quoted
+										lbWasQuot = true;
+										// This item is local quoted. Example: -new_console:t:"My title"
+										lbLocalQuot = true;
+										pS++;
+									}
+
 									// There is enough room allocated
 									while (pS < pszEnd)
 									{
 										if ((*pS == L'^') && ((pS + 1) < pszEnd))
+										{
 											pS++; // Skip control char, goto escaped char
-										else if ((*pS == L'"') && ((pS + 1) < pszEnd) && (*(pS+1) == L'"'))
-											pS++; // Skip qoubled qouble quote
+										}
+										else if (*pS == L'"')
+										{
+											if (((pS + 1) < pszEnd) && (*(pS+1) == L'"'))
+											{
+												pS++; // Skip qoubled qouble quote
+											}
+											else if (lbLocalQuot)
+											{
+												pszEnd = (pS+1);
+												_ASSERTE(*pszEnd==L':' || *pszEnd==L' ' || *pszEnd==0);
+												break; // End of local quoted argument: -new_console:d:"C:\User\super user":t:"My title"
+											}
+										}
 
 										*(pD++) = *(pS++);
 									}
@@ -991,19 +1219,19 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 										if (pszPwd)
 										{
 											// Password was specified, dialog prompt is not required
-											bForceUserDialog = FALSE;
+											ForceUserDialog = crb_Off;
 											*pszPwd = 0;
 											int nPwdLen = lstrlen(pszPwd+1);
 											lstrcpyn(szUserPassword, pszPwd+1, countof(szUserPassword));
 											if (nPwdLen > 0)
 												SecureZeroMemory(pszPwd+1, nPwdLen);
-											bUseEmptyPassword = (nPwdLen == 0);
+											UseEmptyPassword = (nPwdLen == 0) ? crb_On : crb_Off;
 										}
 										else
 										{
 											// Password was NOT specified, dialog prompt IS required
-											bForceUserDialog = TRUE;
-											bUseEmptyPassword = FALSE;
+											ForceUserDialog = crb_On;
+											UseEmptyPassword = crb_Off;
 										}
 										wchar_t* pszSlash = wcschr(lpszTemp, L'\\');
 										if (pszSlash)
@@ -1023,7 +1251,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							SafeFree(lpszTemp);
 						} // L't':
 						break;
-						
+
 					}
 				}
 			}
@@ -1032,7 +1260,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			{
 				// pszEnd должен указывать на конец -new_console[:...] / -cur_console[:...]
 				// и включать обрамляющую кавычку, если он окавычен
-				if (lbQuot)
+				if (lbWasQuot)
 				{
 					if (*pszEnd == L'"' && *(pszEnd-1) != L'"')
 						pszEnd++;
@@ -1044,13 +1272,24 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 				}
 
 				// Откусить лишние пробелы, которые стоят ПЕРЕД -new_console[:...] / -cur_console[:...]
-				while (((pszFind - 1) > pszSpecialCmd)
+				while (((pszFind - 1) >= pszSpecialCmd)
 					&& (*(pszFind-1) == L' ')
-					&& ((*(pszFind-2) == L' ') || (/**pszEnd == L'"' ||*/ *pszEnd == 0 || *pszEnd == L' ')))
+					&& (((pszFind - 1) == pszSpecialCmd) || (*(pszFind-2) == L' ') || (/**pszEnd == L'"' ||*/ *pszEnd == 0 || *pszEnd == L' ')))
 				{
 					pszFind--;
 				}
+				// Откусить лишние пробелы ПОСЛЕ -new_console[:...] / -cur_console[:...] если он стоит в НАЧАЛЕ строки!
+				if (pszFind == pszSpecialCmd)
+				{
+					while (*pszEnd == L' ')
+						pszEnd++;
+				}
 
+				// Здесь нужно подвинуть pszStopAt
+				if (pszStopAt)
+					pszStopAt -= (pszEnd - pszFind);
+
+				// Удалить из строки запуска обработанный ключ
 				wmemmove(pszFind, pszEnd, (lstrlen(pszEnd)+1));
 				nChanges++;
 			}

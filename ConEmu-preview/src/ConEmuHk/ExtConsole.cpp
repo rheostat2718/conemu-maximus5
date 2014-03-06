@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012 Maximus5
+Copyright (c) 2012-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -175,7 +175,7 @@ static BOOL ExtCheckBuffers(HANDLE h)
 
 		//TODO: Пока работаем "по-старому", через буфер TrueColor. Переделать, он не оптимален
 		wchar_t szMapName[128];
-		wsprintf(szMapName, AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)ghExtConEmuWndDC); //-V205
+		msprintf(szMapName, countof(szMapName), AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)ghExtConEmuWndDC); //-V205
 		ghTrueColor = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, szMapName);
 		if (!ghTrueColor)
 		{
@@ -1448,11 +1448,11 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 		{
 			int nMaxCell = min(nWindowWidth * nWindowHeight,gpTrueColor->bufferSize);
 			int nMaxRows = nMaxCell / nWindowWidth;
-			_ASSERTEX(SrcLineTop >= srWork.Top);
-			int nY1 = min(max((SrcLineTop - srWork.Top),0),nMaxRows);    // 2
-			int nY2 = min(max((SrcLineBottom - srWork.Top),0),nMaxRows); // 6
-			int nRows = nY2 - nY1 + 1; // 5
+			//_ASSERTEX(SrcLineTop >= srWork.Top); That will be if visible region is ABOVE our TrueColor region
 			int nShiftRows = -nDir; // 1
+			int nY1 = min(max((SrcLineTop - srWork.Top),nShiftRows),nMaxRows);    // 2
+			int nY2 = min(max((SrcLineBottom - srWork.Top),nShiftRows),nMaxRows); // 6
+			int nRows = nY2 - nY1 + 1; // 5
 
 			if (nRows > 0)
 			{
@@ -1521,11 +1521,12 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 		{
 			int nMaxCell = min(nWindowWidth * nWindowHeight,gpTrueColor->bufferSize);
 			int nMaxRows = nMaxCell / nWindowWidth;
-			_ASSERTEX(SrcLineTop >= srWork.Top);
-			int nY1 = min(max((SrcLineTop - srWork.Top),0),nMaxRows);
-			int nY2 = min(max((SrcLineBottom - srWork.Top),0),nMaxRows);
-			int nRows = nY2 - nY1 + 1;
+			//_ASSERTEX(SrcLineTop >= srWork.Top); That will be if visible region is ABOVE our TrueColor region
 			int nShiftRows = nDir;
+			int nMaxRowsShift = nMaxRows - nShiftRows;
+			int nY1 = min(max((SrcLineTop - srWork.Top),0),nMaxRowsShift);
+			int nY2 = min(max((SrcLineBottom - srWork.Top),0),nMaxRowsShift);
+			int nRows = nY2 - nY1 + 1;
 
 			if (nRows > 0)
 			{

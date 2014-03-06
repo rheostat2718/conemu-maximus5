@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -167,8 +167,16 @@ CEStartupEnv* LoadStartupEnv()
 		pEnv->os = os;
 
 		pEnv->bIsDbcs = IsDbcs();
-		pEnv->bIsWine = IsWine();
-		pEnv->bIsWinPE = IsWinPE();
+
+		#ifdef FULL_STARTUP_ENV
+		// These functions call AdvApi32 functions
+		pEnv->bIsWine = IsWine() ? 1 : 0;
+		pEnv->bIsWinPE = IsWinPE() ? 1 : 0;
+		#else
+		// Don't use them in ConEmuHk
+		pEnv->bIsWine = 2;
+		pEnv->bIsWinPE = 2;
+		#endif
 
 		LPCWSTR pszReactCompare = L"ReactOS";
 		int nCmdLen = lstrlen(pszReactCompare);

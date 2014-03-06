@@ -111,16 +111,18 @@ BOOL gbDebugShowRects = FALSE;
 CEStartupEnv* gpStartEnv = NULL;
 
 LONG DontEnable::gnDontEnable = 0;
+LONG DontEnable::gnDontEnableCount = 0;
 //LONG nPrev;   // Informational!
 //bool bLocked; // Proceed only main thread
-DontEnable::DontEnable()
+DontEnable::DontEnable(bool abLock /*= true*/)
 {
-	bLocked = gpConEmu->isMainThread();
+	bLocked = abLock && gpConEmu->isMainThread();
 	if (bLocked)
 	{
 		_ASSERTE(gnDontEnable>=0);
 		nPrev = InterlockedIncrement(&gnDontEnable) - 1;
 	}
+	InterlockedIncrement(&gnDontEnableCount);
 };
 DontEnable::~DontEnable()
 {
@@ -128,9 +130,10 @@ DontEnable::~DontEnable()
 	{
 		InterlockedDecrement(&gnDontEnable);
 	}
+	InterlockedDecrement(&gnDontEnableCount);
 	_ASSERTE(gnDontEnable>=0);
 };
-BOOL DontEnable::isDontEnable()
+bool DontEnable::isDontEnable()
 {
 	return (gnDontEnable > 0);
 };
@@ -615,32 +618,38 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 
 		_ASSERTE(pszSrc != pszDst);
 
-		switch (*pszSrc)
+		wchar_t wc = *pszSrc;
+		switch (wc)
 		{
-			case L'"':
+			case L'"': // 34
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'"';
 				pszSrc++;
 				break;
-			case L'\\':
+			case L'\\': // 92
 				*(pszDst++) = L'\\';
 				pszSrc++;
 				if (!*pszSrc || !wcschr(pszCtrl, *pszSrc))
 					*(pszDst++) = L'\\';
 				break;
-			case L'\r':
+			case L'\r': // 13
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'r';
 				pszSrc++;
 				break;
-			case L'\n':
+			case L'\n': // 10
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'n';
 				pszSrc++;
 				break;
-			case L'\t':
+			case L'\t': // 9
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L't';
+				pszSrc++;
+				break;
+			case L'\b': // 8 (BS)
+				*(pszDst++) = L'\\';
+				*(pszDst++) = L'b';
 				pszSrc++;
 				break;
 			case 27: //ESC
@@ -648,18 +657,32 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 				*(pszDst++) = L'e';
 				pszSrc++;
 				break;
-			case L'\a': //BELL
+			case L'\a': // 7 (BELL)
 				*(pszDst++) = L'\\';
 				*(pszDst++) = L'a';
 				pszSrc++;
 				break;
 			default:
+				// Escape (if possible) ASCII symbols with codes 01..31 (dec)
+				if (wc < L' ')
+				{
+					wchar_t wcn = pszSrc[1];
+					// If next string character is 'hexadecimal' digit - back conversion will be ambiguous
+					if (!((wcn >= L'0' && wcn <= L'9') || (wcn >= L'a' && wcn <= L'f') || (wcn >= L'A' && wcn <= L'F')))
+					{
+						*(pszDst++) = L'\\';
+						*(pszDst++) = L'x';
+						msprintf(pszDst, 3, L"%02X", (UINT)wc);
+						pszDst+=2;
+						break;
+					}
+				}
 				*(pszDst++) = *(pszSrc++);
 		}
 	}
 	else
 	{
-		// Remove escapes: "\\r" --> wchar(13)
+		// Remove escapes: "\\r" --> wchar(13), etc.
 
 		if (*pszSrc == L'\\')
 		{
@@ -686,6 +709,10 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 					*(pszDst++) = L'\t';
 					pszSrc += 2;
 					break;
+				case L'b': case L'B':
+					*(pszDst++) = L'\b';
+					pszSrc += 2;
+					break;
 				case L'e': case L'E':
 					*(pszDst++) = 27; // ESC
 					pszSrc += 2;
@@ -694,6 +721,22 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 					*(pszDst++) = L'\a'; // BELL
 					pszSrc += 2;
 					break;
+				case L'x':
+				{
+					wchar_t sTemp[5] = L"", *pszEnd = NULL;
+					lstrcpyn(sTemp, pszSrc+2, 5);
+					UINT wc = wcstoul(sTemp, &pszEnd, 16);
+					if (pszEnd > sTemp)
+					{
+						*(pszDst++) = LOWORD(wc);
+						pszSrc += (pszEnd - sTemp) + 2;
+					}
+					else
+					{
+						*(pszDst++) = *(pszSrc++);
+					}
+					break;
+				}
 				default:
 					*(pszDst++) = *(pszSrc++);
 			}
@@ -865,7 +908,7 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote)
 		}
 	}
 
-	size_t cchLen = _tcslen(asWinPath) + (bAutoQuote ? 3 : 1);
+	size_t cchLen = _tcslen(asWinPath) + (bAutoQuote ? 3 : 1) + 1/*Possible space-termination on paste*/;
 	wchar_t* pszResult = (wchar_t*)malloc(cchLen*sizeof(*pszResult));
 	if (!pszResult)
 		return NULL;
@@ -976,7 +1019,7 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent 
 	ofn.nMaxFile = countof(temp)-10;
 	ofn.lpstrTitle = asTitle ? asTitle : L"Choose file";
 	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-		| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|(bSaveNewFile ? 0 : OFN_FILEMUSTEXIST);
+		| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|(bSaveNewFile ? OFN_OVERWRITEPROMPT : OFN_FILEMUSTEXIST);
 
 	BOOL bRc = bSaveNewFile
 		? GetSaveFileName(&ofn)
@@ -1942,12 +1985,44 @@ void SkipOneShowWindow()
 	return;
 }
 
-int MessageBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND hParent /*= NULL*/)
+HWND ghDlgPendingFrom = NULL;
+void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	DontEnable de;
+	if (!ghDlgPendingFrom)
+		return;
 
-	int nBtn = MessageBox(gbMessagingStarted ? (hParent ? hParent : ghWnd) : NULL,
-		lpText, lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
+	HWND hFore = GetForegroundWindow();
+	HWND hActive = GetActiveWindow();
+	if (hFore && (hFore != ghDlgPendingFrom))
+	{
+		DWORD nPID = 0;
+		GetWindowThreadProcessId(hFore, &nPID);
+		if (nPID == GetCurrentProcessId())
+		{
+			wchar_t szClass[32] = L""; GetClassName(hFore, szClass, countof(szClass));
+			if (lstrcmp(szClass, L"#32770") == 0)
+			{
+				SendMessage(hFore, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+				SendMessage(hFore, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+				ghDlgPendingFrom = NULL;
+			}
+		}
+	}
+}
+
+int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahParent /*= (HWND)-1*/, bool abModal /*= true*/)
+{
+	DontEnable de(abModal);
+
+	ghDlgPendingFrom = GetForegroundWindow();
+
+	HWND hParent = gbMessagingStarted
+		? ((ahParent == (HWND)-1) ? ghWnd :ahParent)
+		: NULL;
+
+	int nBtn = MessageBox(hParent, lpText, lpCaption ? lpCaption : gpConEmu->GetLastTitle(), uType);
+
+	ghDlgPendingFrom = NULL;
 
 	return nBtn;
 }
@@ -1995,7 +2070,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 		else
 		{
 			bInAssert = true;
-			nRet = MessageBox(NULL, pszFull, pszTitle, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL|MB_DEFBUTTON3);
+			nRet = MsgBox(pszFull, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL|MB_DEFBUTTON3, pszTitle, NULL);
 			bInAssert = false;
 			nPostCode = GetLastError();
 		}
@@ -2069,7 +2144,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 	WARNING("!!! Заменить MessageBox на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 
 	BOOL lb = gbInDisplayLastError; gbInDisplayLastError = TRUE;
-	nBtn = MessageBox(out ? out : asLabel, dwMsgFlags, asTitle, hParent);
+	nBtn = MsgBox(out ? out : asLabel, dwMsgFlags, asTitle, hParent);
 	gbInDisplayLastError = lb;
 
 	MCHKHEAP
@@ -2137,22 +2212,16 @@ void MessageLoop()
 		}
 		#endif
 
-		BOOL lbDlgMsg = FALSE;
-
 		if (gpConEmu)
-			lbDlgMsg = gpConEmu->isDialogMessage(Msg);
-
-		//if (Msg.message == WM_INITDIALOG)
-		//{
-		//	SendMessage(Msg.hwnd, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-		//	SendMessage(Msg.hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
-		//}
-
-		if (!lbDlgMsg)
 		{
-			TranslateMessage(&Msg);
-			DispatchMessage(&Msg);
+			if (gpConEmu->isDialogMessage(Msg))
+				continue;
+			if ((Msg.message == WM_SYSCOMMAND) && gpConEmu->isSkipNcMessage(Msg))
+				continue;
 		}
+
+		TranslateMessage(&Msg);
+		DispatchMessage(&Msg);
 	}
 
 	gbMessagingStarted = FALSE;
@@ -3003,16 +3072,30 @@ void UnitModuleTest()
 	_ASSERTE(!IsModuleValid((HMODULE)INVALID_HANDLE_VALUE));
 
 	hMod = GetModuleHandle(L"kernel32.dll");
-	bTest = IsModuleValid(hMod);
-	_ASSERTE(bTest);
+	if (hMod)
+	{
+		bTest = IsModuleValid(hMod);
+		_ASSERTE(bTest);
+	}
+	else
+	{
+		_ASSERTE(FALSE && "GetModuleHandle(kernel32) failed");
+	}
 
 	hMod = LoadLibrary(pszConEmuCD);
-	bTest = IsModuleValid(hMod);
-	_ASSERTE(bTest);
+	if (hMod)
+	{
+		bTest = IsModuleValid(hMod);
+		_ASSERTE(bTest);
 
-	FreeLibrary(hMod);
-	bTest = IsModuleValid(hMod);
-	_ASSERTE(!bTest);
+		FreeLibrary(hMod);
+		bTest = IsModuleValid(hMod);
+		_ASSERTE(!bTest);
+	}
+	else
+	{
+		_ASSERTE(FALSE && "LoadLibrary(pszConEmuCD) failed");
+	}
 }
 
 void DebugUnitMprintfTest()
@@ -3134,6 +3217,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
 	HeapInitialize();
 	RemoveOldComSpecC();
+	AssertMsgBox = MsgBox;
 
 	/* *** DEBUG PURPOSES */
 	gpStartEnv = LoadStartupEnv();
@@ -3647,10 +3731,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					WindowModeVal = rMaximized; WindowPrm = true;
 				}
-				else if (!klstricmp(curCommand, _T("/min")) || !klstricmp(curCommand, _T("/mintsa")))
+				else if (!klstricmp(curCommand, _T("/min"))
+					|| !klstricmp(curCommand, _T("/mintsa"))
+					|| !klstricmp(curCommand, _T("/starttsa")))
 				{
 					gpConEmu->WindowStartMinimized = true;
-					gpConEmu->WindowStartTSA = (klstricmp(curCommand, _T("/mintsa")) == 0);
+					if (klstricmp(curCommand, _T("/min")) != 0)
+					{
+						gpConEmu->WindowStartTsa = true;
+						gpConEmu->WindowStartNoClose = (klstricmp(curCommand, _T("/mintsa")) == 0);
+					}
 				}
 				else if (!klstricmp(curCommand, _T("/tsa")) || !klstricmp(curCommand, _T("/tray")))
 				{
@@ -3670,6 +3760,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					|| !klstricmp(curCommand, _T("/nokeybhooks")))
 				{
 					gpConEmu->DisableKeybHooks = true;
+				}
+				else if (!klstricmp(curCommand, _T("/nocloseconfirm")))
+				{
+					gpConEmu->DisableCloseConfirm = true;
 				}
 				else if (!klstricmp(curCommand, _T("/nomacro")))
 				{
@@ -4374,7 +4468,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	gpConEmu->LogString(L"gpConEmu->Init");
 
-	// Тут загружаются иконки, Affinity, и т.п.
+	// Тут загружаются иконки, Affinity, SetCurrentDirectory и т.п.
 	if (!gpConEmu->Init())
 	{
 		return 100;

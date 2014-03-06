@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ class MPipe
 	public:
 		MPipe()
 		{
-			ms_PipeName[0] = ms_Module[0] = 0;
+			ms_PipeName[0] = ms_Module[0] = ms_Error[0] = 0;
 			mh_Pipe = NULL;
 			memset(&m_In, 0, sizeof(m_In));
 			mp_Out = NULL;
@@ -133,6 +133,7 @@ class MPipe
 
 			if (mh_Pipe == INVALID_HANDLE_VALUE)
 			{
+				SaveErrorCode(GetLastError());
 				InterlockedIncrement(&mn_FailCount);
 				_ASSERTE(mh_Pipe != INVALID_HANDLE_VALUE);
 				mh_Pipe = NULL;

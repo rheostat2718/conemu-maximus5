@@ -127,6 +127,7 @@ private:
 	bool DoSelectionCopyInt(bool bCopyAll, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */);
 	int  GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, int* pnSelWidth, int* pnSelHeight, int nNewLineLen);
 	bool PatchMouseCoords(int& x, int& y, COORD& crMouse);
+	bool CanProcessHyperlink(const COORD& crMouse);
 
 public:
 	void OnTimerCheckSelection();
@@ -161,7 +162,9 @@ public:
 	
 	bool isSelectionAllowed();
 	bool isSelectionPresent();
+	bool isMouseSelectionPresent();
 	bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
+	int  GetSelectionCellsCount();
 	
 	void ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
 	void ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
@@ -185,7 +188,7 @@ public:
 	
 private:
 	BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
-	BOOL InitBuffers(DWORD OneBufferSize);
+	BOOL InitBuffers(DWORD anCellCount = 0, int anWidth = 0, int anHeight = 0);
 	BOOL CheckBufferSize();
 	BOOL IsTrueColorerBufferChanged();
 	BOOL LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
@@ -234,6 +237,7 @@ protected:
 	{
 		CONSOLE_SELECTION_INFO m_sel;
 		DWORD m_SelClickTick, m_SelDblClickTick, m_SelLastScrollCheck;
+		BOOL mb_IntelliStored; POINT mpt_IntelliLClick; // Сохранить позицию клика для Intelligent selection
 		CONSOLE_CURSOR_INFO m_ci;
 		DWORD m_dwConsoleCP, m_dwConsoleOutputCP, m_dwConsoleMode;
 		CONSOLE_SCREEN_BUFFER_INFO m_sbi;
@@ -241,9 +245,10 @@ protected:
 		USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
 		DWORD LastStartInitBuffersTick, LastEndInitBuffersTick, LastStartReadBufferTick, LastEndReadBufferTick;
 		BOOL bInGetConsoleData;
+		int nCreatedBufWidth, nCreatedBufHeight; // Informational
+		size_t nConBufCells; // Max buffers size (cells!)
 		wchar_t *pConChar;
 		WORD  *pConAttr;
-		//CESERVER_REQ_CONINFO_DATA *pCopy, *pCmp;
 		CHAR_INFO *pDataCmp;
 		int nTextWidth, nTextHeight, nBufferHeight;
 		BOOL bLockChange2Text;

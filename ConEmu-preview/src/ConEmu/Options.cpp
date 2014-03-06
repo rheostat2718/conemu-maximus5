@@ -360,7 +360,7 @@ void Settings::InitSettings()
 	isSkipFocusEvents = false;
 	//isSendAltEnter = isSendAltSpace = isSendAltF9 = false;
 	isSendAltTab = isSendAltEsc = isSendAltPrintScrn = isSendPrintScrn = isSendCtrlEsc = false;
-	isMonitorConsoleLang = 3;
+	isMonitorConsoleLang = 3; // bitmask. 1 - follow up console HKL (e.g. after XLat in Far Manager), 2 - use one HKL for all tabs
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
 	isSaveCmdHistory = true;
 	nCmdOutputCP = 0;
@@ -422,7 +422,8 @@ void Settings::InitSettings()
 	//Issue 577: Для иероглифов - по умолчанию отключим моноширность
 	isMonospace = bIsDbcs ? 0 : 1;
 
-	mb_MinToTray = false; isAlwaysShowTrayIcon = false;
+	mb_MinToTray = false;
+	mb_AlwaysShowTrayIcon = false;
 	//memset(&rcTabMargins, 0, sizeof(rcTabMargins));
 	//isFontAutoSize = false; mn_AutoFontWidth = mn_AutoFontHeight = -1;
 
@@ -567,6 +568,7 @@ void Settings::InitSettings()
 	isRegisterOnOsStartup = false;
 	isRegisterOnOsStartupTSA = true;
 	isDefaultTerminalNoInjects = false;
+	isDefaultTerminalNewWindow = false;
 	nDefaultTerminalConfirmClose = 1 /* Always */;
 	SetDefaultTerminalApps(L"explorer.exe"/* to default value */); // "|"-delimited string -> MSZ
 
@@ -613,7 +615,8 @@ void Settings::InitSettings()
 	nTabStyle = ts_Win8;
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
-	isConsoleTextSelection = 1; // Always
+	isCTSIntelligent = true;
+	pszCTSIntelligentExceptions = LineDelimited2MSZ(L"far|vim.exe");
 	isCTSAutoCopy = true;
 	isCTSIBeam = true;
 	isCTSEndOnTyping = false;
@@ -658,14 +661,17 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_HwndFore] = true;
 	isStatusColumnHidden[csi_HwndFocus] = true;
 	isStatusColumnHidden[csi_ConEmuPID] = true;
-	isStatusColumnHidden[csi_CursorInfo] = true;
+	//isStatusColumnHidden[csi_CursorInfo] = true; -- show one info col instead of three cursor columns (by default)
+	isStatusColumnHidden[csi_CursorX] = true;
+	isStatusColumnHidden[csi_CursorY] = true;
+	isStatusColumnHidden[csi_CursorSize] = true;
 	isStatusColumnHidden[csi_ConEmuHWND] = true;
 	isStatusColumnHidden[csi_ConEmuView] = true;
 	isStatusColumnHidden[csi_ServerHWND] = true;
 	isStatusColumnHidden[csi_Time] = true;
 
 	isTabs = 1; nTabsLocation = 0; isTabIcons = true; isOneTabPerGroup = false;
-	isActivateSplitMouseOver = false;
+	bActivateSplitMouseOver = 2; // Regarding Windows settings (Active window tracking)
 	isTabSelf = true; isTabRecent = true; isTabLazy = true;
 	nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION; nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
 	ilDragHeight = 10;
@@ -774,6 +780,20 @@ bool Settings::isIntegralSize()
 	#endif
 
 	return true;
+}
+
+bool Settings::isActivateSplitMouseOver()
+{
+	if (bActivateSplitMouseOver == 2)
+	{
+		BOOL bTracking = FALSE;
+		SystemParametersInfo(SPI_GETACTIVEWINDOWTRACKING, 0, &bTracking, 0);
+		return (bTracking != 0);
+	}
+	else
+	{
+		return (bActivateSplitMouseOver == 1);
+	}
 }
 
 bool Settings::isAdminShield()
@@ -2149,7 +2169,7 @@ void Settings::FreeProgresses()
 /* ************************************************************************ */
 /* ************************************************************************ */
 
-void Settings::LoadSettings(bool *rbNeedCreateVanilla)
+void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* apStorage /*= NULL*/)
 {
 	if (!gpConEmu)
 	{
@@ -2218,7 +2238,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 //-----------------------------------------------------------------------
 ///| Loading from reg/xml |//////////////////////////////////////////////
 //-----------------------------------------------------------------------
-	SettingsBase* reg = CreateSettings(NULL);
+	SettingsBase* reg = CreateSettings(apStorage);
 	if (!reg)
 	{
 		_ASSERTE(reg!=NULL);
@@ -2276,6 +2296,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"SetDefaultTerminalStartup", isRegisterOnOsStartup);
 		reg->Load(L"SetDefaultTerminalStartupTSA", isRegisterOnOsStartupTSA);
 		reg->Load(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
+		reg->Load(L"DefaultTerminalNewWindow", isDefaultTerminalNewWindow);
 		reg->Load(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
 		wchar_t* pszApps = NULL;
@@ -2483,7 +2504,13 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		//FindComspec(&ComSpec);
 		//Update Comspec(&ComSpec); --> CSettings::SettingsLoaded
 
-		reg->Load(L"ConsoleTextSelection", isConsoleTextSelection); if (isConsoleTextSelection>2) isConsoleTextSelection = 2;
+		reg->Load(L"CTS.Intelligent", isCTSIntelligent);
+		{
+		wchar_t* pszApps = NULL;
+		if (reg->Load(L"CTS.IntelligentExceptions", &pszApps)) // do not reset 'default' settings
+			SetIntelligentExceptions(pszApps); // "|"-delimited string -> MSZ
+		SafeFree(pszApps);
+		}
 
 		reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
 		reg->Load(L"CTS.IBeam", isCTSIBeam);
@@ -2602,7 +2629,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 
 
 		reg->Load(L"Min2Tray", mb_MinToTray);
-		reg->Load(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
+		reg->Load(L"AlwaysShowTrayIcon", mb_AlwaysShowTrayIcon);
 
 		reg->Load(L"SafeFarClose", isSafeFarClose);
 		if (!reg->Load(L"SafeFarCloseMacro", &sSafeFarCloseMacro) || (sSafeFarCloseMacro && !*sSafeFarCloseMacro)) { SafeFree(sSafeFarCloseMacro); }
@@ -2691,7 +2718,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla)
 		reg->Load(L"TabsLocation", nTabsLocation);
 		reg->Load(L"TabIcons", isTabIcons);
 		reg->Load(L"OneTabPerGroup", isOneTabPerGroup);
-		reg->Load(L"ActivateSplitMouseOver", isActivateSplitMouseOver);
+		reg->Load(L"ActivateSplitMouseOver", bActivateSplitMouseOver); MinMax(bActivateSplitMouseOver, 2);
 		reg->Load(L"TabSelf", isTabSelf);
 		reg->Load(L"TabLazy", isTabLazy);
 		reg->Load(L"TabRecent", isTabRecent);
@@ -3270,6 +3297,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"SetDefaultTerminalStartup", isRegisterOnOsStartup);
 		reg->Save(L"SetDefaultTerminalStartupTSA", isRegisterOnOsStartupTSA);
 		reg->Save(L"DefaultTerminalNoInjects", isDefaultTerminalNoInjects);
+		reg->Save(L"DefaultTerminalNewWindow", isDefaultTerminalNewWindow);
 		reg->Save(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
 		wchar_t* pszApps = GetDefaultTerminalApps(); // MSZ -> "|"-delimited string
@@ -3416,7 +3444,12 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ComSpec.EnvAddExePath", (bool)((ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) == CEAP_AddConEmuExeDir));
 		reg->Save(L"ComSpec.UncPaths", (bool)ComSpec.isAllowUncPaths);
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
-		reg->Save(L"ConsoleTextSelection", isConsoleTextSelection);
+		reg->Save(L"CTS.Intelligent", isCTSIntelligent);
+		{
+		wchar_t* pszApps = GetIntelligentExceptions(); // MSZ -> "|"-delimited string
+		reg->Save(L"CTS.IntelligentExceptions", pszApps);
+		SafeFree(pszApps);
+		}
 		reg->Save(L"CTS.AutoCopy", isCTSAutoCopy);
 		reg->Save(L"CTS.IBeam", isCTSIBeam);
 		reg->Save(L"CTS.EndOnTyping", isCTSEndOnTyping);
@@ -3470,7 +3503,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"SendCtrlEsc", isSendCtrlEsc);
 		//reg->Save(L"SendAltF9", isSendAltF9);
 		reg->Save(L"Min2Tray", mb_MinToTray);
-		reg->Save(L"AlwaysShowTrayIcon", isAlwaysShowTrayIcon);
+		reg->Save(L"AlwaysShowTrayIcon", mb_AlwaysShowTrayIcon);
 		reg->Save(L"SafeFarClose", isSafeFarClose);
 		reg->Save(L"SafeFarCloseMacro", sSafeFarCloseMacro);
 		reg->Save(L"FARuseASCIIsort", isFARuseASCIIsort);
@@ -3500,7 +3533,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"TabsLocation", nTabsLocation);
 		reg->Save(L"TabIcons", isTabIcons);
 		reg->Save(L"OneTabPerGroup", isOneTabPerGroup);
-		reg->Save(L"ActivateSplitMouseOver", isActivateSplitMouseOver);
+		reg->Save(L"ActivateSplitMouseOver", bActivateSplitMouseOver);
 		reg->Save(L"TabSelf", isTabSelf);
 		reg->Save(L"TabLazy", isTabLazy);
 		reg->Save(L"TabRecent", isTabRecent);
@@ -3751,7 +3784,14 @@ bool Settings::isKeyboardHooks(bool abNoDisable /*= false*/)
 				}
 
 				if (!iAsked)
-					iAsked = MessageBox(L"Debugger was detected!\nDo you want to disable hooks to avoid lags?", MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle());
+				{
+					// Need to be set before MsgBox to avoid multiple boxes
+					iAsked = IDYES;
+					// Ask now
+					int iBtn = MsgBox(L"Debugger was detected!\nDo you want to disable hooks to avoid lags?", MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle());
+					if (iBtn != iAsked)
+						iAsked = iBtn;
+				}
 				if (iAsked == IDYES)
 					return false;
 			}
@@ -3853,6 +3893,8 @@ void Settings::HistoryAdd(LPCWSTR asCmd)
 
 	LPCWSTR psCurCmd = gpSetCls->GetCurCmd();
 	if (psCurCmd && lstrcmp(psCurCmd, asCmd)==0)
+		return;
+	if (psCmdHistory && lstrcmp(psCmdHistory, asCmd)==0)
 		return;
 
 	HEAPVAL
@@ -4246,6 +4288,12 @@ bool Settings::isForcedHideCaptionAlways()
 	return (isUserScreenTransparent || isQuakeStyle);
 }
 
+bool Settings::isAlwaysShowTrayIcon()
+{
+	// Issue 1431
+	return (mb_AlwaysShowTrayIcon || isDesktopMode || (isQuakeStyle && !isTabsOnTaskBar()));
+}
+
 bool Settings::isMinimizeOnLoseFocus()
 {
 	return (isQuakeStyle == 2) || (isQuakeStyle == 0 && mb_MinimizeOnLoseFocus);
@@ -4623,42 +4671,61 @@ bool Settings::NeedDialogDetect()
 	//return (isUserScreenTransparent || !isMonospace);
 }
 
+// Suppose that only ONE key can be set as modifier!
 bool Settings::IsModifierPressed(int nDescrID, bool bAllowEmpty)
 {
+	bool bIsPressed = false;
+	IsModifierPressed(nDescrID,
+		bAllowEmpty ? NULL : &bIsPressed,
+		bAllowEmpty ? &bIsPressed : NULL);
+	return bIsPressed;
+}
+
+void Settings::IsModifierPressed(int nDescrID, bool* pbNoEmpty, bool* pbAllowEmpty)
+{
+	if (pbNoEmpty) *pbNoEmpty = false;
+	if (pbAllowEmpty) *pbAllowEmpty = false;
+
 	DWORD vk = ConEmuHotKey::GetHotkey(GetHotkeyById(nDescrID));
 
 	// если НЕ 0 - должен быть нажат
 	if (vk)
 	{
 		if (!isPressed(vk))
-			return false;
-	}
-	else if (!bAllowEmpty)
-	{
-		return false;
+			return;
 	}
 
 	// но другие модификаторы нажаты быть не должны!
+	// В том числе если (vk == 0)
+
 	if (vk != VK_SHIFT && vk != VK_LSHIFT && vk != VK_RSHIFT)
 	{
 		if (isPressed(VK_SHIFT))
-			return false;
+			return;
 	}
 
 	if (vk != VK_MENU && vk != VK_LMENU && vk != VK_RMENU)
 	{
 		if (isPressed(VK_MENU))
-			return false;
+			return;
 	}
 
 	if (vk != VK_CONTROL && vk != VK_LCONTROL && vk != VK_RCONTROL)
 	{
 		if (isPressed(VK_CONTROL))
-			return false;
+			return;
+	}
+
+	// В том числе, отрубить Apps&Win
+	if (!vk)
+	{
+		if (isPressed(VK_APPS) || isPressed(VK_LWIN) || isPressed(VK_RWIN))
+			return;
 	}
 
 	// Можно
-	return true;
+	if (pbAllowEmpty) *pbAllowEmpty = true;
+	if (pbNoEmpty && vk) *pbNoEmpty = true;
 }
 
 bool Settings::NeedCreateAppWindow()
@@ -4907,16 +4974,44 @@ const wchar_t* Settings::GetDefaultTerminalAppsMSZ()
 	return psDefaultTerminalApps;
 }
 
-// "|" delimited
+// returns "|"-delimited string
 wchar_t* Settings::GetDefaultTerminalApps()
 {
-	if (!psDefaultTerminalApps || !*psDefaultTerminalApps)
+	return MSZ2LineDelimited(psDefaultTerminalApps);
+}
+// "|"-delimited apszApps -> MSZ psDefaultTerminalApps
+void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
+{
+	SafeFree(psDefaultTerminalApps);
+	if (!apszApps || !*apszApps)
+	{
+		_ASSERTE(apszApps && *apszApps);
+		apszApps = DEFAULT_TERMINAL_APPS/*L"explorer.exe"*/;
+	}
+
+	// "|" delimited String -> MSZ
+	if (apszApps && *apszApps)
+	{
+		psDefaultTerminalApps = LineDelimited2MSZ(apszApps);
+	}
+
+	if (gpConEmu)
+	{
+		gpConEmu->OnDefaultTermChanged();
+	}
+}
+
+
+// MSZ -> "|"-delimited string
+wchar_t* Settings::MSZ2LineDelimited(const wchar_t* apszApps)
+{
+	if (!apszApps || !*apszApps)
 	{
 		return lstrdup(L"");
 	}
 	// Evaluate required len
 	INT_PTR nTotalLen = 0, nLen;
-	const wchar_t* psz = psDefaultTerminalApps;
+	const wchar_t* psz = apszApps;
 	while (*psz)
 	{
 		nLen = _tcslen(psz)+1;
@@ -4931,7 +5026,7 @@ wchar_t* Settings::GetDefaultTerminalApps()
 		return lstrdup(L"");
 	}
 	// Conversion
-	wchar_t* pszDst = pszRet; psz = psDefaultTerminalApps;
+	wchar_t* pszDst = pszRet; psz = apszApps;
 	while (*psz)
 	{
 		nLen = _tcslen(psz);
@@ -4952,21 +5047,16 @@ wchar_t* Settings::GetDefaultTerminalApps()
 
 	return pszRet;
 }
-// "|" delimited
-void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
+// "|"-delimited string -> MSZ
+wchar_t* Settings::LineDelimited2MSZ(const wchar_t* apszApps)
 {
-	SafeFree(psDefaultTerminalApps);
-	if (!apszApps || !*apszApps)
-	{
-		_ASSERTE(apszApps && *apszApps);
-		apszApps = DEFAULT_TERMINAL_APPS/*L"explorer.exe"*/;
-	}
+	wchar_t* pszDst = NULL;
 
 	// "|" delimited String -> MSZ
-	INT_PTR nLen = _tcslen(apszApps);
-	if (nLen > 0)
+	if (*apszApps)
 	{
-		wchar_t* pszDst = (wchar_t*)malloc((nLen+3)*sizeof(*pszDst));
+		INT_PTR nLen = _tcslen(apszApps);
+		pszDst = (wchar_t*)malloc((nLen+3)*sizeof(*pszDst));
 
 		if (pszDst)
 		{
@@ -4991,15 +5081,27 @@ void Settings::SetDefaultTerminalApps(const wchar_t* apszApps)
 			}
 			*(psz++) = 0;
 			*(psz++) = 0; // для гарантии
-
-			psDefaultTerminalApps = pszDst;
 		}
 	}
 
-	if (gpConEmu)
-	{
-		gpConEmu->OnDefaultTermChanged();
-	}
+	return pszDst;
+}
+
+// "\0"-delimited
+const wchar_t* Settings::GetIntelligentExceptionsMSZ()
+{
+	return pszCTSIntelligentExceptions;
+}
+// returns "|"-delimited
+wchar_t* Settings::GetIntelligentExceptions()
+{
+	return MSZ2LineDelimited(pszCTSIntelligentExceptions);
+}
+// "|"-delimited apszApps -> MSZ pszCTSIntelligentExceptions
+void Settings::SetIntelligentExceptions(const wchar_t* apszApps)
+{
+	SafeFree(pszCTSIntelligentExceptions);
+	pszCTSIntelligentExceptions = LineDelimited2MSZ(apszApps);
 }
 
 
