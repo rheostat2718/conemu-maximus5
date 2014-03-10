@@ -152,6 +152,7 @@ extern DWORD gnLastShowExeTick;
 extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 extern DWORD   gnHookMainThreadId;
 extern BOOL    gbHooksTemporaryDisabled;
+extern MMap<DWORD,BOOL> gStartedThreads;
 //__declspec( thread )
 //static BOOL    gbInShellExecuteEx = FALSE;
 
@@ -199,9 +200,10 @@ WORD gnConsolePopupColors = 0x003E;
 int  gnPowerShellProgressValue = -1;
 /* ************ Globals for powershell ************ */
 
-/* ************ Globals for bash ************ */
+/* ************ Globals for cygwin/msys ************ */
 bool gbIsBashProcess = false;
-/* ************ Globals for bash ************ */
+bool gbIsSshProcess = false;
+/* ************ Globals for cygwin/msys ************ */
 
 /* ************ Globals for ViM ************ */
 bool gbIsVimProcess = false;
@@ -354,7 +356,10 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID);
 BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID);
 #ifdef _DEBUG
 LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
+BOOL WINAPI OnVirtualProtect(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect);
+LPTOP_LEVEL_EXCEPTION_FILTER WINAPI OnSetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
 #endif
+HANDLE WINAPI OnCreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
 BOOL WINAPI OnChooseColorA(LPCHOOSECOLORA lpcc);
 BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc);
 //HWND WINAPI OnCreateWindowA(LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
@@ -598,8 +603,13 @@ bool InitHooksCommon()
 		#ifdef _DEBUG
 		//#ifdef HOOKS_VIRTUAL_ALLOC
 		{(void*)OnVirtualAlloc,			"VirtualAlloc",			kernel32},
+		{(void*)OnVirtualProtect,		"VirtualProtect",		kernel32},
+		{(void*)OnSetUnhandledExceptionFilter,
+										"SetUnhandledExceptionFilter",
+																kernel32},
 		//#endif
 		#endif
+		{(void*)OnCreateThread,			"CreateThread",			kernel32},
 
 		// Microsoft bug?
 		// http://code.google.com/p/conemu-maximus5/issues/detail?id=60
@@ -5516,19 +5526,22 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 {
 	typedef HANDLE(WINAPI* OnVirtualAlloc_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
 	ORIGINALFAST(VirtualAlloc);
+
 	LPVOID lpResult = F(VirtualAlloc)(lpAddress, dwSize, flAllocationType, flProtect);
+	DWORD dwErr = GetLastError();
+
+	wchar_t szText[MAX_PATH*3];
 	if (lpResult == NULL)
 	{
-		DWORD nErr = GetLastError();
-		//_ASSERTE(lpResult != NULL);
-		wchar_t szText[MAX_PATH*3], szTitle[64];
+		wchar_t szTitle[64];
 		msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 		msprintf(szText, countof(szText),
 			L"\nVirtualAlloc " WIN3264TEST(L"%u",L"x%X%08X") L" bytes failed (0x%08X..0x%08X)\nErrorCode=%u %s\n\nWarning! This may cause an errors in Release!\nPress <OK> to VirtualAlloc at the default address\n\n",
 			WIN3264WSPRINT(dwSize),
 			(DWORD)lpAddress, (DWORD)((LPBYTE)lpAddress+dwSize),
-			nErr, (nErr == 487) ? L"(ERROR_INVALID_ADDRESS)" : L"");
+			dwErr, (dwErr == 487) ? L"(ERROR_INVALID_ADDRESS)" : L"");
 		GetModuleFileName(NULL, szText+lstrlen(szText), MAX_PATH);
+		DebugString(szText);
 
 	#if defined(REPORT_VIRTUAL_ALLOC)
 		// clink use bunch of VirtualAlloc to try to find suitable memory location
@@ -5537,15 +5550,75 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 		if (iBtn == IDOK)
 		{
 			lpResult = F(VirtualAlloc)(NULL, dwSize, flAllocationType, flProtect);
+			dwErr = GetLastError();
 		}
-	#else
-		OutputDebugString(szText);
 	#endif
-		SetLastError(nErr);
 	}
+	msprintf(szText, countof(szText),
+		L"VirtualProtect(" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"," WIN3264TEST(L"0x%08X",L"0x%08X%08X") L",%u,%u)=" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"\n",
+		WIN3264WSPRINT(lpAddress), WIN3264WSPRINT(dwSize), flAllocationType, flProtect, WIN3264WSPRINT(lpResult));
+	DebugString(szText);
+
+	SetLastError(dwErr);
 	return lpResult;
 }
+BOOL WINAPI OnVirtualProtect(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect)
+{
+	typedef BOOL(WINAPI* OnVirtualProtect_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect);
+	ORIGINALFAST(VirtualProtect);
+	BOOL bResult = FALSE;
+
+	if (F(VirtualProtect))
+		bResult = F(VirtualProtect)(lpAddress, dwSize, flNewProtect, lpflOldProtect);
+
+#ifdef _DEBUG
+	DWORD dwErr = GetLastError();
+	wchar_t szDbgInfo[100];
+	msprintf(szDbgInfo, countof(szDbgInfo),
+		L"VirtualProtect(" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"," WIN3264TEST(L"0x%08X",L"0x%08X%08X") L",%u,%u)=%u, code=%u\n",
+		WIN3264WSPRINT(lpAddress), WIN3264WSPRINT(dwSize), flNewProtect, lpflOldProtect ? *lpflOldProtect : 0, bResult, dwErr);
+	DebugString(szDbgInfo);
+	SetLastError(dwErr);
 #endif
+
+	return bResult;
+}
+LPTOP_LEVEL_EXCEPTION_FILTER WINAPI OnSetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter)
+{
+	typedef LPTOP_LEVEL_EXCEPTION_FILTER(WINAPI* OnSetUnhandledExceptionFilter_t)(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
+	ORIGINALFAST(SetUnhandledExceptionFilter);
+
+	LPTOP_LEVEL_EXCEPTION_FILTER lpRc = F(SetUnhandledExceptionFilter)(lpTopLevelExceptionFilter);
+
+#ifdef _DEBUG
+	DWORD dwErr = GetLastError();
+	wchar_t szDbgInfo[100];
+	msprintf(szDbgInfo, countof(szDbgInfo),
+		L"SetUnhandledExceptionFilter(" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L")=" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L", code=%u\n",
+		WIN3264WSPRINT(lpTopLevelExceptionFilter), WIN3264WSPRINT(lpRc), dwErr);
+	DebugString(szDbgInfo);
+	SetLastError(dwErr);
+#endif
+
+	return lpRc;
+}
+#endif
+
+// ssh (msysgit) crash issue. Need to know if thread was started by application but not remotely.
+HANDLE WINAPI OnCreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
+{
+	typedef HANDLE(WINAPI* OnCreateThread_t)(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
+	ORIGINALFAST(CreateThread);
+	DWORD nTemp = 0;
+	LPDWORD pThreadID = lpThreadId ? lpThreadId : &nTemp;
+
+	HANDLE hThread = F(CreateThread)(lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, pThreadID);
+
+	if (hThread)
+		gStartedThreads.Set(*pThreadID,true);
+
+	return hThread;
+}
 
 //110131 попробуем просто добвавить ее в ExcludedModules
 //// WinInet.dll

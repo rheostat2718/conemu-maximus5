@@ -237,6 +237,13 @@ enum LoadAltMode
 	lam_Primary = 3,    // TODO: для быстрого начала выделения - копия буфера rbt_Primary
 };
 
+enum StartDebugType
+{
+	sdt_DumpMemory,
+	sdt_DebugActiveProcess,
+	sdt_DebugProcessTree,
+};
+
 enum ExpandTextRangeType;
 struct ConEmuHotKey;
 
@@ -353,6 +360,7 @@ class CRealConsole
 		void PostMacro(LPCWSTR asMacro, BOOL abAsync = FALSE);
 		bool GetFarVersion(FarVersion* pfv);
 		bool IsFarLua();
+		bool StartDebugger(StartDebugType sdt);
 	private:
 		struct PostMacroAnyncArg
 		{
@@ -634,6 +642,7 @@ class CRealConsole
 		BOOL StartProcess();
 		private:
 		BOOL StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR& lpszWorkDir, bool bNeedConHostSearch, HWND hSetForeground, DWORD& nCreateBegin, DWORD& nCreateEnd, DWORD& nCreateDuration, BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/, BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/, STARTUPINFO& si, PROCESS_INFORMATION& pi, DWORD& dwLastError);
+		static BOOL CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args, LPWSTR psCurCmd, LPCWSTR& lpszWorkDir, STARTUPINFO& si, PROCESS_INFORMATION& pi, SHELLEXECUTEINFO*& pp_sei, DWORD& dwLastError);
 		void ResetVarsOnStart();
 		protected:
 		BOOL StartMonitorThread();
@@ -833,7 +842,7 @@ class CRealConsole
 		BOOL mb_MouseTapChanged;
 		COORD mcr_MouseTapReal, mcr_MouseTapChanged;
 		//
-		SHELLEXECUTEINFO *mp_sei;
+		SHELLEXECUTEINFO *mp_sei, *mp_sei_dbg;
 		//
 		HWND FindPicViewFrom(HWND hFrom);
 		//

@@ -37,13 +37,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TrayIcon.h"
 #include "version.h"
 
-#ifdef __GNUC__
-typedef struct {
-    DWORD dwMajorVersion;
-    DWORD dwMinorVersion;
-} HTTP_VERSION_INFO, * LPHTTP_VERSION_INFO;
-#define INTERNET_OPTION_HTTP_VERSION 59
-#endif
+#include <commctrl.h>
+#include "AboutDlg.h"
+#include "ConfirmDlg.h"
 
 CConEmuUpdate* gpUpd = NULL;
 
@@ -53,6 +49,7 @@ CConEmuUpdate* gpUpd = NULL;
 #define sectionConEmuPreview L"ConEmu_Preview_2"
 #define sectionConEmuDevel   L"ConEmu_Devel_2"
 
+#define szWhatsNewLabel L"Whats new (project wiki page)"
 
 
 CConEmuUpdate::CConEmuUpdate()
@@ -65,7 +62,7 @@ CConEmuUpdate::CConEmuUpdate()
 	mb_RequestTerminate = false;
 	mp_Set = NULL;
 	ms_LastErrorInfo = NULL;
-	mb_InShowLastError = false;
+	mn_InShowMsgBox = 0;
 	mp_LastErrorSC = new MSection;
 	mb_InetMode = false;
 	mb_DroppedMode = false;
@@ -73,8 +70,10 @@ CConEmuUpdate::CConEmuUpdate()
 	mpsz_DeleteIniFile = mpsz_DeletePackageFile = mpsz_DeleteBatchFile = NULL;
 	mpsz_PendingPackageFile = mpsz_PendingBatchFile = NULL;
 	m_UpdateStep = us_NotStarted;
+	mb_NewVersionAvailable = false;
 	ms_NewVersion[0] = ms_CurVersion[0] = ms_SkipVersion[0] = 0;
-	ms_VerOnServer[0] = ms_CurVerInfo[0] = 0;
+	ms_VerOnServer[0] = ms_VerOnServerRA[0] = ms_CurVerInfo[0] = 0;
+	mpsz_ConfirmSource = NULL;
 
 	lstrcpyn(ms_DefaultTitle, gpConEmu->GetDefaultTitle(), countof(ms_DefaultTitle));
 
@@ -112,6 +111,7 @@ CConEmuUpdate::~CConEmuUpdate()
 	Inet.Deinit(true);
 
 	SafeFree(ms_LastErrorInfo);
+	SafeFree(mpsz_ConfirmSource);
 
 	if (mp_LastErrorSC)
 	{
@@ -276,7 +276,7 @@ void CConEmuUpdate::ShowLastError()
 {
 	if (ms_LastErrorInfo && *ms_LastErrorInfo)
 	{
-		mb_InShowLastError = true;
+		InterlockedIncrement(&mn_InShowMsgBox);
 
 		MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
 		wchar_t* pszError = ms_LastErrorInfo;
@@ -286,7 +286,7 @@ void CConEmuUpdate::ShowLastError()
 		MsgBox(pszError, MB_ICONINFORMATION, gpConEmu?gpConEmu->GetDefaultTitle():L"ConEmu Update");
 		SafeFree(pszError);
 
-		mb_InShowLastError = false;
+		InterlockedDecrement(&mn_InShowMsgBox);
 	}
 }
 
@@ -300,28 +300,7 @@ bool CConEmuUpdate::ShowConfirmation()
 		gpConEmu->UpdateProgress();
 	}
 
-	if (ms_LastErrorInfo && *ms_LastErrorInfo)
-	{
-		mb_InShowLastError = true;
-
-		MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
-		wchar_t* pszConfirm = ms_LastErrorInfo;
-		ms_LastErrorInfo = NULL;
-		SC.Unlock();
-
-		DontEnable de;
-		int iBtn = MessageBox(NULL, pszConfirm, ms_DefaultTitle, MB_ICONQUESTION|MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_YESNO);
-
-		SafeFree(pszConfirm);
-
-		mb_InShowLastError = false;
-
-		lbConfirm = (iBtn == IDYES);
-	}
-	else
-	{
-		MBoxAssert(ms_LastErrorInfo && *ms_LastErrorInfo);
-	}
+	lbConfirm = QueryConfirmation(m_UpdateStep);
 
 	if (!lbConfirm)
 	{
@@ -492,6 +471,8 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 
 	mb_ManualCallMode = TRUE;
 
+	mb_RequestTerminate = false;
+
 	// Clear possible last error
 	{
 		MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
@@ -637,7 +618,7 @@ wrap:
 	return bRc;
 }
 
-void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&szServer)[100], wchar_t (&szInfo)[100])
+void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&szServer)[100], wchar_t (&szServerRA)[100], wchar_t (&szInfo)[100])
 {
 	wchar_t szTest[64]; // Дописать stable/preview/alpha
 	bool bDetected = false, bNewer;
@@ -653,6 +634,7 @@ void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&s
 	};
 
 	szServer[0] = 0;
+	szServerRA[0] = 0;
 
 	for (size_t i = 0; i < countof(Vers); i++)
 	{
@@ -665,11 +647,27 @@ void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&s
 				bDetected = true;
 				wcscat_c(szInfo, Vers[i].szName);
 			}
-			szTest[10] = 0; wcscat_c(szServer, szTest);
-			if (bNewer) wcscat_c(szServer, (lstrcmp(szTest, ms_CurVersion) > 0) ? L" (newer)" : L" (equal)");
+			szTest[10] = 0;
+			wcscat_c(szServer, szTest);
+			wcscat_c(szServerRA, L"    ");
+			wcscat_c(szServerRA, szTest);
+			wcscat_c(szServerRA, Vers[i].szName);
+			if (bNewer)
+			{
+				wcscat_c(szServer, (lstrcmp(szTest, ms_CurVersion) > 0) ? L" (newer)" : L" (equal)");
+				wcscat_c(szServerRA, (lstrcmp(szTest, ms_CurVersion) > 0) ? L" (newer)" : L" (equal)");
+			}
+			wcscat_c(szServerRA, L"\n");
 		}
 		else
+		{
 			wcscat_c(szServer, L"<Not found>");
+		}
+	}
+
+	if (szServerRA[0] == 0)
+	{
+		wcscpy_c(szServerRA, L"<Not found>");
 	}
 }
 
@@ -772,24 +770,19 @@ DWORD CConEmuUpdate::CheckProcInt()
 		goto wrap;
 	}
 
-	GetVersionsFromIni(pszUpdateVerLocation, ms_VerOnServer, ms_CurVerInfo);
+	GetVersionsFromIni(pszUpdateVerLocation, ms_VerOnServer, ms_VerOnServerRA, ms_CurVerInfo);
 
 	if ((lstrcmpi(ms_NewVersion, ms_CurVersion) <= 0)
 		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
 		|| (!mb_ManualCallMode && (lstrcmp(ms_NewVersion, ms_SkipVersion) == 0)))
 	{
 		// Новых версий нет
+		mb_NewVersionAvailable = false;
+
 		if (mb_ManualCallMode)
 		{
-			wchar_t szFull[300];
-
-			_wsprintf(szFull, SKIPLEN(countof(szFull)) 
-				L"Your current ConEmu version is %s\n\n"
-				L"Versions on server\n%s\n\n"
-				L"No newer %s version is available",
-				ms_CurVerInfo, ms_VerOnServer,
-				(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer", 0);
-			ReportError(szFull, 0);
+			// No newer %s version is available
+			QueryConfirmation(us_NotStarted);
 		}
 
 		if (bTempUpdateVerLocation && pszUpdateVerLocation && *pszUpdateVerLocation)
@@ -825,7 +818,10 @@ DWORD CConEmuUpdate::CheckProcInt()
 	if (!Check7zipInstalled())
 		goto wrap; // Error already reported
 
-	if (!QueryConfirmation(us_ConfirmDownload, pszSource))
+	SafeFree(mpsz_ConfirmSource);
+	mpsz_ConfirmSource = lstrdup(pszSource);
+
+	if (!QueryConfirmation(us_ConfirmDownload))
 	{
 		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
 		wcscpy_c(ms_SkipVersion, ms_NewVersion);
@@ -1383,7 +1379,7 @@ wrap:
 
 void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 {
-	if (mb_InShowLastError)
+	if (mn_InShowMsgBox > 0)
 		return; // Две ошибки сразу не показываем, а то зациклимся
 
 	MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
@@ -1571,7 +1567,7 @@ bool CConEmuUpdate::Check7zipInstalled()
 	return false;
 }
 
-bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR asParm)
+bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 {
 	if (mb_RequestTerminate)
 	{
@@ -1586,8 +1582,8 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 	{
 	case us_ConfirmDownload:
 		{
-			cchMax = _tcslen(asParm)+300;
-			pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
+			mb_NewVersionAvailable = true;
+			m_UpdateStep = step;
 
 			if (mb_ManualCallMode == 2)
 			{
@@ -1595,28 +1591,19 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 			}
 			else if (mp_Set->isUpdateConfirmDownload || mb_ManualCallMode)
 			{
-				wchar_t* pszDup = lstrdup(asParm);
-				wchar_t* pszFile = pszDup ? wcsrchr(pszDup, L'/') : NULL;
-				if (pszFile)
+				if (!gpConEmu->isMainThread())
 				{
-					pszFile[1] = 0;
-					pszFile = (wchar_t*)(asParm + (pszFile - pszDup + 1));
-					asParm = pszDup;
+					lbRc = gpConEmu->ReportUpdateConfirmation();
+					break;
 				}
 
-				_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\n\nVersions on server\n%s\n\n%s\n%s\n\nDownload?",
-					(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer",
-					ms_NewVersion,
-					ms_VerOnServer,
-					asParm ? asParm : L"",
-					pszFile ? pszFile : L"");
-				SafeFree(pszDup);
-
-				m_UpdateStep = step;
-				lbRc = QueryConfirmationInt(pszMsg);
+				lbRc = QueryConfirmationDownload();
 			}
 			else
 			{
+				cchMax = 200;
+				pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
+
 				_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\nClick here to download",
 					(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer",
 					ms_NewVersion);
@@ -1626,20 +1613,33 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 			}
 		}
 		break;
+
 	case us_ConfirmUpdate:
-		cchMax = 512;
-		pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
-		_wsprintf(pszMsg, SKIPLEN(cchMax)
-			L"Do you want to close ConEmu and\n"
-			L"update to %s version %s?",
-			mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new stable"
-			: (mp_Set->isUpdateUseBuilds==3) ? L"new preview" : L"new developer", ms_NewVersion);
 		m_UpdateStep = step;
-		lbRc = QueryConfirmationInt(pszMsg);
+		if (!gpConEmu->isMainThread())
+		{
+			lbRc = gpConEmu->ReportUpdateConfirmation();
+			break;
+		}
+
+		lbRc = QueryConfirmationUpdate();
 		break;
+
 	default:
-		_ASSERTE(step==us_ConfirmDownload);
 		lbRc = false;
+		_ASSERTE(mb_NewVersionAvailable == false);
+		if (step > us_Check)
+		{
+			_ASSERTE(step<=us_Check);
+			break;
+		}
+		if (!gpConEmu->isMainThread())
+		{
+			lbRc = gpConEmu->ReportUpdateConfirmation();
+			break;
+		}
+
+		QueryConfirmationNoNewVer();
 	}
 
 	SafeFree(pszMsg);
@@ -1647,35 +1647,249 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step, LPCWSTR as
 	return lbRc;
 }
 
-bool CConEmuUpdate::QueryConfirmationInt(LPCWSTR asConfirmInfo)
+bool CConEmuUpdate::QueryConfirmationDownload()
 {
-	if (mb_InShowLastError || !gpConEmu)
-		return false; // Если отображается ошибк - не звать
+	if ((mn_InShowMsgBox > 0) || !gpConEmu)
+		return false; // Если отображается ошибка - не звать
 
-	bool lbConfirm;
+	DontEnable de;
+	InterlockedIncrement(&mn_InShowMsgBox);
 
-	if (gpConEmu->isMainThread())
+	int iBtn = -1;
+	HRESULT hr;
+	wchar_t szNewVer[120];
+	wchar_t szWWW[MAX_PATH];
+	TASKDIALOGCONFIG tsk = {sizeof(tsk)};
+	TASKDIALOG_BUTTON btns[3] = {};
+	LPCWSTR pszServerPath = L"";
+	size_t cchMax;
+	wchar_t* pszMsg = NULL;
+	wchar_t* pszDup = NULL;
+	wchar_t* pszFile = NULL;
+	wchar_t* pszBtn1 = NULL;
+	wchar_t* pszBtn2 = NULL;
+
+
+	if (mpsz_ConfirmSource)
 	{
-		Assert(!mb_InetMode && mb_ManualCallMode);
-
-		DontEnable de;
-		int iBtn = MessageBox(NULL, asConfirmInfo, ms_DefaultTitle, MB_ICONQUESTION|MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_YESNO);
-
-		mb_InShowLastError = false;
-
-		lbConfirm = (iBtn == IDYES);
+		pszDup = lstrdup(mpsz_ConfirmSource);
+		if (pszDup)
+		{
+			pszFile = wcsrchr(pszDup, L'/');
+			if (!pszFile) pszFile = wcsrchr(pszDup, L'\\'); // Local file?
+		}
+		if (pszFile)
+		{
+			pszFile[1] = 0;
+			pszFile = (mpsz_ConfirmSource + (pszFile - pszDup + 1));
+			pszServerPath = pszDup;
+		}
+		else
+		{
+			pszServerPath = mpsz_ConfirmSource;
+		}
 	}
+
+	if (gOSVer.dwMajorVersion < 6)
+		goto MsgOnly;
+
+	tsk.hInstance = g_hInstance;
+	if (hClassIcon)
+		tsk.hMainIcon = hClassIcon;
 	else
-	{
-		MSectionLock SC; SC.Lock(mp_LastErrorSC, TRUE);
-		SafeFree(ms_LastErrorInfo);
-		ms_LastErrorInfo = lstrdup(asConfirmInfo);
-		SC.Unlock();
+		tsk.pszMainIcon = MAKEINTRESOURCE(IDI_ICON1);
 
-		lbConfirm = gpConEmu->ReportUpdateConfirmation();
+	_wsprintf(szNewVer, SKIPLEN(countof(szNewVer)) L"New %s version available: %s",
+		(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer", ms_NewVersion);
+	tsk.pszMainInstruction = szNewVer;
+
+	_wsprintf(szWWW, SKIPLEN(countof(szWWW)) L"<a href=\"%s\">%s</a>", gsWhatsNew, szWhatsNewLabel);
+	tsk.pszFooter = szWWW;
+
+	pszMsg = lstrmerge(L"Versions on server\n", ms_VerOnServerRA);
+	tsk.pszContent = pszMsg;
+
+	pszBtn1 = lstrmerge(L"Download\n", pszServerPath, pszFile ? L"\n" : NULL, pszFile);
+	btns[0].nButtonID  = IDYES;    btns[0].pszButtonText = pszBtn1;
+	pszBtn2 = lstrmerge(L"Visit download page\n", gsDownlPage);
+	btns[1].nButtonID  = IDNO;     btns[1].pszButtonText = pszBtn2;
+	btns[2].nButtonID  = IDCANCEL; btns[2].pszButtonText = L"Cancel\nSkip this version";
+
+	tsk.dwFlags        = (hClassIcon?TDF_USE_HICON_MAIN:0)|TDF_USE_COMMAND_LINKS|TDF_ALLOW_DIALOG_CANCELLATION|TDF_ENABLE_HYPERLINKS;
+	tsk.pszWindowTitle = ms_DefaultTitle;
+	tsk.pButtons       = btns;
+	tsk.cButtons       = countof(btns);
+
+
+	hr = TaskDialog(&tsk, &iBtn, NULL, NULL);
+	if (hr == S_OK)
+	{
+		if (iBtn == IDNO)
+			ConEmuAbout::OnInfo_DownloadPage();
+		goto wrap;
 	}
 
-	return lbConfirm;
+MsgOnly:
+
+	SafeFree(pszMsg);
+	cchMax = 300 + (mpsz_ConfirmSource ? _tcslen(mpsz_ConfirmSource) : 0);
+	pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
+
+	_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\n\nVersions on server\n%s\n\n%s\n%s\n\nDownload?",
+		(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer",
+		ms_NewVersion,
+		ms_VerOnServer,
+		pszServerPath,
+		pszFile ? pszFile : L"");
+
+
+	iBtn = MessageBox(NULL, pszMsg, ms_DefaultTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO);
+
+wrap:
+	InterlockedDecrement(&mn_InShowMsgBox);
+	SafeFree(pszMsg);
+	SafeFree(pszDup);
+	SafeFree(pszBtn1);
+	SafeFree(pszBtn2);
+	return (iBtn == IDYES);
+}
+
+bool CConEmuUpdate::QueryConfirmationUpdate()
+{
+	if ((mn_InShowMsgBox > 0) || !gpConEmu)
+		return false; // Если отображается ошибка - не звать
+
+	DontEnable de;
+	InterlockedIncrement(&mn_InShowMsgBox);
+
+	int iBtn = -1;
+	HRESULT hr;
+	wchar_t szWWW[MAX_PATH];
+	TASKDIALOGCONFIG tsk = {sizeof(tsk)};
+	TASKDIALOG_BUTTON btns[2] = {};
+	wchar_t szMsg[200];
+	wchar_t szBtn2[200];
+
+
+	if (gOSVer.dwMajorVersion < 6)
+		goto MsgOnly;
+
+	tsk.hInstance = g_hInstance;
+	if (hClassIcon)
+		tsk.hMainIcon = hClassIcon;
+	else
+		tsk.pszMainIcon = MAKEINTRESOURCE(IDI_ICON1);
+
+	tsk.pszMainInstruction = L"Close ConEmu window and update?";
+
+	_wsprintf(szWWW, SKIPLEN(countof(szWWW)) L"<a href=\"%s\">%s</a>", gsWhatsNew, szWhatsNewLabel);
+	tsk.pszFooter = szWWW;
+
+	_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Close and update\nto %s version %s",
+		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new stable"
+		: (mp_Set->isUpdateUseBuilds==3) ? L"new preview" : L"new developer", ms_NewVersion);
+	btns[0].nButtonID  = IDYES;    btns[0].pszButtonText = szMsg;
+	wcscpy_c(szBtn2, (mb_ManualCallMode == 1) ? L"Cancel" : L"Postpone\nupdate will be started when you close ConEmu window");
+	btns[1].nButtonID  = IDCANCEL; btns[1].pszButtonText = szBtn2;
+
+	tsk.dwFlags        = (hClassIcon?TDF_USE_HICON_MAIN:0)|TDF_USE_COMMAND_LINKS|TDF_ALLOW_DIALOG_CANCELLATION|TDF_ENABLE_HYPERLINKS;
+	tsk.pszWindowTitle = ms_DefaultTitle;
+	tsk.pButtons       = btns;
+	tsk.cButtons       = countof(btns);
+
+	hr = TaskDialog(&tsk, &iBtn, NULL, NULL);
+	if (hr == S_OK)
+		goto wrap;
+
+MsgOnly:
+
+	_wsprintf(szMsg, SKIPLEN(countof(szMsg))
+		L"Do you want to close ConEmu and\n"
+		L"update to %s version %s?",
+		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new stable"
+		: (mp_Set->isUpdateUseBuilds==3) ? L"new preview" : L"new developer", ms_NewVersion);
+
+	iBtn = MessageBox(NULL, szMsg, ms_DefaultTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO);
+
+wrap:
+	InterlockedDecrement(&mn_InShowMsgBox);
+	return (iBtn == IDYES);
+}
+
+void CConEmuUpdate::QueryConfirmationNoNewVer()
+{
+	if ((mn_InShowMsgBox > 0) || !gpConEmu)
+		return; // Если отображается ошибка - не звать
+
+	DontEnable de;
+	InterlockedIncrement(&mn_InShowMsgBox);
+
+	int iBtn = -1;
+	HRESULT hr;
+	wchar_t szMsg[300];
+	wchar_t szCurVer[120];
+	wchar_t szWWW[MAX_PATH];
+	TASKDIALOGCONFIG tsk = {sizeof(tsk)};
+	TASKDIALOG_BUTTON btns[2] = {};
+	LPCWSTR pszServerPath = L"";
+	wchar_t* pszBtn2 = NULL;
+
+
+	if (gOSVer.dwMajorVersion < 6)
+		goto MsgOnly;
+
+	tsk.hInstance = g_hInstance;
+	if (hClassIcon)
+		tsk.hMainIcon = hClassIcon;
+	else
+		tsk.pszMainIcon = MAKEINTRESOURCE(IDI_ICON1);
+
+	_wsprintf(szCurVer, SKIPLEN(countof(szCurVer)) L"No newer %s version is available",
+		(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer");
+	tsk.pszMainInstruction = szCurVer;
+
+	_wsprintf(szWWW, SKIPLEN(countof(szWWW)) L"<a href=\"%s\">%s</a>", gsWhatsNew, szWhatsNewLabel);
+	tsk.pszFooter = szWWW;
+
+	_wsprintf(szMsg, SKIPLEN(countof(szMsg))
+		L"Your current ConEmu version is %s\n\n"
+		L"Versions on server\n%s",
+		ms_CurVerInfo, ms_VerOnServerRA);
+	tsk.pszContent = szMsg;
+
+	btns[0].nButtonID  = IDOK;    btns[0].pszButtonText = L"OK";
+	pszBtn2 = lstrmerge(L"Visit download page\n", gsDownlPage);
+	btns[1].nButtonID  = IDNO;    btns[1].pszButtonText = pszBtn2;
+
+	tsk.dwFlags        = (hClassIcon?TDF_USE_HICON_MAIN:0)|TDF_USE_COMMAND_LINKS|TDF_ALLOW_DIALOG_CANCELLATION|TDF_ENABLE_HYPERLINKS;
+	tsk.pszWindowTitle = ms_DefaultTitle;
+	tsk.pButtons       = btns;
+	tsk.cButtons       = countof(btns);
+
+
+	hr = TaskDialog(&tsk, &iBtn, NULL, NULL);
+	if (hr == S_OK)
+	{
+		if (iBtn == IDNO)
+			ConEmuAbout::OnInfo_DownloadPage();
+		goto wrap;
+	}
+
+MsgOnly:
+
+	_wsprintf(szMsg, SKIPLEN(countof(szMsg))
+		L"Your current ConEmu version is %s\n\n"
+		L"Versions on server\n%s\n\n"
+		L"No newer %s version is available",
+		ms_CurVerInfo, ms_VerOnServer,
+		(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer", 0);
+
+	iBtn = MessageBox(NULL, szMsg, ms_DefaultTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONINFORMATION|MB_OK);
+
+wrap:
+	InterlockedDecrement(&mn_InShowMsgBox);
+	SafeFree(pszBtn2);
+	return;
 }
 
 short CConEmuUpdate::GetUpdateProgress()
@@ -1690,7 +1904,7 @@ short CConEmuUpdate::GetUpdateProgress()
 	case us_Check:
 		return mb_ManualCallMode ? 1 : -1;
 	case us_ConfirmDownload:
-		return 10;
+		return UPD_PROGRESS_CONFIRM_DOWNLOAD;
 	case us_Downloading:
 		if (mn_PackageSize > 0)
 		{
@@ -1699,13 +1913,13 @@ short CConEmuUpdate::GetUpdateProgress()
 				nValue = 0;
 			else if (nValue > 88)
 				nValue = 88;
-			return nValue+10;
+			return nValue+UPD_PROGRESS_DOWNLOAD_START;
 		}
-		return 10;
+		return UPD_PROGRESS_DOWNLOAD_START;
 	case us_ConfirmUpdate:
-		return 98;
+		return UPD_PROGRESS_CONFIRM_UPDATE;
 	case us_ExitAndUpdate:
-		return 99;
+		return UPD_PROGRESS_EXIT_AND_UPDATE;
 	}
 
 	return -1;
@@ -1745,6 +1959,11 @@ void CConEmuUpdate::WaitAllInstances()
 
 bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 {
+	bool bRc = false;
+	wchar_t* pszLib = NULL;
+	HMODULE lhDll = NULL;
+	DownloadCommand_t lDownloadCommand = NULL;
+
 	//  Already initialized?
 	if (hDll)
 	{
@@ -1756,15 +1975,14 @@ bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 			pUpd->ReportError(L"Failed to re-inialize gpInet, code=%u", nErr);
 			return false;
 		}
-		return true;
+		bRc = true;
+		goto wrap;
 	}
 
 	pUpd = apUpd;
 
-	bool bRc = false;
-	wchar_t* pszLib = lstrmerge(gpConEmu->ms_ConEmuBaseDir, WIN3264TEST(L"\\ConEmuCD.dll",L"\\ConEmuCD64.dll"));
-	HMODULE lhDll = pszLib ? LoadLibrary(pszLib) : NULL;
-	DownloadCommand_t lDownloadCommand = NULL;
+	pszLib = lstrmerge(gpConEmu->ms_ConEmuBaseDir, WIN3264TEST(L"\\ConEmuCD.dll",L"\\ConEmuCD64.dll"));
+	lhDll = pszLib ? LoadLibrary(pszLib) : NULL;
 	if (!lhDll)
 	{
 		_ASSERTE(lhDll!=NULL);
@@ -1795,11 +2013,13 @@ bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 	hDll = lhDll;
 	DownloadCommand = lDownloadCommand;
 
-	SetCallback(dc_ErrCallback, ErrorCallback, (LPARAM)apUpd);
-	SetCallback(dc_LogCallback, (gpSetCls && gpSetCls->isAdvLogging)?LogCallback:NULL, (LPARAM)apUpd);
-
 	bRc = true;
 wrap:
+	if (bRc)
+	{
+		SetCallback(dc_ErrCallback, ErrorCallback, (LPARAM)apUpd);
+		SetCallback(dc_LogCallback, (gpSetCls && gpSetCls->isAdvLogging)?LogCallback:NULL, (LPARAM)apUpd);
+	}
 	SafeFree(pszLib);
 	if (lhDll && !bRc)
 	{
