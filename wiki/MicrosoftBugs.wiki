@@ -33,6 +33,22 @@ Turn on ‘Inject !ConEmuHk’ option. Workaround was first created in !ConEmu b
 
 <br>
 
+=chcp hung=
+Console code page change (`chcp.com`, `SetConsoleCP`, `SetConsoleOutputCP`) hungs.
+
+|| Appears || Windows XP ||
+|| Fixed || ? ||
+
+==Related issues==
+Issue 60, Issue 226, Issue 298, Issue 437
+
+==Workaround==
+Turn on ‘Inject !ConEmuHk’ option.
+
+
+
+<br>
+
 =Conclusion=
 My (and not only) experience in ‘bug reporting’ suggests that Microsoft won't fix reported bugs in current versions of Windows.
 

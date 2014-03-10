@@ -254,6 +254,12 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
       - Rename tab (Type=0) or console title (Type=1)
     SetOption("<Name>",<Value>)
       - Name=one of allowed for changing ConEmu options
+        "AlphaValue": set transparency level of active window
+          Value: 40 .. 255 (255==Opaque)
+        "AlphaValueInactive": set transparency level of inactive window
+          Value: 0 .. 255 (255==Opaque)
+        "AlphaValueSeparate": enable separate active/inactive transparency level
+          Value: 0(disable) .. 1(enable)
         "AlwaysOnTop": place ConEmu window above all non-topmost windows
           Value: 2 - toggle, 1 - enable, 0 - disable
         "bgImageDarker": darkening of background image
@@ -298,6 +304,9 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
      - Change ConEmu window transparency level
        Cmd = 0, Value = 40..255 (255==Opaque)
        Cmd = 1, Value = <relative inc/dec>
+       Cmd = 2, Value = 0..255 (255==Opaque) - for inactive window
+       Cmd = 3, Value = <relative inc/dec> - for inactive window
+       Cmd = 4, Value = <0/1> - AlphaValueSeparate
     WindowFullscreen()
      - Switch fullscreen window mode
        returns previous window mode
