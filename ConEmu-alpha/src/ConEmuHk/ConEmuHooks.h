@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,7 @@ extern CEStartupEnv* gpStartEnv;
 #include "../common/ConEmuCheck.h"
 #include "../common/WinObjects.h"
 #include "../common/InQueue.h"
+#include "../common/MMap.h"
 
 //extern MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap;
 //extern CESERVER_CONSOLE_MAPPING_HDR* gpConInfo;
@@ -129,9 +130,10 @@ extern WORD gnConsolePopupColors;
 extern int  gnPowerShellProgressValue;
 /* ************ Globals for powershell ************ */
 
-/* ************ Globals for bash ************ */
+/* ************ Globals for cygwin/msys ************ */
 extern bool gbIsBashProcess;
-/* ************ Globals for bash ************ */
+extern bool gbIsSshProcess;
+/* ************ Globals for cygwin/msys ************ */
 
 /* ************ Globals for ViM ************ */
 extern bool gbIsVimProcess;
