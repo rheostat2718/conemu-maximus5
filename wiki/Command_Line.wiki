@@ -18,7 +18,8 @@
 || /CT`[0|1]` || Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - clear type ||
 || /Font _fontname_ || Specify the font name ||
 || /Size _fontsize_ || Specify the font size ||
-|| /!FontFile _fontfilename_ || Loads fonts from file for !ConEmu process ||
+|| /!FontFile _fontfilename_ || Loads font from file for !ConEmu process (multiple pairs allowed) ||
+|| /!FontDir _fontfolder_ || Loads all fonts from folder (multiple pairs allowed) ||
 || /!BufferHeight _lines_ || Set console buffer height. May be used with cmd.exe, !PowerShell, etc. ||
 || /Palette _Name_ || Choose named color palette. ||
 || /Log | /Log1 | /Log2 || Used to create debug log files ||
