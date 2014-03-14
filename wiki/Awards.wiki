@@ -20,7 +20,8 @@
 <wiki:comment>
 <wiki:gadget url="http://www.ohloh.net/p/376210/widgets/project_users.xml" height="100" border="0"/>
 </wiki:comment>
-<a href="https://www.ohloh.net/p/conemu-maximus5"><img src="https://www.ohloh.net/images/logo/ohloh_hub.png" alt="Use it on ohloh.net"></a>
+
+<a href="https://www.ohloh.net/p/conemu-maximus5"><img src="https://www.ohloh.net/images/logo/ohloh_hub.png" alt="Use it on ohloh.net"/></a>
 
 ===Please, vote for !ConEmu===
 <wiki:comment>
