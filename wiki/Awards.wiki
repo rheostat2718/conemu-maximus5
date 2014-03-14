@@ -17,7 +17,9 @@
 <a href="http://www.bestsoftware4download.com/" target="_blank"><img src="http://www.bestsoftware4download.com/images/BS4D_award5.png" alt="Best Software 4 Download" border="0"/></a>
 </wiki:comment>
 
+<wiki:comment>
 <wiki:gadget url="http://www.ohloh.net/p/376210/widgets/project_users.xml" height="100" border="0"/>
+</wiki:comment>
 <a href="https://www.ohloh.net/p/conemu-maximus5"><img src="https://www.ohloh.net/images/logo/ohloh_hub.png" alt="Use it on ohloh.net"></a>
 
 ===Please, vote for !ConEmu===
