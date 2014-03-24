@@ -55,7 +55,7 @@
       * [TipsAndTweaks Советы и хитрости]
       * [PromptAtTheBottom Prompt внизу окна]
       * [PVSStudio PVS-Studio]
-      * [MiniDump MiniDump]
+      * [MemoryDump MemoryDump]
       * [LogFiles Log файлы]
       * [DropBox DropBox]
       * [MicrosoftBugs Microsoft Bugs]
