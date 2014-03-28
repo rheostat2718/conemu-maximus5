@@ -194,7 +194,8 @@ class CConEmuMain :
 		MFileMapping<ConEmuGuiMapping> m_GuiAttachMapping;
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
-		void UpdateGuiInfoMappingActive(bool bActive);
+		static bool UpdateGuiInfoMappingFill(CVirtualConsole* pVCon, LPARAM lParam);
+		void UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr = true);
 		int mn_QuakePercent; // 0 - отключен, иначе (>0 && <=100) - идет анимация Quake
 		bool mb_InCreateWindow;
 		HMONITOR mh_MinFromMonitor;
@@ -536,11 +537,11 @@ class CConEmuMain :
 		bool PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam, bool& isPrivate);
 		void CheckTopMostState();
 	public:
-		wchar_t* LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDir = NULL);
+		wchar_t* LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDir = NULL, wchar_t** ppszIcon = NULL);
 	private:
 		wchar_t* LoadConsoleBatch_File(LPCWSTR asSource);
 		wchar_t* LoadConsoleBatch_Drops(LPCWSTR asSource);
-		wchar_t* LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStartupDir = NULL);
+		wchar_t* LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStartupDir = NULL, wchar_t** ppszIcon = NULL);
 	public:
 		void RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon);
 		void RegisterMinRestore(bool abRegister);

@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_FONT_GROUPS 20 // Main, Borders, Japan, Cyrillic, ...
 
 #define LONGOUTPUTHEIGHT_MIN 300
-#define LONGOUTPUTHEIGHT_MAX 9999
+#define LONGOUTPUTHEIGHT_MAX 32766 /* 'magic' 0x7FFE */
 
 #define CURSORSIZE_MIN 5
 #define CURSORSIZE_MAX 100
@@ -520,13 +520,16 @@ struct Settings
 
 			void ParseGuiArgs(wchar_t** pszDir, wchar_t** pszIcon) const
 			{
-				if (!pszGuiArgs)
+				if (!pszGuiArgs || !*pszGuiArgs)
 					return;
-				LPCWSTR pszArgs = pszGuiArgs;
+				LPCWSTR pszArgs = pszGuiArgs, pszOk = pszGuiArgs;
 				CmdArg szArg;
 				while (0 == NextArg(&pszArgs, szArg))
 				{
-					if (lstrcmpi(szArg, L"/dir") == 0 || lstrcmpi(szArg, L"-dir") == 0)
+					if (szArg.ms_Arg[0] == L'-')
+						szArg.ms_Arg[0] = L'/';
+
+					if (lstrcmpi(szArg, L"/dir") == 0)
 					{
 						if (0 != NextArg(&pszArgs, szArg))
 							break;
@@ -543,7 +546,7 @@ struct Settings
 							*pszDir = pszExpand ? pszExpand : lstrdup(szArg);
 						}
 					}
-					else if (lstrcmpi(szArg, L"/icon") == 0 || lstrcmpi(szArg, L"-icon") == 0)
+					else if (lstrcmpi(szArg, L"/icon") == 0)
 					{
 						if (0 != NextArg(&pszArgs, szArg))
 							break;
@@ -560,6 +563,23 @@ struct Settings
 							*pszIcon = pszExpand ? pszExpand : lstrdup(szArg);
 						}
 					}
+					else if (lstrcmpi(szArg, L"/single") == 0)
+					{
+						// Used in the other parts of code
+					}
+					else
+					{
+						break;
+					}
+
+					pszOk = pszArgs;
+				}
+				// Errors notification
+				if (pszOk && *pszOk)
+				{
+					wchar_t* pszErr = lstrmerge(L"Unsupported task parameters\r\nTask name: ", pszName, L"\r\nParameters: ", pszOk);
+					MsgBox(pszErr, MB_ICONSTOP);
+					SafeFree(pszErr);
 				}
 			};
 		};
@@ -1315,6 +1335,8 @@ struct Settings
 		
 		//reg->Load(L"SleepInBackground", isSleepInBackground);
 		bool isSleepInBackground;
+		//reg->Load(L"RetardInactivePanes", isRetardInactivePanes);
+		bool isRetardInactivePanes;
 
 		//reg->Load(L"MinimizeOnLoseFocus", mb_MinimizeOnLoseFocus);
 		bool mb_MinimizeOnLoseFocus;

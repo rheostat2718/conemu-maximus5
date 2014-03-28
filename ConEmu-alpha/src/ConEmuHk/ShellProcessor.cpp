@@ -1587,14 +1587,14 @@ int CShellProc::PrepareExecuteParms(
 			return 0;
 		}
 
-		// Started from explorer - CREATE_SUSPENDED is set (why?)
+		// Started from explorer/taskmgr - CREATE_SUSPENDED is set (why?)
 		if (mb_WasSuspended && anCreateFlags)
 		{
 			_ASSERTE(anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED));
 			wchar_t szExecutable[MAX_PATH] = L"";
 			GetModuleFileName(NULL, szExecutable, countof(szExecutable));
 			LPCWSTR pszName = PointToName(szExecutable);
-			if (lstrcmpi(pszName, L"explorer.exe") == 0)
+			if (lstrcmpi(pszName, L"explorer.exe") == 0 || lstrcmpi(pszName, L"taskmgr.exe") == 0)
 			{
 				// Running from explorer?
 				bIgnoreSuspended = true;
@@ -1867,8 +1867,22 @@ int CShellProc::PrepareExecuteParms(
 		&& mb_isCurrentGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		&& ((anShowCmd == NULL) || (*anShowCmd != SW_HIDE)))
 	{
-		WARNING("Не забыть, что цеплять во вкладку нужно только если консоль запускается ВИДИМОЙ");
-		bForceNewConsole = true;
+		// 1. Цеплять во вкладку нужно только если консоль запускается ВИДИМОЙ
+		// 2. Если запускается, например, CommandPromptPortable.exe (GUI) то подцепить запускаемый CUI в уже существующую вкладку!
+		if (gbAttachGuiClient && !ghAttachGuiClient && (aCmd == eCreateProcess))
+		{
+			if (AttachServerConsole())
+			{
+				_ASSERTE(gnAttachPortableGuiCui==0);
+				gnAttachPortableGuiCui = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+				mb_NeedInjects = TRUE;
+				bForceNewConsole = false;
+			}
+		}
+		else
+		{
+			bForceNewConsole = true;
+		}
 	}
 	if (mb_isCurrentGuiClient && (bNewConsoleArg || bForceNewConsole) && !lbGuiApp)
 	{
@@ -1956,7 +1970,15 @@ int CShellProc::PrepareExecuteParms(
 	//lbGuiApp = (ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
 
 	if (lbGuiApp && !(bNewConsoleArg || bForceNewConsole || bVsNetHostRequested))
+	{
+		if (gbAttachGuiClient && !ghAttachGuiClient && (mn_ImageBits != 16) && (m_Args.InjectsDisable != crb_On))
+		{
+			_ASSERTE(gnAttachPortableGuiCui==0);
+			gnAttachPortableGuiCui = IMAGE_SUBSYSTEM_WINDOWS_GUI;
+			mb_NeedInjects = TRUE;
+		}
 		goto wrap; // гуй - не перехватывать (если только не указан "-new_console")
+	}
 
 	// Подставлять ConEmuC.exe нужно только для того, чтобы 
 	//	1. в фаре включить длинный буфер и запомнить длинный результат в консоли (ну и ConsoleAlias обработать)
@@ -2428,6 +2450,9 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	}
 
 	DWORD nShowCmd = (lpSI->dwFlags & STARTF_USESHOWWINDOW) ? lpSI->wShowWindow : SW_SHOWNORMAL;
+	// Console.exe starts cmd.exe with STARTF_USEPOSITION flag
+	if ((lpSI->dwFlags & STARTF_USEPOSITION) && (lpSI->dwX == 32767) && (lpSI->dwY == 32767))
+		nShowCmd = SW_HIDE; // Lets thing it is stating hidden
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
@@ -2578,6 +2603,31 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 
 	if (abSucceeded)
 	{
+		if (gnAttachPortableGuiCui && gnServerPID)
+		{
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_PORTABLESTART, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PORTABLESTARTED));
+			if (pIn)
+			{
+				pIn->PortableStarted.nSubsystem = mn_ImageSubsystem;
+				pIn->PortableStarted.nImageBits = mn_ImageBits;
+				_ASSERTE(wcschr(ms_ExeTmp,L'\\')!=NULL);
+				lstrcpyn(pIn->PortableStarted.sAppFilePathName, ms_ExeTmp, countof(pIn->PortableStarted.sAppFilePathName));
+				pIn->PortableStarted.nPID = lpPI->dwProcessId;
+				HANDLE hServer = OpenProcess(PROCESS_DUP_HANDLE, FALSE, gnServerPID);
+				if (hServer)
+				{
+					HANDLE hDup = NULL;
+					DuplicateHandle(GetCurrentProcess(), lpPI->hProcess, hServer, &hDup, 0, FALSE, DUPLICATE_SAME_ACCESS);
+					pIn->PortableStarted.hProcess = hDup;
+					CloseHandle(hServer);
+				}
+
+				CESERVER_REQ* pOut = ExecuteSrvCmd(gnServerPID, pIn, NULL);
+				ExecuteFreeResult(pOut);
+				ExecuteFreeResult(pIn);
+			}
+		}
+
 		if (gbPrepareDefaultTerminal)
 		{
 			_ASSERTEX(!mb_NeedInjects);

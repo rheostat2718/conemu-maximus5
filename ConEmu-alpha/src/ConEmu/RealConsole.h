@@ -264,28 +264,32 @@ class CRealConsole
 
 	private:
 		HWND    hConWnd;
-		HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
-		RECT    mrc_LastGuiWnd; // Screen coordinates!
-		HWND    mh_GuiWndFocusStore;
-		DWORD   mn_GuiAttachInputTID;
-		static  BOOL CALLBACK FindChildGuiWindowProc(HWND hwnd, LPARAM lParam);
-		DWORD   mn_GuiAttachFlags; // запоминается в SetGuiMode
-		BOOL    mb_GuiExternMode; // FALSE если захотели показать GUI приложение вне вкладки ConEmu (Ctrl-Win-Alt-Space)
-		bool    mb_GuiForceConView; // TRUE если просили спрятать GUI и показать VirtualConsole
-		RECT    rcPreGuiWndRect; // Положение окна ДО аттача
-		BOOL    mb_InGuiAttaching;
-		BOOL    mb_InSetFocus;
-		DWORD   mn_GuiWndStyle, mn_GuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
-		DWORD   mn_GuiWndPID;
-		wchar_t ms_GuiWndProcess[MAX_PATH];
 		BYTE    m_ConsoleKeyShortcuts;
 		BYTE    mn_TextColorIdx, mn_BackColorIdx, mn_PopTextColorIdx, mn_PopBackColorIdx;
 		void    PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx, BYTE& nPopTextColorIdx, BYTE& nPopBackColorIdx, bool bUpdateRegistry = false, HKEY hkConsole = NULL);
-		//HANDLE  hFileMapping;
-		//CESERVER_REQ_CONINFO* pConsoleData;
-		//void CloseMapping();
-		void setGuiWndPID(DWORD anPID, LPCWSTR asProcessName);
+	private:
+		// ChildGui related
+		struct {
+			HWND    hGuiWnd; // Если работаем в Gui-режиме (Notepad, Putty, ...)
+			RECT    rcLastGuiWnd; // Screen coordinates!
+			HWND    hGuiWndFocusStore;
+			DWORD   nGuiAttachInputTID;
+			DWORD   nGuiAttachFlags; // запоминается в SetGuiMode
+			RECT    rcPreGuiWndRect; // Положение окна ДО аттача
+			bool    bGuiExternMode; // FALSE если захотели показать GUI приложение вне вкладки ConEmu (Ctrl-Win-Alt-Space)
+			bool    bGuiForceConView; // TRUE если просили спрятать GUI и показать VirtualConsole
+			bool    bInGuiAttaching;
+			bool    bInSetFocus;
+			DWORD   nGuiWndStyle, nGuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
+			DWORD   nGuiWndPID;
+			wchar_t szGuiWndProcess[MAX_PATH];
+			CESERVER_REQ_PORTABLESTARTED paf;
+			// some helpers
+			bool    isGuiWnd() { return (hGuiWnd && (hGuiWnd != (HWND)INVALID_HANDLE_VALUE)); };
+		} m_ChildGui;
+		void setGuiWndPID(HWND ahGuiWnd, DWORD anPID, LPCWSTR asProcessName);
 		void setGuiWnd(HWND ahGuiWnd);
+		static  BOOL CALLBACK FindChildGuiWindowProc(HWND hwnd, LPARAM lParam);
 
 	public:
 		HWND    ConWnd();  // HWND RealConsole
@@ -305,7 +309,8 @@ class CRealConsole
 		BOOL    isGuiOverCon();
 		void    StoreGuiChildRect(LPRECT prcNewPos);
 		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
-		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui);
+		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui, LPCWSTR pszExeName);
+		static bool CanCutChildFrame(LPCWSTR pszExeName);
 
 		CRealConsole();
 		bool Construct(CVirtualConsole* apVCon, RConStartArgs *args);
@@ -320,7 +325,7 @@ class CRealConsole
 		BOOL PreInit();
 		void DumpConsole(HANDLE ahFile);
 		bool LoadDumpConsole(LPCWSTR asDumpFile);
-		
+
 		RealBufferType GetActiveBufferType();
 		bool SetActiveBuffer(RealBufferType aBufferType);
 
@@ -334,7 +339,7 @@ class CRealConsole
 		DWORD mn_FlushIn, mn_FlushOut;
 	public:
 		COORD ScreenToBuffer(COORD crMouse);
-		COORD BufferToScreen(COORD crMouse, bool bVertOnly = false);
+		COORD BufferToScreen(COORD crMouse, bool bFixup = true, bool bVertOnly = false);
 		bool PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME = false);
 		bool PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		bool DeleteWordKeyPress(bool bTestOnly = false);
@@ -390,6 +395,7 @@ class CRealConsole
 		void StopSignal();
 		void StopThread(BOOL abRecreating=FALSE);
 		void StartStopXTerm(DWORD nPID, bool xTerm);
+		void PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted);
 		bool InScroll();
 		BOOL isBufferHeight();
 		BOOL isAlternative();
@@ -562,7 +568,7 @@ class CRealConsole
 		void AdminDuplicate();
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
 		bool InCreateRoot();
-		bool InRecreate(); 
+		bool InRecreate();
 		BOOL GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID);
 		//LPCWSTR GetLngNameTime();
 		void ShowPropertiesDialog();
@@ -572,6 +578,8 @@ class CRealConsole
 
 		void OnStartProcessAllowed();
 		void OnTimerCheck();
+
+		static bool ThawMonitorThread(CVirtualConsole* pVCon, LPARAM lParam);
 
 	public:
 		void MonitorAssertTrap();
@@ -602,7 +610,7 @@ class CRealConsole
 		// Пайп консольного ввода
 		wchar_t ms_ConEmuCInput_Pipe[MAX_PATH];
 		HANDLE mh_ConInputPipe; // wsprintf(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID)
-		
+
 		BOOL mb_InCreateRoot;
 		BOOL mb_UseOnlyPipeInput;
 		TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_MainSrv_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
@@ -690,14 +698,14 @@ class CRealConsole
 		CRealBuffer* mp_SBuf; // Временный буфер (полный) для блокирования содержимого (выделение/прокрутка/поиск)
 		CRealBuffer* mp_ABuf; // Активный буфер консоли -- ссылка на один из mp_RBuf/mp_EBuf/mp_SBuf
 		bool mb_ABufChaged; // Сменился активный буфер, обновить консоль
-		
+
 		int mn_DefaultBufferHeight;
 		DWORD mn_LastInactiveRgnCheck;
 		#ifdef _DEBUG
 		BOOL mb_DebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контектному меню
 		#endif
-		
-		
+
+
 		//BOOL mb_ThawRefreshThread;
 		struct ServerClosing
 		{
@@ -745,7 +753,7 @@ class CRealConsole
 
 		friend class CRealServer;
 		CRealServer m_RConServer;
-		
+
 		//void ApplyConsoleInfo(CESERVER_REQ* pInfo);
 		void SetHwnd(HWND ahConWnd, BOOL abForceApprove = FALSE);
 		WORD mn_LastVKeyPressed;

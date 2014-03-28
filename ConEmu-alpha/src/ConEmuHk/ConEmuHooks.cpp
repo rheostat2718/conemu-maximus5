@@ -133,8 +133,8 @@ extern DWORD gnLastShowExeTick;
 
 
 #ifdef _DEBUG
-#define DebugString(x) OutputDebugString(x)
-#define DebugStringConSize(x) OutputDebugString(x)
+#define DebugString(x) //OutputDebugString(x)
+#define DebugStringConSize(x) //OutputDebugString(x)
 #else
 #define DebugString(x) //OutputDebugString(x)
 #define DebugStringConSize(x)
@@ -176,9 +176,10 @@ HANDLE ghLastConInHandle = NULL, ghLastNotConInHandle = NULL;
 
 
 /* ************ Globals for Far Hooks ************ */
-struct HookModeFar gFarMode = {sizeof(HookModeFar)};
+HookModeFar gFarMode = {sizeof(HookModeFar)};
+bool    gbIsFarProcess = false;
 InQueue gInQueue = {};
-HANDLE ghConsoleCursorChanged = NULL;
+HANDLE  ghConsoleCursorChanged = NULL;
 /* ************ Globals for Far Hooks ************ */
 
 
@@ -221,6 +222,10 @@ bool gbIsHiewProcess = false;
 /* ************ Globals for DosBox.EXE ************ */
 bool gbDosBoxProcess = false;
 /* ************ Globals for DosBox.EXE ************ */
+
+/* ************ Don't show VirtualAlloc errors ************ */
+bool gbSkipVirtualAllocErr = false;
+/* ************ Don't show VirtualAlloc errors ************ */
 
 /* ************ Globals for "Default terminal ************ */
 bool gbPrepareDefaultTerminal = false;
@@ -390,6 +395,8 @@ BOOL WINAPI OnSetConsoleTitleA(LPCSTR lpConsoleTitle);
 BOOL WINAPI OnSetConsoleTitleW(LPCWSTR lpConsoleTitle);
 BOOL WINAPI OnGetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
 BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
+VOID WINAPI Onmouse_event(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo);
+UINT WINAPI OnSendInput(UINT nInputs, LPINPUT pInputs, int cbSize);
 BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -736,6 +743,8 @@ bool InitHooksUser32()
 		//
 		{(void*)OnGetWindowPlacement,	"GetWindowPlacement",	user32},
 		{(void*)OnSetWindowPlacement,	"SetWindowPlacement",	user32},
+		{(void*)Onmouse_event,			"mouse_event",			user32},
+		{(void*)OnSendInput,			"SendInput",			user32},
 		{(void*)OnPostMessageA,			"PostMessageA",			user32},
 		{(void*)OnPostMessageW,			"PostMessageW",			user32},
 		{(void*)OnSendMessageA,			"SendMessageA",			user32},
@@ -913,6 +922,11 @@ void __stdcall SetFarHookMode(struct HookModeFar *apFarMode)
 	}
 	else
 	{
+		// При запуске Ctrl+Shift+W - фар как-то криво инитится... Ctrl+O не работает
+		#ifdef _DEBUG
+		char szInfo[100]; msprintf(szInfo, countof(szInfo), "SetFarHookMode. FarHookMode=%u, LongConsoleOutput=%u\n", apFarMode->bFarHookMode, apFarMode->bLongConsoleOutput);
+		OutputDebugStringA(szInfo);
+		#endif
 		memmove(&gFarMode, apFarMode, sizeof(gFarMode));
 	}
 }
@@ -1038,7 +1052,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	print_timings(L"SetAllHooks");
 
 	// Теперь можно обработать модули
-	HLOG1_("SetAllHooks",0);
+	HLOG1("SetAllHooks",0);
 	bool lbRc = SetAllHooks(ahOurDll, NULL, TRUE);
 	HLOGEND1();
 
@@ -1112,6 +1126,10 @@ BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 
 	if (hProcess == GetCurrentProcess())
 	{
+		// We need not to unset hooks (due to process will be force-killed below)
+		extern BOOL gbHooksWasSet;
+		gbHooksWasSet = FALSE;
+		// And terminate our threads
 		DllMain(ghOurModule, DLL_PROCESS_DETACH, NULL);
 	}
 
@@ -2624,6 +2642,25 @@ BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 	return lbRc;
 }
 
+VOID WINAPI Onmouse_event(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo)
+{
+	typedef VOID (WINAPI* Onmouse_event_t)(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo);
+	ORIGINALFASTEX(mouse_event,NULL);
+
+	F(mouse_event)(dwFlags, dx, dy, dwData, dwExtraInfo);
+}
+
+UINT WINAPI OnSendInput(UINT nInputs, LPINPUT pInputs, int cbSize)
+{
+	typedef UINT (WINAPI* OnSendInput_t)(UINT nInputs, LPINPUT pInputs, int cbSize);
+	ORIGINALFASTEX(SendInput,NULL);
+	UINT nRc;
+
+	nRc = F(SendInput)(nInputs, pInputs, cbSize);
+
+	return nRc;
+}
+
 bool CanSendMessage(HWND& hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT& lRc)
 {
 	if (ghConEmuWndDC && hWnd == ghConEmuWndDC)
@@ -3577,21 +3614,21 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin)
 							int i = xPos - 1;
 							_ASSERTEX(i >= 0);
 
-							if ((pwszLine[i] == ucSpace) || (pwszLine[i] == ucNoBreakSpace))
-							{
-								// Delete all spaces
-								iBSCount = 1;
-								while ((i-- > 0) && ((pwszLine[i] == ucSpace) || (pwszLine[i] == ucNoBreakSpace)))
-									iBSCount++;
-							}
-							else
-							{
-								// Delete all NON-spaces
-								iBSCount = 1;
-								wchar_t cBreaks[] = {ucSpace, ucNoBreakSpace, L'>', L']', L'$', L'.', L'\\', L'/', 0};
-								while ((i-- > 0) && !wcschr(cBreaks, pwszLine[i]))
-									iBSCount++;
-							}
+							iBSCount = 0;
+
+							// Only RIGHT brackets here to be sure that `(x86)` will be deleted including left bracket
+							wchar_t cBreaks[] = L"\x20\xA0>])}$.,/\\\"";
+
+							// Delete all `spaces` first
+							while ((i >= 0) && ((pwszLine[i] == ucSpace) || (pwszLine[i] == ucNoBreakSpace)))
+								iBSCount++, i--;
+							_ASSERTE(cBreaks[0]==ucSpace && cBreaks[1]==ucNoBreakSpace);
+							// delimiters
+							while ((i >= 0) && wcschr(cBreaks+2, pwszLine[i]))
+								iBSCount++, i--;
+							// and all `NON-spaces`
+							while ((i >= 0) && !wcschr(cBreaks, pwszLine[i]))
+								iBSCount++, i--;
 						}
 					}
 				}
@@ -4919,6 +4956,29 @@ BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuf
 	return lbRc;
 }
 
+bool AttachServerConsole()
+{
+	bool lbAttachRc = false;
+	DWORD nErrCode;
+	HWND hCurCon = GetRealConsoleWindow();
+	if (hCurCon == NULL && gnServerPID != 0)
+	{
+		// функция есть только в WinXP и выше
+		typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
+		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+		AttachConsole_t _AttachConsole = hKernel ? (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole") : NULL;
+		if (_AttachConsole)
+		{
+			lbAttachRc = _AttachConsole(gnServerPID);
+			if (!lbAttachRc)
+			{
+				nErrCode = GetLastError();
+				_ASSERTE(nErrCode==0 && lbAttachRc);
+			}
+		}
+	}
+	return lbAttachRc;
+}
 
 BOOL WINAPI OnAllocConsole(void)
 {
@@ -4944,26 +5004,9 @@ BOOL WINAPI OnAllocConsole(void)
 	// к родительской консоли (консоли серверного процесса)
 	if ((gbAttachGuiClient || ghAttachGuiClient) && !gbPrepareDefaultTerminal)
 	{
-		HWND hCurCon = GetRealConsoleWindow();
-		if (hCurCon == NULL && gnServerPID != 0)
+		if (AttachServerConsole())
 		{
-			// функция есть только в WinXP и выше
-			typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
-			hKernel = GetModuleHandle(L"kernel32.dll");
-			AttachConsole_t _AttachConsole = hKernel ? (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole") : NULL;
-			if (_AttachConsole)
-			{
-				lbAttachRc = _AttachConsole(gnServerPID);
-				if (lbAttachRc)
-				{
-					lbAllocated = TRUE; // Консоль уже есть, ничего не надо
-				}
-				else
-				{
-					nErrCode = GetLastError();
-					_ASSERTE(nErrCode==0 && lbAttachRc);
-				}
-			}
+			lbAllocated = TRUE; // Консоль уже есть, ничего не надо
 		}
 	}
 
@@ -5545,7 +5588,8 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 
 	#if defined(REPORT_VIRTUAL_ALLOC)
 		// clink use bunch of VirtualAlloc to try to find suitable memory location
-		bool bReport = !gbIsCmdProcess || (dwSize != 0x1000);
+		// Some processes raises that error too often (in debug)
+		bool bReport = (!gbIsCmdProcess || (dwSize != 0x1000)) && !gbSkipVirtualAllocErr;
 		int iBtn = bReport ? GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL|MB_ICONSTOP) : IDCANCEL;
 		if (iBtn == IDOK)
 		{

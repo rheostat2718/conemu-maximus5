@@ -26,15 +26,17 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define SHOWDEBUGSTR
+
 #include "ConEmuC.h"
 #include "Queue.h"
 
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s) // ConEmuC: Recieved key... / ConEmuC: Recieved input
 #define DEBUGSTRINPUTEVENT(s) //DEBUGSTR(s) // SetEvent(gpSrv->hInputEvent)
 #define DEBUGLOGINPUT(s) //DEBUGSTR(s) // ConEmuC.MouseEvent(X=
-#define DEBUGSTRINPUTWRITE(s) //DEBUGSTR(s) // *** ConEmuC.MouseEvent(X=
-#define DEBUGSTRINPUTWRITEALL(s) //DEBUGSTR(s) // *** WriteConsoleInput(Write=
-#define DEBUGSTRINPUTWRITEFAIL(s) //DEBUGSTR(s) // ### WriteConsoleInput(Write=
+#define DEBUGSTRINPUTWRITE(s) DEBUGSTR(s) // *** ConEmuC.MouseEvent(X=
+#define DEBUGSTRINPUTWRITEALL(s) DEBUGSTR(s) // *** WriteConsoleInput(Write=
+#define DEBUGSTRINPUTWRITEFAIL(s) DEBUGSTR(s) // ### WriteConsoleInput(Write=
 
 #ifdef _DEBUG
 // Only for input_bug search purposes in Debug builds
@@ -413,7 +415,7 @@ BOOL WaitConsoleReady(BOOL abReqEmpty)
 
 				dwTick = GetTickCount(); dwDelta = dwTick - dwStartTick;
 			}
-			while((nCurInputCount > 0) && (dwDelta < MAX_INPUT_QUEUE_EMPTY_WAIT));
+			while ((nCurInputCount > 0) && (dwDelta < MAX_INPUT_QUEUE_EMPTY_WAIT));
 		}
 
 		if (WaitForSingleObject(ghQuitEvent, 0) == WAIT_OBJECT_0)
@@ -494,7 +496,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 			INPUT_RECORD* ppr = prNew;
 			INPUT_RECORD* pprMod = NULL;
 
-			for(UINT n = 0; n < nCount; n++)
+			for (UINT n = 0; n < nCount; n++)
 			{
 				*(ppr++) = pr[n];
 
@@ -507,7 +509,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 						pprMod = (ppr-1);
 						pprMod->Event.KeyEvent.wRepeatCount = 1;
 
-						for(UINT i = 1; i < nCurCount; i++)
+						for (UINT i = 1; i < nCurCount; i++)
 						{
 							*(ppr++) = *pprMod;
 						}
@@ -543,8 +545,9 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	wchar_t szDbg[255];
 	for (UINT i = 0; i < nCount; i++)
 	{
-		if (pr[i].EventType == MOUSE_EVENT)
+		switch (pr[i].EventType)
 		{
+		case MOUSE_EVENT:
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg))
 				L"*** ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n",
 				pr[i].Event.MouseEvent.dwMousePosition.X, pr[i].Event.MouseEvent.dwMousePosition.Y, pr[i].Event.MouseEvent.dwButtonState, (pr[i].Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
@@ -569,6 +572,13 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 				}
 			}
 			#endif
+			break;
+		case KEY_EVENT:
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg))
+				L"*** ConEmuC.KeybdEvent(%s, VK=%u, CH=%c)\n",
+				pr[i].Event.KeyEvent.bKeyDown ? L"Dn" : L"Up", pr[i].Event.KeyEvent.wVirtualKeyCode, pr[i].Event.KeyEvent.uChar.UnicodeChar);
+			DEBUGSTRINPUTWRITE(szDbg);
+			break;
 		}
 
 		// Only for input_bug search purposes in Debug builds
@@ -604,7 +614,24 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 
 
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
-	fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
+	// Strange VIM reaction on xterm-keypresses
+	if ((nCount > 2) && (nCount <= 32) && (pr->EventType == KEY_EVENT) && (pr->Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE))
+	{
+		DWORD nWritten = 0; cbWritten = 0;
+		for (UINT n = 0; n < nCount; n++)
+		{
+			if ((n + 1) == nCount)
+			{
+				DEBUGTEST(bConReady = ) WaitConsoleReady(TRUE);
+			}
+			fSuccess = WriteConsoleInput(hIn, pr+n, 1, &nWritten);
+			if (fSuccess) cbWritten += nWritten;
+		}
+	}
+	else
+	{
+		fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
+	}
 
 	// Error ERROR_INVALID_HANDLE may occurs when ConEmu was Attached to some external console with redirected input.
 
@@ -663,7 +690,7 @@ DWORD WINAPI InputThread(LPVOID lpvParam)
 			SetEvent(gpSrv->hInputWasRead);
 
 			#ifdef _DEBUG
-			for(DWORD j = 0; j < nInputCount; j++)
+			for (DWORD j = 0; j < nInputCount; j++)
 			{
 				if (ir[j].EventType == KEY_EVENT
 					&& (ir[j].Event.KeyEvent.wVirtualKeyCode == 'C' || ir[j].Event.KeyEvent.wVirtualKeyCode == VK_CANCEL)

@@ -281,7 +281,7 @@ int AttachRootProcess()
 				{
 					do
 					{
-						for(UINT i = 0; i < gpSrv->nProcessCount; i++)
+						for (UINT i = 0; i < gpSrv->nProcessCount; i++)
 						{
 							if (prc.th32ProcessID != gnSelfPID
 							        && prc.th32ProcessID == gpSrv->pnProcesses[i])
@@ -315,7 +315,7 @@ int AttachRootProcess()
 						if (dwServerPID)
 							break;
 					}
-					while(Process32Next(hSnap, &prc));
+					while (Process32Next(hSnap, &prc));
 				}
 
 				CloseHandle(hSnap);
@@ -2045,7 +2045,7 @@ HWND FindConEmuByPID()
 						break;
 					}
 				}
-				while(Process32Next(hSnap, &prc));
+				while (Process32Next(hSnap, &prc));
 			}
 
 			CloseHandle(hSnap);
@@ -2374,7 +2374,7 @@ HWND Attach2Gui(DWORD nTimeout)
 			{
 				do
 				{
-					for(UINT i = 0; i < gpSrv->nProcessCount; i++)
+					for (UINT i = 0; i < gpSrv->nProcessCount; i++)
 					{
 						if (lstrcmpiW(prc.szExeFile, L"conemu.exe")==0
 							|| lstrcmpiW(prc.szExeFile, L"conemu64.exe")==0)
@@ -2386,7 +2386,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 					if (dwGuiPID) break;
 				}
-				while(Process32Next(hSnap, &prc));
+				while (Process32Next(hSnap, &prc));
 			}
 
 			CloseHandle(hSnap);
@@ -4209,7 +4209,22 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			gpSrv->nLastConsoleActiveTick = GetTickCount();
 		}
 
-		if ((ghConWnd == gpSrv->guiSettings.hActiveCon) || (gpSrv->guiSettings.hActiveCon == NULL) || bConsoleVisible)
+		bool bOurConActive = false, bOneConActive = false;
+		for (size_t i = 0; i < countof(gpSrv->guiSettings.hActiveCons); i++)
+		{
+			HWND h = gpSrv->guiSettings.hActiveCons[i];
+			if (h)
+			{
+				bOneConActive = true;
+				if (ghConWnd == h)
+				{
+					bOurConActive = true;
+					break;
+				}
+			}
+		}
+
+		if (bOurConActive || !bOneConActive || bConsoleVisible)
 			bNewActive = gpSrv->guiSettings.bGuiActive || !(gpSrv->guiSettings.Flags & CECF_SleepInBackg);
 		else
 			bNewActive = FALSE;
@@ -4419,7 +4434,7 @@ int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
 	BOOL lbPanelVisible = TRUE;
 	hRgn = CreateRectRgn(pRgn->rcRects->left, pRgn->rcRects->top, pRgn->rcRects->right, pRgn->rcRects->bottom);
 
-	for(int i = 1; i < pRgn->nRectCount; i++)
+	for (int i = 1; i < pRgn->nRectCount; i++)
 	{
 		RECT rcTest;
 
