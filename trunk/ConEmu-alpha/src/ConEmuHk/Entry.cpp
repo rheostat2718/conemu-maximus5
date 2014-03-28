@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"ssh.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"ConsolePortable.exe"
 //	#define SHOW_EXE_TIMINGS
 //	#define SHOW_FIRST_ANSI_CALL
 #endif
@@ -659,6 +659,32 @@ DWORD WINAPI DummyLibLoaderThread(LPVOID /*apParm*/)
 }
 #endif
 
+#if 0
+DWORD gnDummyLibLoaderCmdThreadTID = 0;
+DWORD WINAPI DummyLibLoaderCmdThread(LPVOID /*apParm*/)
+{
+	char szInfo[100];
+	msprintf(szInfo, countof(szInfo), "DummyLibLoaderCmdThread started, TID=%u\n", GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+
+	SetLastError(0);
+	HMODULE hLib = LoadLibraryW(L"comdlg88.dll");
+	DWORD dwErr = GetLastError(); SetLastError(0);
+	hLib = LoadLibraryW(L"comdlg32.dll");
+	dwErr = GetLastError(); SetLastError(0);
+	hLib = LoadLibraryW(L"comdlg32.dll");
+	dwErr = GetLastError(); SetLastError(0);
+	if (hLib) FreeLibrary(hLib);
+	dwErr = GetLastError(); SetLastError(0);
+	if (hLib) FreeLibrary(hLib);
+	dwErr = GetLastError(); SetLastError(0);
+
+	msprintf(szInfo, countof(szInfo), "DummyLibLoaderCmdThread finished, TID=%u\n", GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+	return 0;
+}
+#endif
+
 static long gnFixSshThreadsResumeOk = 0;
 void FixSshThreads(int iStep)
 {
@@ -848,9 +874,16 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			}
 		}
 	}
+	else if ((lstrcmpi(pszName, L"far.exe") == 0) || (lstrcmpi(pszName, L"far64.exe") == 0) || (lstrcmpi(pszName, L"far32.exe") == 0))
+	{
+		gbIsFarProcess = true;
+	}
 	else if ((lstrcmpi(pszName, L"cmd.exe") == 0) || (lstrcmpi(pszName, L"cmd") == 0))
 	{
 		gbIsCmdProcess = true;
+		#if 0
+		CreateThread(NULL, 0, DummyLibLoaderCmdThread, NULL, 0, &gnDummyLibLoaderCmdThreadTID);
+		#endif
 	}
 	else if ((lstrcmpi(pszName, L"sh.exe") == 0) || (lstrcmpi(pszName, L"sh") == 0)
 		|| (lstrcmpi(pszName, L"bash.exe") == 0) || (lstrcmpi(pszName, L"bash") == 0)
@@ -904,6 +937,13 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	else if ((lstrcmpi(pszName, L"devenv.exe") == 0) || (lstrcmpi(pszName, L"WDExpress.exe") == 0))
 	{
 		gbIsVStudio = true;
+	}
+
+	if ((lstrcmpi(pszName, L"chrome.exe") == 0)
+		|| (lstrcmpi(pszName, L"firefox.exe") == 0)
+		|| (lstrcmpi(pszName, L"link.exe") == 0))
+	{
+		gbSkipVirtualAllocErr = true;
 	}
 
 	// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
@@ -1117,7 +1157,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(nSize);
 				ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
 				pIn->AttachGuiApp.nPID = GetCurrentProcessId();
-				GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
+				GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFilePathName, countof(pIn->AttachGuiApp.sAppFilePathName));
 				pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
 
 				wchar_t szGuiPipeName[128];
@@ -1758,8 +1798,10 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			#ifdef USEHOOKLOG
 			DLOGEND();
-			//HookLogger::RunAnalyzer();
-			//_ASSERTEX(FALSE && "Hooks terminated");
+			#ifdef USEHOOKLOGANALYZE
+			HookLogger::RunAnalyzer();
+			_ASSERTEX(FALSE && "Hooks terminated");
+			#endif
 			#endif
 		}
 		break; // DLL_PROCESS_DETACH

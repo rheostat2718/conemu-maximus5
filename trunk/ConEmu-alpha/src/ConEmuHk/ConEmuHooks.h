@@ -73,6 +73,7 @@ extern CEStartupEnv* gpStartEnv;
 //extern CESERVER_CONSOLE_MAPPING_HDR* gpConInfo;
 CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate=FALSE);
 void OnConWndChanged(HWND ahNewConWnd);
+bool AttachServerConsole();
 
 typedef HWND (WINAPI* GetConsoleWindow_T)();
 extern GetConsoleWindow_T gfGetRealConsoleWindow;
@@ -110,6 +111,7 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin);
 BOOL OnExecutePromptCmd(LPCWSTR asCmd);
 
 /* ************ Globals for Far ************ */
+extern bool    gbIsFarProcess;
 extern InQueue gInQueue;
 /* ************ Globals for Far ************ */
 
@@ -152,6 +154,10 @@ extern bool gbIsHiewProcess;
 extern bool gbDosBoxProcess;
 /* ************ Globals for DosBox.EXE ************ */
 
+/* ************ Don't show VirtualAlloc errors ************ */
+extern bool gbSkipVirtualAllocErr;
+/* ************ Don't show VirtualAlloc errors ************ */
+
 /* ************ Globals for "Default terminal ************ */
 extern bool gbPrepareDefaultTerminal;
 extern bool gbIsNetVsHost;
@@ -180,8 +186,14 @@ extern "C" {
 #ifdef _DEBUG
 	//#define USEHOOKLOG
 	#undef USEHOOKLOG
+	#ifdef USEHOOKLOG
+		#define USEHOOKLOGANALYZE
+	#else
+		#undef USEHOOKLOGANALYZE
+	#endif
 #else
 	#undef USEHOOKLOG
+	#undef USEHOOKLOGANALYZE
 #endif
 
 #ifdef USEHOOKLOG

@@ -476,10 +476,9 @@ CConEmuMain::CConEmuMain()
 
 	mpsz_ConEmuArgs = NULL;
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = ms_ConEmuWorkDir[0] = 0;
-	//ms_ConEmuCExe[0] = 
 	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
 	ms_ConEmuXml[0] = ms_ConEmuIni[0] = ms_ConEmuChm[0] = 0;
-	//ms_ConEmuCExeName[0] = 0;
+
 	wchar_t *pszSlash = NULL;
 
 	if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH) || !(pszSlash = wcsrchr(ms_ConEmuExe, L'\\')))
@@ -2641,13 +2640,8 @@ void CConEmuMain::UpdateGuiInfoMapping()
 
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_BlockChildDbg,(m_DbgInfo.bBlockChildrenDebuggers ? CECF_BlockChildDbg : 0));
 
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
-	m_GuiInfo.bGuiActive = isMeForeground(true, true);
-	{
-	CVConGuard VCon;
-	m_GuiInfo.hActiveCon = (GetActiveVCon(&VCon) >= 0) ? VCon->RCon()->ConWnd() : NULL;
-	}
-	m_GuiInfo.dwActiveTick = GetTickCount();
+	// m_GuiInfo.Flags[CECF_SleepInBackg], m_GuiInfo.hActiveCons, m_GuiInfo.dwActiveTick, m_GuiInfo.bGuiActive
+	UpdateGuiInfoMappingActive(isMeForeground(true, true), false);
 
 	mb_DosBoxExists = CheckDosBoxExists();
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_DosBox,(mb_DosBoxExists ? CECF_DosBox : 0));
@@ -2823,15 +2817,29 @@ void CConEmuMain::UpdateGuiInfoMapping()
 
 }
 
-void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive)
+bool CConEmuMain::UpdateGuiInfoMappingFill(CVirtualConsole* pVCon, LPARAM lParam)
 {
-	CVConGuard VCon;
-	HWND hActiveRCon = (GetActiveVCon(&VCon) >= 0) ? VCon->RCon()->ConWnd() : NULL;
+	int* pnCount = (int*)lParam;
+	gpConEmu->m_GuiInfo.hActiveCons[*pnCount] = pVCon->RCon()->ConWnd();
+	(*pnCount)++;
+	return true;
+}
 
+void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= true*/)
+{
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
+
 	m_GuiInfo.bGuiActive = bActive;
-	m_GuiInfo.hActiveCon = hActiveRCon;
+
+	int nActiveCount = 0;
+	CVConGroup::EnumVCon(gpSet->isRetardInactivePanes ? evf_Active : evf_Visible, UpdateGuiInfoMappingFill, (LPARAM)&nActiveCount);
+	for (int i = nActiveCount; i < countof(m_GuiInfo.hActiveCons); i++)
+		m_GuiInfo.hActiveCons[i] = NULL;
+
 	m_GuiInfo.dwActiveTick = GetTickCount();
+
+	if (!bUpdatePtr)
+		return;
 
 	ConEmuGuiMapping* pData = m_GuiInfoMapping.Ptr();
 
@@ -2839,11 +2847,11 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive)
 	{
 		if ((((pData->Flags & CECF_SleepInBackg)!=0) != (gpSet->isSleepInBackground != FALSE))
 			|| ((pData->bGuiActive!=FALSE) != (bActive!=FALSE))
-			|| (pData->hActiveCon != hActiveRCon))
+			|| (memcmp(pData->hActiveCons, m_GuiInfo.hActiveCons, sizeof(m_GuiInfo.hActiveCons) != 0)))
 		{
 			SetConEmuFlags(pData->Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
 			pData->bGuiActive = bActive;
-			pData->hActiveCon = hActiveRCon;
+			memmove(pData->hActiveCons, m_GuiInfo.hActiveCons, sizeof(m_GuiInfo.hActiveCons));
 			pData->dwActiveTick = m_GuiInfo.dwActiveTick;
 		}
 	}
@@ -7377,47 +7385,83 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 
 		if (*pszLine)
 		{
-			while (pszLine[0] == L'/')
+			RConStartArgs args;
+
+			if (apDefArgs)
+				args.AssignFrom(apDefArgs);
+
+			if (apDefArgs && apDefArgs->pszStartupDir && *apDefArgs->pszStartupDir)
+				args.pszStartupDir = lstrdup(apDefArgs->pszStartupDir);
+			else if (asStartupDir && *asStartupDir)
+				args.pszStartupDir = lstrdup(asStartupDir);
+			else
+				SafeFree(args.pszStartupDir);
+
+			LPCWSTR pcszCmd = pszLine;
+			CmdArg szArg;
+			const int iNewConLen = lstrlen(L"-new_console");
+			while (NextArg(&pcszCmd, szArg) == 0)
 			{
-				if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
-				                               pszLine, 14, L"/bufferheight ", 14))
+				if (wcsncmp(szArg, L"-new_console", iNewConLen) == 0 || wcsncmp(szArg, L"-cur_console", iNewConLen) == 0)
+					break;
+
+				if (szArg.ms_Arg[0] != L'/')
+					break;
+
+				if (lstrcmpi(szArg, L"/bufferheight") == 0)
 				{
-					pszLine += 14;
-
-					while(*pszLine == L' ') pszLine++;
-
-					wchar_t* pszEnd = NULL;
-					long lBufHeight = wcstol(pszLine, &pszEnd, 10);
-					gpSetCls->SetArgBufferHeight(lBufHeight);
-
-					if (pszEnd) pszLine = pszEnd;
+					if (NextArg(&pcszCmd, szArg) == 0)
+					{
+						wchar_t* pszEnd = NULL;
+						args.nBufHeight = wcstol(szArg, &pszEnd, 10);
+						args.BufHeight = crb_On;
+						pszLine = (wchar_t*)pcszCmd; // OK
+						continue;
+					}
+				}
+				else if (lstrcmpi(szArg, L"/dir") == 0)
+				{
+					if (NextArg(&pcszCmd, szArg) == 0)
+					{
+						SafeFree(args.pszStartupDir);
+						args.pszStartupDir = lstrdup(szArg);
+						pszLine = (wchar_t*)pcszCmd; // OK
+						continue;
+					}
+				}
+				else if (lstrcmpi(szArg, L"/icon") == 0)
+				{
+					if (NextArg(&pcszCmd, szArg) == 0)
+					{
+						SafeFree(args.pszIconFile);
+						args.pszIconFile = lstrdup(szArg);
+						pszLine = (wchar_t*)pcszCmd; // OK
+						continue;
+					}
+				}
+				else if (lstrcmpi(szArg, L"/tab") == 0)
+				{
+					if (NextArg(&pcszCmd, szArg) == 0)
+					{
+						SafeFree(args.pszRenameTab);
+						args.pszRenameTab = lstrdup(szArg);
+						pszLine = (wchar_t*)pcszCmd; // OK
+						continue;
+					}
 				}
 
-				TODO("Когда появится ключ /mouse - добавить сюда обработку");
-
-				if (CSTR_EQUAL == CompareString(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE|SORT_STRINGSORT,
-				                               pszLine, 5, L"/cmd ", 5))
-				{
-					pszLine += 5;
-				}
-
-				while (*pszLine == L' ') pszLine++;
+				wchar_t* pszErr = lstrmerge(L"Unsupported switch in task command:\r\n", pszLine);
+				int iBtn = MsgBox(pszErr, MB_ICONSTOP|MB_OKCANCEL, gpConEmu->GetDefaultTitle());
+				SafeFree(pszErr);
+				*pszLine = 0;
+				if (iBtn == IDCANCEL)
+					pszNewLine = NULL;
+				break;
 			}
 
 			if (*pszLine)
 			{
-				RConStartArgs args;
-				if (apDefArgs)
-					args.AssignFrom(apDefArgs);
-
 				args.pszSpecialCmd = lstrdup(pszLine);
-
-				if (apDefArgs && apDefArgs->pszStartupDir && *apDefArgs->pszStartupDir)
-					args.pszStartupDir = lstrdup(apDefArgs->pszStartupDir);
-				else if (asStartupDir && *asStartupDir)
-					args.pszStartupDir = lstrdup(asStartupDir);
-				else
-					SafeFree(args.pszStartupDir);
 
 				if (lbRunAdmin) // don't reset one that may come from apDefArgs
 					args.RunAsAdministrator = crb_On;
@@ -7769,6 +7813,10 @@ void CConEmuMain::ExecuteProcessFinished(bool bOpt)
 
 void CConEmuMain::SetWindowIcon(LPCWSTR asNewIcon)
 {
+	// Don't change TITLE BAR icon after initialization finished
+	if (mn_StartupFinished == ss_Started)
+		return;
+
 	if (!asNewIcon || !*asNewIcon)
 		return;
 
@@ -10913,7 +10961,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	return 0;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/)
+wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/, wchar_t** ppszIcon /*= NULL*/)
 {
 	wchar_t* pszDataW = NULL;
 
@@ -10925,7 +10973,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDi
 	else if ((*asSource == TaskBracketLeft) || (lstrcmp(asSource, AutoStartTaskName) == 0))
 	{
 		// Имя задачи
-		pszDataW = LoadConsoleBatch_Task(asSource, ppszStartupDir);
+		pszDataW = LoadConsoleBatch_Task(asSource, ppszStartupDir, ppszIcon);
 	}
 	else if (*asSource == DropLnkPrefix)
 	{
@@ -11159,7 +11207,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 	return pszDataW;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/)
+wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/, wchar_t** ppszIcon /*= NULL*/)
 {
 	wchar_t* pszDataW = NULL;
 
@@ -11194,7 +11242,15 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 
 				if (pszIcon)
 				{
+					// Функция сама проверит - можно или нет менять иконку приложения
 					SetWindowIcon(pszIcon);
+					// Если просили - вернуть путь к иконке
+					if (ppszIcon && !*ppszIcon)
+					{
+						SafeFree(*ppszIcon);
+						*ppszIcon = pszIcon;
+						pszIcon = NULL;
+					}
 					SafeFree(pszIcon);
 				}
 			}
@@ -11437,9 +11493,9 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			}
 			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && !gpConEmu->mb_StartDetached)
 			{
-				wchar_t* pszStartupDir = NULL;
+				RConStartArgs args;
 				// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
-				wchar_t* pszDataW = LoadConsoleBatch(pszCmd, &pszStartupDir);
+				wchar_t* pszDataW = LoadConsoleBatch(pszCmd, &args.pszStartupDir, &args.pszIconFile);
 				if (!pszDataW)
 				{
 					Destroy();
@@ -11447,14 +11503,13 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				}
 
 				// GO
-				if (!CreateConGroup(pszDataW, FALSE, pszStartupDir))
+				if (!CreateConGroup(pszDataW, FALSE, NULL/*ignored when 'args' specified*/, &args))
 				{
 					Destroy();
 					return;
 				}
 
 				SafeFree(pszDataW);
-				SafeFree(pszStartupDir);
 
 				//// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
 				//// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
@@ -13360,6 +13415,8 @@ void CConEmuMain::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			//gpConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"From DoMinimizeRestore(sih_Show)");
 		}
 
+		CVConGroup::EnumVCon(evf_Visible, CRealConsole::ThawMonitorThread, 0);
+
 		if (bIsIconic)
 			mp_Menu->SetRestoreFromMinimized(bPrevInRestore);
 	}
@@ -14114,8 +14171,6 @@ void CConEmuMain::UpdateImeComposition()
 		pRCon->GetConsoleCursorInfo(&ci);
 		pRCon->GetConsoleScreenBufferInfo(&sbi);
 		COORD crVisual = pRCon->BufferToScreen(sbi.dwCursorPosition);
-		crVisual.X = max(0,min(crVisual.X,(int)pRCon->TextWidth()));
-		crVisual.Y = max(0,min(crVisual.Y,(int)pRCon->TextHeight()));
 		POINT ptCurPos = VCon->ConsoleToClient(crVisual.X, crVisual.Y);
 
 		MapWindowPoints(hView, ghWnd, &ptCurPos, 1);
@@ -15140,8 +15195,9 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		CVConGuard VCon;
 		if (CVConGroup::GetVConFromPoint(ptCurScreen, &VCon))
 		{
-			HWND hGuiChild = VCon->RCon()->GuiWnd();
-			if (hGuiChild)
+			CRealConsole* pRCon = VCon->RCon();
+			HWND hGuiChild = pRCon->GuiWnd();
+			if (hGuiChild && !pRCon->isBufferHeight())
 			{
 				// Just resend it to child GUI
 				bWasSendToChildGui = true;
@@ -15363,16 +15419,6 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	{
 		if (TrackMouse())
 			return 0;
-	}
-
-	if (pRCon && pRCon->GuiWnd() && !pRCon->isBufferHeight())
-	{
-		// Эти сообщения нужно посылать специально, иначе не доходят
-		if ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL))
-		{
-			pRCon->PostConsoleMessage(pRCon->GuiWnd(), messg, wParam, lParam);
-		}
-		return 0;
 	}
 
 	if (pRCon && pRCon->isSelectionPresent()
