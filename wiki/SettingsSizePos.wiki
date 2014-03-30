@@ -1,7 +1,7 @@
 ﻿#summary This page was generated automatically from ConEmu sources
 <wiki:comment> IDD_SPG_WNDSIZEPOS </wiki:comment>
 =Settings: Size & Pos=
-<img src="http://ce-test-wiki.googlecode.com/svn/files/Settings-SizePos.png" title="ConEmu Settings: Size & Pos">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/Settings-SizePos.png" title="ConEmu Settings: Size & Pos">
 
 
 

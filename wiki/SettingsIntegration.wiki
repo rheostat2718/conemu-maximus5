@@ -1,5 +1,5 @@
 ﻿=Integration=
-<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsIntegration.png" title="Integration page of !ConEmu settings dialog">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/Settings-Integration.png" title="ConEmu Settings: Integration">
 
 You may register here several menu items, which will be shown in the Explorer popup menu
 (used in folder background, folder items, libraries).

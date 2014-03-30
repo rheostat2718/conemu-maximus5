@@ -1,9 +1,9 @@
 ﻿#summary This page was generated automatically from ConEmu sources
 <wiki:comment> IDD_SPG_COLORS </wiki:comment>
 =Settings: Colors=
-<img src="http://ce-test-wiki.googlecode.com/svn/files/Settings-Colors.png" title="ConEmu Settings: Colors">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/Settings-Colors.png" title="ConEmu Settings: Colors">
 
-<img src="http://ce-test-wiki.googlecode.com/svn/files/Settings-Colors2.png" title="ConEmu Settings: Colors">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/Settings-Colors2.png" title="ConEmu Settings: Colors">
 
 
 

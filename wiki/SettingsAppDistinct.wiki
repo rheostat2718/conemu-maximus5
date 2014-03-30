@@ -1,9 +1,9 @@
 ﻿#summary This page was generated automatically from ConEmu sources
 <wiki:comment> IDD_SPG_APPDISTINCT </wiki:comment>
 =Settings: App distinct=
-<img src="http://ce-test-wiki.googlecode.com/svn/files/Settings-AppDistinct.png" title="ConEmu Settings: App distinct">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/Settings-AppDistinct.png" title="ConEmu Settings: App distinct">
 
-<img src="http://ce-test-wiki.googlecode.com/svn/files/Settings-AppDistinct2.png" title="ConEmu Settings: App distinct">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/Settings-AppDistinct2.png" title="ConEmu Settings: App distinct">
 
 
 

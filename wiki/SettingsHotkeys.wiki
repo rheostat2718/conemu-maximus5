@@ -1,7 +1,7 @@
 ﻿#summary This page was generated automatically from ConEmu sources
 <wiki:comment> IDD_SPG_KEYS </wiki:comment>
 =Settings: Keys & Macro=
-<img src="http://ce-test-wiki.googlecode.com/svn/files/Settings-Hotkeys.png" title="ConEmu Settings: Keys & Macro">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/Settings-Hotkeys.png" title="ConEmu Settings: Keys & Macro">
 
 
 

@@ -1,7 +1,7 @@
 ﻿#summary This page was generated automatically from ConEmu sources
 <wiki:comment> IDD_SPG_FEATURE_FAR </wiki:comment>
 =Settings: Far Manager=
-<img src="http://ce-test-wiki.googlecode.com/svn/files/Settings-Far.png" title="ConEmu Settings: Far Manager">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/Settings-Far.png" title="ConEmu Settings: Far Manager">
 
 
 

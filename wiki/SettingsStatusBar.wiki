@@ -1,7 +1,7 @@
 ﻿#summary This page was generated automatically from ConEmu sources
 <wiki:comment> IDD_SPG_STATUSBAR </wiki:comment>
 =Settings: Status bar=
-<img src="http://ce-test-wiki.googlecode.com/svn/files/Settings-StatusBar.png" title="ConEmu Settings: Status bar">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/Settings-StatusBar.png" title="ConEmu Settings: Status bar">
 
 
 
