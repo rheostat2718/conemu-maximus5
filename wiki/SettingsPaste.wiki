@@ -1,0 +1,22 @@
+﻿#summary This page was generated automatically from ConEmu sources
+<wiki:comment> IDD_SPG_PASTE </wiki:comment>
+=Settings: Paste=
+<img src="http://ce-test-wiki.googlecode.com/svn/files/Settings-Paste.png" title="ConEmu Settings: Paste">
+
+
+
+==Pasting text behavior (with exception of Far Manager)==
+
+*All lines (default Shift+Ins)* 
+
+*First line (default Ctrl+V)* 
+
+*Confirm `<`Enter`>` keypress* 
+
+*Confirm pasting more than* 
+
+*chars* 
+
+
+
+

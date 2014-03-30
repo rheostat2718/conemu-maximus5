@@ -1,0 +1,43 @@
+﻿#summary This page was generated automatically from ConEmu sources
+<wiki:comment> IDD_SPG_DEFTERM </wiki:comment>
+=Settings: Default term=
+<img src="http://ce-test-wiki.googlecode.com/svn/files/Settings-DefTerm.png" title="ConEmu Settings: Default term">
+
+
+
+==WARNING!!! Enabling this option may cause false alarms in antiviral programs!!!==
+
+*Force ConEmu as default terminal for console applications* 
+
+*Register on OS startup* 
+
+*Leave in TSA* 
+
+*List of hooked executables delimited with "|" (e.g. "explorer.exe|devenv.exe|totalcmd.exe")* 
+
+*Don't use ConEmuHk.dll in started console* 
+
+*Use existing ConEmu window if available* 
+
+==Confirm close (Press Enter or Esc to close console)==
+
+
+
+  * *Automatic*
+  * *Always*
+  * *Never*
+
+
+
+
+LTEXT
+
+
+
+==Confirm close (Press Enter or Esc to close console)==
+
+
+
+
+
+

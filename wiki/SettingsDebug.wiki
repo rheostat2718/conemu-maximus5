@@ -1,0 +1,32 @@
+﻿#summary This page was generated automatically from ConEmu sources
+<wiki:comment> IDD_SPG_DEBUG </wiki:comment>
+=Settings: Debug=
+<img src="http://ce-test-wiki.googlecode.com/svn/files/Settings-Debug.png" title="ConEmu Settings: Debug">
+
+
+
+==Shell activity==
+
+
+
+*Reset* 
+
+*Save as...* 
+
+  * *Disabled* Disable debug logging. This implies on ‘Settings’ dialog close.
+  * *Shell* Log shell calls (progress creations, library loadings, etc.) ‘Inject ConEmuHk’ is required
+  * *Input* Log keyboard and mouse activities
+  * *Cmd* Log internal ConEmu (GUI`<`--`>`Server) calls
+  * *Ansi*
+  * *Debug* Automatically attach ConEmu debugger to all started processes
+
+
+
+
+
+
+
+
+
+
+
