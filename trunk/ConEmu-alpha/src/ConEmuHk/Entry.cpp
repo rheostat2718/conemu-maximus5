@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"ConsolePortable.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"xxx.exe"
 //	#define SHOW_EXE_TIMINGS
 //	#define SHOW_FIRST_ANSI_CALL
 #endif
@@ -531,11 +531,11 @@ bool InitDefaultTerm()
 		MODULEENTRY32 mi = {sizeof(mi)};
 		//wchar_t szOurName[MAX_PATH] = L"";
 		//GetModuleFileName(ghOurModule, szOurName, MAX_PATH);
-		wchar_t szVer[2] = {MVV_4a[0], 0};
-		wchar_t szAddName[32];
+		wchar_t szMinor[8] = L""; lstrcpyn(szMinor, WSTRING(MVV_4a), countof(szMinor));
+		wchar_t szAddName[40];
 		msprintf(szAddName, countof(szAddName),
 			CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
-			WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szVer);
+			WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
 		//LPCWSTR pszOurName = PointToName(szOurName);
 		wchar_t* pszDot = wcschr(szAddName, L'.');
 		wchar_t szCheckName[MAX_PATH+1];
