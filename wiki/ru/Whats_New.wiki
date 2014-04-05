@@ -1,4 +1,4 @@
-#labels Featured
+﻿#labels Featured
 Проголосуйте за !ConEmu, если не жалко :)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
@@ -6,12 +6,27 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 140404==
+  * Show 1-based console coordinates in the status bar (was 0-based).
+  * Don't show size of the console visible rect by default in the status bar.
+  * Win8. Failed to set console width less than 19 after Ctrl+Shift+O (in progress).
+
+
+==Build 140403==
+  * Issue 1527: Regression 140327. !PowerShell was not hooked.
+  * Issue 1528: Infinite mouse messages !ChildGui<-->!ConEmu in some cases.
+  * Settings Main page redesigned.
+  * Change clink homepage url, update ConEmu\clink\Readme.txt.
+  * Remove possible deadlock after closing !AltServer.
+  * Some internal changes.
+
+
 ==Build 140327==
   * Console. Increase max buffer height to 32766 lines.
   * Issue 1504: Parenthesis issue in `csudo.cmd`.
   * Ensure `Cmd_Autorun.cmd` always returns errorlevel==0.
   * Quotation marks changes in `Cmd_Autorun.cmd` (possible parenthesis issues?)
-  * Use !LdrDllNotification (Vista+). Might speed up hooks and set up hooks before !DllMain called (!LoadLibrary).
+  * Use !LdrDllNotification (Win8+). Will set up hooks before !DllMain called (!LoadLibrary).
   * Ctrl+O Far macro was failed in some cases - `Shell("new_console:b")`.
   * Issue 1509: Arg parsing failed for ‘`/dir "C:\" /single`’ (01ed281 regression).
   * Allow string arguments of `-new_console` to be resetted. For example, you are running task with "/icon nice.ico" in Task parameters. You may reset it in task commands if you are running several tabs at once:
