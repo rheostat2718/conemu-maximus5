@@ -1,0 +1,13 @@
+*This article is under construction*
+
+Well known POSIX emulator layer for Windows: cygwin and msys. AFAIK, msys was forked long ago from cygwin, that is why they are alike in many cases.
+
+I regularly get emails and issues about cygwin/msys compatibility with ConEmu. Most of them does not have anything to fix inside ConEmu sources, but users complain me instead of cygwin/msys developers.
+
+Let me draw and analogue. There is a great tool RPP, but it is an MacOS application. How can you run it on Windows? Set up VMWare with MacOS inside :-D
+
+The same with POSIX console applications in Windows. If you want to run them properly - set up mintty. That is weird for my taste... If you develop Windows console application, it must be able to run in Windows standard console window. It may show some lack of features (like 256 colors processing) but it must be working properly in all other cases. Windows standard console supports 16 color palette, 32K lines of backscroll buffer, alternative screens, Unicode and dozens of other features.
+
+The main complains of Linux users  - unfriendly clipboard support (copy/paste) and window resizing. Really, "unfriendly" but not an "absent".
+
+To be continued...
