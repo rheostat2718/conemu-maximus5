@@ -1,0 +1,1 @@
+Running simple !ChildGui is a "side-feature". ConEmu can't control or customize those apps. In most cases console versions are preferred because they are running in the ConEmu "native" mode.
