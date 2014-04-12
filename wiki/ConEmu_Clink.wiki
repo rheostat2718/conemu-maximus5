@@ -2,7 +2,7 @@
 Build 121015 introduces new experimental feature on ‘Features’ page: ‘Use Clink in prompt’. Clink - bash style completion.
 
 *Note* Clink version *0.2.1* or later is *recommended*. 
-If clink binarites are not available, you may [https://code.google.com/p/clink/#Building_clink build clink]
+If clink binaries are not available, you may [https://code.google.com/p/clink/#Building_clink build clink]
 yourself from its [https://code.google.com/p/clink/source/checkout sources].
 
   * This is *experimental* feature, it may be changed or removed in future builds.
