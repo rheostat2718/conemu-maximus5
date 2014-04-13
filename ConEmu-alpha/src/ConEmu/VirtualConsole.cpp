@@ -83,7 +83,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #define DEBUGDRAW_VERTICALS VK_SCROLL // -- при включенном ScrollLock отрисовать прямоугольники, соответсвующие граням диалогов (которые строго выравниваются по ячейкам)
 #endif
 
-#define DEBUGSTRDRAW(s) //DEBUGSTR(s)
+#define DEBUGSTRDRAW(s) DEBUGSTR(s)
 #define DEBUGSTRCOORD(s) //DEBUGSTR(s)
 #define DEBUGSTRFAIL(s) DEBUGSTR(s)
 
@@ -4601,8 +4601,6 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 			pszStarting = L"No consoles";
 		else if (this && mp_RCon)
 			pszStarting = mp_RCon->GetConStatus();
-		else if (CRealConsole::ms_LastRConStatus[0])
-			pszStarting = CRealConsole::ms_LastRConStatus;
 
 		if (pszStarting != NULL)
 		{

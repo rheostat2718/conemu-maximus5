@@ -1958,10 +1958,9 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	wchar_t* lpChar = con.pConChar;
 	WORD* lpAttr = con.pConAttr;
 
-	if (mp_RCon->mb_ResetStatusOnConsoleReady)
+	if (mp_RCon->m_ConStatus.Options & CRealConsole::cso_ResetOnConsoleReady)
 	{
-		mp_RCon->mb_ResetStatusOnConsoleReady = false;
-		mp_RCon->ms_ConStatus[0] = 0;
+		ZeroStruct(mp_RCon->m_ConStatus);
 	}
 
 
@@ -3286,6 +3285,8 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		return false;
 	}
 
+	bool bWasSelection = isSelectionPresent();
+
 	// Получить известные координаты символов
 	COORD crScreen = mp_RCon->mp_VCon->ClientToConsole(x,y);
 	MinMax(crScreen.X, 0, TextWidth()-1);
@@ -3398,7 +3399,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			}
 			else
 			{
-				ExpandSelection(cr.X, cr.Y);
+				ExpandSelection(cr.X, cr.Y, bWasSelection);
 			}
 
 		}
@@ -3755,7 +3756,7 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	if ((anFromMsg == WM_LBUTTONDBLCLK) || (pcrTo && (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)))
 	{
 		if (pcrTo)
-			ExpandSelection(pcrTo->X, pcrTo->Y);
+			ExpandSelection(pcrTo->X, pcrTo->Y, false);
 		con.m_sel.dwFlags |= CONSOLE_DBLCLICK_SELECTION;
 
 		_ASSERTE(anFromMsg == WM_LBUTTONDBLCLK);
@@ -3778,11 +3779,13 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	}
 }
 
-void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY)
+void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 {
 	_ASSERTE(con.m_sel.dwFlags!=0);
 	// Добавил "-3" чтобы на прокрутку не ругалась
 	_ASSERTE(anY==-1 || anY>=(con.nTopVisibleLine-3));
+
+	CONSOLE_SELECTION_INFO cur_sel = con.m_sel;
 
 	// 131017 Scroll content if selection cursor goes out of visible screen
 	if (anY < con.nTopVisibleLine)
@@ -3844,7 +3847,12 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY)
 		con.m_sel.srSelection.Bottom = cr.Y;
 	}
 
-	UpdateSelection();
+	bool bChanged = (memcmp(&cur_sel, &con.m_sel, sizeof(cur_sel)) != 0);
+
+	if (!bWasSelection || bChanged)
+	{
+		UpdateSelection();
+	}
 }
 
 void CRealBuffer::DoSelectionStop()
@@ -4393,8 +4401,8 @@ void CRealBuffer::UpdateSelection()
 
 	TODO("Это корректно? Нужно обновить VCon");
 	con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
-	mp_RCon->mp_VCon->Update(true);
-	mp_RCon->mp_VCon->Redraw();
+	//mp_RCon->mp_VCon->Update(true); -- Update() и так вызывается в PaintVConNormal
+	mp_RCon->mp_VCon->Redraw(true);
 }
 
 bool CRealBuffer::isConSelectMode()
@@ -4519,7 +4527,7 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else
 			{
-				ExpandSelection(cr.X,cr.Y);
+				ExpandSelection(cr.X,cr.Y, true);
 			}
 		}
 
@@ -5248,12 +5256,12 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	}
 
 	// Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
-	if (!gpSet->isStatusBarShow && mp_RCon->ms_ConStatus[0])
+	if (!gpSet->isStatusBarShow && mp_RCon->m_ConStatus.szText[0] && (mp_RCon->m_ConStatus.Options & CRealConsole::cso_Critical))
 	{
-		int nLen = _tcslen(mp_RCon->ms_ConStatus);
-		wmemcpy(pChar, mp_RCon->ms_ConStatus, nLen);
+		int nLen = _tcslen(mp_RCon->m_ConStatus.szText);
+		wmemcpy(pChar, mp_RCon->m_ConStatus.szText, nLen);
 
-		if (nWidth>nLen)
+		if (nWidth > nLen)
 			wmemset(pChar+nLen, L' ', nWidth-nLen);
 
 		//wmemset((wchar_t*)pAttr, 0x47, nWidth);
