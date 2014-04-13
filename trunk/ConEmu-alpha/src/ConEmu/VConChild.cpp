@@ -27,6 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
+#define SHOWDEBUGSTR
 #include "Header.h"
 #include "../common/common.hpp"
 #include "../common/MMap.h"
@@ -45,7 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EXT_GNUC_LOG
 #endif
 
-#define DEBUGSTRDRAW(s) //DEBUGSTR(s)
+#define DEBUGSTRDRAW(s) DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
@@ -1032,6 +1033,8 @@ LRESULT CConEmuChild::OnPaint()
 	//    break;
 	//_ASSERTE(FALSE);
 
+	DEBUGSTRDRAW(L"CConEmuChild::OnPaint()\n");
+
 	//2009-09-28 может так (autotabs)
 	if (mb_DisableRedraw)
 		return 0;
@@ -1208,7 +1211,7 @@ void CConEmuChild::CheckPostRedraw()
 	}
 }
 
-void CConEmuChild::Redraw()
+void CConEmuChild::Redraw(bool abRepaintNow /*= false*/)
 {
 	if (!this)
 	{
@@ -1252,6 +1255,15 @@ void CConEmuChild::Redraw()
 	//RedrawWindow(ghWnd, NULL, NULL,
 	//	RDW_INTERNALPAINT|RDW_NOERASE|RDW_UPDATENOW);
 	mb_RedrawPosted = FALSE; // Чтобы другие нити могли сделать еще пост
+
+	if (abRepaintNow)
+	{
+		RECT rcClient = {};
+		if (GetClientRect(mh_WndDC, &rcClient))
+		{
+			RedrawWindow(mh_WndDC, &rcClient, NULL, RDW_INTERNALPAINT|RDW_NOERASE|RDW_NOFRAME|RDW_UPDATENOW|RDW_VALIDATE);
+		}
+	}
 }
 
 // Вызывается из VConGroup::RepositionVCon

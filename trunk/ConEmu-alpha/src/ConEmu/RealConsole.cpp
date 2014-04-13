@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
+#define DEBUGSTRSTATUS(s) DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRWHEEL(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
@@ -77,7 +78,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSTOP(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //LogFocusInfo(s)
 #define DEBUGSTRGUICHILDPOS(s) //DEBUGSTR(s)
-#define DEBUGSTRPROGRESS(s) DEBUGSTR(s)
+#define DEBUGSTRPROGRESS(s) //DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -120,8 +121,6 @@ WARNING("Часто после разблокирования компьютер
 static BOOL gbInSendConEvent = FALSE;
 
 
-wchar_t CRealConsole::ms_LastRConStatus[80] = {};
-
 const wchar_t gsCloseGui[] = L"Confirm closing active child window?";
 const wchar_t gsCloseCon[] = L"Confirm closing console?";
 //const wchar_t gsCloseAny[] = L"Confirm closing console?";
@@ -148,7 +147,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mp_Log = NULL;
 
 	MCHKHEAP;
-	SetConStatus(L"Initializing ConEmu (2)", true, true);
+	SetConStatus(L"Initializing ConEmu (2)", cso_ResetOnConsoleReady|cso_DontUpdate|cso_Critical);
 	//mp_VCon->mp_RCon = this;
 	HWND hView = apVCon->GetView();
 	if (!hView)
@@ -1813,7 +1812,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	bool bDetached = (pRCon->m_Args.Detached == crb_On) && !pRCon->mb_ProcessRestarted && !pRCon->mn_InRecreate;
 	bool lbChildProcessCreated = FALSE;
 
-	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...", true);
+	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...", cso_ResetOnConsoleReady|cso_Critical);
 
 	//pRCon->mb_WaitingRootStartup = TRUE;
 
@@ -2649,9 +2648,9 @@ BOOL CRealConsole::StartMonitorThread()
 	//_ASSERTE(mh_InputThread==NULL);
 	//_ASSERTE(mb_Detached || mh_MainSrv!=NULL); -- процесс теперь запускаем в MonitorThread
 	DWORD nCreateBegin = GetTickCount();
-	SetConStatus(L"Initializing ConEmu (4)", true);
+	SetConStatus(L"Initializing ConEmu (4)", cso_ResetOnConsoleReady|cso_Critical);
 	mh_MonitorThread = CreateThread(NULL, 0, MonitorThread, (LPVOID)this, 0, &mn_MonitorThreadID);
-	SetConStatus(L"Initializing ConEmu (5)", true);
+	SetConStatus(L"Initializing ConEmu (5)", cso_ResetOnConsoleReady|cso_Critical);
 	DWORD nCreateEnd = GetTickCount();
 	DWORD nThreadCreationTime = nCreateEnd - nCreateBegin;
 	if (nThreadCreationTime > 2500)
@@ -2891,7 +2890,7 @@ void CRealConsole::OnStartProcessAllowed()
 	if (!PreInit())
 	{
 		DEBUGSTRPROC(L"### RCon:PreInit failed\n");
-		SetConStatus(L"RCon:PreInit failed");
+		SetConStatus(L"RCon:PreInit failed", cso_Critical);
 
 		mb_StartResult = FALSE;
 		mb_NeedStartProcess = FALSE;
@@ -2908,7 +2907,7 @@ void CRealConsole::OnStartProcessAllowed()
 		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't start root process, ErrCode=0x%08X...", GetLastError());
 		DEBUGSTRPROC(L"### Can't start process\n");
 
-		SetConStatus(szErrInfo);
+		SetConStatus(szErrInfo, cso_Critical);
 
 		WARNING("Need to be checked, what happens on 'Run errors'");
 		return;
@@ -3230,7 +3229,7 @@ BOOL CRealConsole::StartProcess()
 	_ASSERTE(mn_MonitorThreadID!=0);
 
 	BOOL lbRc = FALSE;
-	SetConStatus(L"Preparing process startup line...", true);
+	SetConStatus(L"Preparing process startup line...", cso_ResetOnConsoleReady|cso_Critical);
 
 	SetConEmuEnvVarChild(mp_VCon->GetView(), mp_VCon->GetBack());
 	SetConEmuEnvVar(ghWnd);
@@ -3439,7 +3438,7 @@ BOOL CRealConsole::StartProcess()
 			_ASSERTE(mh_MainSrv==NULL);
 			SafeCloseHandle(mh_MainSrv);
 			_ASSERTE(isDetached());
-			SetConStatus(L"Restart console failed");
+			SetConStatus(L"Restart console failed", cso_Critical);
 		}
 
 		//Box("Cannot execute the command.");
@@ -3802,7 +3801,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 	if ((Args.RunAsAdministrator != crb_On) || gpConEmu->mb_IsUacAdmin)
 	{
 		LockSetForegroundWindow(LSFW_LOCK);
-		pRCon->SetConStatus(L"Starting root process...", true);
+		pRCon->SetConStatus(L"Starting root process...", cso_ResetOnConsoleReady|cso_Critical);
 
 		if (Args.pszUserName != NULL)
 		{
@@ -3909,7 +3908,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 			pp_sei->nShow = SW_SHOWNORMAL;
 
 			// GuiShellExecuteEx запускается в основном потоке, поэтому nCreateDuration здесь не считаем
-			pRCon->SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", true);
+			pRCon->SetConStatus((gOSVer.dwMajorVersion>=6) ? L"Starting root process as Administrator..." : L"Starting root process as user...", cso_ResetOnConsoleReady|cso_Critical);
 			//lbRc = gpConEmu->GuiShellExecuteEx(pp_sei, mp_VCon);
 
 			bool bPrevIgnore = gpConEmu->mb_IgnoreQuakeActivation;
@@ -4362,7 +4361,7 @@ void CRealConsole::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*
 
 void CRealConsole::ExpandSelection(SHORT anX, SHORT anY)
 {
-	mp_ABuf->ExpandSelection(anX, anY);
+	mp_ABuf->ExpandSelection(anX, anY, mp_ABuf->isSelectionPresent());
 }
 
 void CRealConsole::DoSelectionStop()
@@ -4377,17 +4376,30 @@ void CRealConsole::OnSelectionChanged()
 	CONSOLE_SELECTION_INFO sel = {};
 	if (mp_ABuf->GetConsoleSelectionInfo(&sel))
 	{
+		#ifdef _DEBUG
+		static CONSOLE_SELECTION_INFO old_sel = {};
+		bool bChanged = false; static int iTheSame = 0;
+		if (memcmp(&old_sel, &sel, sizeof(sel)) != 0)
+		{
+			old_sel = sel; iTheSame = 0;
+		}
+		else
+		{
+			iTheSame++;
+		}
+		#endif
+
 		if (sel.dwFlags & CONSOLE_MOUSE_SELECTION)
 			mb_WasMouseSelection = true;
 
 		bool bStreamMode = ((sel.dwFlags & CONSOLE_TEXT_SELECTION) != 0);
 		int  nCellsCount = mp_ABuf->GetSelectionCellsCount();
 
-		_wsprintf(szSelInfo, SKIPLEN(countof(szSelInfo)) L"%s selection {%i,%i}-{%i,%i} total %i chars",
-			bStreamMode ? L"Stream" : L"Block",
-			sel.srSelection.Left, sel.srSelection.Top,
-			sel.srSelection.Right, sel.srSelection.Bottom,
-			nCellsCount);
+		_wsprintf(szSelInfo, SKIPLEN(countof(szSelInfo)) L"%i chars {%i,%i}-{%i,%i} %s selection",
+			nCellsCount,
+			sel.srSelection.Left+1, sel.srSelection.Top+1,
+			sel.srSelection.Right+1, sel.srSelection.Bottom+1,
+			bStreamMode ? L"stream" : L"block");
 	}
 	SetConStatus(szSelInfo);
 }
@@ -4413,7 +4425,7 @@ bool CRealConsole::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0
 				pBuf = mp_ABuf;
 				pBuf->m_Type = rbt_Selection;
 				pBuf->StartSelection(TRUE, 0, 0);
-				pBuf->ExpandSelection(crEnd.X, crEnd.Y);
+				pBuf->ExpandSelection(crEnd.X, crEnd.Y, false);
 			}
 		}
 		else
@@ -5689,7 +5701,7 @@ void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 	// Окошко консоли скорее всего еще не инициализировано
 	if (hConWnd == NULL)
 	{
-		SetConStatus(L"Waiting for console server...", true);
+		SetConStatus(L"Waiting for console server...", cso_ResetOnConsoleReady|cso_Critical);
 		SetHwnd(ahConWnd);
 	}
 
@@ -7923,7 +7935,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	//}
 
 	CloseConfirmReset();
-	SetConStatus(L"Restarting process...");
+	SetConStatus(L"Restarting process...", cso_Critical);
 	return true;
 }
 
@@ -12410,21 +12422,6 @@ wrap:
 	return lbResult;
 }
 
-//void CRealConsole::CloseMapData()
-//{
-//	if (mp_ConsoleData) {
-//		UnmapViewOfFile(mp_ConsoleData);
-//		mp_ConsoleData = NULL;
-//		lstrcpy(ms_ConStatus, L"Console data was not opened!");
-//	}
-//	if (mh_FileMappingData) {
-//		CloseHandle(mh_FileMappingData);
-//		mh_FileMappingData = NULL;
-//	}
-//	mn_LastConsoleDataIdx = mn_LastConsolePacketIdx = /*mn_LastFarReadIdx =*/ -1;
-//	mn_LastFarReadTick = 0;
-//}
-
 void CRealConsole::CloseFarMapData(MSectionLock* pCS)
 {
 	MSectionLock CS;
@@ -12498,29 +12495,46 @@ LPCWSTR CRealConsole::GetConStatus()
 	}
 	if (m_ChildGui.hGuiWnd)
 		return NULL;
-	return ms_ConStatus;
+	return m_ConStatus.szText;
 }
 
-void CRealConsole::SetConStatus(LPCWSTR asStatus, bool abResetOnConsoleReady /*= false*/, bool abDontUpdate /*= false*/)
+void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ Options /*= cso_Default*/)
 {
+	if (!asStatus)
+		asStatus = L"";
+
+	wchar_t szPrefix[128];
+	_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::SetConStatus, hView=x%08X: ", (DWORD)(DWORD_PTR)mp_VCon->GetView());
+	wchar_t* pszInfo = lstrmerge(szPrefix, *asStatus ? asStatus : L"<Empty>");
+	DEBUGSTRSTATUS(pszInfo);
+
+	#ifdef _DEBUG
+	if ((m_ConStatus.Options == Options) && (lstrcmp(m_ConStatus.szText, asStatus) == 0))
+	{
+		int iDbg = 0; // Nothing was changed?
+	}
+	#endif
+
 	if (gpSetCls->isAdvLogging)
 	{
-		wchar_t szPrefix[128];
-		_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::SetConStatus, hView=x%08X: ", (DWORD)(DWORD_PTR)mp_VCon->GetView());
-		wchar_t* pszInfo = lstrmerge(szPrefix, (asStatus && *asStatus) ? asStatus : L"<Empty>");
 		if (mp_Log)
 			LogString(pszInfo, TRUE);
 		else
 			gpConEmu->LogString(pszInfo);
-		SafeFree(pszInfo);
 	}
 
-	lstrcpyn(ms_ConStatus, asStatus ? asStatus : L"", countof(ms_ConStatus));
-	mb_ResetStatusOnConsoleReady = abResetOnConsoleReady;
+	SafeFree(pszInfo);
 
-	lstrcpyn(CRealConsole::ms_LastRConStatus, ms_ConStatus, countof(CRealConsole::ms_LastRConStatus));
+	lstrcpyn(m_ConStatus.szText, asStatus, countof(m_ConStatus.szText));
+	m_ConStatus.Options = Options;
 
-	if (!abDontUpdate && isActive(false))
+	if (!gpSet->isStatusBarShow && !(Options & cso_Critical) && (asStatus && *asStatus))
+	{
+		// No need to force non-critical status messages to console (upper-left corner)
+		return;
+	}
+
+	if (!(Options & cso_DontUpdate) && isActive(false))
 	{
 		// Обновить статусную строку, если она показана
 		if (gpSet->isStatusBarShow)
@@ -12528,7 +12542,7 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, bool abResetOnConsoleReady /*=
 			// Перерисовать сразу
 			gpConEmu->mp_Status->UpdateStatusBar(true, true);
 		}
-		else if (!abDontUpdate && mp_VCon->GetView())
+		else if (!(Options & cso_DontUpdate) && mp_VCon->GetView())
 		{
 			mp_VCon->Update(true);
 		}
