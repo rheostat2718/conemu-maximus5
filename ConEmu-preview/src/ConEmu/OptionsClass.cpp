@@ -903,6 +903,27 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, ConfigName);
 }
 
+bool CSettings::SetOption(LPCWSTR asName, int anValue)
+{
+	bool lbRc = true;
+
+	if (!lstrcmpi(asName, L"CursorBlink"))
+	{
+		gpSet->AppStd.CursorActive.isBlinking = (anValue != 0);
+		if (ghOpWnd && mh_Tabs[thi_Cursor])
+			checkDlgButton(mh_Tabs[thi_Cursor], cbCursorBlink, (anValue != 0));
+		// Может выполняться в фоновом потоке!
+		// При таком (ниже) запуске после старта курсор не отрисовывается в промпте
+		// -basic -cmd cmd /k conemuc -guimacro status 0 2 -guimacro setoption cursorblink 0 & dir
+	}
+	else
+	{
+		lbRc = false;
+	}
+
+	return lbRc;
+}
+
 void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine /*= NULL*/)
 {
 	// Обработать 32/64 (найти tcc.exe и т.п.)
@@ -1005,7 +1026,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 	if ((SingleInstanceArg == sgl_Default) && gpSet->isQuakeStyle)
 	{
-		_ASSERTE(SingleInstanceShowHide == sih_None);
+		_ASSERTE((SingleInstanceShowHide == sih_None) || (gpSet->isSingleInstance && (SingleInstanceShowHide == sih_ShowMinimize)));
 		SingleInstanceArg = sgl_Enabled;
 	}
 
@@ -2114,11 +2135,11 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 	UpdatePos(gpConEmu->wndX, gpConEmu->wndY, true);
 
 	checkRadioButton(hWnd2, rCascade, rFixed, gpSet->wndCascade ? rCascade : rFixed);
-
+	SetDlgItemText(ghOpWnd, rCascade, gpSet->isQuakeStyle ? L"Centered" : L"Cascade");
 
 	checkDlgButton(hWnd2, cbLongOutput, gpSet->AutoBufferHeight);
 	TODO("Надо бы увеличить, но нужно сервер допиливать");
-	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 4, 0);
+	SendDlgItemMessage(hWnd2, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
 	SetDlgItemInt(hWnd2, tLongOutputHeight, gpSet->DefaultBufferHeight, FALSE);
 	//EnableWindow(GetDlgItem(hWnd2, tLongOutputHeight), gpSet->AutoBufferHeight);
 
@@ -2406,6 +2427,8 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2)
 	checkDlgButton(hWnd2, cbMonitorConsoleLang, gpSet->isMonitorConsoleLang ? BST_CHECKED : BST_UNCHECKED);
 
 	checkDlgButton(hWnd2, cbSleepInBackground, gpSet->isSleepInBackground);
+
+	checkDlgButton(hWnd2, cbRetardInactivePanes, gpSet->isRetardInactivePanes);
 
 	checkDlgButton(hWnd2, cbVisible, gpSet->isConVisible);
 
@@ -2835,7 +2858,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 			case chk_User:
 				wcscpy_c(szName, L"User"); break;
 			case chk_Macro:
-				_wsprintf(szName, SKIPLEN(countof(szName)) L"Macro %02i", ppHK->DescrLangID-vkGuMacro01+1); break;
+				_wsprintf(szName, SKIPLEN(countof(szName)) L"Macro %02i", ppHK->DescrLangID-vkGuiMacro01+1); break;
 			case chk_Modifier:
 			case chk_Modifier2:
 				wcscpy_c(szName, L"Modifier"); break;
@@ -4844,7 +4867,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rFixed:
 			gpSet->wndCascade = (CB == rCascade);
 			if (gpSet->isQuakeStyle)
+			{
 				UpdatePosSizeEnabled(hWnd2);
+				EnableWindow(GetDlgItem(hWnd2, cbApplyPos), TRUE);
+			}
 			break;
 		case cbUseCurrentSizePos:
 			gpSet->isUseCurrentSizePos = IsChecked(hWnd2, cbUseCurrentSizePos);
@@ -5459,7 +5485,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				checkDlgButton(hWnd2, cbUseClink, BST_UNCHECKED);
 				wchar_t szErrInfo[MAX_PATH+200];
 				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
-					L"Clink was not found in '%s\\clink'. Download and unpack clink files\nhttp://code.google.com/p/clink/\n\n"
+					L"Clink was not found in '%s\\clink'. Download and unpack clink files\nhttp://mridgers.github.io/clink/\n\n"
 					L"Note that you don't need to check 'Use clink'\nif you already have set up clink globally.",
 					gpConEmu->ms_ConEmuBaseDir);
 				MsgBox(szErrInfo, MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghOpWnd);
@@ -5467,7 +5493,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			gpConEmu->OnGlobalSettingsChanged();
 			break;
 		case cbClinkWebPage:
-			ShellExecute(NULL, L"open", L"http://code.google.com/p/clink", NULL, NULL, SW_SHOWNORMAL);
+			ShellExecute(NULL, L"open", L"http://mridgers.github.io/clink/", NULL, NULL, SW_SHOWNORMAL);
 			break;
 		case cbPortableRegistry:
 			#ifdef USEPORTABLEREGISTRY
@@ -5502,6 +5528,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbSleepInBackground:
 			gpSet->isSleepInBackground = IsChecked(hWnd2, cbSleepInBackground);
+			CVConGroup::OnGuiFocused(TRUE);
+			break;
+		case cbRetardInactivePanes:
+			gpSet->isRetardInactivePanes = IsChecked(hWnd2, cbRetardInactivePanes);
 			CVConGroup::OnGuiFocused(TRUE);
 			break;
 		case cbMinimizeOnLoseFocus:
@@ -8892,6 +8922,8 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 				// Переключиться на предыдущий таб
 				gpSetCls->OnPage((LPNMHDR)wParam);
 			}
+
+			break;
 
 		case WM_ACTIVATE:
 
@@ -12954,7 +12986,8 @@ void CSettings::UnregisterTabs()
 	mb_TabHotKeyRegistered = FALSE;
 }
 
-// Если asFontFile НЕ NULL - значит его пользователь указал через /fontfile
+// asFontFile may come from: ConEmu /fontfile <path-to-font-file>
+// or from RegisterFontsDir when enumerating font folder...
 BOOL CSettings::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 {
 	// Обработка параметра /fontfile
@@ -13262,11 +13295,11 @@ void CSettings::RegisterFonts()
 		return; // Если поиск шрифтов не требуется
 
 	// Сначала - регистрация шрифтов в папке программы
-	RegisterFontsInt(gpConEmu->ms_ConEmuExeDir);
+	RegisterFontsDir(gpConEmu->ms_ConEmuExeDir);
 
 	// Если папка запуска отличается от папки программы
 	if (lstrcmpW(gpConEmu->ms_ConEmuExeDir, gpConEmu->ms_ConEmuBaseDir))
-		RegisterFontsInt(gpConEmu->ms_ConEmuBaseDir); // зарегистрировать шрифты и из базовой папки
+		RegisterFontsDir(gpConEmu->ms_ConEmuBaseDir); // зарегистрировать шрифты и из базовой папки
 
 	// Если папка запуска отличается от папки программы
 	if (lstrcmpiW(gpConEmu->ms_ConEmuExeDir, gpConEmu->WorkDir()))
@@ -13283,7 +13316,7 @@ void CSettings::RegisterFonts()
 		if (!lbSkipCurDir)
 		{
 			// зарегистрировать шрифты и из папки запуска
-			RegisterFontsInt(gpConEmu->WorkDir());
+			RegisterFontsDir(gpConEmu->WorkDir());
 		}
 	}
 
@@ -13291,12 +13324,18 @@ void CSettings::RegisterFonts()
 	// Это делается в InitFont
 }
 
-void CSettings::RegisterFontsInt(LPCWSTR asFromDir)
+void CSettings::RegisterFontsDir(LPCWSTR asFromDir)
 {
+	if (!asFromDir || !*asFromDir)
+		return;
+
 	// Регистрация шрифтов в папке ConEmu
 	WIN32_FIND_DATA fnd;
-	wchar_t szFind[MAX_PATH*2]; wcscpy_c(szFind, asFromDir); // БЕЗ завершающего слеша!
+	wchar_t szFind[MAX_PATH*2]; wcscpy_c(szFind, asFromDir);
 	wchar_t* pszSlash = szFind + lstrlenW(szFind);
+	_ASSERTE(pszSlash > szFind);
+	if (*(pszSlash-1) == L'\\')
+		pszSlash--;
 	wcscpy_add(pszSlash, szFind, L"\\*.*");
 	HANDLE hFind = FindFirstFile(szFind, &fnd);
 

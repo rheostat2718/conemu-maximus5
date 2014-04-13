@@ -160,6 +160,7 @@ class CConEmuMain :
 		bool PreparePortableReg();
 		bool mb_UpdateJumpListOnStartup;
 		bool mb_FindBugMode;
+		UINT mn_LastTransparentValue;
 	private:
 		struct
 		{
@@ -193,7 +194,8 @@ class CConEmuMain :
 		MFileMapping<ConEmuGuiMapping> m_GuiAttachMapping;
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
-		void UpdateGuiInfoMappingActive(bool bActive);
+		static bool UpdateGuiInfoMappingFill(CVirtualConsole* pVCon, LPARAM lParam);
+		void UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr = true);
 		int mn_QuakePercent; // 0 - отключен, иначе (>0 && <=100) - идет анимация Quake
 		bool mb_InCreateWindow;
 		HMONITOR mh_MinFromMonitor;
@@ -336,6 +338,11 @@ class CConEmuMain :
 			WPARAM  wState;     // session state change event
 			LPARAM  lSessionID; // session ID
 
+			typedef BOOL (WINAPI* WTSRegisterSessionNotification_t)(HWND hWnd, DWORD dwFlags);
+			WTSRegisterSessionNotification_t pfnRegister;
+			typedef BOOL (WINAPI* WTSUnRegisterSessionNotification_t)(HWND hWnd);
+			WTSUnRegisterSessionNotification_t pfnUnregister;
+
 			#define SESSION_LOG_SIZE 128
 			struct EvtLog {
 				DWORD  nTick;
@@ -343,63 +350,13 @@ class CConEmuMain :
 				LPARAM lSessionID; // session ID
 			} g_evt[SESSION_LOG_SIZE];
 			LONG g_evtidx;
-			inline void Log(WPARAM State, LPARAM SessionID)
-			{
-				LONG i = _InterlockedIncrement(&g_evtidx);
-				EvtLog evt = {GetTickCount(), (DWORD)State, SessionID};
-				// Write a message at this index
-				g_evt[i & (SESSION_LOG_SIZE - 1)] = evt;
-			}
+			void Log(WPARAM State, LPARAM SessionID);
 
-			bool Connected()
-			{
-				return (wState!=7/*WTS_SESSION_LOCK*/);
-			}
+			bool Connected();
 
-			void SessionChanged(WPARAM State, LPARAM SessionID)
-			{
-				wState = State;
-				lSessionID = SessionID;
-				Log(State, SessionID);
-			}
+			void SessionChanged(WPARAM State, LPARAM SessionID);
 
-			void SetSessionNotification(bool bSwitch)
-			{
-				if (((hWtsApi!=NULL) == bSwitch) || !IsWindowsXP)
-					return;
-				if (bSwitch)
-				{
-					typedef BOOL (WINAPI* WTSRegisterSessionNotification_t)(HWND hWnd, DWORD dwFlags);
-
-					wState = (WPARAM)-1;
-					lSessionID = (LPARAM)-1;
-
-					hWtsApi = LoadLibrary(L"Wtsapi32.dll");
-					WTSRegisterSessionNotification_t pfn = hWtsApi ? (WTSRegisterSessionNotification_t)GetProcAddress(hWtsApi, "WTSRegisterSessionNotification") : NULL;
-					if (!pfn || !pfn(ghWnd, 0/*NOTIFY_FOR_THIS_SESSION*/))
-					{
-						if (hWtsApi)
-						{
-							FreeLibrary(hWtsApi);
-							hWtsApi = NULL;
-						}
-						return;
-					}
-				}
-				else if (hWtsApi)
-				{
-					typedef BOOL (WINAPI* WTSUnRegisterSessionNotification_t)(HWND hWnd);
-
-					WTSUnRegisterSessionNotification_t pfn = (WTSUnRegisterSessionNotification_t)GetProcAddress(hWtsApi, "WTSUnRegisterSessionNotification");
-					if (pfn && ghWnd)
-					{
-						pfn(ghWnd);
-					}
-
-					FreeLibrary(hWtsApi);
-					hWtsApi = NULL;
-				}
-			}
+			void SetSessionNotification(bool bSwitch);
 		} session;
 		bool isPiewUpdate;
 		bool gbPostUpdateWindowSize;
@@ -535,11 +492,11 @@ class CConEmuMain :
 		bool PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam, bool& isPrivate);
 		void CheckTopMostState();
 	public:
-		wchar_t* LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDir = NULL);
+		wchar_t* LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDir = NULL, wchar_t** ppszIcon = NULL);
 	private:
 		wchar_t* LoadConsoleBatch_File(LPCWSTR asSource);
 		wchar_t* LoadConsoleBatch_Drops(LPCWSTR asSource);
-		wchar_t* LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStartupDir = NULL);
+		wchar_t* LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStartupDir = NULL, wchar_t** ppszIcon = NULL);
 	public:
 		void RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon);
 		void RegisterMinRestore(bool abRegister);

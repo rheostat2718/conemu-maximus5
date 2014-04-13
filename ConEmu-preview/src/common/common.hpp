@@ -30,8 +30,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _COMMON_HEADER_HPP_
 #define _COMMON_HEADER_HPP_
 
-// Версия интерфейса
-#define CESERVER_REQ_VER    135
+// Interface version
+#define CESERVER_REQ_VER    136
+
+// Max tabs/panes count
+#define MAX_CONSOLE_COUNT 30
 
 #include "defines.h"
 #include "ConEmuColors.h"
@@ -89,6 +92,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 
 #define CEHOMEPAGE     L"http://conemu-maximus5.googlecode.com"
 #define CEHOMEPAGE_A    "http://conemu-maximus5.googlecode.com"
+#define CEDOWNLPAGE    L"http://www.fosshub.com/ConEmu.html"
 #define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/issues/entry"
 #define CEREPORTCRASH  L"http://code.google.com/p/conemu-maximus5/issues/entry"
 #define CEWHATSNEW     L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New"
@@ -383,6 +387,7 @@ const CECMD
 	//CECMD_DEFTERMSTARTED = 75, // Уведомить GUI, что инициализация хуков для Default Terminal была завершена -- не требуется, ConEmuC ждет успеха
 	CECMD_UPDCONMAPHDR   = 76, // AltServer не может менять CESERVER_CONSOLE_MAPPING_HDR во избежание конфликтов. Это делает только RM_MAINSERVER (req.ConInfo)
 	CECMD_SETCONSCRBUF   = 77, // CESERVER_REQ_SETCONSCRBUF - temporarily block active server reading thread to change console buffer size
+	CECMD_PORTABLESTART  = 78, // CESERVER_REQ_PORTABLESTARTED - used when XxxPortable.exe starts Xxx.exe (paf - kitty, tcc, etc.)
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1051,8 +1056,8 @@ struct ConEmuGuiMapping
 	//BOOL     bSleepInBackg; // Sleep in background
 
 	BOOL     bGuiActive;    // Gui is In focus or Not
-	HWND2    hActiveCon;    // Active Real console HWND
-	DWORD    dwActiveTick;  // Tick, when hActiveCon/bGuiActive was changed
+	DWORD    dwActiveTick;  // Tick, when hActiveCons/bGuiActive was changed
+	HWND2    hActiveCons[MAX_CONSOLE_COUNT]; // Active or visible Real console HWND
 
 	/* Основной шрифт в GUI */
 	struct ConEmuMainFont MainFont;
@@ -1761,6 +1766,7 @@ struct GuiStylesAndShifts
 {
 	DWORD nStyle, nStyleEx;
 	RECT  Shifts;
+	WCHAR szExeName[MAX_PATH]; // name only, not path
 };
 
 // CECMD_ATTACHGUIAPP
@@ -1779,7 +1785,17 @@ struct CESERVER_REQ_ATTACHGUIAPP
 	//DWORD nStyle, nStyleEx;
 	//BOOL  bHideCaption; // 
 	struct GuiStylesAndShifts Styles;
-	wchar_t sAppFileName[MAX_PATH*2];
+	wchar_t sAppFilePathName[MAX_PATH*2];
+};
+
+// CECMD_PORTABLESTART
+struct CESERVER_REQ_PORTABLESTARTED
+{
+	DWORD   nSubsystem;
+	DWORD   nImageBits;
+	HANDLE2 hProcess;
+	DWORD   nPID;
+	wchar_t sAppFilePathName[MAX_PATH*2];
 };
 
 // CECMD_SETFOCUS
@@ -1922,7 +1938,8 @@ struct CESERVER_REQ
 		CESERVER_REQ_PEEKREADINFO PeekReadInfo;
 		MyAssertInfo AssertInfo;
 		CESERVER_REQ_ATTACHGUIAPP AttachGuiApp;
-		struct GuiStylesAndShifts GuiAppShifts;
+		CESERVER_REQ_PORTABLESTARTED PortableStarted;
+		GuiStylesAndShifts GuiAppShifts;
 		CESERVER_REQ_SETFOCUS setFocus;
 		CESERVER_REQ_SETPARENT setParent;
 		CESERVER_REQ_SETGUIEXTERN SetGuiExtern;

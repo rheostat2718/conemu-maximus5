@@ -281,7 +281,7 @@ int AttachRootProcess()
 				{
 					do
 					{
-						for(UINT i = 0; i < gpSrv->nProcessCount; i++)
+						for (UINT i = 0; i < gpSrv->nProcessCount; i++)
 						{
 							if (prc.th32ProcessID != gnSelfPID
 							        && prc.th32ProcessID == gpSrv->pnProcesses[i])
@@ -315,7 +315,7 @@ int AttachRootProcess()
 						if (dwServerPID)
 							break;
 					}
-					while(Process32Next(hSnap, &prc));
+					while (Process32Next(hSnap, &prc));
 				}
 
 				CloseHandle(hSnap);
@@ -687,7 +687,7 @@ int ServerInitGuiTab()
 		}
 		else
 		{
-			ghConEmuWnd = pOut->StartStop.hWnd;
+			ghConEmuWnd = pOut->StartStopRet.hWnd;
 			SetConEmuWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
 			gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
 			
@@ -1148,6 +1148,9 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
 	}
 
+
+	// Проверка. Для дебаггера должен быть RM_UNDEFINED!
+	_ASSERTE(!(gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcess || gpSrv->DbgInfo.bDebugProcessTree) || gnRunMode == RM_UNDEFINED);
 
 	if (!gbAttachMode && !gpSrv->DbgInfo.bDebuggerActive)
 	{
@@ -2042,7 +2045,7 @@ HWND FindConEmuByPID()
 						break;
 					}
 				}
-				while(Process32Next(hSnap, &prc));
+				while (Process32Next(hSnap, &prc));
 			}
 
 			CloseHandle(hSnap);
@@ -2175,7 +2178,7 @@ void CheckConEmuHwnd()
 	}
 }
 
-bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
+bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 {
 	bool bConnected = false;
 	DWORD nDupErrCode = 0;
@@ -2241,9 +2244,7 @@ bool TryConnect2Gui(HWND hGui, HWND& hDcWnd, CESERVER_REQ* pIn)
 	}
 	else
 	{
-		//ghConEmuWnd = hGui;
 		ghConEmuWnd = pOut->StartStopRet.hWnd;
-		hDcWnd = pOut->StartStopRet.hWndDc;
 		SetConEmuWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
 		gpSrv->dwGuiPID = pOut->StartStopRet.dwPID;
 		_ASSERTE(gpSrv->pConsoleMap != NULL); // мэппинг уже должен быть создан,
@@ -2319,7 +2320,7 @@ HWND Attach2Gui(DWORD nTimeout)
 	// Нить Refresh НЕ должна быть запущена, иначе в мэппинг могут попасть данные из консоли
 	// ДО того, как отработает ресайз (тот размер, который указал установить GUI при аттаче)
 	_ASSERTE(gpSrv->dwRefreshThread==0 || gpSrv->bWasDetached);
-	HWND hGui = NULL, hDcWnd = NULL;
+	HWND hGui = NULL;
 	//UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
 	BOOL bNeedStartGui = FALSE;
 	DWORD nStartedGuiPID = 0;
@@ -2373,7 +2374,7 @@ HWND Attach2Gui(DWORD nTimeout)
 			{
 				do
 				{
-					for(UINT i = 0; i < gpSrv->nProcessCount; i++)
+					for (UINT i = 0; i < gpSrv->nProcessCount; i++)
 					{
 						if (lstrcmpiW(prc.szExeFile, L"conemu.exe")==0
 							|| lstrcmpiW(prc.szExeFile, L"conemu64.exe")==0)
@@ -2385,7 +2386,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 					if (dwGuiPID) break;
 				}
-				while(Process32Next(hSnap, &prc));
+				while (Process32Next(hSnap, &prc));
 			}
 
 			CloseHandle(hSnap);
@@ -2575,13 +2576,17 @@ HWND Attach2Gui(DWORD nTimeout)
 	// другого процесса - шрифт все-равно поменять не получится
 	//BOOL lbNeedSetFont = TRUE;
 
+	_ASSERTE(ghConEmuWndDC==NULL);
+	ghConEmuWndDC = NULL;
+
 	// Если с первого раза не получится (GUI мог еще не загрузиться) пробуем еще
-	while (!hDcWnd && dwDelta <= nTimeout)
+	_ASSERTE(dwDelta < nTimeout); // Must runs at least once!
+	while (dwDelta <= nTimeout)
 	{
 		if (gpSrv->hGuiWnd)
 		{
-			if (TryConnect2Gui(gpSrv->hGuiWnd, hDcWnd, pIn) && hDcWnd)
-				break; // OK
+			// On success, it will set ghConEmuWndDC and others...
+			TryConnect2Gui(gpSrv->hGuiWnd, pIn);
 		}
 		else
 		{
@@ -2599,12 +2604,13 @@ HWND Attach2Gui(DWORD nTimeout)
 						continue;					
 				}
 
-				if (TryConnect2Gui(hFindGui, hDcWnd, pIn))
+				// On success, it will set ghConEmuWndDC and others...
+				if (TryConnect2Gui(hFindGui, pIn))
 					break; // OK
 			}
 		}
 
-		if (hDcWnd)
+		if (ghConEmuWndDC)
 			break;
 
 		dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
@@ -2616,7 +2622,7 @@ HWND Attach2Gui(DWORD nTimeout)
 		dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
 	}
 
-	return hDcWnd;
+	return ghConEmuWndDC;
 }
 
 
@@ -4203,7 +4209,22 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			gpSrv->nLastConsoleActiveTick = GetTickCount();
 		}
 
-		if ((ghConWnd == gpSrv->guiSettings.hActiveCon) || (gpSrv->guiSettings.hActiveCon == NULL) || bConsoleVisible)
+		bool bOurConActive = false, bOneConActive = false;
+		for (size_t i = 0; i < countof(gpSrv->guiSettings.hActiveCons); i++)
+		{
+			HWND h = gpSrv->guiSettings.hActiveCons[i];
+			if (h)
+			{
+				bOneConActive = true;
+				if (ghConWnd == h)
+				{
+					bOurConActive = true;
+					break;
+				}
+			}
+		}
+
+		if (bOurConActive || !bOneConActive || bConsoleVisible)
 			bNewActive = gpSrv->guiSettings.bGuiActive || !(gpSrv->guiSettings.Flags & CECF_SleepInBackg);
 		else
 			bNewActive = FALSE;
@@ -4413,7 +4434,7 @@ int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
 	BOOL lbPanelVisible = TRUE;
 	hRgn = CreateRectRgn(pRgn->rcRects->left, pRgn->rcRects->top, pRgn->rcRects->right, pRgn->rcRects->bottom);
 
-	for(int i = 1; i < pRgn->nRectCount; i++)
+	for (int i = 1; i < pRgn->nRectCount; i++)
 	{
 		RECT rcTest;
 

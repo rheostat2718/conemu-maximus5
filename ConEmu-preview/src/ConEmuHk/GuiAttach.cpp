@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,7 @@ RECT    grcConEmuClient = {}; // Для аттача гуевых окон
 BOOL    gbAttachGuiClient = FALSE; // Для аттача гуевых окон
 BOOL 	gbGuiClientAttached = FALSE; // Для аттача гуевых окон (успешно подключились)
 BOOL 	gbGuiClientExternMode = FALSE; // Если нужно показать Gui-приложение вне вкладки ConEmu
+DWORD   gnAttachPortableGuiCui = 0; // XxxPortable.exe запускает xxx.exe который уже и нужно цеплять (IMAGE_SUBSYSTEM_WINDOWS_[G|C]UI)
 struct GuiStylesAndShifts gGuiClientStyles = {}; // Запомнить сдвиги окна внутри ConEmu
 HWND 	ghAttachGuiClient = NULL;
 DWORD 	gnAttachGuiClientFlags = 0;
@@ -242,13 +243,18 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 		}
 		else
 		{
+			const DWORD dwNormalSized = (WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX); // Some applications can 'disable' Maximize button but they are still 'resizeable'
+			const DWORD dwDlgSized = (WS_POPUP|WS_THICKFRAME);
+			const DWORD dwSizedMask = (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_POPUP|DS_MODALFRAME|WS_CHILDWINDOW);
+			const DWORD dwNoCaptionSized = (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX);
+			// Lets check
 			bool lbCanAttach =
-							// Обычное окно с заголовком
-							((dwStyle & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW)
-							// Диалог с ресайзом рамки
-							|| ((dwStyle & (WS_POPUP|WS_THICKFRAME)) == (WS_POPUP|WS_THICKFRAME))
-							// Обычное окно без заголовка
-							|| ((dwStyle & (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_POPUP|DS_MODALFRAME|WS_CHILDWINDOW)) == (WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX)) 
+							// Обычное окно с заголовком (0x00CF0000 or 0x00CE0000)
+							((dwStyle & dwNormalSized) == dwNormalSized)
+							// Диалог с ресайзом рамки (0x80040000)
+							|| ((dwStyle & dwDlgSized) == dwDlgSized)
+							// Обычное окно без заголовка (0xC0070080 : 0x00070000)
+							|| ((dwStyle & dwSizedMask) == dwNoCaptionSized)
 							;
 			if (dwStyle & (DS_MODALFRAME|WS_CHILDWINDOW))
 				lbCanAttach = false;
@@ -256,6 +262,13 @@ bool CheckCanCreateWindow(LPCSTR lpClassNameA, LPCWSTR lpClassNameW, DWORD& dwSt
 				lbCanAttach = false;
 			else if (dwExStyle & (WS_EX_TOOLWINDOW|WS_EX_TOPMOST|WS_EX_DLGMODALFRAME|WS_EX_MDICHILD))
 				lbCanAttach = false;
+
+			// Disable attach of some window classes
+			if (lbCanAttach && lpClassNameW && (((DWORD_PTR)lpClassNameW) & ~0xFFFF))
+			{
+				if (lstrcmpW(lpClassNameW, L"MozillaTempWindowClass") == 0)
+					lbCanAttach = false;
+			}
 
 			if (lbCanAttach)
 			{
@@ -615,7 +628,7 @@ void OnGuiWindowAttached(HWND hWindow, HMENU hMenu, LPCSTR asClassA, LPCWSTR asC
 	pIn->AttachGuiApp.Styles.nStyle = nCurStyle; // стили могли измениться после создания окна,
 	pIn->AttachGuiApp.Styles.nStyleEx = nCurStyleEx; // поэтому получим актуальные
 	user->getWindowRect(hWindow, &pIn->AttachGuiApp.rcWindow);
-	GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
+	GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFilePathName, countof(pIn->AttachGuiApp.sAppFilePathName));
 	pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
 
 	wchar_t szGuiPipeName[128];
@@ -805,7 +818,7 @@ void OnShowGuiClientWindow(HWND hWnd, int &nCmdShow, BOOL &rbGuiAttach, BOOL &rb
 			pIn->AttachGuiApp.Styles.nStyle = nCurStyle; // стили могли измениться после создания окна,
 			pIn->AttachGuiApp.Styles.nStyleEx = nCurStyleEx; // поэтому получим актуальные
 			user->getWindowRect(hWnd, &pIn->AttachGuiApp.rcWindow);
-			GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
+			GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFilePathName, countof(pIn->AttachGuiApp.sAppFilePathName));
 
 			wchar_t szGuiPipeName[128];
 			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);
@@ -867,6 +880,9 @@ void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui)
 		{
 			pIn->GuiAppShifts.nStyle = anStyle;
 			pIn->GuiAppShifts.nStyleEx = anStyleEx;
+			wchar_t szOurExe[MAX_PATH*2] = L"";
+			GetModuleFileName(NULL, szOurExe, countof(szOurExe));
+			lstrcpyn(pIn->GuiAppShifts.szExeName, PointToName(szOurExe), countof(pIn->GuiAppShifts.szExeName));
 
 			wchar_t szGuiPipeName[128];
 			msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", (DWORD)ghConEmuWnd);

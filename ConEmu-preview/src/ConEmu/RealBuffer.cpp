@@ -1958,10 +1958,9 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	wchar_t* lpChar = con.pConChar;
 	WORD* lpAttr = con.pConAttr;
 
-	if (mp_RCon->mb_ResetStatusOnConsoleReady)
+	if (mp_RCon->m_ConStatus.Options & CRealConsole::cso_ResetOnConsoleReady)
 	{
-		mp_RCon->mb_ResetStatusOnConsoleReady = false;
-		mp_RCon->ms_ConStatus[0] = 0;
+		ZeroStruct(mp_RCon->m_ConStatus);
 	}
 
 
@@ -2553,7 +2552,7 @@ COORD CRealBuffer::ScreenToBuffer(COORD crMouse)
 	return crMouse;
 }
 
-COORD CRealBuffer::BufferToScreen(COORD crMouse, bool bVertOnly /*= false*/)
+COORD CRealBuffer::BufferToScreen(COORD crMouse, bool bFixup /*= true*/, bool bVertOnly /*= false*/)
 {
 	if (!this)
 		return crMouse;
@@ -2561,8 +2560,14 @@ COORD CRealBuffer::BufferToScreen(COORD crMouse, bool bVertOnly /*= false*/)
 	if (isScroll())
 	{
 		if (!bVertOnly)
-			crMouse.X = max(0,crMouse.X-con.m_sbi.srWindow.Left);
-		crMouse.Y = max(0,crMouse.Y-con.m_sbi.srWindow.Top);
+			crMouse.X = crMouse.X-con.m_sbi.srWindow.Left;
+		crMouse.Y = crMouse.Y-con.m_sbi.srWindow.Top;
+	}
+
+	if (bFixup)
+	{
+		crMouse.X = max(0,min(crMouse.X,GetTextWidth()-1));
+		crMouse.Y = max(0,min(crMouse.Y,GetTextHeight()-1));
 	}
 
 	return crMouse;
@@ -2641,7 +2646,7 @@ bool CRealBuffer::CanProcessHyperlink(const COORD& crMouse)
 	if (mp_RCon->isFar())
 	{
 		RECT rc;
-		COORD crMap = BufferToScreen(crMouse);
+		COORD crMap = BufferToScreen(crMouse, false, false);
 		if (isLeftPanel() && GetPanelRect(FALSE, &rc, TRUE, TRUE) && CoordInRect(crMap, rc))
 			return false;
 		if (isRightPanel() && GetPanelRect(TRUE, &rc, TRUE, TRUE) && CoordInRect(crMap, rc))
@@ -3088,7 +3093,10 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		}
 	}
 
-	if (con.bBufferHeight && ((m_Type != rbt_Primary) || !lbFarBufferSupported || !lbMouseSendAllowed || lbMouseOverScroll))
+	if (con.bBufferHeight
+		&& ((m_Type != rbt_Primary) || !lbFarBufferSupported || !lbMouseSendAllowed || lbMouseOverScroll
+			|| (((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL)) && isSelfSelectMode())
+			))
 	{
 		if (messg == WM_MOUSEWHEEL)
 		{
@@ -3277,6 +3285,8 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		return false;
 	}
 
+	bool bWasSelection = isSelectionPresent();
+
 	// Получить известные координаты символов
 	COORD crScreen = mp_RCon->mp_VCon->ClientToConsole(x,y);
 	MinMax(crScreen.X, 0, TextWidth()-1);
@@ -3389,7 +3399,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			}
 			else
 			{
-				ExpandSelection(cr.X, cr.Y);
+				ExpandSelection(cr.X, cr.Y, bWasSelection);
 			}
 
 		}
@@ -3746,7 +3756,7 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	if ((anFromMsg == WM_LBUTTONDBLCLK) || (pcrTo && (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)))
 	{
 		if (pcrTo)
-			ExpandSelection(pcrTo->X, pcrTo->Y);
+			ExpandSelection(pcrTo->X, pcrTo->Y, false);
 		con.m_sel.dwFlags |= CONSOLE_DBLCLICK_SELECTION;
 
 		_ASSERTE(anFromMsg == WM_LBUTTONDBLCLK);
@@ -3769,11 +3779,13 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	}
 }
 
-void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY)
+void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 {
 	_ASSERTE(con.m_sel.dwFlags!=0);
 	// Добавил "-3" чтобы на прокрутку не ругалась
 	_ASSERTE(anY==-1 || anY>=(con.nTopVisibleLine-3));
+
+	CONSOLE_SELECTION_INFO cur_sel = con.m_sel;
 
 	// 131017 Scroll content if selection cursor goes out of visible screen
 	if (anY < con.nTopVisibleLine)
@@ -3835,7 +3847,12 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY)
 		con.m_sel.srSelection.Bottom = cr.Y;
 	}
 
-	UpdateSelection();
+	bool bChanged = (memcmp(&cur_sel, &con.m_sel, sizeof(cur_sel)) != 0);
+
+	if (!bWasSelection || bChanged)
+	{
+		UpdateSelection();
+	}
 }
 
 void CRealBuffer::DoSelectionStop()
@@ -3877,8 +3894,8 @@ bool CRealBuffer::DoSelectionCopy(bool bCopyAll /*= false*/, BYTE nFormat /*= 0x
 		// Сначала проверим, помещается ли "выделенная область" в "ВИДИМУЮ область"
 		if (m_Type == rbt_Primary)
 		{
-			COORD crStart = BufferToScreen(MakeCoord(con.m_sel.srSelection.Left, con.m_sel.srSelection.Top));
-			COORD crEnd = BufferToScreen(MakeCoord(con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom));
+			COORD crStart = BufferToScreen(MakeCoord(con.m_sel.srSelection.Left, con.m_sel.srSelection.Top), false);
+			COORD crEnd = BufferToScreen(MakeCoord(con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom), false);
 
 			int nTextWidth = this->GetTextWidth();
 			int nTextHeight = this->GetTextHeight();
@@ -4384,8 +4401,8 @@ void CRealBuffer::UpdateSelection()
 
 	TODO("Это корректно? Нужно обновить VCon");
 	con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
-	mp_RCon->mp_VCon->Update(true);
-	mp_RCon->mp_VCon->Redraw();
+	//mp_RCon->mp_VCon->Update(true); -- Update() и так вызывается в PaintVConNormal
+	mp_RCon->mp_VCon->Redraw(true);
 }
 
 bool CRealBuffer::isConSelectMode()
@@ -4510,7 +4527,7 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else
 			{
-				ExpandSelection(cr.X,cr.Y);
+				ExpandSelection(cr.X,cr.Y, true);
 			}
 		}
 
@@ -5239,12 +5256,12 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	}
 
 	// Если требуется показать "статус" - принудительно перебиваем первую видимую строку возвращаемого буфера
-	if (!gpSet->isStatusBarShow && mp_RCon->ms_ConStatus[0])
+	if (!gpSet->isStatusBarShow && mp_RCon->m_ConStatus.szText[0] && (mp_RCon->m_ConStatus.Options & CRealConsole::cso_Critical))
 	{
-		int nLen = _tcslen(mp_RCon->ms_ConStatus);
-		wmemcpy(pChar, mp_RCon->ms_ConStatus, nLen);
+		int nLen = _tcslen(mp_RCon->m_ConStatus.szText);
+		wmemcpy(pChar, mp_RCon->m_ConStatus.szText, nLen);
 
-		if (nWidth>nLen)
+		if (nWidth > nLen)
 			wmemset(pChar+nLen, L' ', nWidth-nLen);
 
 		//wmemset((wchar_t*)pAttr, 0x47, nWidth);
@@ -6054,7 +6071,7 @@ bool CRealBuffer::FindRangeStart(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[In/Out
 				crFrom.X += 2;
 				break;
 			}
-			else if (pChar[crFrom.X+1] != L'\\' && pChar[crFrom.X+1] != L'/')
+			else if (bUrlMode && pChar[crFrom.X+1] != L'\\' && pChar[crFrom.X+1] != L'/')
 			{
 				goto wrap; // Не оно
 			}
