@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Macro.h"
 #include "VConGroup.h"
 #include "Menu.h"
+#include "AboutDlg.h"
 
 
 /* ********************************* */
@@ -121,6 +122,8 @@ namespace ConEmuMacro
 	/* ****** Macros functions ****** */
 	/* ****************************** */
 
+	// Диалог About(["Tab"])
+	LPWSTR About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Закрыть/прибить текущую консоль
 	LPWSTR Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
@@ -164,6 +167,8 @@ namespace ConEmuMacro
 	LPWSTR Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// SetOption("<Name>",<Value>)
 	LPWSTR SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Диалог Settings
+	LPWSTR Settings(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Shell (ShellExecute)
 	LPWSTR Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Split
@@ -176,6 +181,7 @@ namespace ConEmuMacro
 	LPWSTR Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Transparency
 	LPWSTR Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	LPWSTR TransparencyHelper(int nCmd, int nValue); // helper, это не макро-фукнция
 	// Fullscreen
 	LPWSTR WindowFullscreen(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Maximize
@@ -195,6 +201,7 @@ namespace ConEmuMacro
 		bool NoThreadSafe;
 	} Functions[] = {
 		// List all functions
+		{About, {L"About"}},
 		{IsConEmu, {L"IsConEmu"}},
 		{Close, {L"Close"}},
 		{FindEditor, {L"FindEditor"}},
@@ -222,6 +229,7 @@ namespace ConEmuMacro
 		{Shell, {L"Shell", L"ShellExecute"}},
 		{Select, {L"Select"}},
 		{SetOption, {L"SetOption"}},
+		{Settings, {L"Settings"}},
 		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
 		{Task, {L"Task"}},
 		{Transparency, {L"Transparency"}},
@@ -1069,6 +1077,18 @@ wrap:
 	return rsString;
 }
 /* ***  Теперь - собственно макросы  *** */
+
+// Диалог About(["Tab"])
+LPWSTR ConEmuMacro::About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszPageName = NULL;
+	if (p->IsStrArg(0))
+		p->GetStrArg(0, pszPageName);
+
+	ConEmuAbout::OnInfo_About(pszPageName);
+
+	return lstrdup(L"OK");
+}
 
 // Проверка, есть ли ConEmu GUI. Функцию мог бы плагин и сам обработать,
 // но для "общности" возвращаем "Yes" здесь
@@ -2148,12 +2168,44 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 		gpConEmu->OnAlwaysOnTop();
 		pszResult = lstrdup(L"OK");
 	}
+	else if (!lstrcmpi(pszName, L"AlphaValue"))
+	{
+		if (p->GetIntArg(1, nValue))
+			pszResult = TransparencyHelper(0, nValue);
+	}
+	else if (!lstrcmpi(pszName, L"AlphaValueInactive"))
+	{
+		if (p->GetIntArg(1, nValue))
+			pszResult = TransparencyHelper(2, nValue);
+	}
+	else if (!lstrcmpi(pszName, L"AlphaValueSeparate"))
+	{
+		if (p->GetIntArg(1, nValue))
+			pszResult = TransparencyHelper(4, nValue);
+	}
+	else if (!lstrcmpi(pszName, L"CursorBlink"))
+	{
+		if (p->GetIntArg(1, nValue))
+			pszResult = gpSetCls->SetOption(pszName, nValue) ? lstrdup(L"OK") : NULL;
+	}
 	else
 	{
 		//TODO: More options on demand
 	}
 
 	return pszResult ? pszResult : lstrdup(L"UnknownOption");
+}
+
+// Диалог Settings
+LPWSTR ConEmuMacro::Settings(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	int IdShowPage = 0;
+	if (p->IsIntArg(0))
+		p->GetIntArg(0, IdShowPage);
+
+	CSettings::Dialog(IdShowPage);
+
+	return lstrdup(L"OK");
 }
 
 // ShellExecute
@@ -2643,28 +2695,51 @@ LPWSTR ConEmuMacro::HighlightMouse(GuiMacro* p, CRealConsole* apRCon, bool abFro
 LPWSTR ConEmuMacro::Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nCmd, nValue;
-	if (!p->GetIntArg(0, nCmd) || !(nCmd == 0 || nCmd == 1))
+	if (!p->GetIntArg(0, nCmd) || !(nCmd >= 0 && nCmd <= 4))
 		return lstrdup(L"InvalidArg");
 	if (!p->GetIntArg(1, nValue))
 		return lstrdup(L"InvalidArg");
 
-	int newV = gpSet->nTransparent;
+	return TransparencyHelper(nCmd, nValue);
+}
+
+LPWSTR ConEmuMacro::TransparencyHelper(int nCmd, int nValue)
+{
+	int oldValue, newValue;
 
 	switch (nCmd)
 	{
 	case 0:
-		// Absolute value
-		newV = max(MIN_ALPHA_VALUE, min(MAX_ALPHA_VALUE, nValue));
+		// Absolute value, "AlphaValue" (active)
+		oldValue = gpSet->nTransparent;
+		gpSet->nTransparent = newValue = max(MIN_ALPHA_VALUE, min(MAX_ALPHA_VALUE, nValue));
 		break;
 	case 1:
-		// Relative value
-		newV = max(MIN_ALPHA_VALUE, min(MAX_ALPHA_VALUE, newV+nValue));
+		// Relative value, "AlphaValue" (active)
+		oldValue = gpSet->nTransparent;
+		gpSet->nTransparent = newValue = max(MIN_ALPHA_VALUE, min(MAX_ALPHA_VALUE, gpSet->nTransparent+nValue));
 		break;
+	case 2:
+		// Absolute value, "AlphaValueInactive" (inactive)
+		oldValue = gpSet->nTransparentInactive;
+		gpSet->nTransparentInactive = newValue = max(MIN_INACTIVE_ALPHA_VALUE, min(MAX_ALPHA_VALUE, nValue));
+		break;
+	case 3:
+		// Relative value, "AlphaValueInactive" (inactive)
+		oldValue = gpSet->nTransparentInactive;
+		gpSet->nTransparentInactive = newValue = max(MIN_INACTIVE_ALPHA_VALUE, min(MAX_ALPHA_VALUE, gpSet->nTransparentInactive+nValue));
+		break;
+	case 4:
+		// "AlphaValueSeparate"
+		oldValue = gpSet->isTransparentSeparate;
+		newValue = gpSet->isTransparentSeparate = (nValue != 0);
+		break;
+	default:
+		return lstrdup(L"InvalidArg");
 	}
 
-	if (newV != gpSet->nTransparent)
+	if (oldValue != newValue)
 	{
-		gpSet->nTransparent = newV;
 		gpConEmu->OnTransparent();
 	}
 

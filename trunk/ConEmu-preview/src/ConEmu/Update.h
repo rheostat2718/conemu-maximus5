@@ -31,6 +31,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DOWNLOADER_IMPORTS
 #include "../ConEmuCD/Downloader.h"
 
+#define UPD_PROGRESS_CONFIRM_DOWNLOAD  5
+#define UPD_PROGRESS_DOWNLOAD_START   10
+#define UPD_PROGRESS_CONFIRM_UPDATE   98
+#define UPD_PROGRESS_EXIT_AND_UPDATE  99
+
 struct ConEmuUpdateSettings;
 class CConEmuUpdate;
 class MSection;
@@ -68,7 +73,7 @@ protected:
 	BOOL mb_ManualCallMode;
 	ConEmuUpdateSettings* mp_Set;
 
-	bool mb_InShowLastError;
+	long mn_InShowMsgBox;
 	wchar_t* ms_LastErrorInfo;
 	MSection* mp_LastErrorSC;
 
@@ -82,7 +87,7 @@ protected:
 
 	static DWORD WINAPI CheckThreadProc(LPVOID lpParameter);
 	DWORD CheckProcInt();
-	void GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&szServer)[100], wchar_t (&szInfo)[100]);
+	void GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&szServer)[100], wchar_t (&szServerRA)[100], wchar_t (&szInfo)[100]);
 
 	wchar_t* CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, HANDLE& hFile);
 	wchar_t* CreateBatchFile(LPCWSTR asPackage);
@@ -131,12 +136,17 @@ protected:
 	void RequestTerminate();
 	bool mb_RequestTerminate;
 	UpdateStep m_UpdateStep;
-	wchar_t ms_NewVersion[64], ms_CurVersion[64], ms_SkipVersion[64];
+	bool mb_NewVersionAvailable;
+	wchar_t ms_NewVersion[64], ms_OurVersion[64], ms_SkipVersion[64];
 	wchar_t ms_VerOnServer[100]; // Information about available server versions
+	wchar_t ms_VerOnServerRA[100]; // Information about available server versions (right aligned)
 	wchar_t ms_CurVerInfo[100];  // Version + stable/preview/alpha
 	wchar_t ms_DefaultTitle[128];
-	bool QueryConfirmation(UpdateStep step, LPCWSTR asParm = NULL);
-	bool QueryConfirmationInt(LPCWSTR asConfirmInfo);
+	wchar_t* mpsz_ConfirmSource;
+	bool QueryConfirmation(UpdateStep step);
+	bool QueryConfirmationDownload();
+	bool QueryConfirmationUpdate();
+	void QueryConfirmationNoNewVer();
 	void WaitAllInstances();
 	bool Check7zipInstalled();
 	#if 0

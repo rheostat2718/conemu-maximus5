@@ -241,6 +241,7 @@ class CSettings
 		void debugLogInfo(HWND hWnd2, CESERVER_REQ_PEEKREADINFO* pInfo);
 		void debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTick, DWORD anDur, LPCWSTR asPipe, CESERVER_REQ* pResult = NULL);
 		//
+		bool SetOption(LPCWSTR asName, int anValue);
 		void SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine = NULL);
 		void SettingsPreSave();
 		//void InitSettings();
@@ -264,9 +265,7 @@ class CSettings
 		void InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
 		BOOL RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
 		void RegisterFonts();
-	private:
-		void RegisterFontsInt(LPCWSTR asFromDir);
-		//void ApplyStartupOptions();
+		void RegisterFontsDir(LPCWSTR asFromDir);
 	public:
 		enum ShellIntegrType
 		{

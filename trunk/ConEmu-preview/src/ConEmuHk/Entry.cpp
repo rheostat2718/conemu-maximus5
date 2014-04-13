@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"vim.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"xxx.exe"
 //	#define SHOW_EXE_TIMINGS
 //	#define SHOW_FIRST_ANSI_CALL
 #endif
@@ -90,6 +90,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #undef FULL_STARTUP_ENV
 #include "../common/StartupEnv.h"
+
+// _CrtCheckMemory can't be used in DLL_PROCESS_ATTACH
+#undef MCHKHEAP
+#include "../common/MArray.h"
 
 
 #if defined(_DEBUG) || defined(SHOW_EXE_TIMINGS)
@@ -162,6 +166,7 @@ extern void ShutdownHooks();
 extern void InitializeHookedModules();
 extern void FinalizeHookedModules();
 extern DWORD GetMainThreadId(bool bUseCurrentAsMain);
+extern MMap<DWORD,BOOL> gStartedThreads;
 extern HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir, bool bRunAsAdmin, bool bForce);
 //HMODULE ghPsApi = NULL;
 #ifdef _DEBUG
@@ -507,6 +512,12 @@ bool InitDefaultTerm()
 {
 	bool lbRc = true;
 
+	#ifdef _DEBUG
+	char szInfo[100];
+	msprintf(szInfo, countof(szInfo), "!!! TH32CS_SNAPMODULE, TID=%u, InitDefaultTerm\n", GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+	#endif
+
 	gpDefaultTermParm = (ConEmuGuiMapping*)calloc(sizeof(*gpDefaultTermParm),1);
 
 	CShellProc sp;
@@ -520,11 +531,11 @@ bool InitDefaultTerm()
 		MODULEENTRY32 mi = {sizeof(mi)};
 		//wchar_t szOurName[MAX_PATH] = L"";
 		//GetModuleFileName(ghOurModule, szOurName, MAX_PATH);
-		wchar_t szVer[2] = {MVV_4a[0], 0};
-		wchar_t szAddName[32];
+		wchar_t szMinor[8] = L""; lstrcpyn(szMinor, WSTRING(MVV_4a), countof(szMinor));
+		wchar_t szAddName[40];
 		msprintf(szAddName, countof(szAddName),
 			CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
-			WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szVer);
+			WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
 		//LPCWSTR pszOurName = PointToName(szOurName);
 		wchar_t* pszDot = wcschr(szAddName, L'.');
 		wchar_t szCheckName[MAX_PATH+1];
@@ -581,7 +592,205 @@ bool InitDefaultTerm()
 		}
 	}
 
+	#ifdef _DEBUG
+	OutputDebugStringA("InitDefaultTerm finished\n");
+	#endif
+
 	return lbRc;
+}
+
+#if 0
+
+//	There was report from user about ssh crash under ConEmu.
+//	Inspection of the crash dump shows
+//	Unhandled exception at 0x6085E0E9 (msys-1.0.dll) in ssh.exe: 0xC0000005: Access violation reading location 0x00000000.
+//		6085E0E1  mov         eax,dword ptr ds:[6089E490h]
+//		6085E0E6  mov         ebp,esp
+//		6085E0E8  pop         ebp
+//		6085E0E9  mov         eax,dword ptr [eax]
+//
+//	And this happens (almost all time) only if ‘Inject ConEmuHk’ is ON and the following library is loaded too:
+//	C:\Program Files (x86)\Avecto\Privilege Guard Client\PGHook.dll
+//
+//	Some debugging shows that PGHook.dll was started (or starts?) background thread
+//	and exception occures when that thread exits, example stack:
+//	>	msys-1.0.dll!6085e0e9()	Unknown
+// 		[Frames below may be incorrect and/or missing, no symbols loaded for msys-1.0.dll]
+// 		ntdll.dll!_LdrxCallInitRoutine@16()
+// 		ntdll.dll!LdrpCallInitRoutine()
+// 		ntdll.dll!LdrShutdownThread()
+// 		ntdll.dll!_RtlExitUserThread@4()
+//
+//	Avecto is not available to download/testing, so I tries to ‘emulate’ the problem and was ‘succeeded’.
+//	* My test thread waits for Main thread, when is loads (LoadLibrary) the "advapi32"
+//	* Main thread (at the moment of loading "advapi32") waits for test thread when it starts to load (LoadLibrary) "comdlg32"
+//	* And when test thread exists - crash occures almost all times.
+//
+//	The test command that calls ssh was (example)
+//	  git clone git@github.com:Maximus5/FarPl.git
+//
+//	Seems like it can be any repository.
+//
+//	Simplifying, the following command can be runned (but "git clone ..." must be runned at least once)
+//	  ssh git@github.com "git-upload-pack 'git@github.com:Maximus5/FarPl.git'"
+//
+//	For my test case - possible workaround was setting and waiting for ghDebugSshLibsCan event.
+//	Comment below to raise a crash: //DWORD nWait = WaitForSingleObject(ghDebugSshLibsCan, 5000);
+
+DWORD gnDummyLibLoaderThreadTID = 0;
+HANDLE ghDebugSshLibs = NULL, ghDebugSshLibsRc = NULL, ghDebugSshLibsCan = NULL;
+DWORD WINAPI DummyLibLoaderThread(LPVOID /*apParm*/)
+{
+	char szInfo[100];
+	msprintf(szInfo, countof(szInfo), "DummyLibLoaderThread started, TID=%u\n", GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+
+	WaitForSingleObject(ghDebugSshLibs, 2000);
+	SetEvent(ghDebugSshLibsRc);
+
+	extern HMODULE WINAPI OnLoadLibraryW(const WCHAR* lpFileName);
+	OnLoadLibraryW(L"comdlg32.dll");
+
+	msprintf(szInfo, countof(szInfo), "DummyLibLoaderThread finished, TID=%u\n", GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+
+	//DWORD nWait = WaitForSingleObject(ghDebugSshLibsCan, 5000);
+	return 0;
+}
+#endif
+
+#if 0
+DWORD gnDummyLibLoaderCmdThreadTID = 0;
+DWORD WINAPI DummyLibLoaderCmdThread(LPVOID /*apParm*/)
+{
+	char szInfo[100];
+	msprintf(szInfo, countof(szInfo), "DummyLibLoaderCmdThread started, TID=%u\n", GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+
+	SetLastError(0);
+	HMODULE hLib = LoadLibraryW(L"comdlg88.dll");
+	DWORD dwErr = GetLastError(); SetLastError(0);
+	hLib = LoadLibraryW(L"comdlg32.dll");
+	dwErr = GetLastError(); SetLastError(0);
+	hLib = LoadLibraryW(L"comdlg32.dll");
+	dwErr = GetLastError(); SetLastError(0);
+	if (hLib) FreeLibrary(hLib);
+	dwErr = GetLastError(); SetLastError(0);
+	if (hLib) FreeLibrary(hLib);
+	dwErr = GetLastError(); SetLastError(0);
+
+	msprintf(szInfo, countof(szInfo), "DummyLibLoaderCmdThread finished, TID=%u\n", GetCurrentThreadId());
+	OutputDebugStringA(szInfo);
+	return 0;
+}
+#endif
+
+static long gnFixSshThreadsResumeOk = 0;
+void FixSshThreads(int iStep)
+{
+	struct ThInfoStr { DWORD_PTR nTID; HANDLE hThread; };
+	static MArray<ThInfoStr> *pThInfo = NULL;
+
+	#ifdef _DEBUG
+	char szInfo[120]; DWORD nErr;
+	msprintf(szInfo, countof(szInfo), "FixSshThreads(%u) started\n", iStep);
+	if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+	#endif
+
+	switch (iStep)
+	{
+		case 1:
+		{
+			// Was initialized?
+			if (!pThInfo)
+				break;
+			// May occures in several threads simultaneously
+			long n = InterlockedIncrement(&gnFixSshThreadsResumeOk);
+			if (n > 1)
+				break;
+			// Resume all suspended...
+			for (INT_PTR i = 0; i < pThInfo->size(); i++)
+				ResumeThread((*pThInfo)[i].hThread);
+			break;
+		}
+		case 0:
+		{
+			_ASSERTEX(gnHookMainThreadId!=0);
+			pThInfo = new MArray<ThInfoStr>;
+			HANDLE hThread = NULL, hSnap = NULL;
+			DWORD nTID = 0, dwPID = GetCurrentProcessId();
+			HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, dwPID);
+			if (snapshot == INVALID_HANDLE_VALUE)
+			{
+				#ifdef _DEBUG
+				nErr = GetLastError();
+				msprintf(szInfo, countof(szInfo), "CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD) failed in FixSshThreads, code=%u\n", nErr);
+				if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+				#endif
+			}
+			else
+			{
+				THREADENTRY32 module = {sizeof(THREADENTRY32)};
+				if (!Thread32First(snapshot, &module))
+				{
+					#ifdef _DEBUG
+					nErr = GetLastError();
+					msprintf(szInfo, countof(szInfo), "Thread32First failed in FixSshThreads, code=%u\n", nErr);
+					if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+					#endif
+				}
+				else do
+				{
+					if ((module.th32OwnerProcessID == dwPID) && (gnHookMainThreadId != module.th32ThreadID))
+					{
+						// Наши потоки - не морозить
+						if (gpHookServer && gpHookServer->IsPipeThread(module.th32ThreadID))
+							continue;
+
+						hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, module.th32ThreadID);
+						if (!hThread)
+						{
+							#ifdef _DEBUG
+							nErr = GetLastError();
+							msprintf(szInfo, countof(szInfo), "OpenThread(%u) failed in FixSshThreads, code=%u\n", module.th32ThreadID, nErr);
+							if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+							#endif
+						}
+						else
+						{
+							DWORD nSC = SuspendThread(hThread);
+							if (nSC == (DWORD)-1)
+							{
+								// Error!
+								#ifdef _DEBUG
+								nErr = GetLastError();
+								msprintf(szInfo, countof(szInfo), "SuspendThread(%u) failed in FixSshThreads, code=%u\n", module.th32ThreadID, nErr);
+								if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+								#endif
+							}
+							else
+							{
+								ThInfoStr th = {module.th32ThreadID, hThread};
+								pThInfo->push_back(th);
+								#ifdef _DEBUG
+								msprintf(szInfo, countof(szInfo), "Thread %u was suspended\n", module.th32ThreadID);
+								if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+								#endif
+							}
+						}
+					}
+				} while (Thread32Next(snapshot, &module));
+
+				CloseHandle(snapshot);
+			}
+			break;
+		}
+	}
+
+	#ifdef _DEBUG
+	msprintf(szInfo, countof(szInfo), "FixSshThreads(%u) finished\n", iStep);
+	if (gnDllState != ds_DllProcessDetach) OutputDebugStringA(szInfo);
+	#endif
 }
 
 DWORD WINAPI DllStart(LPVOID /*apParm*/)
@@ -593,6 +802,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
 	const wchar_t* pszName = PointToName(szModule);
 	wchar_t szMsg[128];
+
+	// Process exe name must be known
+	_ASSERTEX(pszName);
 
 	// For reporting purposes. Users may define env.var and run program.
 	// When ConEmuHk.dll loaded in that process - it'll show msg box
@@ -640,6 +852,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 	#endif
 
+	// Must be extension?
+	_ASSERTEX(wcschr(pszName,L'.')!=NULL);
 
 	if ((lstrcmpi(pszName, L"powershell.exe") == 0) || (lstrcmpi(pszName, L"powershell") == 0))
 	{
@@ -660,9 +874,16 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			}
 		}
 	}
+	else if ((lstrcmpi(pszName, L"far.exe") == 0) || (lstrcmpi(pszName, L"far64.exe") == 0) || (lstrcmpi(pszName, L"far32.exe") == 0))
+	{
+		gbIsFarProcess = true;
+	}
 	else if ((lstrcmpi(pszName, L"cmd.exe") == 0) || (lstrcmpi(pszName, L"cmd") == 0))
 	{
 		gbIsCmdProcess = true;
+		#if 0
+		CreateThread(NULL, 0, DummyLibLoaderCmdThread, NULL, 0, &gnDummyLibLoaderCmdThreadTID);
+		#endif
 	}
 	else if ((lstrcmpi(pszName, L"sh.exe") == 0) || (lstrcmpi(pszName, L"sh") == 0)
 		|| (lstrcmpi(pszName, L"bash.exe") == 0) || (lstrcmpi(pszName, L"bash") == 0)
@@ -676,6 +897,16 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		#if 0
 		if (lstrcmpi(pszName, L"isatty.exe") == 0)
 			StartPTY();
+		#endif
+	}
+	else if ((lstrcmpi(pszName, L"ssh.exe") == 0) || (lstrcmpi(pszName, L"ssh") == 0))
+	{
+		gbIsSshProcess = true;
+		#if 0
+		ghDebugSshLibs = CreateEvent(NULL, FALSE, FALSE, NULL);
+		ghDebugSshLibsRc = CreateEvent(NULL, FALSE, FALSE, NULL);
+		ghDebugSshLibsCan = CreateEvent(NULL, FALSE, FALSE, NULL);
+		CreateThread(NULL, 0, DummyLibLoaderThread, NULL, 0, &gnDummyLibLoaderThreadTID);
 		#endif
 	}
 	else if ((lstrcmpi(pszName, L"hiew32.exe") == 0) || (lstrcmpi(pszName, L"hiew32") == 0))
@@ -706,6 +937,13 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	else if ((lstrcmpi(pszName, L"devenv.exe") == 0) || (lstrcmpi(pszName, L"WDExpress.exe") == 0))
 	{
 		gbIsVStudio = true;
+	}
+
+	if ((lstrcmpi(pszName, L"chrome.exe") == 0)
+		|| (lstrcmpi(pszName, L"firefox.exe") == 0)
+		|| (lstrcmpi(pszName, L"link.exe") == 0))
+	{
+		gbSkipVirtualAllocErr = true;
 	}
 
 	// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
@@ -919,7 +1157,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(nSize);
 				ExecutePrepareCmd(pIn, CECMD_ATTACHGUIAPP, nSize);
 				pIn->AttachGuiApp.nPID = GetCurrentProcessId();
-				GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFileName, countof(pIn->AttachGuiApp.sAppFileName));
+				GetModuleFileName(NULL, pIn->AttachGuiApp.sAppFilePathName, countof(pIn->AttachGuiApp.sAppFilePathName));
 				pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
 
 				wchar_t szGuiPipeName[128];
@@ -1402,6 +1640,11 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			DLOG1_("DllMain.MainThreadId",ul_reason_for_call);
 			GetMainThreadId(bCurrentThreadIsMain); // Инициализировать gnHookMainThreadId
+			// In some cases we need to know thread IDs was started 'normally'
+			gStartedThreads.Init(128,true);
+			gStartedThreads.Set(gnHookMainThreadId,true);
+			if (!bCurrentThreadIsMain)
+				gStartedThreads.Set(GetCurrentThreadId(),true);
 			DLOGEND1();
 
 			DLOG1_("DllMain.InQueue",ul_reason_for_call);
@@ -1477,6 +1720,11 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			user->setAllowLoadLibrary();
 
+			if (gbIsSshProcess && bCurrentThreadIsMain && (GetCurrentThreadId() == gnHookMainThreadId))
+			{
+				FixSshThreads(0);
+			}
+
 			DLOGEND();
 		}
 		break; // DLL_PROCESS_ATTACH
@@ -1487,6 +1735,8 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			gnDllThreadCount++;
 			if (gbHooksWasSet)
 				InitHooksRegThread();
+			if (gbIsSshProcess && !gnFixSshThreadsResumeOk && gStartedThreads.Get(GetCurrentThreadId(), NULL))
+				FixSshThreads(1);
 			DLOGEND();
 		}
 		break; // DLL_THREAD_ATTACH
@@ -1494,6 +1744,8 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		case DLL_THREAD_DETACH:
 		{
 			DLOG0("DllMain.DLL_THREAD_DETACH",ul_reason_for_call);
+
+			DWORD nTID = GetCurrentThreadId();
 
 			#ifdef SHOW_SHUTDOWN_STEPS
 			gnDbgPresent = 0;
@@ -1503,7 +1755,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			if (gbHooksWasSet)
 				DoneHooksRegThread();
 			// DLL_PROCESS_DETACH зовется как выяснилось не всегда
-			if (gnHookMainThreadId && (GetCurrentThreadId() == gnHookMainThreadId) && !gbDllDeinitialized)
+			if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !gbDllDeinitialized)
 			{
 				gbDllDeinitialized = true;
 				DLOG1("DllMain.DllStop",ul_reason_for_call);
@@ -1512,7 +1764,12 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 				DLOGEND1();
 			}
 			gnDllThreadCount--;
+			gStartedThreads.Del(nTID);
 			ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", gnDllThreadCount);
+
+			#if 0
+			if (ghDebugSshLibsCan) SetEvent(ghDebugSshLibsCan);
+			#endif
 
 			DLOGEND();
 		}
@@ -1541,8 +1798,10 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			#ifdef USEHOOKLOG
 			DLOGEND();
-			//HookLogger::RunAnalyzer();
-			//_ASSERTEX(FALSE && "Hooks terminated");
+			#ifdef USEHOOKLOGANALYZE
+			HookLogger::RunAnalyzer();
+			_ASSERTEX(FALSE && "Hooks terminated");
+			#endif
 			#endif
 		}
 		break; // DLL_PROCESS_DETACH

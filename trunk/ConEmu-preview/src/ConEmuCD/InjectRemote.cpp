@@ -142,7 +142,7 @@ int InfiltrateDll(HANDLE hProcess, LPCWSTR asConEmuHk)
 
 	// Копируем параметры в процесс
 	pRemoteDat = VirtualAllocEx(hProcess, NULL, sizeof(InfiltrateArg), MEM_COMMIT, PAGE_READWRITE);
-	if(!pRemoteDat)
+	if (!pRemoteDat)
 	{
 		iRc = -106;
 		goto wrap;
@@ -192,9 +192,9 @@ wrap:
 		FreeLibrary(hKernel);
 	if (hThread)
 		CloseHandle(hThread);
-	if(pRemoteProc)
+	if (pRemoteProc)
 		VirtualFreeEx(hProcess, (void*)pRemoteProc, cbCode, MEM_RELEASE);
-	if(pRemoteDat)
+	if (pRemoteDat)
 		VirtualFreeEx(hProcess, pRemoteDat, sizeof(InfiltrateArg), MEM_RELEASE);
 	return iRc;
 }
@@ -202,7 +202,8 @@ wrap:
 int PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 {
 	int iRc = -251;
-	wchar_t szNewPath[MAX_PATH+16] = {}, szAddName[32] = {}, szVer[2] = {};
+	wchar_t szNewPath[MAX_PATH+16] = {}, szAddName[40] = {};
+	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, WSTRING(MVV_4a), countof(szMinor));
 	INT_PTR nLen = 0;
 	bool bAlreadyExists = false;
 
@@ -214,10 +215,9 @@ int PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 		goto wrap;
 	}
 
-	szVer[0] = MVV_4a[0];
 	_wsprintf(szAddName, SKIPLEN(countof(szAddName))
 		L"\\" CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
-		WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szVer);
+		WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
 
 	nLen = lstrlen(szNewPath);
 	if (szNewPath[nLen-1] != L'\\')

@@ -285,8 +285,8 @@ CStatus::CStatus()
 	wcscpy_c(m_Values[csi_Time].szFormat, L"00:00:00");
 
 	_ASSERTE(gpConEmu && *gpConEmu->ms_ConEmuBuild);
-	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L" %c %s%s", 
-		0x00AB/* « */, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"[32]",L"[64]"));
+	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L" %c %s[%u%s]",
+		0x00AB/* « */, gpConEmu->ms_ConEmuBuild, WIN3264TEST(32,64), RELEASEDEBUGTEST(L"","D"));
 }
 
 CStatus::~CStatus()
@@ -335,7 +335,7 @@ bool CStatus::LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMa
 		lstrcpyn(psz, (pszName && *pszName) ? pszName : L"???", 64);
 		int nCurLen = lstrlen(psz);
 		_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u"), nPID);
-		//_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u « %s%s"), 
+		//_wsprintf(psz+nCurLen, SKIPLEN(nCchLeft-nCurLen) _T(":%u « %s%s"),
 		//	nPID, gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x86",L"x64"));
 		UNREFERENCED_PARAMETER(nCchLeft);
 		lbRc = true;
@@ -507,13 +507,6 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				{
 					lstrcpyn(m_Items[nDrawCount].sText, pszTmp, countof(m_Items[nDrawCount].sText));
 				}
-				/* -- вроде и так работает через pRCon->GetConStatus()
-				else if (pRCon && pRCon->isSelectionPresent())
-				{
-					CONSOLE_SELECTION_INFO sel = {};
-					pRCon->GetConsoleSelectionInfo(&sel);
-				}
-				*/
 				else if (pRCon)
 				{
 					if (!gpSet->isStatusColumnHidden[csi_ConsoleTitle])
@@ -799,12 +792,12 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 
 			if (!i && szVerSize.cx > 0)
 			{
-				bDrawRC = DrawText(hDrawDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &rcText, 
+				bDrawRC = DrawText(hDrawDC, ms_ConEmuBuild, lstrlen(ms_ConEmuBuild), &rcText,
 					DT_RIGHT|DT_NOPREFIX|DT_SINGLELINE|/*DT_VCENTER|*/DT_END_ELLIPSIS);
 				rcText.right -= szVerSize.cx;
 			}
 
-			bDrawRC = DrawText(hDrawDC, m_Items[i].sText, m_Items[i].nTextLen, &rcText, 
+			bDrawRC = DrawText(hDrawDC, m_Items[i].sText, m_Items[i].nTextLen, &rcText,
 				((m_Items[i].nID == csi_Info) ? DT_LEFT : DT_CENTER)
 				|DT_NOPREFIX|DT_SINGLELINE|/*DT_VCENTER|*/DT_END_ELLIPSIS);
 
@@ -961,7 +954,7 @@ void CStatus::OnTimer()
 	if (!gpSet->isStatusBarShow)
 		return;
 
-	// Если сейчас нет меню, и был показан hint для колонки - 
+	// Если сейчас нет меню, и был показан hint для колонки -
 	// проверить позицию мышки
 	if ((m_ClickedItemDesc != csi_Last) && !mb_InPopupMenu)
 	{
@@ -1253,7 +1246,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	//		ReleaseCapture();
 	//		mb_WasClick = false;
 	//		if (ms_ClickedItemDesc[0])
-	//		{	
+	//		{
 	//			ms_ClickedItemDesc[0] = 0;
 	//			UpdateStatusBar(true);
 	//		}
@@ -1491,14 +1484,14 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 	if (bValid)
 	{
 		_wsprintf(m_Values[csi_ConsolePos].sText, SKIPLEN(countof(m_Values[csi_ConsolePos].sText)-1) L"(%i,%i)-(%i,%i)",
-			(int)psbi->srWindow.Left, (int)psbi->srWindow.Top, (int)psbi->srWindow.Right, (int)psbi->srWindow.Bottom);
+			(int)psbi->srWindow.Left+1, (int)psbi->srWindow.Top+1, (int)psbi->srWindow.Right+1, (int)psbi->srWindow.Bottom+1);
 		_wsprintf(m_Values[csi_ConsolePos].szFormat, SKIPLEN(countof(m_Values[csi_ConsolePos].szFormat)) L" (%i,%i)-(%i,%i) ",
-			(int)psbi->srWindow.Left, (int)psbi->srWindow.Top, (int)psbi->dwSize.X, (int)psbi->dwSize.Y);
+			(int)psbi->srWindow.Left+1, (int)psbi->srWindow.Top+1, (int)psbi->dwSize.X, (int)psbi->dwSize.Y);
 	}
 	else
 	{
 		wcscpy_c(m_Values[csi_ConsolePos].sText, L" ");
-		wcscpy_c(m_Values[csi_ConsolePos].szFormat, L"(0,0)-(199,199)"); // на самом деле может быть до 9999, но для уменьшения ширины - по умолчанию так
+		wcscpy_c(m_Values[csi_ConsolePos].szFormat, L"(0,0)-(199,199)"); // на самом деле может быть до 32766, но для уменьшения ширины - по умолчанию так
 	}
 
 	// csi_ConsoleSize:
@@ -1541,7 +1534,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	// csi_CursorX:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_CursorX].sText, SKIPLEN(countof(m_Values[csi_CursorX].sText)-1) _T("%i"), (int)pcr->X);
+		_wsprintf(m_Values[csi_CursorX].sText, SKIPLEN(countof(m_Values[csi_CursorX].sText)-1) _T("%i"), (int)pcr->X+1);
 		if (nMaxX)
 			_wsprintf(m_Values[csi_CursorX].szFormat, SKIPLEN(countof(m_Values[csi_CursorX].szFormat)) L" %i", nMaxX);
 	}
@@ -1554,7 +1547,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	// csi_CursorY:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_CursorY].sText, SKIPLEN(countof(m_Values[csi_CursorY].sText)-1) _T("%i"), (int)pcr->Y);
+		_wsprintf(m_Values[csi_CursorY].sText, SKIPLEN(countof(m_Values[csi_CursorY].sText)-1) _T("%i"), (int)pcr->Y+1);
 		if (nMaxY)
 			_wsprintf(m_Values[csi_CursorY].szFormat, SKIPLEN(countof(m_Values[csi_CursorY].szFormat)) L" %i", nMaxY);
 	}
@@ -1579,7 +1572,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	// csi_CursorInfo:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_CursorInfo].sText, SKIPLEN(countof(m_Values[csi_CursorInfo].sText)-1) _T("(%i,%i) %i%s"), (int)pcr->X, (int)pcr->Y, pci->dwSize, pci->bVisible ? L"V" : L"H");
+		_wsprintf(m_Values[csi_CursorInfo].sText, SKIPLEN(countof(m_Values[csi_CursorInfo].sText)-1) _T("(%i,%i) %i%s"), (int)pcr->X+1, (int)pcr->Y+1, pci->dwSize, pci->bVisible ? L"V" : L"H");
 		if (nMaxX && nMaxY)
 			_wsprintf(m_Values[csi_CursorInfo].szFormat, SKIPLEN(countof(m_Values[csi_CursorInfo].szFormat)) L" (%i,%i) 100V", nMaxX, nMaxY);
 	}
@@ -1605,7 +1598,7 @@ void CStatus::OnConsoleBufferChanged(CRealConsole* pRCon)
 	bool bIsScroll = pRCon ? pRCon->isBufferHeight() : false;
 	wchar_t cScroll = (gnOsVer>=0x0601/*Windows7*/) ? 0x2195 : L']'/*WinXP has not arrows*/; // Up/Down arrow
 
-	wcscpy_c(m_Values[csi_ActiveBuffer].sText, 
+	wcscpy_c(m_Values[csi_ActiveBuffer].sText,
 			(tBuffer == rbt_Primary) ? L"PRI" :
 			(tBuffer == rbt_Alternative) ? L"ALT" :
 			(tBuffer == rbt_Selection) ? L"SEL" :
@@ -1844,7 +1837,7 @@ void CStatus::OnKeyboardChanged()
 void CStatus::OnTransparency()
 {
 	_wsprintf(m_Values[csi_Transparency].sText, SKIPLEN(countof(m_Items[csi_Transparency].sText))
-		_T("%u%%%s%s"), (UINT)(gpSet->nTransparent >= 255) ? 100 : (gpSet->nTransparent * 100 / 255),
+		_T("%u%%%s%s"), (UINT)(gpConEmu->mn_LastTransparentValue >= 255) ? 100 : (gpConEmu->mn_LastTransparentValue * 100 / 255),
 		gpSet->isUserScreenTransparent ? L",USR" : L"",
 		L""); // TODO: ColorKey transparency
 	wcscpy_c(m_Values[csi_Transparency].szFormat, L"100%");

@@ -71,7 +71,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/CT[0|1] - Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - cleartype.\r\n" \
 	L"/Font <fontname> - Specify the font name.\r\n" \
 	L"/Size <fontsize> - Specify the font size.\r\n" \
-	L"/FontFile <fontfilename> - Loads fonts from file.\r\n" \
+	L"/FontFile <fontfilename> - Loads font from file (multiple pairs allowed).\r\n" \
+	L"/FontDir <fontfolder> - Loads all fonts from folder (multiple pairs allowed).\r\n" \
 	L"/BufferHeight <lines> - Set console buffer height.\r\n" \
 	L"/Palette <name> - Choose named color palette.\r\n" \
 	L"/Log[1|2] - Used to create debug log files.\r\n" \
@@ -193,6 +194,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"CLI example: ConEmuC -GuiMacro Rename 0 PoSh\r\n" \
 	L"Read more online: http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
+	L"About([\"<Page>\"])\r\n" \
+	L"  - Show ‘About’ dialog with page activated, e.g. ‘About(\"-new_console\")’\r\n" \
 	L"Close(<What>[,<Flags>])\r\n" \
 	L"  - close current console (0), without confirmation (0,1),\r\n" \
 	L"    terminate active process (1), without confirmation (1,1)\r\n" \
@@ -281,12 +284,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"  - Rename tab (Type=0) or console title (Type=1)\r\n" \
 	L"SetOption(\"<Name>\",<Value>)\r\n" \
 	L"  - Name=one of allowed for changing ConEmu options\r\n" \
+	L"    \"AlphaValue\": set transparency level of active window\r\n" \
+	L"      Value: 40 .. 255 (255==Opaque)\r\n" \
+	L"    \"AlphaValueInactive\": set transparency level of inactive window\r\n" \
+	L"      Value: 0 .. 255 (255==Opaque)\r\n" \
+	L"    \"AlphaValueSeparate\": enable separate active/inactive transparency level\r\n" \
+	L"      Value: 0(disable) .. 1(enable)\r\n" \
 	L"    \"AlwaysOnTop\": place ConEmu window above all non-topmost windows\r\n" \
 	L"      Value: 2 - toggle, 1 - enable, 0 - disable\r\n" \
 	L"    \"bgImageDarker\": darkening of background image\r\n" \
 	L"      Value: 0 .. 255\r\n" \
 	L"    \"QuakeAutoHide\": auto hide on focus lose, Quake mode\r\n" \
 	L"      Value: 2 - switch auto-hide, 1 - enable, 0 - disable\r\n" \
+	L"Settings([<PageResourceId>])\r\n" \
+	L"  - Show ‘Settings’ dialog with specified page activated (optionally)\r\n" \
+	L"      PageResourceId: integer DialogID from ‘resource.h’\r\n" \
 	L"Shell(\"<Verb>\",\"<File>\"[,\"<Parms>\"[,\"<Dir>\"[,<ShowCmd>]]])\r\n" \
 	L"  - Verb can be \"open\", \"print\" and so on, or special value \"new_console\",\r\n" \
 	L"     which starts File in the new tab of ConEmu window. Examples:\r\n" \
@@ -322,6 +334,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"  - change ConEmu transparency level absolutely or relatively\r\n" \
 	L"    Cmd==0, Value=40..255 (255==Opaque)\r\n" \
 	L"    Cmd==1, Value=<relative inc/dec>\r\n" \
+	L"    Cmd==2, Value=0..255 (255==Opaque) - for inactive window\r\n" \
+	L"    Cmd==3, Value=<relative inc/dec> - for inactive window\r\n" \
+	L"    Cmd==4, Value=<0/1> - AlphaValueSeparate\r\n" \
 	L"Task(\"Name\"[,\"Dir\"])\r\n" \
 	L"  - start task with specified name\r\n" \
 	L"WindowFullscreen()\r\n" \

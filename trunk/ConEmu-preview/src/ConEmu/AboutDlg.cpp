@@ -109,15 +109,12 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			LPCWSTR pszActivePage = (LPCWSTR)lParam;
 
-			WCHAR szTitle[255];
-			LPCWSTR pszBits = WIN3264TEST(L"x86",L"x64");
-			LPCWSTR pszDebug = L"";
-			#ifdef _DEBUG
-			pszDebug = L"[DEBUG] ";
-			#endif
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%02u%02u%02u%s %s%s)", 
-				(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), pszDebug, pszBits);
-			SetWindowText(hDlg, szTitle);
+			wchar_t* pszTitle = lstrmerge(gpConEmu->GetDefaultTitle(), L" About");
+			if (pszTitle)
+			{
+				SetWindowText(hDlg, pszTitle);
+				SafeFree(pszTitle);
+			}
 
 			if (hClassIcon)
 			{
@@ -310,20 +307,14 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 
 	if (!bOk)
 	{
-		WCHAR szTitle[255];
-		LPCWSTR pszBits = WIN3264TEST(L"x86",L"x64");
-		LPCWSTR pszDebug = L"";
-		#ifdef _DEBUG
-		pszDebug = L"[DEBUG] ";
-		#endif
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"About ConEmu (%02u%02u%02u%s %s%s)", 
-			(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), pszDebug, pszBits);
+		wchar_t* pszTitle = lstrmerge(gpConEmu->GetDefaultTitle(), L" About");
 		DontEnable de;
 		MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance,
 			pAbout,
-			szTitle,
+			pszTitle,
 			MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), 0, NULL, LANG_NEUTRAL
 		};
+		SafeFree(pszTitle);
 		// Use MessageBoxIndirect instead of MessageBox to show our icon instead of std ICONINFORMATION
 		MessageBoxIndirect(&mb);
 	}
@@ -392,6 +383,15 @@ void ConEmuAbout::OnInfo_Help()
 void ConEmuAbout::OnInfo_HomePage()
 {
 	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsHomePage, NULL, NULL, SW_SHOWNORMAL);
+	if (shellRc <= 32)
+	{
+		DisplayLastError(L"ShellExecute failed", shellRc);
+	}
+}
+
+void ConEmuAbout::OnInfo_DownloadPage()
+{
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", gsDownlPage, NULL, NULL, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);
@@ -479,7 +479,7 @@ void ConEmuAbout::LoadResources()
 	{
 		if (m_Btns[i].hBmp)
 			continue; // Already loaded
-		
+
 		m_Btns[i].ResId = Images[i].ResId;
 		m_Btns[i].nCtrlId = Images[i].nCtrlId;
 		m_Btns[i].pszUrl = (Images[i].nCtrlId == pLinkDonate) ? gsDonatePage : gsFlattrPage;

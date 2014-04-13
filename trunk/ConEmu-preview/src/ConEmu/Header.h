@@ -68,9 +68,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "kl_parts.h"
 #endif
 
-// Array sizes
-#define MAX_CONSOLE_COUNT 30
-
 
 #include "globals.h"
 #include "resource.h"
@@ -682,6 +679,7 @@ bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval);
 #define LockFrequentExecuteStatic(Interval) static DWORD LastExecuteTick; if (CheckLockFrequentExecute(LastExecuteTick,Interval))
 
 extern const wchar_t* gsHomePage;    // = L"http://conemu-maximus5.googlecode.com";
+extern const wchar_t* gsDownlPage;   // = L"http://www.fosshub.com/ConEmu.html";
 extern const wchar_t* gsReportBug;   // = L"http://code.google.com/p/conemu-maximus5/issues/entry";
 extern const wchar_t* gsReportCrash; // = L"http://code.google.com/p/conemu-maximus5/issues/entry";
 extern const wchar_t* gsWhatsNew;    // = L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";

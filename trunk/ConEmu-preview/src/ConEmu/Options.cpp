@@ -548,6 +548,7 @@ void Settings::InitSettings()
 	isSnapToDesktopEdges = false;
 	isAlwaysOnTop = false;
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
+	isRetardInactivePanes = false; // не включать "засыпание в видимых-но-неактивных сплитах"
 	mb_MinimizeOnLoseFocus = false; // не "прятаться" при потере фокуса
 	RECT rcWork = {}; SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
 	if (gbIsWine)
@@ -661,6 +662,7 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_HwndFore] = true;
 	isStatusColumnHidden[csi_HwndFocus] = true;
 	isStatusColumnHidden[csi_ConEmuPID] = true;
+	isStatusColumnHidden[csi_ConsoleSize] = true;
 	//isStatusColumnHidden[csi_CursorInfo] = true; -- show one info col instead of three cursor columns (by default)
 	isStatusColumnHidden[csi_CursorX] = true;
 	isStatusColumnHidden[csi_CursorY] = true;
@@ -2800,6 +2802,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"SnapToDesktopEdges", isSnapToDesktopEdges);
 		reg->Load(L"AlwaysOnTop", isAlwaysOnTop);
 		reg->Load(L"SleepInBackground", isSleepInBackground);
+		reg->Load(L"RetardInactivePanes", isRetardInactivePanes);
 		reg->Load(L"MinimizeOnLoseFocus", mb_MinimizeOnLoseFocus);
 
 		reg->Load(L"DisableFarFlashing", isDisableFarFlashing); if (isDisableFarFlashing>2) isDisableFarFlashing = 2;
@@ -3586,6 +3589,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"SnapToDesktopEdges", isSnapToDesktopEdges);
 		reg->Save(L"AlwaysOnTop", isAlwaysOnTop);
 		reg->Save(L"SleepInBackground", isSleepInBackground);
+		reg->Save(L"RetardInactivePanes", isRetardInactivePanes);
 		reg->Save(L"MinimizeOnLoseFocus", mb_MinimizeOnLoseFocus);
 		reg->Save(L"DisableFarFlashing", isDisableFarFlashing);
 		reg->Save(L"DisableAllFlashing", isDisableAllFlashing);
@@ -5415,16 +5419,6 @@ void Settings::CheckHotkeyUnique()
 
 			ppHK1->GetDescription(szDescr1, countof(szDescr1), true);
 			ppHK2->GetDescription(szDescr2, countof(szDescr2), true);
-
-			//if (ppHK1->HkType == chk_Macro)
-			//	_wsprintf(szDescr1, SKIPLEN(countof(szDescr1)) L"Macro %02i", ppHK1->DescrLangID-vkGuMacro01+1);
-			//else if (!LoadString(g_hInstance, ppHK1->DescrLangID, szDescr1, countof(szDescr1)))
-			//	_wsprintf(szDescr1, SKIPLEN(countof(szDescr1)) L"%i", ppHK1->DescrLangID);
-
-			//if (ppHK2->HkType == chk_Macro)
-			//	_wsprintf(szDescr2, SKIPLEN(countof(szDescr2)) L"Macro %02i", ppHK2->DescrLangID-vkGuMacro01+1);
-			//else if (!LoadString(g_hInstance, ppHK2->DescrLangID, szDescr2, countof(szDescr2)))
-			//	_wsprintf(szDescr2, SKIPLEN(countof(szDescr2)) L"%i", ppHK2->DescrLangID);
 
 			ppHK1->GetHotkeyName(szKey);
 

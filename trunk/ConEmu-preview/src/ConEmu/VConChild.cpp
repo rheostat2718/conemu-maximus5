@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2013 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
+#define SHOWDEBUGSTR
 #include "Header.h"
 #include "../common/common.hpp"
 #include "../common/MMap.h"
@@ -45,7 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define EXT_GNUC_LOG
 #endif
 
-#define DEBUGSTRDRAW(s) //DEBUGSTR(s)
+#define DEBUGSTRDRAW(s) DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
@@ -427,16 +428,8 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			break;
 		case WM_CREATE:
 			break;
-		case WM_KEYDOWN:
-		case WM_KEYUP:
-		case WM_SYSKEYDOWN:
-		case WM_SYSKEYUP:
 		case WM_MOUSEWHEEL:
-		case WM_ACTIVATE:
-		case WM_ACTIVATEAPP:
-			//case WM_MOUSEACTIVATE:
-		case WM_KILLFOCUS:
-			//case WM_SETFOCUS:
+		case WM_MOUSEHWHEEL:
 		case WM_MOUSEMOVE:
 		case WM_RBUTTONDOWN:
 		case WM_RBUTTONUP:
@@ -450,6 +443,17 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 		case WM_XBUTTONDOWN:
 		case WM_XBUTTONUP:
 		case WM_XBUTTONDBLCLK:
+			if (pVCon->RCon()->isGuiOverCon())
+				break;
+		case WM_KEYDOWN:
+		case WM_KEYUP:
+		case WM_SYSKEYDOWN:
+		case WM_SYSKEYUP:
+		case WM_ACTIVATE:
+		case WM_ACTIVATEAPP:
+			//case WM_MOUSEACTIVATE:
+		case WM_KILLFOCUS:
+			//case WM_SETFOCUS:
 		case WM_VSCROLL:
 			// Вся обработка в родителе
 			{
@@ -787,16 +791,8 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			_ASSERTE(hWnd == pVCon->mh_WndBack);
 			pVCon->OnPaintGaps();
 			break;
-		case WM_KEYDOWN:
-		case WM_KEYUP:
-		case WM_SYSKEYDOWN:
-		case WM_SYSKEYUP:
 		case WM_MOUSEWHEEL:
-		case WM_ACTIVATE:
-		case WM_ACTIVATEAPP:
-			//case WM_MOUSEACTIVATE:
-		case WM_KILLFOCUS:
-			//case WM_SETFOCUS:
+		case WM_MOUSEHWHEEL:
 		case WM_MOUSEMOVE:
 		case WM_RBUTTONDOWN:
 		case WM_RBUTTONUP:
@@ -810,6 +806,17 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 		case WM_XBUTTONDOWN:
 		case WM_XBUTTONUP:
 		case WM_XBUTTONDBLCLK:
+			if (pVCon->RCon()->isGuiOverCon())
+				break;
+		case WM_KEYDOWN:
+		case WM_KEYUP:
+		case WM_SYSKEYDOWN:
+		case WM_SYSKEYUP:
+		case WM_ACTIVATE:
+		case WM_ACTIVATEAPP:
+			//case WM_MOUSEACTIVATE:
+		case WM_KILLFOCUS:
+			//case WM_SETFOCUS:
 		case WM_VSCROLL:
 			// Вся обработка в родителе
 			{
@@ -1026,6 +1033,8 @@ LRESULT CConEmuChild::OnPaint()
 	//    break;
 	//_ASSERTE(FALSE);
 
+	DEBUGSTRDRAW(L"CConEmuChild::OnPaint()\n");
+
 	//2009-09-28 может так (autotabs)
 	if (mb_DisableRedraw)
 		return 0;
@@ -1202,7 +1211,7 @@ void CConEmuChild::CheckPostRedraw()
 	}
 }
 
-void CConEmuChild::Redraw()
+void CConEmuChild::Redraw(bool abRepaintNow /*= false*/)
 {
 	if (!this)
 	{
@@ -1246,6 +1255,15 @@ void CConEmuChild::Redraw()
 	//RedrawWindow(ghWnd, NULL, NULL,
 	//	RDW_INTERNALPAINT|RDW_NOERASE|RDW_UPDATENOW);
 	mb_RedrawPosted = FALSE; // Чтобы другие нити могли сделать еще пост
+
+	if (abRepaintNow)
+	{
+		RECT rcClient = {};
+		if (GetClientRect(mh_WndDC, &rcClient))
+		{
+			RedrawWindow(mh_WndDC, &rcClient, NULL, RDW_INTERNALPAINT|RDW_NOERASE|RDW_NOFRAME|RDW_UPDATENOW|RDW_VALIDATE);
+		}
+	}
 }
 
 // Вызывается из VConGroup::RepositionVCon
@@ -1411,7 +1429,12 @@ BOOL CConEmuChild::TrackMouse()
 
 	BOOL lbOverVScroll = CheckMouseOverScroll();
 
-	if (gpSet->isAlwaysShowScrollbar == 1)
+	if (pVCon->RCon()->isGuiVisible())
+	{
+		if (mb_ScrollVisible || mb_Scroll2Visible)
+			HideScroll(TRUE);
+	}
+	else if (gpSet->isAlwaysShowScrollbar == 1)
 	{
 		// Если полоса прокрутки показывается всегда - то она и не прячется
 		if (!mb_ScrollVisible)
@@ -1783,7 +1806,9 @@ void CConEmuChild::HideScroll(BOOL abImmediate)
 	bool bTHide = false;
 	mb_ScrollAutoPopup = FALSE;
 
-	if (gpSet->isAlwaysShowScrollbar == 1)
+	CVirtualConsole* pVCon = (CVirtualConsole*)this;
+
+	if ((gpSet->isAlwaysShowScrollbar == 1) && !pVCon->GuiWnd())
 	{
 		// Прокрутка всегда показывается! Скрывать нельзя!
 		SCROLLINFO si = {sizeof(si), SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/, 0, 100, 1};
@@ -1861,6 +1886,8 @@ int CConEmuChild::IsDcLocked(RECT* CurrentConLockedRect)
 	return (nDelta <= LOCK_DC_RECT_TIMEOUT) ? 1 : 2;
 }
 
+// Это было сделано для обработки в хуках OnStretchDIBits
+// Плагин фара пытался рисовать прямо на канвасе VCon и безуспешно
 void CConEmuChild::LockDcRect(bool bLock, RECT* Rect)
 {
 	if (!bLock)

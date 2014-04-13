@@ -133,8 +133,8 @@ extern DWORD gnLastShowExeTick;
 
 
 #ifdef _DEBUG
-#define DebugString(x) OutputDebugString(x)
-#define DebugStringConSize(x) OutputDebugString(x)
+#define DebugString(x) //OutputDebugString(x)
+#define DebugStringConSize(x) //OutputDebugString(x)
 #else
 #define DebugString(x) //OutputDebugString(x)
 #define DebugStringConSize(x)
@@ -152,6 +152,7 @@ extern DWORD gnLastShowExeTick;
 extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хуки не ставятся)
 extern DWORD   gnHookMainThreadId;
 extern BOOL    gbHooksTemporaryDisabled;
+extern MMap<DWORD,BOOL> gStartedThreads;
 //__declspec( thread )
 //static BOOL    gbInShellExecuteEx = FALSE;
 
@@ -175,9 +176,10 @@ HANDLE ghLastConInHandle = NULL, ghLastNotConInHandle = NULL;
 
 
 /* ************ Globals for Far Hooks ************ */
-struct HookModeFar gFarMode = {sizeof(HookModeFar)};
+HookModeFar gFarMode = {sizeof(HookModeFar)};
+bool    gbIsFarProcess = false;
 InQueue gInQueue = {};
-HANDLE ghConsoleCursorChanged = NULL;
+HANDLE  ghConsoleCursorChanged = NULL;
 /* ************ Globals for Far Hooks ************ */
 
 
@@ -199,9 +201,10 @@ WORD gnConsolePopupColors = 0x003E;
 int  gnPowerShellProgressValue = -1;
 /* ************ Globals for powershell ************ */
 
-/* ************ Globals for bash ************ */
+/* ************ Globals for cygwin/msys ************ */
 bool gbIsBashProcess = false;
-/* ************ Globals for bash ************ */
+bool gbIsSshProcess = false;
+/* ************ Globals for cygwin/msys ************ */
 
 /* ************ Globals for ViM ************ */
 bool gbIsVimProcess = false;
@@ -219,6 +222,10 @@ bool gbIsHiewProcess = false;
 /* ************ Globals for DosBox.EXE ************ */
 bool gbDosBoxProcess = false;
 /* ************ Globals for DosBox.EXE ************ */
+
+/* ************ Don't show VirtualAlloc errors ************ */
+bool gbSkipVirtualAllocErr = false;
+/* ************ Don't show VirtualAlloc errors ************ */
 
 /* ************ Globals for "Default terminal ************ */
 bool gbPrepareDefaultTerminal = false;
@@ -354,7 +361,10 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID);
 BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID);
 #ifdef _DEBUG
 LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
+BOOL WINAPI OnVirtualProtect(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect);
+LPTOP_LEVEL_EXCEPTION_FILTER WINAPI OnSetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
 #endif
+HANDLE WINAPI OnCreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
 BOOL WINAPI OnChooseColorA(LPCHOOSECOLORA lpcc);
 BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc);
 //HWND WINAPI OnCreateWindowA(LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
@@ -385,6 +395,8 @@ BOOL WINAPI OnSetConsoleTitleA(LPCSTR lpConsoleTitle);
 BOOL WINAPI OnSetConsoleTitleW(LPCWSTR lpConsoleTitle);
 BOOL WINAPI OnGetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
 BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl);
+VOID WINAPI Onmouse_event(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo);
+UINT WINAPI OnSendInput(UINT nInputs, LPINPUT pInputs, int cbSize);
 BOOL WINAPI OnPostMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 BOOL WINAPI OnPostMessageW(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI OnSendMessageA(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -598,8 +610,13 @@ bool InitHooksCommon()
 		#ifdef _DEBUG
 		//#ifdef HOOKS_VIRTUAL_ALLOC
 		{(void*)OnVirtualAlloc,			"VirtualAlloc",			kernel32},
+		{(void*)OnVirtualProtect,		"VirtualProtect",		kernel32},
+		{(void*)OnSetUnhandledExceptionFilter,
+										"SetUnhandledExceptionFilter",
+																kernel32},
 		//#endif
 		#endif
+		{(void*)OnCreateThread,			"CreateThread",			kernel32},
 
 		// Microsoft bug?
 		// http://code.google.com/p/conemu-maximus5/issues/detail?id=60
@@ -726,6 +743,8 @@ bool InitHooksUser32()
 		//
 		{(void*)OnGetWindowPlacement,	"GetWindowPlacement",	user32},
 		{(void*)OnSetWindowPlacement,	"SetWindowPlacement",	user32},
+		{(void*)Onmouse_event,			"mouse_event",			user32},
+		{(void*)OnSendInput,			"SendInput",			user32},
 		{(void*)OnPostMessageA,			"PostMessageA",			user32},
 		{(void*)OnPostMessageW,			"PostMessageW",			user32},
 		{(void*)OnSendMessageA,			"SendMessageA",			user32},
@@ -903,6 +922,11 @@ void __stdcall SetFarHookMode(struct HookModeFar *apFarMode)
 	}
 	else
 	{
+		// При запуске Ctrl+Shift+W - фар как-то криво инитится... Ctrl+O не работает
+		#ifdef _DEBUG
+		char szInfo[100]; msprintf(szInfo, countof(szInfo), "SetFarHookMode. FarHookMode=%u, LongConsoleOutput=%u\n", apFarMode->bFarHookMode, apFarMode->bLongConsoleOutput);
+		OutputDebugStringA(szInfo);
+		#endif
 		memmove(&gFarMode, apFarMode, sizeof(gFarMode));
 	}
 }
@@ -1028,7 +1052,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	print_timings(L"SetAllHooks");
 
 	// Теперь можно обработать модули
-	HLOG1_("SetAllHooks",0);
+	HLOG1("SetAllHooks",0);
 	bool lbRc = SetAllHooks(ahOurDll, NULL, TRUE);
 	HLOGEND1();
 
@@ -1102,6 +1126,10 @@ BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 
 	if (hProcess == GetCurrentProcess())
 	{
+		// We need not to unset hooks (due to process will be force-killed below)
+		extern BOOL gbHooksWasSet;
+		gbHooksWasSet = FALSE;
+		// And terminate our threads
 		DllMain(ghOurModule, DLL_PROCESS_DETACH, NULL);
 	}
 
@@ -2614,6 +2642,25 @@ BOOL WINAPI OnSetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 	return lbRc;
 }
 
+VOID WINAPI Onmouse_event(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo)
+{
+	typedef VOID (WINAPI* Onmouse_event_t)(DWORD dwFlags, DWORD dx, DWORD dy, DWORD dwData, ULONG_PTR dwExtraInfo);
+	ORIGINALFASTEX(mouse_event,NULL);
+
+	F(mouse_event)(dwFlags, dx, dy, dwData, dwExtraInfo);
+}
+
+UINT WINAPI OnSendInput(UINT nInputs, LPINPUT pInputs, int cbSize)
+{
+	typedef UINT (WINAPI* OnSendInput_t)(UINT nInputs, LPINPUT pInputs, int cbSize);
+	ORIGINALFASTEX(SendInput,NULL);
+	UINT nRc;
+
+	nRc = F(SendInput)(nInputs, pInputs, cbSize);
+
+	return nRc;
+}
+
 bool CanSendMessage(HWND& hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT& lRc)
 {
 	if (ghConEmuWndDC && hWnd == ghConEmuWndDC)
@@ -3567,21 +3614,21 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin)
 							int i = xPos - 1;
 							_ASSERTEX(i >= 0);
 
-							if ((pwszLine[i] == ucSpace) || (pwszLine[i] == ucNoBreakSpace))
-							{
-								// Delete all spaces
-								iBSCount = 1;
-								while ((i-- > 0) && ((pwszLine[i] == ucSpace) || (pwszLine[i] == ucNoBreakSpace)))
-									iBSCount++;
-							}
-							else
-							{
-								// Delete all NON-spaces
-								iBSCount = 1;
-								wchar_t cBreaks[] = {ucSpace, ucNoBreakSpace, L'>', L']', L'$', L'.', L'\\', L'/', 0};
-								while ((i-- > 0) && !wcschr(cBreaks, pwszLine[i]))
-									iBSCount++;
-							}
+							iBSCount = 0;
+
+							// Only RIGHT brackets here to be sure that `(x86)` will be deleted including left bracket
+							wchar_t cBreaks[] = L"\x20\xA0>])}$.,/\\\"";
+
+							// Delete all `spaces` first
+							while ((i >= 0) && ((pwszLine[i] == ucSpace) || (pwszLine[i] == ucNoBreakSpace)))
+								iBSCount++, i--;
+							_ASSERTE(cBreaks[0]==ucSpace && cBreaks[1]==ucNoBreakSpace);
+							// delimiters
+							while ((i >= 0) && wcschr(cBreaks+2, pwszLine[i]))
+								iBSCount++, i--;
+							// and all `NON-spaces`
+							while ((i >= 0) && !wcschr(cBreaks, pwszLine[i]))
+								iBSCount++, i--;
 						}
 					}
 				}
@@ -4909,6 +4956,29 @@ BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuf
 	return lbRc;
 }
 
+bool AttachServerConsole()
+{
+	bool lbAttachRc = false;
+	DWORD nErrCode;
+	HWND hCurCon = GetRealConsoleWindow();
+	if (hCurCon == NULL && gnServerPID != 0)
+	{
+		// функция есть только в WinXP и выше
+		typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
+		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+		AttachConsole_t _AttachConsole = hKernel ? (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole") : NULL;
+		if (_AttachConsole)
+		{
+			lbAttachRc = _AttachConsole(gnServerPID);
+			if (!lbAttachRc)
+			{
+				nErrCode = GetLastError();
+				_ASSERTE(nErrCode==0 && lbAttachRc);
+			}
+		}
+	}
+	return lbAttachRc;
+}
 
 BOOL WINAPI OnAllocConsole(void)
 {
@@ -4934,26 +5004,9 @@ BOOL WINAPI OnAllocConsole(void)
 	// к родительской консоли (консоли серверного процесса)
 	if ((gbAttachGuiClient || ghAttachGuiClient) && !gbPrepareDefaultTerminal)
 	{
-		HWND hCurCon = GetRealConsoleWindow();
-		if (hCurCon == NULL && gnServerPID != 0)
+		if (AttachServerConsole())
 		{
-			// функция есть только в WinXP и выше
-			typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
-			hKernel = GetModuleHandle(L"kernel32.dll");
-			AttachConsole_t _AttachConsole = hKernel ? (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole") : NULL;
-			if (_AttachConsole)
-			{
-				lbAttachRc = _AttachConsole(gnServerPID);
-				if (lbAttachRc)
-				{
-					lbAllocated = TRUE; // Консоль уже есть, ничего не надо
-				}
-				else
-				{
-					nErrCode = GetLastError();
-					_ASSERTE(nErrCode==0 && lbAttachRc);
-				}
-			}
+			lbAllocated = TRUE; // Консоль уже есть, ничего не надо
 		}
 	}
 
@@ -5516,36 +5569,100 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 {
 	typedef HANDLE(WINAPI* OnVirtualAlloc_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
 	ORIGINALFAST(VirtualAlloc);
+
 	LPVOID lpResult = F(VirtualAlloc)(lpAddress, dwSize, flAllocationType, flProtect);
+	DWORD dwErr = GetLastError();
+
+	wchar_t szText[MAX_PATH*3];
 	if (lpResult == NULL)
 	{
-		DWORD nErr = GetLastError();
-		//_ASSERTE(lpResult != NULL);
-		wchar_t szText[MAX_PATH*3], szTitle[64];
+		wchar_t szTitle[64];
 		msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 		msprintf(szText, countof(szText),
 			L"\nVirtualAlloc " WIN3264TEST(L"%u",L"x%X%08X") L" bytes failed (0x%08X..0x%08X)\nErrorCode=%u %s\n\nWarning! This may cause an errors in Release!\nPress <OK> to VirtualAlloc at the default address\n\n",
 			WIN3264WSPRINT(dwSize),
 			(DWORD)lpAddress, (DWORD)((LPBYTE)lpAddress+dwSize),
-			nErr, (nErr == 487) ? L"(ERROR_INVALID_ADDRESS)" : L"");
+			dwErr, (dwErr == 487) ? L"(ERROR_INVALID_ADDRESS)" : L"");
 		GetModuleFileName(NULL, szText+lstrlen(szText), MAX_PATH);
+		DebugString(szText);
 
 	#if defined(REPORT_VIRTUAL_ALLOC)
 		// clink use bunch of VirtualAlloc to try to find suitable memory location
-		bool bReport = !gbIsCmdProcess || (dwSize != 0x1000);
+		// Some processes raises that error too often (in debug)
+		bool bReport = (!gbIsCmdProcess || (dwSize != 0x1000)) && !gbSkipVirtualAllocErr;
 		int iBtn = bReport ? GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL|MB_ICONSTOP) : IDCANCEL;
 		if (iBtn == IDOK)
 		{
 			lpResult = F(VirtualAlloc)(NULL, dwSize, flAllocationType, flProtect);
+			dwErr = GetLastError();
 		}
-	#else
-		OutputDebugString(szText);
 	#endif
-		SetLastError(nErr);
 	}
+	msprintf(szText, countof(szText),
+		L"VirtualProtect(" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"," WIN3264TEST(L"0x%08X",L"0x%08X%08X") L",%u,%u)=" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"\n",
+		WIN3264WSPRINT(lpAddress), WIN3264WSPRINT(dwSize), flAllocationType, flProtect, WIN3264WSPRINT(lpResult));
+	DebugString(szText);
+
+	SetLastError(dwErr);
 	return lpResult;
 }
+BOOL WINAPI OnVirtualProtect(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect)
+{
+	typedef BOOL(WINAPI* OnVirtualProtect_t)(LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect);
+	ORIGINALFAST(VirtualProtect);
+	BOOL bResult = FALSE;
+
+	if (F(VirtualProtect))
+		bResult = F(VirtualProtect)(lpAddress, dwSize, flNewProtect, lpflOldProtect);
+
+#ifdef _DEBUG
+	DWORD dwErr = GetLastError();
+	wchar_t szDbgInfo[100];
+	msprintf(szDbgInfo, countof(szDbgInfo),
+		L"VirtualProtect(" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"," WIN3264TEST(L"0x%08X",L"0x%08X%08X") L",%u,%u)=%u, code=%u\n",
+		WIN3264WSPRINT(lpAddress), WIN3264WSPRINT(dwSize), flNewProtect, lpflOldProtect ? *lpflOldProtect : 0, bResult, dwErr);
+	DebugString(szDbgInfo);
+	SetLastError(dwErr);
 #endif
+
+	return bResult;
+}
+LPTOP_LEVEL_EXCEPTION_FILTER WINAPI OnSetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter)
+{
+	typedef LPTOP_LEVEL_EXCEPTION_FILTER(WINAPI* OnSetUnhandledExceptionFilter_t)(LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter);
+	ORIGINALFAST(SetUnhandledExceptionFilter);
+
+	LPTOP_LEVEL_EXCEPTION_FILTER lpRc = F(SetUnhandledExceptionFilter)(lpTopLevelExceptionFilter);
+
+#ifdef _DEBUG
+	DWORD dwErr = GetLastError();
+	wchar_t szDbgInfo[100];
+	msprintf(szDbgInfo, countof(szDbgInfo),
+		L"SetUnhandledExceptionFilter(" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L")=" WIN3264TEST(L"0x%08X",L"0x%08X%08X") L", code=%u\n",
+		WIN3264WSPRINT(lpTopLevelExceptionFilter), WIN3264WSPRINT(lpRc), dwErr);
+	DebugString(szDbgInfo);
+	SetLastError(dwErr);
+#endif
+
+	return lpRc;
+}
+#endif
+
+// ssh (msysgit) crash issue. Need to know if thread was started by application but not remotely.
+HANDLE WINAPI OnCreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
+{
+	typedef HANDLE(WINAPI* OnCreateThread_t)(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId);
+	ORIGINALFAST(CreateThread);
+	DWORD nTemp = 0;
+	LPDWORD pThreadID = lpThreadId ? lpThreadId : &nTemp;
+
+	HANDLE hThread = F(CreateThread)(lpThreadAttributes, dwStackSize, lpStartAddress, lpParameter, dwCreationFlags, pThreadID);
+
+	if (hThread)
+		gStartedThreads.Set(*pThreadID,true);
+
+	return hThread;
+}
 
 //110131 попробуем просто добвавить ее в ExcludedModules
 //// WinInet.dll
