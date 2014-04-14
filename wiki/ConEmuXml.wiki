@@ -7,5 +7,5 @@ When one reports about problem, developer needs your ConEmu settings often.
 
 The easiest (and may be most proper) way to provide it is ‘Export...’ button in the
 [https://code.google.com/p/conemu-maximus5/wiki/Settings#Settings_dialog ConEmu Settings dialog].
-Save your config in the new xml (*don't overwrite your existing config*) file
-and attach it to the created issue.
+
+Save your config in the new xml (*don't overwrite your existing config*) file and attach it to the created issue.
