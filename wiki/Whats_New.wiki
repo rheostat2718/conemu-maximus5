@@ -6,6 +6,10 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 140414==
+  * Issue 1544: Cygwin ssh forking fails.
+
+
 ==Build 140412==
   * Issue 1532: Show only critical status messages in the top-left terminal corner.
   * Issue 1534: Use About() and Settings() GuiMacro for system hotkeys (Win+Alt+A, Win+Alt+P, Win+Alt+K). System hotkeys are fixed by design. But user can use GuiMacro to open About or Settings dialogs. Moreover, if you need to open dialogs with special page activated (if you need some page often).
