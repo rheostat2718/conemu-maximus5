@@ -31,7 +31,7 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
 
 ==Build 140403==
   * Issue 1527: Regression 140327. !PowerShell was not hooked.
-  * Issue 1528: Infinite mouse messages !ChildGui<-->!ConEmu in some cases.
+  * Issue 1528: Infinite mouse messages `ChildGui<-->ConEmu` in some cases.
   * Settings Main page redesigned.
   * Change clink homepage url, update ConEmu\clink\Readme.txt.
   * Remove possible deadlock after closing !AltServer.
