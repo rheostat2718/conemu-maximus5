@@ -6,6 +6,10 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 140420==
+  * GuiMacro: Sleep(Milliseconds).
+
+
 ==Build 140416==
   * Don't use hooks inside shell started from mintty (6b514d0 regression).
   * Issue 1553: Mouse button actions modifier was not saved (vkCTSVkAct).

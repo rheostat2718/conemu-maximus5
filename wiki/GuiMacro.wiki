@@ -274,6 +274,8 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
          Shell("new_console:b","","cmd.exe /k")
          Shell("new_console:sV")
          Shell("new_console:Ibn","cmd","/k start explorer \"%CD%\" && exit")
+    Sleep(<Milliseconds>)
+      - Milliseconds: max 10000 (10 seconds)
     Split(<Cmd>,<Horz>,<Vert>)
      - Cmd=0, Horz=1..99, Vert=0: Duplicate active ‘shell’ split to right, same as Shell("new_console:s50Hn")
        Cmd=0, Horz=0, Vert=1..99: Duplicate active ‘shell’ split to bottom, same as Shell("new_console:s50Vn")

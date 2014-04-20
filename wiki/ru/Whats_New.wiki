@@ -6,6 +6,10 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 140420==
+  * GuiMacro: Sleep(Milliseconds).
+
+
 ==Build 140416==
   * Don't use hooks inside shell started from mintty (6b514d0 regression).
   * Issue 1553: Mouse button actions modifier was not saved (vkCTSVkAct).
