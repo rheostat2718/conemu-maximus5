@@ -172,6 +172,12 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
 ==List of functions==
 <wiki:comment> !!! when modifying - add same functions to "src\ConEmu\About.h" !!! </wiki:comment>
 {{{
+    About(["<Page>"])
+      - Show ‘About’ dialog with page activated, e.g. ‘About("-new_console")’
+    Break([<Event>[,<ProcessGroupId>]])
+      - Event==0: Generates a CTRL+C signal
+        Event==1: Generates a CTRL+BREAK signal
+        More info in GenerateConsoleCtrlEvent WinAPI function
     Close(<What>[,<Flags>])
       - Close current console (0), without confirmation (0,1),
         terminate active process (1), without confirmation (1,1)
@@ -266,6 +272,9 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
           Value: 0 .. 255
         "QuakeAutoHide": auto hide on focus lose, Quake mode
           Value: 2 - switch auto-hide, 1 - enable, 0 - disable
+    Settings([<PageResourceId>])
+     - Show ‘Settings’ dialog with specified page activated (optionally)
+         PageResourceId: integer DialogID from ‘resource.h’
     Shell("<Verb>","<File>"[,"<Parms>"[,"<Dir>"[,<ShowCmd>]]])
      - Verb can be "open", "print" and so on, or special value "new_console",
        which starts File in the new tab of ConEmu window. Examples:
@@ -275,7 +284,7 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
          Shell("new_console:sV")
          Shell("new_console:Ibn","cmd","/k start explorer \"%CD%\" && exit")
     Sleep(<Milliseconds>)
-      - Milliseconds: max 10000 (10 seconds)
+     - Milliseconds: max 10000 (10 seconds)
     Split(<Cmd>,<Horz>,<Vert>)
      - Cmd=0, Horz=1..99, Vert=0: Duplicate active ‘shell’ split to right, same as Shell("new_console:s50Hn")
        Cmd=0, Horz=0, Vert=1..99: Duplicate active ‘shell’ split to bottom, same as Shell("new_console:s50Vn")

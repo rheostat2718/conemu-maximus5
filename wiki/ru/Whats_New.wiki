@@ -6,8 +6,11 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
-==Build 140420==
-  * GuiMacro: Sleep(Milliseconds).
+==Build 140422==
+  * GuiMacro. `Sleep(Milliseconds)`. Because it is processed inside GUI process, Milliseconds are limited to 10000 (10 sec) max.
+  * GuiMacro. `Break()` for `Ctrl+C` and `Break(1)` for `Ctrl+Break`. However, these function may fails in some cases (in RealConsole for example). Also, they are processed by Windows asynchronously, so you may need to `Sleep(ms)` after them if your want to `print("something")` to console after.
+  * Clipboard use optimization - RClick Paste may fails sometimes.
+  * Fix hyperlinks underlining errors (c31f3cb regression).
 
 
 ==Build 140416==
