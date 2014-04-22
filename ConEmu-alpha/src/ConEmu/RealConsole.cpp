@@ -1510,6 +1510,34 @@ bool CRealConsole::PostLeftClickSync(COORD crDC)
 	return lbOk;
 }
 
+bool CRealConsole::PostCtrlBreakEvent(DWORD nEvent, DWORD nGroupId)
+{
+	if (!this)
+		return false;
+
+	if (mn_MainSrv_PID == 0 || !m_ConsoleMap.IsValid())
+		return false; // Сервер еще не стартовал. События будут пропущены...
+
+	bool lbRc = false;
+
+	_ASSERTE(nEvent == CTRL_C_EVENT/*0*/ || nEvent == CTRL_BREAK_EVENT/*1*/);
+
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_CTRLBREAK, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+	if (pIn)
+	{
+		pIn->dwData[0] = nEvent;
+		pIn->dwData[1] = nGroupId;
+
+		CESERVER_REQ* pOut = ExecuteSrvCmd(GetServerPID(false), pIn, ghWnd);
+		if (pOut->DataSize() >= sizeof(DWORD))
+			lbRc = (pOut->dwData[0] != 0);
+		ExecuteFreeResult(pOut);
+		ExecuteFreeResult(pIn);
+	}
+
+	return lbRc;
+}
+
 bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false*/)
 {
 	if (!this)
@@ -5222,6 +5250,20 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		wParam = wParam;
 	}
 
+	// (wParam == 'C' || wParam == VK_PAUSE/*Break*/)
+	// Ctrl+C & Ctrl+Break are very special signals in Windows
+	// After many tries I decided to send 'C'/Break to console window
+	// via simple `SendMessage(ghConWnd, WM_KEYDOWN, r.Event.KeyEvent.wVirtualKeyCode, 0)`
+	// That is done inside ../ConEmuCD/Queue.cpp::ProcessInputMessage
+	// Some restriction applies to it also, look inside `ProcessInputMessage`
+	//
+	// Yep, there is another nice function - GenerateConsoleCtrlEvent
+	// But it has different restrictions and it doesn't break ReadConsole
+	// because that function loops deep inside Windows kernel...
+	// However, user can call it via GuiMacro:
+	// Break() for Ctrl+C or Break(1) for Ctrl+Break
+	// if simple Keys("^c") does not work in your case.
+
 	if (wParam == VK_CONTROL || wParam == VK_LCONTROL || wParam == VK_RCONTROL || wParam == 'C')
 	{
 		if (messg == WM_KEYDOWN || messg == WM_KEYUP /*|| messg == WM_CHAR*/)
@@ -5670,7 +5712,7 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 
 		if (mn_Comspec4Ntvdm == 0)
 		{
-			mn_ProgramStatus &= ~CES_NTVDM;
+			SetProgramStatus(mn_ProgramStatus & ~CES_NTVDM);
 		}
 
 		//2010-02-26 убрал. может прийти с задержкой и только создать проблемы
@@ -5753,7 +5795,7 @@ void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 //				//}
 //
 //				//if (!(mn_ProgramStatus & CES_NTVDM))
-//				//	mn_ProgramStatus |= CES_NTVDM;
+//				//	SetProgramStatus(mn_ProgramStatus|CES_NTVDM);
 //
 //				//if (gOSVer.dwMajorVersion>5 || (gOSVer.dwMajorVersion==5 && gOSVer.dwMinorVersion>=1))
 //				//	mb_IgnoreCmdStop = TRUE;
@@ -9861,12 +9903,13 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		HGLOBAL hglb = NULL;
 		LPCWSTR lptstr = NULL;
 		wchar_t szErr[128] = {}; DWORD nErrCode = 0;
+		bool lbOpened = false;
 
 		// из буфера обмена
-		if (!OpenClipboard(NULL))
+		if (!(lbOpened = MyOpenClipboard(L"GetClipboard")))
 		{
-			nErrCode = GetLastError();
-			wcscpy_c(szErr, L"Can't open Windows clipboard");
+			// Error already displayed
+			szErr[0] = 0;
 		}
 		else if ((hglb = GetClipboardData(CF_UNICODETEXT)) == NULL)
 		{
@@ -9888,7 +9931,10 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		}
 
 		// Done
-		CloseClipboard();
+		if (lbOpened)
+		{
+			MyCloseClipboard();
+		}
 
 		if (!pszBuf)
 		{

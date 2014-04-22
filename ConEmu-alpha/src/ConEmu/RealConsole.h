@@ -359,6 +359,7 @@ class CRealConsole
 	public:
 		COORD ScreenToBuffer(COORD crMouse);
 		COORD BufferToScreen(COORD crMouse, bool bFixup = true, bool bVertOnly = false);
+		bool PostCtrlBreakEvent(DWORD nEvent, DWORD nGroupId);
 		bool PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME = false);
 		bool PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		bool DeleteWordKeyPress(bool bTestOnly = false);
@@ -485,6 +486,7 @@ class CRealConsole
 		BOOL RecreateProcess(RConStartArgs *args);
 		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
 		ExpandTextRangeType GetLastTextRangeType();
+		bool IsFarHyperlinkAllowed(bool abFarRequired);
 	private:
 		bool PreCreate(RConStartArgs *args);
 
@@ -496,7 +498,6 @@ class CRealConsole
 		//	etr_FileAndLine = 2,
 		//};
 		//ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
-		bool IsFarHyperlinkAllowed(bool abFarRequired);
 		void UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab);
 		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:

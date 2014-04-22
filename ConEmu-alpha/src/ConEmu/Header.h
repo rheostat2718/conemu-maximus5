@@ -263,6 +263,10 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*
 BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes = false*/);
 bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
 
+bool MyOpenClipboard(LPCWSTR asAction);
+void MyCloseClipboard();
+bool CopyToClipboard(LPCWSTR asText);
+
 extern const wchar_t* gsEscaped;
 //wchar_t* EscapeString(bool bSet, LPCWSTR pszSrc);
 void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst);
@@ -738,3 +742,6 @@ bool NextLine(const wchar_t*& pszFrom, wchar_t** pszLine);
 
 // pszWords - '|'separated
 void StripWords(wchar_t* pszText, const wchar_t* pszWords);
+
+// One message cycle step
+bool ProcessMessage(MSG& Msg);
