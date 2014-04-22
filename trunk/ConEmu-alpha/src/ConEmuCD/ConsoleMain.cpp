@@ -731,6 +731,36 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 // DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024], LPWSTR pszComment = NULL);
 #include "../common/Dump.h"
 
+bool CopyToClipboard(LPCWSTR asText)
+{
+	if (!asText)
+		return false;
+
+	bool bCopied = false;
+
+	if (OpenClipboard(NULL))
+	{
+		DWORD cch = lstrlen(asText);
+		HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (cch + 1) * sizeof(*asText));
+		if (hglbCopy)
+		{
+			wchar_t* lptstrCopy = (wchar_t*)GlobalLock(hglbCopy);
+			if (lptstrCopy)
+			{
+				_wcscpy_c(lptstrCopy, cch+1, asText);
+				GlobalUnlock(hglbCopy);
+
+				EmptyClipboard();
+				bCopied = (SetClipboardData(CF_UNICODETEXT, hglbCopy) != NULL);
+			}
+		}
+
+		CloseClipboard();
+	}
+
+	return bCopied;
+}
+
 LPTOP_LEVEL_EXCEPTION_FILTER gpfnPrevExFilter = NULL;
 LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 {
@@ -8491,6 +8521,29 @@ BOOL cmd_PortableStarted(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_CtrlBreakEvent(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+	BOOL lbGenRc = FALSE;
+
+	if (in.DataSize() == (2 * sizeof(DWORD)))
+	{
+		lbGenRc = GenerateConsoleCtrlEvent(in.dwData[0], in.dwData[1]);
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Invalid CtrlBreakEvent data");
+	}
+
+	size_t cbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_CTRLBREAK, cbReplySize);
+	if (*out)
+		(*out)->dwData[0] = lbGenRc;
+	lbRc = ((*out) != NULL);
+
+	return lbRc;
+}
+
 bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 {
 	bool lbProcessed = false;
@@ -8716,6 +8769,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_PORTABLESTART:
 		{
 			lbRc = cmd_PortableStarted(in, out);
+		} break;
+		case CECMD_CTRLBREAK:
+		{
+			lbRc = cmd_CtrlBreakEvent(in, out);
 		} break;
 		default:
 		{

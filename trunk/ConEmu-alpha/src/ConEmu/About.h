@@ -196,6 +196,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"About([\"<Page>\"])\r\n" \
 	L"  - Show ‘About’ dialog with page activated, e.g. ‘About(\"-new_console\")’\r\n" \
+	L"Break([<Event>[,<ProcessGroupId>]])\r\n" \
+	L"  - Event==0: Generates a CTRL+C signal\r\n" \
+	L"    Event==1: Generates a CTRL+BREAK signal\r\n" \
+	L"    More info in GenerateConsoleCtrlEvent WinAPI function\r\n" \
 	L"Close(<What>[,<Flags>])\r\n" \
 	L"  - close current console (0), without confirmation (0,1),\r\n" \
 	L"    terminate active process (1), without confirmation (1,1)\r\n" \
@@ -306,6 +310,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"        Shell(\"\",\"\",\"cmd.exe /k -new_console:b\"),\r\n" \
 	L"        Shell(\"new_console:b\",\"\",\"cmd.exe /k\")\r\n" \
 	L"        Shell(\"new_console:sV\")\r\n" \
+	L"Sleep(<Milliseconds>)\r\n" \
+	L"  - Milliseconds: max 10000 (10 seconds)\r\n" \
 	L"Split(<Cmd>,<Horz>,<Vert>)\r\n" \
 	L"  - Cmd=0, Horz=1..99, Vert=0: Duplicate active \"shell\" split to right\r\n" \
 	L"    Cmd=0, Horz=0, Vert=1..99: Duplicate active \"shell\" split to bottom\r\n" \

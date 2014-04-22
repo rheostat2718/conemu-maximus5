@@ -124,13 +124,17 @@ namespace ConEmuMacro
 
 	// Диалог About(["Tab"])
 	LPWSTR About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Break (0=CtrlC; 1=CtrlBreak)
+	LPWSTR Break(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Закрыть/прибить текущую консоль
 	LPWSTR Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Copy (<What>)
+	LPWSTR Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
 	LPWSTR FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	LPWSTR FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon, bool abFromPlugin); // helper, это не макро-фукнция
+	LPWSTR FindViewer(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+		LPWSTR FindFarWindowHelper(CEFarWindowType anWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName, CRealConsole* apRCon, bool abFromPlugin); // helper, это не макро-фукнция
 	// Flash
 	LPWSTR Flash(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Изменить имя основного шрифта. string
@@ -145,20 +149,18 @@ namespace ConEmuMacro
 	LPWSTR IsConsoleActive(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Проверка, видима ли RealConsole
 	LPWSTR IsRealVisible(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Keys("<Combo1>"[,"<Combo2>"[...]])
+	LPWSTR Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Menu(Type)
 	LPWSTR Menu(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
 	LPWSTR MsgBox(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	// Copy (<What>)
-	LPWSTR Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Palette([<Cmd>[,"<NewPalette>"]])
+	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Paste (<Cmd>[,"<Text>"])
 	LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// print("<Text>") - alias for Paste(2,"<Text>")
 	LPWSTR Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	// Keys("<Combo1>"[,"<Combo2>"[...]])
-	LPWSTR Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	// Palette([<Cmd>[,"<NewPalette>"]])
-	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Progress(<Type>[,<Value>])
 	LPWSTR Progress(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Rename(<Type>,"<Title>")
@@ -171,6 +173,8 @@ namespace ConEmuMacro
 	LPWSTR Settings(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Shell (ShellExecute)
 	LPWSTR Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Sleep (ms)
+	LPWSTR Sleep(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Split
 	LPWSTR Split(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Status
@@ -181,7 +185,7 @@ namespace ConEmuMacro
 	LPWSTR Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Transparency
 	LPWSTR Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	LPWSTR TransparencyHelper(int nCmd, int nValue); // helper, это не макро-фукнция
+		LPWSTR TransparencyHelper(int nCmd, int nValue); // helper, это не макро-фукнция
 	// Fullscreen
 	LPWSTR WindowFullscreen(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Maximize
@@ -202,39 +206,41 @@ namespace ConEmuMacro
 	} Functions[] = {
 		// List all functions
 		{About, {L"About"}},
-		{IsConEmu, {L"IsConEmu"}},
+		{Break, {L"Break"}},
 		{Close, {L"Close"}},
+		{Copy, {L"Copy"}},
 		{FindEditor, {L"FindEditor"}},
-		{FindViewer, {L"FindViewer"}},
 		{FindFarWindow, {L"FindFarWindow"}},
+		{FindViewer, {L"FindViewer"}},
+		{Flash, {L"Flash", L"FlashWindow"}},
+		{FontSetName, {L"FontSetName"}},
+		{FontSetSize, {L"FontSetSize"}},
+		{HighlightMouse, {L"HighlightMouse"}},
+		{IsConEmu, {L"IsConEmu"}},
+		{IsConsoleActive, {L"IsConsoleActive"}},
+		{IsRealVisible, {L"IsRealVisible"}},
+		{Keys, {L"Keys"}},
+		{Menu, {L"Menu"}},
+		{MsgBox, {L"MsgBox"}},
+		{Palette, {L"Palette"}},
+		{Paste, {L"Paste"}},
+		{Print, {L"Print"}},
+		{Progress, {L"Progress"}},
+		{Rename, {L"Rename"}},
+		{Select, {L"Select"}},
+		{SetOption, {L"SetOption"}},
+		{Settings, {L"Settings"}},
+		{Shell, {L"Shell", L"ShellExecute"}},
+		{Sleep, {L"Sleep"}},
+		{Split, {L"Split", L"Splitter"}},
+		{Status, {L"Status", L"StatusBar", L"StatusControl"}, true},
+		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
+		{Task, {L"Task"}},
+		{Transparency, {L"Transparency"}},
 		{WindowFullscreen, {L"WindowFullscreen"}},
 		{WindowMaximize, {L"WindowMaximize"}},
 		{WindowMinimize, {L"WindowMinimize"}},
 		{WindowMode, {L"WindowMode"}},
-		{MsgBox, {L"MsgBox"}},
-		{Menu, {L"Menu"}},
-		{Flash, {L"Flash", L"FlashWindow"}},
-		{FontSetSize, {L"FontSetSize"}},
-		{FontSetName, {L"FontSetName"}},
-		{HighlightMouse, {L"HighlightMouse"}},
-		{IsRealVisible, {L"IsRealVisible"}},
-		{IsConsoleActive, {L"IsConsoleActive"}},
-		{Copy, {L"Copy"}},
-		{Paste, {L"Paste"}},
-		{Palette, {L"Palette"}},
-		{Print, {L"Print"}},
-		{Keys, {L"Keys"}},
-		{Progress, {L"Progress"}},
-		{Rename, {L"Rename"}},
-		{Shell, {L"Shell", L"ShellExecute"}},
-		{Select, {L"Select"}},
-		{SetOption, {L"SetOption"}},
-		{Settings, {L"Settings"}},
-		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
-		{Task, {L"Task"}},
-		{Transparency, {L"Transparency"}},
-		{Status, {L"Status", L"StatusBar", L"StatusControl"}, true},
-		{Split, {L"Split", L"Splitter"}},
 		// End
 		{NULL}
 	};
@@ -1122,6 +1128,23 @@ LPWSTR ConEmuMacro::IsConsoleActive(GuiMacro* p, CRealConsole* apRCon, bool abFr
 		pszResult = lstrdup(L"No");
 
 	return pszResult;
+}
+
+// Break (0=CtrlC; 1=CtrlBreak)
+LPWSTR ConEmuMacro::Break(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	bool bRc = false;
+	int nEvent = 0, nGroup = 0;
+
+	if (p->GetIntArg(0, nEvent))
+		p->GetIntArg(1, nGroup);
+
+	if ((nEvent == 0 || nEvent == 1) && apRCon)
+	{
+		bRc = apRCon->PostCtrlBreakEvent(nEvent, nGroup);
+	}
+
+	return bRc ? lstrdup(L"OK") : lstrdup(L"InvalidArg");
 }
 
 LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
@@ -2402,6 +2425,54 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 wrap:
 	SafeFree(pszBuf);
+	return pszRc ? pszRc : lstrdup(L"InvalidArg");
+}
+
+LPWSTR ConEmuMacro::Sleep(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszRc = NULL;
+	int ms = 0;
+	wchar_t szStatus[32];
+
+	// Max - 10sec to avoid hungs
+	if (p->GetIntArg(0, ms) && (ms > 0) && (ms < 10000))
+	{
+		_wsprintf(szStatus, SKIPLEN(countof(szStatus)) L"Sleeping %u ms", ms);
+		if (apRCon) apRCon->SetConStatus(szStatus, CRealConsole::cso_Critical);
+		DWORD dwStartTick = GetTickCount(), dwDelta, dwNow;
+		MSG Msg;
+		if (!gpConEmu->isMainThread())
+		{
+			::Sleep(ms);
+		}
+		else
+		{
+			while (true)
+			{
+				::Sleep(min(ms,5));
+				dwDelta = (dwNow = GetTickCount()) - dwStartTick;
+				// Too long waiting may be noticed as "hangs"
+				if (dwDelta < (DWORD)ms)
+				{
+					while (PeekMessage(&Msg, NULL, 0, 0, PM_REMOVE))
+					{
+						if (!ProcessMessage(Msg))
+						{
+							return lstrdup(L"Terminated");
+						}
+						dwDelta = (dwNow = GetTickCount()) - dwStartTick;
+						if (dwDelta >= (DWORD)ms)
+							break;
+					}
+				}
+				// Sleep more?
+				if (dwDelta >= (DWORD)ms)
+					break;
+			}
+		}
+		if (apRCon) apRCon->SetConStatus(NULL);
+	}
+
 	return pszRc ? pszRc : lstrdup(L"InvalidArg");
 }
 

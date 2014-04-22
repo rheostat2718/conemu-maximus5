@@ -2190,21 +2190,91 @@ RECT CenterInParent(RECT rcDlg, HWND hParent)
 	return rcCenter;
 }
 
+static LONG gnMyClipboardOpened = 0;
+
+bool MyOpenClipboard(LPCWSTR asAction)
+{
+	_ASSERTE(gnMyClipboardOpened==0 || gnMyClipboardOpened==1);
+
+	if (gnMyClipboardOpened > 0)
+	{
+		InterlockedIncrement(&gnMyClipboardOpened);
+		return true;
+	}
+
+	BOOL lbRc;
+
+	// Открыть буфер обмена
+	while (!(lbRc = OpenClipboard(ghWnd)))
+	{
+		DWORD dwErr = GetLastError();
+
+		wchar_t* pszMsg = lstrmerge(L"OpenClipboard failed (", asAction, L")");
+		int iBtn = DisplayLastError(pszMsg, dwErr, MB_RETRYCANCEL|MB_ICONSTOP);
+		SafeFree(pszMsg);
+
+		if (iBtn != IDRETRY)
+			return false;
+	}
+
+	InterlockedIncrement(&gnMyClipboardOpened);
+	_ASSERTE(gnMyClipboardOpened==1);
+	return true;
+}
+
+void MyCloseClipboard()
+{
+	_ASSERTE(gnMyClipboardOpened==1 || gnMyClipboardOpened==2);
+
+	if (InterlockedDecrement(&gnMyClipboardOpened) > 0)
+	{
+		return;
+	}
+
+	CloseClipboard();
+}
+
+bool CopyToClipboard(LPCWSTR asText)
+{
+	if (!asText)
+		return false;
+
+	bool bCopied = false;
+
+	if (MyOpenClipboard(L"CopyToClipboard"))
+	{
+		DWORD cch = lstrlen(asText);
+		HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (cch + 1) * sizeof(*asText));
+		if (hglbCopy)
+		{
+			wchar_t* lptstrCopy = (wchar_t*)GlobalLock(hglbCopy);
+			if (lptstrCopy)
+			{
+				_wcscpy_c(lptstrCopy, cch+1, asText);
+				GlobalUnlock(hglbCopy);
+
+				EmptyClipboard();
+				bCopied = (SetClipboardData(CF_UNICODETEXT, hglbCopy) != NULL);
+			}
+		}
+
+		MyCloseClipboard();
+	}
+
+	return bCopied;
+}
 
 void MessageLoop()
 {
 	MSG Msg = {NULL};
 	gbMessagingStarted = TRUE;
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	wchar_t szDbg[128];
-#endif
+	#endif
 
 	while (GetMessage(&Msg, NULL, 0, 0))
 	{
-		// Может быть некоторые дублирование с логированием в самих функциях
-		ConEmuMsgLogger::Log(Msg, ConEmuMsgLogger::msgCommon);
-
 		#ifdef _DEBUG
 		if (Msg.message == WM_TIMER)
 		{
@@ -2213,19 +2283,41 @@ void MessageLoop()
 		}
 		#endif
 
-		if (gpConEmu)
-		{
-			if (gpConEmu->isDialogMessage(Msg))
-				continue;
-			if ((Msg.message == WM_SYSCOMMAND) && gpConEmu->isSkipNcMessage(Msg))
-				continue;
-		}
-
-		TranslateMessage(&Msg);
-		DispatchMessage(&Msg);
+		if (!ProcessMessage(Msg))
+			break;
 	}
 
 	gbMessagingStarted = FALSE;
+}
+
+bool ProcessMessage(MSG& Msg)
+{
+	bool bRc = true;
+	static bool bQuitMsg = false;
+
+	if (Msg.message == WM_QUIT)
+	{
+		bQuitMsg = true;
+		bRc = false;
+		goto wrap;
+	}
+
+	// Может быть некоторые дублирование с логированием в самих функциях
+	ConEmuMsgLogger::Log(Msg, ConEmuMsgLogger::msgCommon);
+
+	if (gpConEmu)
+	{
+		if (gpConEmu->isDialogMessage(Msg))
+			goto wrap;
+		if ((Msg.message == WM_SYSCOMMAND) && gpConEmu->isSkipNcMessage(Msg))
+			goto wrap;
+	}
+
+	TranslateMessage(&Msg);
+	DispatchMessage(&Msg);
+
+wrap:
+	return bRc;
 }
 
 /* С командной строкой (GetCommandLineW) у нас засада */
