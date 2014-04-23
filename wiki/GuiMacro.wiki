@@ -1,6 +1,8 @@
 ﻿There is an easy way to control (a little) !ConEmu window from console applications or additional hotkeys.
 It's a !GuiMacro.
 
+<wiki:toc max_depth="3" />
+
 ==Abstract==
 You can execute !ConEmu GUI macro from:
   * !ConEmu hotkey - set up ‘Macro 01’ … ‘Macro 32’ on ‘Keys’ page of ‘Settings’ dialog.
