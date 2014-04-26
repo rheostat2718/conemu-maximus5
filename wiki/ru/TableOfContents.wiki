@@ -66,6 +66,7 @@
       * [SplitScreen Splits (panes)]
       * [SystemMenu Системное меню]
       * [KeyboardShortcuts Клавиатура]
+      * [GlobalHotKeys Глобальные клавиши]
       * [UsingMouse Мышь]
       * [TextSelection Работа с текстом]
       * [GuiMacro GUI макросы]

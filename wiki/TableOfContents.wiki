@@ -65,6 +65,7 @@
       * [SplitScreen Splits (panes)]
       * [SystemMenu System menu]
       * [KeyboardShortcuts Keyboard shortcuts]
+      * [GlobalHotKeys Global hotkeys]
       * [UsingMouse Using mouse]
       * [TextSelection Text selection]
       * [GuiMacro GUI Macros]

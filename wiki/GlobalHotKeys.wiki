@@ -1,0 +1,21 @@
+﻿ConEmu ‘Keys & Macro’ page contains few hotkeys marked as ‘Global’. Thought, most useful is ‘Minimize/Restore’.
+These hotkeys are registered globally in system via
+[http://msdn.microsoft.com/en-us/library/windows/desktop/ms646309(v=vs.85).aspx RegisterHotKey]
+and are available even ConEmu has no focus.
+
+Because these hotkeys are processed by Windows, some limitations applied:
+
+  * You can't use ‘Apps’ as modifier.
+  * Left and Right modifiers are indifferent.
+  * You can't register hotkey already registered by any other application.
+  * The F12 key is [http://msdn.microsoft.com/en-us/library/windows/desktop/ms646309(v=vs.85).aspx reserved for use by the debugger] at all times, so it should not be registered as a hot key. Even when you are not debugging an application, F12 is reserved in case a kernel-mode debugger or a just-in-time debugger is resident.
+
+==Using F12 as global hotkey==
+As [http://msdn.microsoft.com/en-us/library/windows/desktop/ms646309(v=vs.85).aspx msdn] said, F12 is reserved for use by the debugger.
+However, [http://technet.microsoft.com/en-us/library/cc786263.aspx technet] describes a way how to choose another key via registry.
+For example, change the value to `0x13` to use `Pause` key for debugger.
+
+{{{
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\AeDebug]
+"UserDebuggerHotKey"=dword:00000000 ; The default
+}}}
