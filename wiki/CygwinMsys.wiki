@@ -1,4 +1,4 @@
-*This article is under construction*
+ï»¿*This article is under construction*
 
 Some techinfo first. There are two types of Windows console (terminal) emulators:
 
@@ -6,16 +6,16 @@ Some techinfo first. There are two types of Windows console (terminal) emulators
   # Based on Windows console API. Most known - !ConEmu, [https://sourceforge.net/projects/console/ Console], [http://jpsoft.com/ Take Command].
 
 =stdin/stdout redirection style=
-Most of this type emulators are based on ‘POSIX layer’ -
+Most of this type emulators are based on â€˜POSIX layerâ€™ -
 [http://cygwin.com/ cygwin], [http://www.mingw.org/wiki/MSYS msys] or [http://msysgit.github.io/ msysgit].
 AFAIK, msys was forked long ago from cygwin, that is why they are alike in many cases.
 In turn, there is another fork - msysgit was forked from msys...
 
 ==Pros==
-Very fast output. Really. No need to use ‘slow’ Windows console subsystem,
+Very fast output. Really. No need to use â€˜slowâ€™ Windows console subsystem,
 that's why the speed is limited mainly with pipe throughput.
 
-‘Easy’ implementation of ANSI support. All ANSI codes are processed inside the emulator.
+â€˜Easyâ€™ implementation of ANSI support. All ANSI codes are processed inside the emulator.
 No need to translate them to and from Windows console subsystem.
 
 Almost unlimited backscroll buffer.
@@ -33,7 +33,7 @@ Say, they are wrappers around Windows API.
 That means all programs designed for Windows console sybsystem must be working perfectly.
 Of course, using these emulators, users will get bonuses like easy resizing and handy copy/pasting.
 
-On the other hand, programs designed for ‘POSIX layer’ may fails here or there...
+On the other hand, programs designed for â€˜POSIX layerâ€™ may fails here or there...
 
 ==Complains==
 I regularly get emails and issues about cygwin/msys compatibility with ConEmu.
@@ -48,7 +48,7 @@ Well, it may show some lack of features (like 256 colors processing) but it must
 
 ==Windows power==
 Windows standard console supports 16 color palette, 32K lines of backscroll buffer, alternative screens, Unicode, mouse input and dozens of other features.
-The main complains of Linux users  - unfriendly clipboard support (copy/paste) and window resizing. Really, ‘unfriendly’ but not an ‘absent’.
+The main complains of Linux users  - unfriendly clipboard support (copy/paste) and window resizing. Really, â€˜unfriendlyâ€™ but not an â€˜absentâ€™.
 So, if you are using !ConEmu or similar emulator - copy/paste/resize is not a problem at all...
 
 What I want to say. Windows console is powerful subsystem. Just run there proper shell. If you like bash - just run it!
@@ -56,12 +56,12 @@ What I want to say. Windows console is powerful subsystem. Just run there proper
 =Problems with cygwin=
 Before reporting cygwin-related problem to me, please check it in the standard Windows console.
 Just run your shell from `Win+R`, for example `C:\cygwin\bin\sh.exe -l -i`, ensure your console
-window has the same buffer and window sizes (right click on the console caption, choose ‘Properties’
+window has the same buffer and window sizes (right click on the console caption, choose â€˜Propertiesâ€™
 and change sizes), and try to reproduce your problem.
 
-I believe, your problem will repeats in standard Windows console (many users erroneously call it ‘cmd.exe’).
+I believe, your problem will repeats in standard Windows console (many users erroneously call it â€˜cmd.exeâ€™).
 At the moment, only one reported bug really relates to !ConEmu: Issue 1549 (clearing screen with `Ctrl+L`).
 
 But in most of cases, your problem will repeats.
-That means, you should contact cygwin team, because ‘console application must work properly in the console’.
+That means, you should contact cygwin team, because â€˜console application must work properly in the consoleâ€™.
 But in your case, cygwin acts properly only under certain terminal emulators (mintty), which are not real consoles in fact.
