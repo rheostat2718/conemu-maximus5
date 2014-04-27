@@ -3,7 +3,7 @@
 Some techinfo first. There are two types of Windows console (terminal) emulators:
 
   # Based on stdin/stdout redirection. Most known - [https://code.google.com/p/mintty/ mintty], [https://code.google.com/p/puttycyg/ puttycyg], [https://sourceforge.net/projects/poderosa/ Poderosa's cygterm].
-  # Based on Windows console API. Most known - !ConEmu, [https://sourceforge.net/projects/console/ Console], [http://jpsoft.com/ Take Command].
+  # Based on Windows console API. Most known - ConEmu, [https://sourceforge.net/projects/console/ Console], [http://jpsoft.com/ Take Command].
 
 =stdin/stdout redirection style=
 Most of this type emulators are based on ‘POSIX layer’ -
@@ -65,3 +65,5 @@ At the moment, only one reported bug really relates to !ConEmu: Issue 1549 (clea
 But in most of cases, your problem will repeats.
 That means, you should contact cygwin team, because ‘console application must work properly in the console’.
 But in your case, cygwin acts properly only under certain terminal emulators (mintty), which are not real consoles in fact.
+
+to be continued...

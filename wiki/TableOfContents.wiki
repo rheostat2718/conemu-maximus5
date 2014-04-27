@@ -70,6 +70,7 @@
       * [TextSelection Text selection]
       * [GuiMacro GUI Macros]
       * [TabletPC Far and touchscreen]
+    * [CygwinMsys Cygwin & Msys]
     * Far Manager
       * [ConEmuFarPlugin Far & ConEmu plugins]
       * [FarMacro Far Macros]
