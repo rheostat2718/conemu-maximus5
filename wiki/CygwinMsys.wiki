@@ -98,6 +98,8 @@ Cygwin does not want to know anything about ConEmu. I can understand this point 
 
 However... to be continued...
 
+==Startup directory==
+
 =Resume=
 My position is simple: if you are writing console application for Windows - just make it working in Windows.
 Report your problems related to Windows console to cygwin team here: [http://dir.gmane.org/gmane.os.cygwin dir.gmane.org/gmane.os.cygwin].
