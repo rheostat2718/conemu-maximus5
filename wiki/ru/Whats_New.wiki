@@ -6,6 +6,14 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 140428==
+  * Shield was not set on ‘Restart’ button in ‘Recreate’ dialog.
+  * github`#`5: Console was not started as admin when ‘Create new console’ dialog was skipped.
+  * Don't hide row/col highlight on focus loose.
+  * Issue 1557: Switch `-new_console:u:"other_user:password"` may lock the account of other_user. In some cases starting new console without directly specified working directory (with `-cur_console:d:...` for example) may lock other_user account with reason ‘Bad password count exceeded’.
+  * Issue 1516: !ConEmu fails to duplicate root when cmd.exe was catched as ‘Default terminal’.
+
+
 ==Build 140422==
   * GuiMacro. `Sleep(Milliseconds)`. Because it is processed inside GUI process, Milliseconds are limited to 10000 (10 sec) max.
   * GuiMacro. `Break()` for `Ctrl+C` and `Break(1)` for `Ctrl+Break`. However, these function may fails in some cases (in RealConsole for example). Also, they are processed by Windows asynchronously, so you may need to `Sleep(ms)` after them if your want to `print("something")` to console after.
