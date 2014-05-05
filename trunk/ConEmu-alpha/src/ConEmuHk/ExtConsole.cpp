@@ -1064,7 +1064,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		*/
 
 		SHORT ForceDumpX = 0;
-		bool BS = false;
+		bool BSRN = false;
 
 		// Обработка символов, которые двигают курсор
 		switch (*pCur)
@@ -1078,13 +1078,23 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			}
 			break;
 		case L'\r':
-			ForceDumpX = x2;
+			if (x2 > 0)
+				ForceDumpX = x2-1;
 			x2 = 0;
+			BSRN = true;
+			// "\r\n"? Do not break in two physical writes
+			if (((pCur+1) < pEnd) && (*(pCur+1) == L'\n'))
+			{
+				pCur++; y2++;
+				_ASSERTE(bWrap);
+			}
 			break;
 		case L'\n':
-			ForceDumpX = x2;
+			if (x2 > 0)
+				ForceDumpX = x2-1;
 			x2 = 0; y2++;
 			_ASSERTE(bWrap);
+			BSRN = true;
 			break;
 		case 7:
 			//Beep (no spacing)
@@ -1095,7 +1105,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				ForceDumpX = x2;
 			if (x2>0)
 				x2--;
-			BS = true;
+			BSRN = true;
 			break;
 		default:
 			// Просто буква.
@@ -1123,7 +1133,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		}
 
 		// После BS - сменить "начальную" координату
-		if (BS)
+		if (BSRN)
 			x = x2;
 
 		// При смене строки
