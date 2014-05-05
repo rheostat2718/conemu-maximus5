@@ -10,7 +10,7 @@ Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 mai
   * Limited logging of console contents.
     * Option ‘[ConEmuHk Inject ConEmuHk]’ must be enabled to get that feature!
     * Only ‘Standard output’ will be logged (the same activity as processed with ‘ANSI X3.64’ processor). So, certain Windows console API functions will not be logged (Far Manager panels, for example).
-    * You may choose folder for storing log-files, default is `"%ConEmuDir%\Logs\"`
+    * You may choose folder for storing log-files, default is `"%ConEmuDir%\Logs\"`.
     * *Note!* Default folder may be write-protected, if you've installed !ConEmu to `"Program Files"`. So, you may need to choose write-enabled folder.
     * Each console will share its own log-file, example: `"ConEmu-YYYY-MM-DD-pPID.log"`.
     * So, if several processes will write to console output simultaneously, you may get unpredictable result in your log-file.
