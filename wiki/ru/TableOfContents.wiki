@@ -16,6 +16,7 @@
     * Запуск приложений
       * [LaunchNewTab Новый таб]
       * [RestartTab Перезапуск таба]
+      * [DefaultTerminal Терминал по умолчанию]
       * [csudo sudo]
       * [Command_Line Аргументы ConEmu.exe]
       * [ConEmuC ConEmuC]

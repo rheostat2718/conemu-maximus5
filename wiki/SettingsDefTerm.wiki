@@ -3,6 +3,7 @@
 =Settings: Default term=
 <img src="http://conemu-maximus5.googlecode.com/svn/files/Settings-DefTerm.png" title="ConEmu Settings: Default term">
 
+Read more about [DefaultTerminal Default terminal feature].
 
 
 ==WARNING!!! Enabling this option may cause false alarms in antiviral programs!!!==
