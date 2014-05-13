@@ -96,9 +96,12 @@ That is because cygwin (ncurses actually, thought) does not send escape sequence
 
 Cygwin does not want to know anything about ConEmu. I can understand this point of view.
 
-However... to be continued...
+Read more in wiki CygwinAnsi.
 
 ==Startup directory==
+Cygwin shell always starts in your `"${HOME}"` instead of specified working folder.
+
+How to change that behaviour - read in wiki CygwinWorkDir.
 
 =Resume=
 My position is simple: if you are writing console application for Windows - just make it working in Windows.

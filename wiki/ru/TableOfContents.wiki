@@ -73,6 +73,8 @@
       * [GuiMacro GUI макросы]
       * [TabletPC Far и тачскрин]
     * [CygwinMsys Cygwin & Msys]
+      * [CygwinWorkDir Cygwin & ${HOME}]
+      * [CygwinAnsi Cygwin & Ansi]
     * Far Manager
       * [ConEmuFarPlugin Плагины Far & ConEmu]
       * [FarMacro Far макросы]

@@ -72,6 +72,8 @@
       * [GuiMacro GUI Macros]
       * [TabletPC Far and touchscreen]
     * [CygwinMsys Cygwin & Msys]
+      * [CygwinWorkDir Cygwin & ${HOME}]
+      * [CygwinAnsi Cygwin & Ansi]
     * Far Manager
       * [ConEmuFarPlugin Far & ConEmu plugins]
       * [FarMacro Far Macros]
