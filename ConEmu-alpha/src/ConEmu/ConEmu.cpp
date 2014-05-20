@@ -80,12 +80,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
-#define DEBUGSTRLANG(s) DEBUGSTR(s)// ; Sleep(2000)
+#define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
-#define DEBUGSTRMOUSEWHEEL(s) DEBUGSTR(s)
+#define DEBUGSTRMOUSEWHEEL(s) //DEBUGSTR(s)
 #define DEBUGSTRRCLICK(s) //DEBUGSTR(s)
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRIME(s) //DEBUGSTR(s)
@@ -100,7 +100,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTIMER(s) //DEBUGSTR(s)
 #define DEBUGSTRMSG(s) //DEBUGSTR(s)
 #define DEBUGSTRMSG2(s) //DEBUGSTR(s)
-#define DEBUGSTRANIMATE(s) DEBUGSTR(s)
+#define DEBUGSTRANIMATE(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #define DEBUGSTRSESS(s) DEBUGSTR(s)
 #ifdef _DEBUG
@@ -1287,7 +1287,7 @@ BOOL CConEmuMain::Init()
 	LoadIcons();
 
 	mp_Tip = new CToolTip();
-	mp_TabBar = new TabBarClass();
+	mp_TabBar = new CTabBarClass();
 	//m_Child = new CConEmuChild();
 	//m_Back = new CConEmuBack();
 	//m_Macro = new CConEmuMacro();
@@ -2608,6 +2608,21 @@ void CConEmuMain::InitComSpecStr(ConEmuComspec& ComSpec)
 	wcscpy_c(ComSpec.ConEmuBaseDir, ms_ConEmuBaseDir);
 }
 
+void CConEmuMain::GetGuiInfo(ConEmuGuiMapping& GuiInfo)
+{
+	GuiInfo = m_GuiInfo;
+}
+
+void CConEmuMain::GetAnsiLogInfo(ConEmuAnsiLog &AnsiLog)
+{
+	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	AnsiLog.Enabled = gpSet->isAnsiLog;
+	// Max path = (MAX_PATH - "ConEmu-yyyy-mm-dd-p12345.log")
+	lstrcpyn(AnsiLog.Path,
+		(gpSet->isAnsiLog && gpSet->pszAnsiLog) ? gpSet->pszAnsiLog : L"",
+		countof(AnsiLog.Path)-32);
+}
+
 void CConEmuMain::UpdateGuiInfoMapping()
 {
 	m_GuiInfo.nProtocolVersion = CESERVER_REQ_VER;
@@ -3123,9 +3138,9 @@ void CConEmuMain::Destroy()
 	}
 
 	#ifdef _DEBUG
-	if (gbInMyAssertTrap)
+	if (gnInMyAssertTrap > 0)
 	{
-		LogString(L"-- Destroy skipped due to gbInMyAssertTrap");
+		LogString(L"-- Destroy skipped due to gnInMyAssertTrap");
 		mb_DestroySkippedInAssert = true;
 		return;
 	}
@@ -7222,18 +7237,20 @@ void CConEmuMain::AttachToDialog()
 	mp_AttachDlg->AttachDlg();
 }
 
-CRealConsole* CConEmuMain::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID)
+CRealConsole* CConEmuMain::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID)
 {
 	wchar_t szLogInfo[MAX_PATH];
 
+	_ASSERTE(anServerPID!=0);
+
 	if (gpSetCls->isAdvLogging!=0)
 	{
-		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. AppPID=%u, FileName=", anAppPID);
+		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. SrvPID=%u. AppPID=%u, FileName=", anServerPID, anAppPID);
 		lstrcpyn(szLogInfo+_tcslen(szLogInfo), asAppFileName ? asAppFileName : L"<NULL>", 128);
 		LogString(szLogInfo);
 	}
 
-	CRealConsole* pRCon = CVConGroup::AttachRequestedGui(asAppFileName, anAppPID);
+	CRealConsole* pRCon = CVConGroup::AttachRequestedGui(anServerPID, asAppFileName, anAppPID);
 
 	if (gpSetCls->isAdvLogging!=0)
 	{
@@ -7242,7 +7259,7 @@ CRealConsole* CConEmuMain::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anApp
 			_wsprintf(szRc, SKIPLEN(countof(szRc)) L"Succeeded. ServerPID=%u", pRCon->GetServerPID());
 		else
 			wcscpy_c(szRc, L"Rejected");
-		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. AppPID=%u. %s", anAppPID, szRc);
+		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. SrvPID=%u. AppPID=%u. %s", anServerPID, anAppPID, szRc);
 		LogString(szLogInfo);
 	}
 
@@ -7735,6 +7752,11 @@ DWORD_PTR CConEmuMain::GetActiveKeyboardLayout()
 LPCWSTR CConEmuMain::GetDefaultTitle()
 {
 	return ms_ConEmuDefTitle;
+}
+
+LPCWSTR CConEmuMain::GetDefaultTabLabel()
+{
+	return L"ConEmu";
 }
 
 void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
@@ -9268,12 +9290,10 @@ void CConEmuMain::CheckNeedUpdateTitle(LPCWSTR asRConTitle)
 }
 
 // !!!Warning!!! Никаких return. в конце функции вызывается необходимый CheckProcesses
-void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
+void CConEmuMain::UpdateTitle()
 {
 	if (GetCurrentThreadId() != mn_MainThreadId)
 	{
-		/*if (TitleCmp != asNewTitle) -- можем наколоться на многопоточности. Лучше получим повторно
-		    wcscpy(TitleCmp, asNewTitle);*/
 		PostMessage(ghWnd, mn_MsgUpdateTitle, 0, 0);
 		return;
 	}
@@ -9298,8 +9318,6 @@ void CConEmuMain::UpdateTitle(/*LPCTSTR asNewTitle*/)
 
 	if (!pszNewTitle)
 	{
-		//if ((pszNewTitle = mp_ VActive->RCon()->GetTitle()) == NULL)
-		//	return;
 		pszNewTitle = GetDefaultTitle();
 	}
 
@@ -10225,9 +10243,6 @@ LPCTSTR CConEmuMain::GetLastTitle(bool abUseDefault/*=true*/)
 
 LPCTSTR CConEmuMain::GetVConTitle(int nIdx)
 {
-	//if (nIdx < 0 || nIdx >= MAX_CONSOLE_COUNT)
-	//	return NULL;
-
 	CVConGuard VCon;
 	if (!CVConGroup::GetVCon(nIdx, &VCon))
 		return NULL;
@@ -10843,6 +10858,11 @@ bool CConEmuMain::OnScClose()
 void CConEmuMain::SetScClosePending(bool bFlag)
 {
 	mb_ScClosePending = bFlag;
+}
+
+bool CConEmuMain::isScClosing()
+{
+	return mb_ScClosePending;
 }
 
 bool CConEmuMain::isCloseConfirmed()
@@ -17420,11 +17440,11 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	#ifdef _DEBUG
 	if (mb_DestroySkippedInAssert)
 	{
-		if (!gbInMyAssertTrap)
+		if (gnInMyAssertTrap <= 0)
 		{
 			if (CVConGroup::GetConCount() == 0)
 			{
-				LogString(L"-- Destroy was skipped due to gbInMyAssertTrap, reposting");
+				LogString(L"-- Destroy was skipped due to gnInMyAssertTrap, reposting");
 				Destroy();
 				return;
 			}

@@ -58,7 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CConEmuChild;
 class CConEmuBack;
-class TabBarClass;
+class CTabBarClass;
 class CConEmuMacro;
 class CAttachDlg;
 class CRecreateDlg;
@@ -192,6 +192,10 @@ class CConEmuMain :
 		ConEmuGuiMapping m_GuiInfo;
 		MFileMapping<ConEmuGuiMapping> m_GuiInfoMapping;
 		MFileMapping<ConEmuGuiMapping> m_GuiAttachMapping;
+	public:
+		void GetGuiInfo(ConEmuGuiMapping& GuiInfo);
+		void GetAnsiLogInfo(ConEmuAnsiLog &AnsiLog);
+	private:
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
 		static bool UpdateGuiInfoMappingFill(CVirtualConsole* pVCon, LPARAM lParam);
@@ -219,7 +223,7 @@ class CConEmuMain :
 		//CConEmuBack  *m_Back;
 		//CConEmuMacro *m_Macro;
 		CConEmuMenu *mp_Menu;
-		TabBarClass *mp_TabBar;
+		CTabBarClass *mp_TabBar;
 		CConEmuInside *mp_Inside;
 		CStatus *mp_Status;
 		CToolTip *mp_Tip;
@@ -389,6 +393,7 @@ class CConEmuMain :
 		bool CanSetChildFocus();
 		void SetScClosePending(bool bFlag);
 		bool OnScClose();
+		bool isScClosing();
 	protected:
 		bool mb_ScClosePending; // Устанавливается в TRUE в CVConGroup::CloseQuery
 	protected:
@@ -579,7 +584,8 @@ class CConEmuMain :
 		DWORD GetFarPID(BOOL abPluginRequired=FALSE);
 
 	public:
-		LPCWSTR GetDefaultTitle(); // вернуть ms_ConEmuVer
+		LPCWSTR GetDefaultTitle(); // вернуть ms_ConEmuDefTitle
+		LPCWSTR GetDefaultTabLabel(); // L"ConEmu"
 		LPCTSTR GetLastTitle(bool abUseDefault=true);
 		LPCTSTR GetVConTitle(int nIdx);
 		void SetTitleTemplate(LPCWSTR asTemplate);
@@ -603,7 +609,7 @@ class CConEmuMain :
 		void AskChangeBufferHeight();
 		void AskChangeAlternative();
 		void AttachToDialog();
-		CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
+		CRealConsole* AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
 		void AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom);
 		RECT CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode = wmCurrent);
 		RECT CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon=NULL);
@@ -769,7 +775,7 @@ class CConEmuMain :
 	public:
 		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 		void CheckNeedUpdateTitle(LPCWSTR asRConTitle);
-		void UpdateTitle(/*LPCTSTR asNewTitle*/);
+		void UpdateTitle();
 		void UpdateProgress(/*BOOL abUpdateTitle*/);
 		void UpdateWindowRgn(int anX=-1, int anY=-1, int anWndWidth=-1, int anWndHeight=-1);
 		static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

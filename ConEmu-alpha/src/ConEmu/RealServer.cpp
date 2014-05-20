@@ -51,7 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuPipe.h"
 #include "Macro.h"
 
-#define DEBUGSTRCMD(s) DEBUGSTR(s)
+#define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
 
 
@@ -721,7 +721,9 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 			if (mp_RCon->isActive()) gpConEmu->UpdateProcessDisplay(FALSE);  // обновить PID в окне настройки
 		}
 
+		mp_RCon->tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchNonPanel, pIn->hdr.nSrcPID);
 		mp_RCon->SetTabs(NULL, 1);
+		gpConEmu->mp_TabBar->PrintRecentStack();
 	}
 	else
 	{

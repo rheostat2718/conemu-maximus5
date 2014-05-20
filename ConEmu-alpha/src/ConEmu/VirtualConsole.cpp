@@ -83,7 +83,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #define DEBUGDRAW_VERTICALS VK_SCROLL // -- при включенном ScrollLock отрисовать прямоугольники, соответсвующие граням диалогов (которые строго выравниваются по ячейкам)
 #endif
 
-#define DEBUGSTRDRAW(s) DEBUGSTR(s)
+#define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRCOORD(s) //DEBUGSTR(s)
 #define DEBUGSTRFAIL(s) DEBUGSTR(s)
 
@@ -563,68 +563,6 @@ HWND CVirtualConsole::GhostWnd()
 bool CVirtualConsole::isVisible()
 {
 	return gpConEmu->isVisible(this);
-}
-
-int CVirtualConsole::GetTabCount()
-{
-	if (!this)
-	{
-		_ASSERTE(this!=NULL);
-		return 0;
-	}
-	if (!mp_RCon)
-	{
-		return 1;
-	}
-	return mp_RCon->GetTabCount();
-}
-
-int CVirtualConsole::GetActiveTab()
-{
-	if (!this)
-	{
-		_ASSERTE(this!=NULL);
-		return 0;
-	}
-	if (!mp_RCon)
-	{
-		return 0;
-	}
-	return mp_RCon->GetActiveTab();
-}
-
-bool CVirtualConsole::GetTab(int tabIdx, /*OUT*/ CTab* pTab)
-{
-	if (!this || !mp_RCon)
-	{
-		_ASSERTE(this && mp_RCon);
-		return false;
-	}
-
-	ConEmuTab tab = {};
-	if (!GetTab(tabIdx, &tab))
-		return false;
-
-	CTabID* id = new CTabID(this, *tab.Name ? tab.Name : gpConEmu->GetDefaultTitle(), tab.Type & fwt_TypeMask/*убить*/, 0/*anPID*/, tab.Pos/*anFarWindowID*/, tab.EditViewId, tab.Type);
-	pTab->Init(id);
-	//id->Release(); -- ???
-	return true;
-}
-
-bool CVirtualConsole::GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab)
-{
-	if (!this)
-	{
-		_ASSERTE(this!=NULL);
-		return false;
-	}
-	if (!mp_RCon)
-	{
-		pTab->Pos = 0; pTab->Current = 1; pTab->Type = 1; pTab->Modified = 0;
-		lstrcpyn(pTab->Name, gpConEmu->GetDefaultTitle(), countof(pTab->Name));
-		return true;
-	}
-	return mp_RCon->GetTab(tabIdx, pTab);
 }
 
 void CVirtualConsole::PointersInit()

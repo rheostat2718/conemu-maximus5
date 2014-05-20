@@ -670,18 +670,22 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				CVirtualConsole* pVCon = (CVirtualConsole*)lParam;
 
 				#ifdef _DEBUG
+				_ASSERTE(pVCon == guard.VCon());
 				int i = -100;
 				wchar_t szDbg[200];
+				wchar_t szTmp[128];
 				{
 					lstrcpy(szDbg, L"gn_MsgVConTerminated");
 
 					i = CVConGroup::GetVConIndex(pVCon);
 					if (i >= 1)
 					{
-						ConEmuTab tab = {0};
-						pVCon->RCon()->GetTab(0, &tab);
-						tab.Name[128] = 0; // чтобы не вылезло из szDbg
-						wsprintf(szDbg+_tcslen(szDbg), L": #%i: %s", i, tab.Name);
+						CTab tab(__FILE__,__LINE__);
+						if (pVCon->RCon()->GetTab(0, tab))
+							lstrcpyn(szTmp, tab->Name.Ptr(), countof(szTmp)); // чтобы не вылезло из szDbg
+						else
+							wcscpy_c(szTmp, L"<GetTab(0) failed>");
+						wsprintf(szDbg+_tcslen(szDbg), L": #%i: %s", i, szTmp);
 					}
 
 					lstrcat(szDbg, L"\n");

@@ -248,6 +248,7 @@ enum ExpandTextRangeType;
 struct ConEmuHotKey;
 
 #include "RealServer.h"
+#include "TabID.h"
 
 class CRealConsole
 {
@@ -422,6 +423,8 @@ class CRealConsole
 		HWND isPictureView(BOOL abIgnoreNonModal=FALSE);
 		BOOL isWindowVisible();
 		LPCTSTR GetTitle(bool abGetRenamed=false);
+		LPCWSTR GetPanelTitle();
+		LPCWSTR GetTabTitle(CTab& tab);
 		void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
 		//void GetConsoleCursorPos(COORD *pcr);
 		void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr = NULL);
@@ -482,7 +485,7 @@ class CRealConsole
 		void ShowGuiClientInt(bool bShow);
 		void ChildSystemMenu();
 		bool isDetached();
-		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
+		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet);
 		BOOL RecreateProcess(RConStartArgs *args);
 		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
 		ExpandTextRangeType GetLastTextRangeType();
@@ -498,7 +501,6 @@ class CRealConsole
 		//	etr_FileAndLine = 2,
 		//};
 		//ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
-		void UpdateTabFlags(/*IN|OUT*/ ConEmuTab* pTab);
 		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		BOOL IsConsoleDataChanged();
@@ -511,7 +513,7 @@ class CRealConsole
 		//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
 		BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 		void UpdateScrollInfo();
-		void SetTabs(ConEmuTab* tabs, int tabsCount);
+		void SetTabs(ConEmuTab* apTabs, int anTabsCount);
 		void DoRenameTab();
 		bool DuplicateRoot(bool bSkipMsg = false, bool bRunAsAdmin = false, LPCWSTR asNewConsole = NULL, LPCWSTR asApp = NULL, LPCWSTR asParm = NULL);
 		void RenameTab(LPCWSTR asNewTabText = NULL);
@@ -520,10 +522,11 @@ class CRealConsole
 		int GetRootProcessIcon();
 		int GetActiveTab();
 		CEFarWindowType GetActiveTabType();
-		bool GetTab(int tabIdx, /*OUT*/ ConEmuTab* pTab);
+		bool GetTab(int tabIdx, /*OUT*/ CTab& rTab);
 		int GetModifiedEditors();
 		BOOL ActivateFarWindow(int anWndIndex);
 		DWORD CanActivateFarWindow(int anWndIndex);
+		bool IsSwitchFarWindowAllowed();
 		void OnConsoleKeyboardLayout(DWORD dwNewLayout);
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
 		void CloseConsole(bool abForceTerminate, bool abConfirm, bool abAllowMacro = true);
@@ -533,6 +536,7 @@ class CRealConsole
 		BOOL CanCloseTab(BOOL abPluginRequired = FALSE);
 		void CloseTab();
 		bool isConsoleClosing();
+		bool isConsoleReady();
 		void OnServerClosing(DWORD anSrvPID);
 		void Paste(CEPasteMode PasteMode = pm_Standard, LPCWSTR asText = NULL, bool abNoConfirm = false, bool abCygWin = false);
 		void LogString(LPCSTR asText, BOOL abShowTime = FALSE);
@@ -585,7 +589,7 @@ class CRealConsole
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
 		bool InCreateRoot();
 		bool InRecreate();
-		BOOL GuiAppAttachAllowed(LPCWSTR asAppFileName, DWORD anAppPID);
+		BOOL GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
 		//LPCWSTR GetLngNameTime();
 		void ShowPropertiesDialog();
 		void LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars = NULL);
@@ -746,11 +750,18 @@ class CRealConsole
 		wchar_t ms_LastProcessName[MAX_PATH];
 		int mn_LastAppSettingsId;
 		//
-		ConEmuTab* mp_tabs;
-		wchar_t    ms_RenameFirstTab[MAX_RENAME_TAB_LEN/*128*/];
-		MSection   msc_Tabs;
-		int mn_tabsCount, mn_MaxTabs, mn_ActiveTab;
-		bool mb_TabsWasChanged;
+		struct _TabsInfo
+		{
+			wchar_t    ms_RenameFirstTab[MAX_RENAME_TAB_LEN/*128*/];
+			CTabStack m_Tabs;
+			int  mn_tabsCount; // Число текущих табов. Может отличаться (в меньшую сторону) от m_Tabs.GetCount()
+			bool mb_TabsWasChanged;
+			bool mb_HasModalWindow; // Far Manager modal editor/viewer
+			CEFarWindowType nActiveType;
+			int nActiveFarWindow;
+			void StoreActiveTab(const CTabID* apActiveTab);
+			void RefreshFarPID(DWORD nNewPID);
+		} tabs;
 		void CheckPanelTitle();
 		//
 		//void ProcessAdd(DWORD addPID);

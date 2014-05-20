@@ -65,12 +65,17 @@ class CLogFunction
 {
 protected:
 	static int m_FnLevel; // without per-thread devision
+	bool mb_Logged;
 public:
+	CLogFunction();
 	CLogFunction(const char* asFnName);
+	CLogFunction(const wchar_t* asFnName);
+	void DoLogFunction(const wchar_t* asFnName);
 	~CLogFunction();
 };
-#define LogFunction(fn) CLogFunction logFunction(fn)
-#define LogFunction2(fn) CLogFunction logFunction2(fn)
+#define LogFunction_Cat2(n,i) n##i
+#define LogFunction_Cat1(n,i) LogFunction_Cat2(n,i)
+#define LogFunction(fn) CLogFunction LogFunction_Cat1(logFunction,__COUNTER__)(fn)
 
 #ifdef _DEBUG
 //CRITICAL_ SECTION gcsHeap;
@@ -117,10 +122,11 @@ void SetTerminateEvent(SetTerminateEventPlace eFrom);
 extern DWORD   gnSelfPID;
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
 extern HWND    ghConWnd;
+extern DWORD   gnConEmuPID; // PID of ConEmu[64].exe (ghConEmuWnd)
 extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern HWND    ghConEmuWndBack; // ConEmu Back window
-void SetConEmuWindows(HWND hDcWnd, HWND hBackWnd);
+extern void    SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd);
 extern DWORD   gnMainServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
 extern DWORD   gnAltServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
 extern BOOL    gbLogProcess; // (pInfo->nLoggingType == glt_Processes)
@@ -258,6 +264,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 void CreateLogSizeFile(int nLevel);
 void LogSize(COORD* pcrSize, LPCSTR pszLabel);
 void LogString(LPCSTR asText);
+void LogString(LPCWSTR asText);
 void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo=NULL);
 BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RECT& rgn);
 BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn);
@@ -318,9 +325,9 @@ int InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false);
 int InfiltrateDll(HANDLE hProcess, LPCWSTR dll);
 
 int ParseCommandLine(LPCWSTR asCmdLine /*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/); // Разбор параметров командной строки
-wchar_t* ParseConEmuSubst(LPCWSTR asCmd, bool bUpdateTitle = false);
-void UpdateConsoleTitle(LPCWSTR lsCmdLine, BOOL& lbNeedCutStartEndQuot, bool bExpandVars);
-BOOL SetTitle(bool bExpandVars, LPCWSTR lsTitle);
+wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
+void UpdateConsoleTitle();
+BOOL SetTitle(LPCWSTR lsTitle);
 void Help();
 void DosBoxHelp();
 int  ExitWaitForKey(WORD* pvkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontShowConsole);
@@ -424,6 +431,13 @@ struct SrvInfo
 
 	CESERVER_REQ_PORTABLESTARTED Portable;
 
+	struct {
+		HWND  hGuiWnd;
+		BOOL  bCallRc;
+		DWORD nTryCount, nErr, nDupErrCode;
+		DWORD nInitTick, nStartTick, nEndTick, nDelta, nConnectDelta;
+	} ConnectInfo;
+
 	HANDLE hMainServer; DWORD dwMainServerPID;
 	HANDLE hServerStartedEvent;
 
@@ -440,7 +454,6 @@ struct SrvInfo
 
 	HWND   hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
 	DebuggerInfo DbgInfo;
-	DWORD  dwGuiPID; // GUI PID (ИД процесса графической части ConEmu)
 	DWORD  dwGuiAID; // ConEmu internal ID of started CRealConsole
 	HWND   hGuiWnd; // передается через аргумент "/GHWND=%08X", чтобы окно не искать
 	BOOL   bRequestNewGuiWnd;
@@ -624,7 +637,6 @@ void PrintVersion();
 extern COORD gcrVisibleSize;
 extern BOOL  gbParmVisibleSize, gbParmBufSize;
 extern SHORT gnBufferHeight, gnBufferWidth;
-extern wchar_t* gpszPrevConTitle;
 
 //extern HANDLE ghLogSize;
 //extern wchar_t* wpszLogSizeFile;
@@ -695,6 +707,6 @@ namespace InputLogger
 		DEBUGTEST(g_evt[i].time = GetTickCount();)
 		// Fill info
 		g_evt[i].val = val;
-		g_evt[i].ir = ir;		
+		g_evt[i].ir = ir;
 	}
 }
