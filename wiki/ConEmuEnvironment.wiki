@@ -9,6 +9,7 @@
 || `ConEmuConfig` || current configuration name, see `/config` switch || ||
 || `ConEmuBuild` || current !ConEmu build number || `121202` ||
 || `ConEmuPID` || PID (process ID) of !ConEmu GUI || `1234` ||
+|| `ConEmuServerPID` || PID (process ID) of !ConEmuC server executable || `1234` ||
 || `ConEmuHWND` || main !ConEmu window handle || `0x0021094A` ||
 || `ConEmuDrawHWND` || virtual console window handle (child window of !ConEmu), this is canvas for console text painting || `0x000E0F8A` ||
 || `ConEmuBackHWND` || backing for canvas, it may be larger than canvas if padding or scrollbars exists || `0x00040E8A` ||
