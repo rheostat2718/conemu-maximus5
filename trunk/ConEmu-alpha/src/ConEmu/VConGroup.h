@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CVirtualConsole;
 class CVConGuard;
+class CTabID;
 
 enum EnumVConFlags
 {
@@ -80,7 +81,7 @@ protected:
 	bool ReSizeSplitter(int iCells);
 
 	CVConGroup* FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/);
-	
+
 protected:
 	//static CVirtualConsole* mp_VCon[MAX_CONSOLE_COUNT];
 
@@ -96,13 +97,13 @@ protected:
 
 private:
 	static CVirtualConsole* CreateVCon(RConStartArgs *args, CVirtualConsole*& ppVConI);
-	
+
 	static CVConGroup* CreateVConGroup();
 	CVConGroup* SplitVConGroup(RConStartArgs::SplitType aSplitType = RConStartArgs::eSplitHorz/*eSplitVert*/, UINT anPercent10 = 500);
 	int GetGroupPanes(MArray<CVConGuard*>* rPanes);
 	static void FreePanesArray(MArray<CVConGuard*> &rPanes);
 	static bool CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /*= NULL*/, bool bForceKill = false, bool bNoGroup = false);
-	
+
 	CVConGroup(CVConGroup *apParent);
 
 protected:
@@ -145,6 +146,7 @@ public:
 	static bool isVConHWND(HWND hChild, CVConGuard* rpVCon = NULL);
 	static bool isConsolePID(DWORD nPID);
 	static DWORD GetFarPID(BOOL abPluginRequired=FALSE);
+	static void CheckTabValid(CTabID* apTab, bool& rbVConValid, bool& rbPidValid, bool& rbPassive);
 
 	static bool EnumVCon(EnumVConFlags what, EnumVConProc pfn, LPARAM lParam);
 
@@ -192,8 +194,8 @@ public:
 	static bool ConActivateNext(bool abNext);
 	static bool PaneActivateNext(bool abNext);
 	static DWORD CheckProcesses();
-	static CRealConsole* AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID);
-	static BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet);
+	static CRealConsole* AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
+	static BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet);
 	static int GetConCount(bool bNoDetached = false);
 	static int ActiveConNum();
 
@@ -242,14 +244,14 @@ class CGroupGuard
 {
 private:
 	CVConGroup *mp_Ref;
-	
+
 public:
 	CGroupGuard(CVConGroup* apRef);
 	~CGroupGuard();
-	
+
 	void Release();
 	bool Attach(CVConGroup* apRef);
-	
+
 
 public:
 	// Dereference

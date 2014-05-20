@@ -26,12 +26,11 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #ifndef _COMMON_HEADER_HPP_
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    137
+#define CESERVER_REQ_VER    138
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -115,6 +114,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMUHWND_VAR_W L"ConEmuHWND"
 #define ENV_CONEMUPID_VAR_A   "ConEmuPID"
 #define ENV_CONEMUPID_VAR_W  L"ConEmuPID"
+#define ENV_CONEMUSERVERPID_VAR_W  L"ConEmuServerPID"
 #define ENV_CONEMUDRAW_VAR_A  "ConEmuDrawHWND"
 #define ENV_CONEMUDRAW_VAR_W L"ConEmuDrawHWND"
 #define ENV_CONEMUBACK_VAR_A  "ConEmuBackHWND"
@@ -152,7 +152,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CESERVERQUERYNAME   L"\\\\%s\\pipe\\ConEmuSrvQuery%u" // ConEmuC_PID
 #define CESERVERWRITENAME   L"\\\\%s\\pipe\\ConEmuSrvWrite%u" // ConEmuC_PID
 #define CESERVERREADNAME    L"\\\\%s\\pipe\\ConEmuSrvRead%u"  // ConEmuC_PID
-#define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui%u"      // GetConsoleWindow() // необходимо, чтобы плагин мог общаться с GUI
+#define CEGUIPIPENAME       L"\\\\%s\\pipe\\ConEmuGui.%08X"   // GetConsoleWindow() // необходимо, чтобы плагин мог общаться с GUI
 															  // ghConEmuWndRoot --> CConEmuMain::GuiServerThreadCommand
 #define CEPLUGINPIPENAME    L"\\\\%s\\pipe\\ConEmuPlugin%u"   // Far_PID
 #define CEHOOKSPIPENAME     L"\\\\%s\\pipe\\ConEmuHk%u"       // PID процесса, в котором крутится Pipe
@@ -1083,9 +1083,9 @@ struct ConEmuGuiMapping
 typedef unsigned int CEFarWindowType;
 static const CEFarWindowType
 	fwt_Any            = 0,
-	fwt_Panels         = 1,
-	fwt_Viewer         = 2,
-	fwt_Editor         = 3,
+	fwt_Panels         = 1,       // _ASSERTE(fwt_Panels == WTYPE_PANELS)
+	fwt_Viewer         = 2,       // _ASSERTE(fwt_Viewer == WTYPE_VIEWER)
+	fwt_Editor         = 3,       // _ASSERTE(fwt_Viewer == WTYPE_EDITOR)
 	fwt_TypeMask       = 0x00FF,
 
 	fwt_Elevated       = 0x00100,
@@ -1641,10 +1641,19 @@ struct CESERVER_REQ_STARTSTOPRET
 	DWORD dwPrevAltServerPID;
 	BOOL  bNeedLangChange;
 	u64   NewConsoleLang;
+};
+
+// Result of CESERVER_REQ_SRVSTARTSTOP
+struct CESERVER_REQ_SRVSTARTSTOPRET
+{
+	// Main values
+	CESERVER_REQ_STARTSTOPRET Info;
 	// Используется при CECMD_ATTACH2GUI
 	CESERVER_REQ_SETFONT Font;
 	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
 	ConEmuAnsiLog AnsiLog;
+	// Avoid space calls, let do all in one place
+	ConEmuGuiMapping GuiMapping;
 };
 
 struct CESERVER_REQ_POSTMSG
@@ -1794,6 +1803,7 @@ struct CESERVER_REQ_ATTACHGUIAPP
 {
 	DWORD nFlags;
 	DWORD nPID;
+	DWORD nServerPID;
 	DWORD hkl;
 	HWND2 hConEmuWnd;   // Root
 	HWND2 hConEmuDc;    // DC Window
@@ -1937,6 +1947,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_OUTPUTFILE OutputFile;
 		CESERVER_REQ_NEWCMD NewCmd;
 		CESERVER_REQ_SRVSTARTSTOP SrvStartStop;
+		CESERVER_REQ_SRVSTARTSTOPRET SrvStartStopRet;
 		CESERVER_REQ_STARTSTOP StartStop;
 		CESERVER_REQ_STARTSTOPRET StartStopRet;
 		CESERVER_REQ_CONEMUTAB Tabs;

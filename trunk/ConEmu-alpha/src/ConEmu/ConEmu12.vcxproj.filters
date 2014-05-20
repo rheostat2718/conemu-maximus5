@@ -198,6 +198,12 @@
     <ClCompile Include="AboutDlg.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TabCtrlBase.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TabCtrlWin.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -444,6 +450,12 @@
     <ClInclude Include="AboutDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TabCtrlBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TabCtrlWin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Circles.bmp">
@@ -529,7 +541,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="!ToDo.!111!.txt" />
-    <Text Include="..\..\..\Maximus5\src\ConEmu\!Todo.txt" />
+    <Text Include="!ToDo.Tabs.txt" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Copy24.bmp">

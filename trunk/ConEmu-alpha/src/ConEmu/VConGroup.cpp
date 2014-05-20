@@ -613,7 +613,7 @@ void CVConGroup::GetAllTextSize(SIZE& sz, bool abMinimal /*= false*/)
 //	{
 //		CVConGuard VCon1(mp_Grp1->mp_Item);
 //		CVConGuard VCon2(mp_Grp2->mp_Item);
-//	
+//
 //		if (mp_Grp1)
 //		{
 //			nSize += mp_Grp1->AllTextHeight();
@@ -622,7 +622,7 @@ void CVConGroup::GetAllTextSize(SIZE& sz, bool abMinimal /*= false*/)
 //		{
 //			_ASSERTE(mp_Grp1!=NULL);
 //		}
-//		
+//
 //		if (mp_Grp2 && (m_SplitType == RConStartArgs::eSplitVert))
 //		{
 //			nSize += mp_Grp2->AllTextHeight();
@@ -1240,6 +1240,37 @@ bool CVConGroup::isValid(CVirtualConsole* apVCon)
 	return false;
 }
 
+void CVConGroup::CheckTabValid(CTabID* apTab, bool& rbVConValid, bool& rbPidValid, bool& rbPassive)
+{
+	bool bVConValid = false, bPidValid = false, bPassive = false;
+
+	if (apTab)
+	{
+		DWORD nCurFarPid;
+		CVirtualConsole* pVCon = (CVirtualConsole*)apTab->Info.pVCon;
+		bVConValid = isValid(pVCon);
+
+		if (bVConValid)
+		{
+			if (apTab->Info.nPID)
+			{
+				bPidValid = pVCon->RCon()->isProcessExist(apTab->Info.nPID);
+				nCurFarPid = pVCon->RCon()->GetFarPID(true);
+				bPassive = (nCurFarPid != apTab->Info.nPID);
+			}
+			else
+			{
+				_ASSERTE(FALSE && "Must be filled? What about simple consoles?");
+				bPidValid = true;
+			}
+		}
+	}
+
+	rbVConValid = bVConValid;
+	rbPidValid = bPidValid;
+	rbPassive = bPassive;
+}
+
 bool CVConGroup::isVConExists(int nIdx)
 {
 	if (nIdx < 0 || nIdx >= (int)countof(gp_VCon))
@@ -1352,7 +1383,7 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 				else
 				{
 					// Нужны доп.проверки окон фара
-					ConEmuTab tab;
+					CTab tab(__FILE__,__LINE__);
 					LPCWSTR pszNameOnly = (anWindowType & fwt_FarFullPathReq) ? NULL : asName ? PointToName(asName) : NULL;
 					if (pszNameOnly)
 					{
@@ -1365,38 +1396,40 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 
 					for (int j = 0; !iFound; j++)
 					{
-						if (!pRCon->GetTab(j, &tab))
+						if (!pRCon->GetTab(j, tab))
 							break;
 
-						if ((tab.Type & fwt_TypeMask) != (anWindowType & fwt_TypeMask))
+						CEFarWindowType tabFlags = tab->Info.Type;
+						if ((tabFlags & fwt_TypeMask) != (anWindowType & fwt_TypeMask))
 							continue;
 
 						// Этот Far Elevated?
-						if ((anWindowType & fwt_Elevated) && !(tab.Type & fwt_Elevated))
+						if ((anWindowType & fwt_Elevated) && !(tabFlags & fwt_Elevated))
 							continue;
 						// В табе устанавливается флаг fwt_Elevated
 						// fwt_NonElevated используется только как аргумент поиска
-						if ((anWindowType & fwt_NonElevated) && (tab.Type & fwt_Elevated))
+						if ((anWindowType & fwt_NonElevated) && (tabFlags & fwt_Elevated))
 							continue;
 
 						// Модальное окно?
 						WARNING("Нужно еще учитывать <модальность> заблокированным диалогом, или меню, или еще чем-либо!");
-						if ((anWindowType & fwt_ModalFarWnd) && !(tab.Type & fwt_ModalFarWnd))
+						if ((anWindowType & fwt_ModalFarWnd) && !(tabFlags & fwt_ModalFarWnd))
 							continue;
 						// В табе устанавливается флаг fwt_Modal
 						// fwt_NonModal используется только как аргумент поиска
-						if ((anWindowType & fwt_NonModal) && (tab.Type & fwt_ModalFarWnd))
+						if ((anWindowType & fwt_NonModal) && (tabFlags & fwt_ModalFarWnd))
 							continue;
 
 						// Если ищем конкретный редактор/вьювер
 						if (asName && *asName)
 						{
-							if (lstrcmpi(tab.Name, asName) == 0)
+							LPCWSTR tabName = tab->Name.Ptr();
+							if (lstrcmpi(tabName, asName) == 0)
 							{
 								iFound = (j+1);
 							}
 							else if (pszNameOnly && (pszNameOnly != asName)
-								&& (lstrcmpi(PointToName(tab.Name), pszNameOnly) == 0))
+								&& (lstrcmpi(PointToName(tabName), pszNameOnly) == 0))
 							{
 								iFound = (j+1);
 							}
@@ -1669,7 +1702,7 @@ void CVConGroup::Update(bool isForce /*= false*/)
 
 bool CVConGroup::isActive(CVirtualConsole* apVCon, bool abAllowGroup /*= true*/)
 {
-	if (!isValid(apVCon))
+	if (!gp_VActive || !isValid(apVCon))
 		return false;
 
 	if (apVCon == gp_VActive)
@@ -1918,7 +1951,8 @@ bool CVConGroup::isPictureView()
 
 	for (size_t i = 0; !lbRc && i < countof(gp_VCon); i++)
 	{
-		CVirtualConsole* pVCon = gp_VCon[i];
+		CVConGuard VCon(gp_VCon[i]);
+		CVirtualConsole* pVCon = VCon.VCon();
 		// Было isVisible, но некорректно блокировать другие сплиты, в которых PicView нету
 		if (!pVCon || !isActive(pVCon) || !pVCon->RCon())
 			continue;
@@ -2196,9 +2230,9 @@ bool CVConGroup::OnCloseQuery(bool* rbMsgConfirmed /*= NULL*/)
 	gpConEmu->SetScClosePending(true);
 
 	#ifdef _DEBUG
-	if (gbInMyAssertTrap)
+	if (gnInMyAssertTrap > 0)
 	{
-		gpConEmu->LogString(L"CloseQuery skipped due to gbInMyAssertTrap");
+		gpConEmu->LogString(L"CloseQuery skipped due to gnInMyAssertTrap");
 		return false;
 	}
 	#endif
@@ -2629,8 +2663,13 @@ void CVConGroup::OnVConClosed(CVirtualConsole* apVCon)
 			if (apVCon == gp_VActive)
 			{
 				gpConEmu->mp_TabBar->SwitchRollback();
+				if (gp_VCon[1] == NULL)
+				{
+					// if there is only one console left - no chance to "change" it...
+					_ASSERTE(GetConCount() <= 1);
+				}
 				// Firstly, try to activate pane in the same group
-				if (!ActivateNextPane(apVCon))
+				else if (!ActivateNextPane(apVCon))
 				{
 					if (gpSet->isTabRecent)
 						gpConEmu->mp_TabBar->SwitchNext();
@@ -3063,7 +3102,7 @@ int CVConGroup::GetConCount(bool bNoDetached /*= false*/)
 	return nCount;
 }
 
-BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_STARTSTOPRET* pRet)
+BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet)
 {
 	CVConGuard VCon;
 	bool bFound = false;
@@ -3184,7 +3223,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 	return bFound;
 }
 
-CRealConsole* CVConGroup::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppPID)
+CRealConsole* CVConGroup::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID)
 {
 	CRealConsole* pRCon;
 
@@ -3192,7 +3231,7 @@ CRealConsole* CVConGroup::AttachRequestedGui(LPCWSTR asAppFileName, DWORD anAppP
 	{
 		if (gp_VCon[i] && (pRCon = gp_VCon[i]->RCon()) != NULL)
 		{
-			if (pRCon->GuiAppAttachAllowed(asAppFileName, anAppPID))
+			if (pRCon->GuiAppAttachAllowed(anServerPID, asAppFileName, anAppPID))
 				return pRCon;
 		}
 	}
