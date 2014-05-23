@@ -1,6 +1,16 @@
 ﻿#summary cygwin, msys, msysgit and ConEmu
 
-Some techinfo first. There are two types of Windows console (terminal) emulators:
+=Abstract=
+Report cygwin and msys bugs to their [http://dir.gmane.org/gmane.os.cygwin authors]!
+
+ConEmu is terminal!
+It just the display for output of console applications.
+Bugs in applications will lead wrong display output in ConEmu. Of course.
+
+Still thinking the problem is inside ConEmu? Read the rest of this wiki.
+
+=Some techinfo first=
+There are two types of Windows console (terminal) emulators:
 
   # Based on stdin/stdout redirection. Most known - [https://code.google.com/p/mintty/ mintty], [https://code.google.com/p/puttycyg/ puttycyg], [https://sourceforge.net/projects/poderosa/ Poderosa's cygterm].
   # Based on Windows console API. Most known - ConEmu, [https://sourceforge.net/projects/console/ Console], [http://jpsoft.com/ Take Command].

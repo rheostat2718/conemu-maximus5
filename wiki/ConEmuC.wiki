@@ -70,6 +70,34 @@ ConEmuC /ATTACH [/GHWND=NEW|<HWND>] /[FAR|CON|TRM]PID=<PID>
 ConEmuC /GUIMACRO Function([Arg1[,Arg2[,...]])
 }}}
 
+*Echo and Type*
+These two was implemented for test purposed mostly. But may be useful.
+Use any of `"-e"`, `"-echo"`, `"/echo"` to echo.
+{{{
+ConEmuC -e [-r] [-n] [-b] "String to echo"
+  Switches
+    -r  - do not replace "^e^r^n^t^b" with ASCII equivalents
+          to print single "^" char - double it "^^"
+          escape char alias - "^["
+    -n  - do not add CRLF after printed line
+    -b  - scroll to bottom of the buffer before printing (TrueColor buffer compatible)
+}}}
+Use any of `"-t"`, `"-type"`, `"/type"` to type text file.
+{{{
+ConEmuC -t [-b] [-CP] "Path to text file to echo"
+  Switches
+    -b  - scroll to bottom of the buffer before printing (TrueColor buffer compatible)
+    -CP - consider that text file code page is "CP"
+          ConEmuC -t -65001 "utf8-file.txt"
+          Without specified code page BOM may be used for utf-8 and CP1200
+          Otherwise the file will be threated as ANSI
+}}}
+Both commands are able to process [AnsiEscapeCodes ANSI sequences].
+But take into account, that `"ConEmuC -t ..."` does not do replacements with ASCII equivalents.
+{{{
+ConEmuC -e "^[[1;33;45mqwerty^[[m"
+}}}
+
 *Debug and MiniDump*
 {{{
 ConEmuC /DEBUGPID=<Debugging PID> [/DUMP | /MINI | /FULL]

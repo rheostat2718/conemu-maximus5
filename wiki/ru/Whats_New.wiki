@@ -6,6 +6,19 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 
+==Build 140522==
+  * Some fixes related to new tabs internals.
+  * Issue 1583: Fix `ConEmu.Editor.lua` bug.
+  * Wrong startup directory used when starting at the drive root.
+  * Allow rename any Far tab, not only panels.
+  * Two new switches (commands actually) in ConEmuC: "-e" and "-t". Read more in wiki: http://code.google.com/p/conemu-maximus5/wiki/ConEmuC#Echo_and_Type
+{{{
+ConEmuC -e [-n] [-r] [-b] "string" for printing some string
+ConEmuC -t [-r] [-b] "file" for printing some text file
+}}}
+  * Force "CHERE_INVOKING" in default tasks for cygwin.
+
+
 ==Build 140519==
   * *Experimental build*
   * Refactoring of Server startup.

@@ -83,6 +83,7 @@
       * [RoadMap ConEmu Road Map]
       * [ConEmuHk Inject ConEmuHk]
       * [TipsAndTweaks Tips and Tweaks]
+      * [TccInsertOverwrite TCC Insert/Overwrite]
       * [PromptAtTheBottom Prompt at the bottom]
       * [PVSStudio PVS-Studio]
       * [MemoryDump MemoryDump]

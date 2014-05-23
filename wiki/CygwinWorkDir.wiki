@@ -1,11 +1,23 @@
-﻿#summary cygwin, ConEmu and working directory
+﻿#summary cygwin, mingw, ConEmu and working directory
 
 One of the most asked questions about cygwin using - how to run its shell in the specified working directory.
 
 Finally, thanks to csbdess, Issue1552#15, the problem was identified.
 
 Cygwin always do ‘`cd "${HOME}"`’ from `/etc/profile`.
+{{{
+# Make sure we start in home unless invoked by CHERE
+if [ ! -z "${CHERE_INVOKING}" ]; then
+  unset CHERE_INVOKING
+else
+  cd "${HOME}" || echo "WARNING: Failed attempt to cd into ${HOME}!"
+fi
+}}}
 So, if you do not like that behaviour, read below for solutions.
+
+*Note*. MinGW (at least version installed on my PC) does not have checking for `CHERE_INVOKING` environment variable.
+There is just `cd "$HOME"` at the end of `/MinGW/msys/1.0/etc/profile`.
+You may change that file yourself to get the same checks as cygwin.
 
 =CHERE=
 Cygwin will not do ‘`cd "${HOME}"`’ if environment variable `CHERE_INVOKING` is defined.
@@ -64,3 +76,14 @@ In bash, like in ksh, set -o nounset; typeset -a foobar; echo $foobar triggers a
 
 Note that in all situations described here, ${foobar+1} expands to 1 if and only if $foobar would cause an error under set -o nounset.
 </wiki:comment>
+
+
+=cygdrive=
+Not related to working directory and ConEmu, actually, but let it be here.
+
+If you want to remove annoying `/cygdrive`, just replace one line in your `/etc/fstab`.
+
+{{{
+#none /cygdrive cygdrive binary,posix=0,user 0 0
+none / cygdrive binary 0 0
+}}}
