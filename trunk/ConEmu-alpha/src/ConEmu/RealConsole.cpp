@@ -73,7 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSENDMSG(s) //DEBUGSTR(s)
 #define DEBUGSTRLOG(s) //OutputDebugStringA(s)
 #define DEBUGSTRALIVE(s) //DEBUGSTR(s)
-#define DEBUGSTRTABS(s) //DEBUGSTR(s)
+#define DEBUGSTRTABS(s) DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
 #define DEBUGSTRALTSRV(s) //DEBUGSTR(s)
 #define DEBUGSTRSTOP(s) //DEBUGSTR(s)
@@ -177,9 +177,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	#ifdef TAB_REF_PLACE
 	tabs.m_Tabs.SetPlace("RealConsole.cpp:tabs.m_Tabs",0);
 	#endif
-
-	TODO("tabs.ms_RenameFirstTab pending to remove, all must be in tabs.m_Tabs[]->Renamed");
-	lstrcpyn(tabs.ms_RenameFirstTab, args->pszRenameTab ? args->pszRenameTab : L"", countof(tabs.ms_RenameFirstTab));
 
 	// -- т.к. автопоказ табов может вызвать ресайз - то табы в самом конце инициализации!
 	//SetTabs(NULL,1);
@@ -5256,10 +5253,19 @@ LPCTSTR CRealConsole::GetTitle(bool abGetRenamed/*=false*/)
 	if (!this /*|| !mn_ProcessCount*/)
 		return NULL;
 
-	// Если убирать - иметь в виду, что здесь нужно возвращать "переименованным" активный таб, а не только первый
-	if (abGetRenamed && *tabs.ms_RenameFirstTab)
+	// Здесь нужно возвращать "переименованным" активный таб, а не только первый
+	// Пока abGetRenamed используется только в ConfirmCloseConsoles и CTaskBarGhost::CheckTitle
+	if (abGetRenamed && (tabs.nActiveType & fwt_Renamed))
 	{
-		return tabs.ms_RenameFirstTab;
+		CTab tab(__FILE__,__LINE__);
+		if (GetTab(tabs.nActiveFarWindow, tab) && (tab->Flags() & fwt_Renamed))
+		{
+			lstrcpyn(TempTitleRenamed, tab->Renamed.Ptr(), countof(TempTitleRenamed));
+			if (*TempTitleRenamed)
+			{
+				return TempTitleRenamed;
+			}
+		}
 	}
 
 	if (isAdministrator() && gpSet->szAdminTitleSuffix[0])
@@ -6405,7 +6411,7 @@ void CRealConsole::SetFarPID(DWORD nFarPID)
 	if (bNeedUpdate)
 	{
 		DEBUGSTRFARPID(szDbg);
-		tabs.RefreshFarPID(nFarPID);
+		tabs.RefreshFarPID((mn_ProgramStatus & CES_FARACTIVE) ? nFarPID : 0);
 		mp_VCon->Update(true);
 	}
 }
@@ -7208,7 +7214,7 @@ BOOL CRealConsole::WaitConsoleSize(int anWaitSize, DWORD nTimeout)
 
 #ifdef _DEBUG
 	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CRealConsole::WaitConsoleSize(H=%i, Timeout=%i)\n", anWaitSize, nTimeout);
-	DEBUGSTRTABS(szDbg);
+	DEBUGSTRSIZE(szDbg);
 #endif
 	WARNING("Вообще, команду в сервер может и не посылать? Сам справится? Просто проверять значения из FileMap");
 
@@ -7230,7 +7236,7 @@ BOOL CRealConsole::WaitConsoleSize(int anWaitSize, DWORD nTimeout)
 	}
 
 	_ASSERTE(lbRc && "WaitConsoleSize");
-	DEBUGSTRTABS(lbRc ? L"CRealConsole::WaitConsoleSize SUCCEEDED\n" : L"CRealConsole::WaitConsoleSize FAILED!!!\n");
+	DEBUGSTRSIZE(lbRc ? L"CRealConsole::WaitConsoleSize SUCCEEDED\n" : L"CRealConsole::WaitConsoleSize FAILED!!!\n");
 	return lbRc;
 }
 
@@ -8921,6 +8927,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 #endif
 
 	ConEmuTab lTmpTabs = {0};
+	bool bRenameByArgs = false;
 
 	// Табы нужно проверить и подготовить
 	if (apTabs && (anTabsCount > 0))
@@ -8936,9 +8943,30 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 		if (anTabsCount == 1 && (apTabs[0].Type == fwt_Viewer || apTabs[0].Type == fwt_Editor))
 			apTabs[0].Modal = 1;
 
-		int nActiveTab = -1;
+		// Far may fails sometimes when closing modal editor (when editor can't save changes on ShiftF10)
+		int nModalTab = -1;
+		for (int i = (anTabsCount-1); i >= 0; i--)
+		{
+			if (apTabs[i].Modal)
+			{
+				_ASSERTE((i == (anTabsCount-1)) && "Modal tabs can be at the tail only");
+				if (!apTabs[i].Current)
+				{
+					if (i == (anTabsCount-1))
+					{
+						DEBUGSTRTABS(L"!!! Last 'Modal' tab was not 'Current'\n");
+						apTabs[i].Current = 1;
+					}
+					else
+					{
+						_ASSERTE(apTabs[i].Current && "Modal tab can be only current?");
+					}
+				}
+			}
+		}
 
-		// найти активную закладку
+		// Find active tab. Start from the tail (Far can fails during opening new editor/viewer)
+		int nActiveTab = -1;
 		for (int i = (anTabsCount-1); i >= 0; i--)
 		{
 			if (apTabs[i].Current)
@@ -8955,7 +8983,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 			}
 		}
 
-		// вдруг флажок не установлен
+		// Ensure, at least one tab is current
 		if (nActiveTab < 0)
 		{
 			apTabs[0].Current = 1;
@@ -8979,6 +9007,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 		apTabs->Current = 1;
 		apTabs->Type = 1;
 		anTabsCount = 1;
+		bRenameByArgs = (m_Args.pszRenameTab && *m_Args.pszRenameTab);
 		if (!ms_DefTitle.IsEmpty())
 		{
 			lstrcpyn(apTabs->Name, ms_DefTitle.ms_Arg, countof(apTabs->Name));
@@ -9035,6 +9064,17 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 			tabs.mb_TabsWasChanged = true;
 	}
 
+	_ASSERTE(!bRenameByArgs || (anTabsCount==1));
+	if (bRenameByArgs)
+	{
+		_ASSERTE(ActiveTab.Tab()!=NULL);
+		if (ActiveTab.Tab())
+		{
+			ActiveTab->Info.Type |= fwt_Renamed;
+			ActiveTab->Renamed.Set(m_Args.pszRenameTab);
+		}
+	}
+
 	tabs.mn_tabsCount = anTabsCount;
 	tabs.mb_HasModalWindow = bHasModal;
 	tabs.StoreActiveTab(ActiveTab.Tab());
@@ -9081,19 +9121,11 @@ INT_PTR CRealConsole::renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			HWND hEdit = GetDlgItem(hDlg, tNewTabName);
 
 			int nLen = 0;
-			if (pRCon->tabs.ms_RenameFirstTab[0])
+			CTab tab(__FILE__,__LINE__);
+			if (pRCon->GetTab(pRCon->tabs.nActiveFarWindow, tab))
 			{
-				nLen = lstrlen(pRCon->tabs.ms_RenameFirstTab);
-				SetWindowText(hEdit, pRCon->tabs.ms_RenameFirstTab);
-			}
-			else
-			{
-				CTab tab(__FILE__,__LINE__);
-				if (pRCon->GetTab(0, tab))
-				{
-					nLen = lstrlen(tab->Name.Ptr());
-					SetWindowText(hEdit, tab->Name.Ptr());
-				}
+				nLen = lstrlen(tab->GetName());
+				SetWindowText(hEdit, tab->GetName());
 			}
 
 			SendMessage(hEdit, EM_SETSEL, 0, nLen);
@@ -9144,17 +9176,12 @@ void CRealConsole::DoRenameTab()
 	if (!this)
 		return;
 
-	if (GetActiveTab() > 0)
-	{
-		MBox(L"Only first tab of console can be renamed in current version");
-		return;
-	}
-
 	DontEnable de;
 	INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RENAMETAB), ghWnd, renameProc, (LPARAM)this);
 	if (iRc == IDOK)
 	{
 		//gpConEmu->mp_TabBar->Update(); -- уже, в RenameTab(...)
+		UNREFERENCED_PARAMETER(iRc);
 	}
 }
 
@@ -9300,7 +9327,22 @@ void CRealConsole::RenameTab(LPCWSTR asNewTabText /*= NULL*/)
 	if (!this)
 		return;
 
-	lstrcpyn(tabs.ms_RenameFirstTab, asNewTabText ? asNewTabText : L"", countof(tabs.ms_RenameFirstTab));
+	CTab tab(__FILE__,__LINE__);
+	if (GetTab(tabs.nActiveFarWindow, tab))
+	{
+		if (asNewTabText && *asNewTabText)
+		{
+			tab->Renamed.Set(asNewTabText);
+			tab->Info.Type |= fwt_Renamed;
+		}
+		else
+		{
+			tab->Renamed.Set(NULL);
+			tab->Info.Type &= ~fwt_Renamed;
+		}
+		tabs.nActiveType = tab->Info.Type;
+	}
+
 	gpConEmu->mp_TabBar->Update();
 	mp_VCon->OnTitleChanged();
 }
@@ -9396,6 +9438,8 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 	int nType = fwt_Any/*0*/;
 
 	#ifdef _DEBUG
+	TabInfo rInfo;
+	int iModal = -1, iTabCount;
 	if (tabs.mn_tabsCount < 1)
 	{
 		_ASSERTE(tabs.mn_tabsCount>=1);
@@ -9403,11 +9447,10 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 	}
 	else
 	{
-		TabInfo rInfo;
+		nType = fwt_Panels;
 		MSectionLockSimple SC;
 		tabs.m_Tabs.LockTabs(&SC);
-		int iModal = -1;
-		int iTabCount = tabs.m_Tabs.GetCount();
+		iTabCount = tabs.m_Tabs.GetCount();
 		for (int i = 0; i < iTabCount; i++)
 		{
 			if (tabs.m_Tabs.GetTabInfoByIndex(i, rInfo)
@@ -9524,6 +9567,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	if (!tabs.m_Tabs.GetTabByIndex(iGetTabIdx, rTab))
 		return false;
 
+#if 0
 	if ((tabIdx == 0) && (*tabs.ms_RenameFirstTab))
 	{
 		rTab->Info.Type |= fwt_Renamed;
@@ -9533,6 +9577,7 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	{
 		rTab->Info.Type &= ~fwt_Renamed;
 	}
+#endif
 
 	return true;
 

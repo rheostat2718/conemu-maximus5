@@ -117,7 +117,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 			CheckDlgButton(hDlg, cbUseKeyboardHooksFast, gpSet->isKeyboardHooks(true));
 
-			
+
 
 			// Debug purposes only. ConEmu.exe switch "/nokeyhooks"
 			#ifdef _DEBUG
@@ -158,7 +158,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 					HWND h = GetDlgItem(hDlg, IDOK);
 					GetWindowRect(h, &rcBtn); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtn, 2);
 					SetWindowPos(h, NULL, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-					
+
 					h = GetDlgItem(hDlg, IDCANCEL);
 					GetWindowRect(h, &rcBtn); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtn, 2);
 					SetWindowPos(h, NULL, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
@@ -256,7 +256,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 					/* Save settings */
 					SettingsBase* reg = NULL;
-					
+
 					if (!bVanilla)
 					{
 						if ((reg = gpSet->CreateSettings(NULL)) == NULL)
@@ -285,7 +285,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 								// Fast configuration done
 								reg->CloseKey();
 							}
-				
+
 							delete reg;
 						}
 					}
@@ -370,7 +370,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 		//	;;    в 'ConIme.ex1' (видимо это возможно только в безопасном режиме).
 		//	;;    Запретить автозапуск: Внесите в реестр и перезагрузитесь
 		long  lbStopWarning = FALSE;
-		
+
 		SettingsBase* reg = gpSet->CreateSettings(NULL);
 		if (reg)
 		{
@@ -542,13 +542,13 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	*/
 
 	struct {
-		LPCWSTR asName, asExePath, asArgs, asGuiArg;
+		LPCWSTR asName, asExePath, asArgs, asPrefix, asGuiArg;
 		LPWSTR  pszFound;
 	} FindTasks[] = {
 		// Far Manager
 		// -- {L"Far Manager",         L"%ConEmuDir%\\far.exe"}, 
 		{L"Far Manager",         L"far.exe"},
-		
+
 		// TakeCommand
 		{L"TCC",                 L"tcc.exe",                           NULL},
 		{L"TCC (Admin)",         L"tcc.exe",                           L" -new_console:a"},
@@ -569,7 +569,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
 		// HKLM\SOFTWARE\Cygwin\setup\rootdir
 		// HKCU\Software\Cygwin\setup\rootdir
-		{L"CygWin bash",    L"\\CygWin\\bin\\sh.exe",                  L" --login -i"},
+		{L"CygWin bash",    L"\\CygWin\\bin\\sh.exe",                  L" --login -i", L"set CHERE_INVOKING=1 & "},
 
 //		{L"CygWin mintty",  L"\\CygWin\\bin\\mintty.exe",              L" -"},
 		{L"MinGW bash",     L"\\MinGW\\msys\\1.0\\bin\\sh.exe",        L" --login -i"},
@@ -579,12 +579,14 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		#ifdef _WIN64
 		{L"Git bash",       L"%ProgramFiles(x86)%\\Git\\bin\\sh.exe",  L" --login -i"},
 		#endif
-		{L"bash",           L"sh.exe",                                 L" --login -i"}, // Last chance for bash
+		// Last chance for bash
+		{L"bash",           L"sh.exe",                                 L" --login -i", L"set CHERE_INVOKING=1 & "},
+
 		// Putty?
 		{L"Putty",          L"Putty.exe",                              NULL},
-		
+
 		// C++ build environments (Visual Studio) - !!!TODO!!!
-		
+
 		// FIN
 		{NULL}
 	};
@@ -616,9 +618,9 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 
 		// Spaces in path? (use expanded path)
 		if (bNeedQuot)
-			pszFull = lstrmerge(L"\"", pszFound, L"\"", FindTasks[i].asArgs);
+			pszFull = lstrmerge(FindTasks[i].asPrefix, L"\"", pszFound, L"\"", FindTasks[i].asArgs);
 		else
-			pszFull = lstrmerge(pszFound, FindTasks[i].asArgs);
+			pszFull = lstrmerge(FindTasks[i].asPrefix, pszFound, FindTasks[i].asArgs);
 
 		// Create task
 		if (pszFull)
@@ -633,6 +635,11 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	{
 		gpSet->CmdTaskSet(iCreatIdx++, L"cmd 64/32", L"", L">\"%windir%\\system32\\cmd.exe\" /k ver & echo This is Native cmd.exe\r\n\r\n\"%windir%\\syswow64\\cmd.exe\" /k ver & echo This is 32 bit cmd.exe -new_console:s50V");
 	}
+
+	// IRSSI
+	// L"\"set PATH=C:\\irssi\\bin;%PATH%\" & set PERL5LIB=lib/perl5/5.8 & set TERMINFO_DIRS=terminfo & "
+	// L"C:\\irssi\\bin\\irssi.exe"
+	// L" -cur_console:d:\"C:\\irssi\""
 
 	// Type ANSI color codes
 	// cmd /k type "%ConEmuBaseDir%\Addons\AnsiColors16t.ans" -cur_console:n
@@ -685,7 +692,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 				}
 				RegCloseKey(hkVer);
 			}
-			
+
 			cchMax = countof(szVer) - 1;
 		}
 		RegCloseKey(hk);
