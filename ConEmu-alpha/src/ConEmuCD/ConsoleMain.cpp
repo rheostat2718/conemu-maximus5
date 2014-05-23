@@ -78,6 +78,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleRead.h"
 #include "../common/WinConsole.h"
 #include "../common/CmdLine.h"
+#include "ConProcess.h"
 #include "ConsoleHelp.h"
 #include "Debugger.h"
 #include "Downloader.h"
@@ -196,7 +197,6 @@ BOOL  gbDumpServerInitStatus = FALSE;
 BOOL  gbNoCreateProcess = FALSE;
 BOOL  gbDontInjectConEmuHk = FALSE;
 int   gnCmdUnicodeMode = 0;
-BOOL  gbUseDosBox = FALSE; HANDLE ghDosBoxProcess = NULL; DWORD gnDosBoxPID = 0;
 UINT  gnPTYmode = 0; // 1 enable PTY, 2 - disable PTY (work as plain console), 0 - don't change
 BOOL  gbRootIsCmdExe = TRUE;
 BOOL  gbAttachFromFar = FALSE;
@@ -1065,16 +1065,11 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		goto wrap;
 	}
 
+	if (gbInShutdown)
+		goto wrap;
+
 	// По идее, при вызове дебаггера ParseCommandLine сразу должна послать на выход.
 	_ASSERTE(!(gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcess || gpSrv->DbgInfo.bDebugProcessTree))
-
-	if ((gnRunMode == RM_UNDEFINED) && gpSrv->DbgInfo.bDebugProcess)
-	{
-		DWORD nDebugThread = WaitForSingleObject(gpSrv->DbgInfo.hDebugThread, INFINITE);
-		_ASSERTE(nDebugThread == WAIT_OBJECT_0); UNREFERENCED_PARAMETER(nDebugThread);
-
-		goto wrap;
-	}
 
 #ifdef _DEBUG
 	if (gnRunMode == RM_SERVER)
@@ -1690,34 +1685,20 @@ wait:
 		// По крайней мере один процесс в консоли запустился. Ждем пока в консоли не останется никого кроме нас
 		nWait = WAIT_TIMEOUT; nWaitExitEvent = -2;
 
-		if (!gpSrv->DbgInfo.bDebuggerActive)
+		_ASSERTE(!gpSrv->DbgInfo.bDebuggerActive);
+
+		#ifdef _DEBUG
+		while (nWait == WAIT_TIMEOUT)
 		{
-			#ifdef _DEBUG
-			while (nWait == WAIT_TIMEOUT)
-			{
-				nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, 100);
-				// Что-то при загрузке компа иногда все-таки не дожидается, когда процесс в консоли появится
-				_ASSERTE(!(gbCtrlBreakStopWaitingShown && (nWait != WAIT_TIMEOUT)));
-			}
-			#else
-			nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, INFINITE);
+			nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, 100);
+			// Что-то при загрузке компа иногда все-таки не дожидается, когда процесс в консоли появится
 			_ASSERTE(!(gbCtrlBreakStopWaitingShown && (nWait != WAIT_TIMEOUT)));
-			#endif
-			ShutdownSrvStep(L"ghExitQueryEvent was set");
 		}
-		else
-		{
-			// Перенес обработку отладочных событий в отдельную нить, чтобы случайно не заблокироваться с главной
-			nWaitDebugExit = WaitForSingleObject(gpSrv->DbgInfo.hDebugThread, INFINITE);
-			nWait = WAIT_OBJECT_0;
-			//while (nWait == WAIT_TIMEOUT)
-			//{
-			//	ProcessDebugEvent();
-			//	nWait = WaitForSingleObject(ghExitQueryEvent, 0);
-			//}
-			//gbAlwaysConfirmExit = TRUE;
-			ShutdownSrvStep(L"DebuggerThread terminated");
-		}
+		#else
+		nWait = nWaitExitEvent = WaitForSingleObject(ghExitQueryEvent, INFINITE);
+		_ASSERTE(!(gbCtrlBreakStopWaitingShown && (nWait != WAIT_TIMEOUT)));
+		#endif
+		ShutdownSrvStep(L"ghExitQueryEvent was set");
 
 		#ifdef _DEBUG
 		xf_validate(NULL);
@@ -2737,6 +2718,8 @@ enum ConEmuExecAction
 	ea_Download,   // after "/download" switch may be unlimited pairs of {"url","file"},{"url","file"},...
 	ea_ParseArgs,  // debug test of NextArg function... print args to STDOUT
 	ea_ErrorLevel, // return specified errorlevel
+	ea_OutEcho,    // echo "string" with ANSI processing
+	ea_OutType,    // print file contents with ANSI processing
 };
 
 int DoInjectHooks(LPWSTR asCmdArg)
@@ -3645,6 +3628,256 @@ int DoGuiMacro(LPCWSTR asCmdArg, HWND hMacroInstance = NULL)
 	return iRc;
 }
 
+int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
+{
+	int iRc = 0;
+	wchar_t* pszTemp = NULL;
+	wchar_t* pszLine = NULL;
+	char*    pszOem = NULL;
+	char*    pszFile = NULL;
+	LPCWSTR  pszText = NULL;
+	DWORD    cchLen = 0, dwWritten = 0;
+	HANDLE   hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	bool     bAddNewLine = true;
+	bool     bProcessed = true;
+	bool     bToBottom = false;
+	CmdArg   szArg;
+	HANDLE   hFile = NULL;
+	DWORD    DefaultCP = 0;
+
+	_ASSERTE(asCmdArg && (*asCmdArg != L' '));
+	asCmdArg = SkipNonPrintable(asCmdArg);
+
+	while ((*asCmdArg == L'-' || *asCmdArg == L'/') && (NextArg(&asCmdArg, szArg) == 0))
+	{
+		wchar_t* psz;
+
+		// Make uniform
+		if (szArg.ms_Arg[0] == L'/')
+			szArg.ms_Arg[0] = L'-';
+
+		// Do not CRLF after printing
+		if (lstrcmpi(szArg, L"-n") == 0)
+			bAddNewLine = false;
+		// ‘RAW’: Do not process ANSI and specials (^e^[^r^n^t^b...)
+		else if (lstrcmpi(szArg, L"-r") == 0)
+			bProcessed = false;
+		// Scroll to bottom of screen buffer (ConEmu TrueColor buffer compatible)
+		else if (lstrcmpi(szArg, L"-b") == 0)
+			bToBottom = true;
+		// Forced codepage of typed text file
+		else if (isDigit(szArg.ms_Arg[1]))
+			DefaultCP = wcstoul(szArg, &psz, 10);
+	}
+
+	_ASSERTE(asCmdArg && (*asCmdArg != L' '));
+	asCmdArg = SkipNonPrintable(asCmdArg);
+
+	if (eExecAction == ea_OutType)
+	{
+		if (NextArg(&asCmdArg, szArg) == 0)
+		{
+			DWORD nSize = 0, nErrCode = 0;
+			int iRead = ReadTextFile(szArg, (1<<24), pszTemp, cchLen, nErrCode, DefaultCP);
+			if (iRead < 0)
+			{
+				wchar_t szInfo[100];
+				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\r\nCode=%i, Error=%u\r\n", iRead, nErrCode);
+				pszTemp = lstrmerge(L"Reading source file failed!\r\n", szArg, szInfo);
+				cchLen = pszTemp ? lstrlen(pszTemp) : 0;
+				iRc = 4;
+			}
+			pszText = pszTemp;
+		}
+	}
+	else if (eExecAction == ea_OutEcho)
+	{
+		// Get the string
+		int nLen = lstrlen(asCmdArg);
+		if ((nLen < 1) && !bAddNewLine)
+			goto wrap;
+
+		// Cut double-quotes, trailing spaces, process ASCII analogues
+		if (nLen > 0)
+		{
+			int j = nLen-1;
+			pszLine = lstrdup(asCmdArg,2/*Add two extra wchar_t*/);
+			if (!pszLine)
+			{
+				iRc = 100; goto wrap;
+			}
+
+			while ((j > 0) && (pszLine[j] == L' '))
+			{
+				pszLine[j--] = 0;
+			}
+
+			if (((nLen > 2) && (asCmdArg[0] == L'"'))
+				&& ((j > 0) && (pszLine[j] == L'"')))
+			{
+				pszLine[j] = 0;
+				asCmdArg = pszLine + 1;
+			}
+			else
+			{
+				asCmdArg = pszLine;
+				j++;
+				_ASSERTE(j >= 0 && j <= nLen);
+			}
+
+			if (bAddNewLine)
+			{
+				pszLine[j++] = L'\r';
+				pszLine[j++] = L'\n';
+				pszLine[j] = 0;
+				bAddNewLine = false; // Already prepared
+			}
+
+			// Process special symbols: ^e^[^r^n^t^b
+			if (bProcessed)
+			{
+				wchar_t* pszDst = wcschr(pszLine, L'^');
+				if (pszDst)
+				{
+					const wchar_t* pszSrc = pszDst;
+					const wchar_t* pszEnd = pszLine + j;
+					while (pszSrc < pszEnd)
+					{
+						if (*pszSrc == L'^')
+						{
+							switch (*(++pszSrc))
+							{
+							case L'^':
+								*pszDst = L'^'; break;
+							case L'r': case L'R':
+								*pszDst = L'\r'; break;
+							case L'n': case L'N':
+								*pszDst = L'\n'; break;
+							case L't': case L'T':
+								*pszDst = L'\t'; break;
+							case L'b': case L'B':
+								*pszDst = L'\b'; break;
+							case L'e': case L'E': case L'[':
+								*pszDst = 27; break;
+							default:
+								// Unknown ctrl-sequence, bypass
+								*(pszDst++) = *(pszSrc++);
+								continue;
+							}
+							*pszDst++; *pszSrc++;
+						}
+						else
+						{
+							*(pszDst++) = *(pszSrc++);
+						}
+					}
+					// Was processed? Zero terminate it.
+					*pszDst = 0;
+				}
+			}
+		}
+
+		if (bAddNewLine)
+		{
+			pszTemp = lstrmerge(asCmdArg, L"\r\n");
+			pszText = pszTemp;
+		}
+		else
+		{
+			pszText = asCmdArg;
+		}
+		cchLen = pszText ? lstrlen(pszText) : 0;
+	}
+
+	if (bToBottom)
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+		if (GetConsoleScreenBufferInfo(hOut, &csbi))
+		{
+			COORD crBottom = {0, csbi.dwSize.Y-1};
+			SetConsoleCursorPosition(hOut, crBottom);
+			int Y1 = crBottom.Y - (csbi.srWindow.Bottom-csbi.srWindow.Top);
+			SMALL_RECT srWindow = {0, Y1, csbi.srWindow.Right-srWindow.Left, crBottom.Y};
+			SetConsoleWindowInfo(hOut, TRUE, &srWindow);
+		}
+	}
+
+	if (!pszText || !cchLen)
+	{
+		iRc = 1;
+		goto wrap;
+	}
+
+	if (!IsOutputRedirected())
+	{
+		BOOL bRc;
+		typedef BOOL (WINAPI* WriteProcessed_t)(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
+		WriteProcessed_t WriteProcessed = NULL;
+		HMODULE hHooks = NULL;
+		if (bProcessed)
+		{
+			LPCWSTR pszHooksName = WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll");
+			if ((hHooks = GetModuleHandle(pszHooksName)) == NULL)
+			{
+				wchar_t szSelf[MAX_PATH];
+				if (GetModuleFileName(ghOurModule, szSelf, countof(szSelf)))
+				{
+					wchar_t* pszName = (wchar_t*)PointToName(szSelf);
+					int nSelfName = lstrlen(pszName);
+					_ASSERTE(nSelfName == lstrlen(pszHooksName));
+					lstrcpyn(pszName, pszHooksName, nSelfName+1);
+					hHooks = LoadLibrary(szSelf);
+				}
+			}
+			if (hHooks)
+			{
+				WriteProcessed = (WriteProcessed_t)GetProcAddress(hHooks, "WriteProcessed");
+			}
+		}
+
+		// If possible - use processed (with ANSI support) output
+		if (WriteProcessed)
+		{
+			bRc = WriteProcessed(pszText, cchLen, &dwWritten);
+		}
+		else
+		{
+			bRc = WriteConsoleW(hOut, pszText, cchLen, &dwWritten, 0);
+		}
+
+		if (!bRc)
+			iRc = 3;
+	}
+	else
+	{
+		// Current process output was redirected to file!
+
+		UINT  cp = GetConsoleOutputCP();
+		int   nDstLen = WideCharToMultiByte(cp, 0, pszText, cchLen, NULL, 0, NULL, NULL);
+		if (nDstLen < 1)
+		{
+			iRc = 2;
+			goto wrap;
+		}
+
+		pszOem = (char*)malloc(nDstLen);
+		if (pszOem)
+		{
+			int nWrite = WideCharToMultiByte(cp, 0, pszText, cchLen, pszOem, nDstLen, NULL, NULL);
+			if (nWrite > 1)
+			{
+				WriteFile(hOut, pszOem, nWrite, &dwWritten, 0);
+			}
+		}
+	}
+
+wrap:
+	SafeFree(pszLine);
+	SafeFree(pszTemp);
+	SafeFree(pszOem);
+	return iRc;
+}
+
 int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */, HWND hMacroInstance = NULL)
 {
 	int iRc = CERR_CARGUMENT;
@@ -3699,6 +3932,12 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 		{
 			wchar_t* pszEnd = NULL;
 			iRc = wcstol(asCmdArg, &pszEnd, 10);
+			break;
+		}
+	case ea_OutEcho:
+	case ea_OutType:
+		{
+			iRc = DoOutput(eExecAction, asCmdArg);
 			break;
 		}
 	default:
@@ -4008,6 +4247,16 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpi(szArg, L"/Result")==0)
 		{
 			gbPrintRetErrLevel = TRUE;
+		}
+		else if (lstrcmpi(szArg, L"/echo")==0 || lstrcmpi(szArg, L"/e")==0)
+		{
+			eExecAction = ea_OutEcho;
+			break;
+		}
+		else if (lstrcmpi(szArg, L"/type")==0 || lstrcmpi(szArg, L"/t")==0)
+		{
+			eExecAction = ea_OutType;
+			break;
 		}
 		// **** Regular use ****
 		else if (wcsncmp(szArg, L"/REGCONFONT=", 12)==0)
@@ -6098,606 +6347,6 @@ CLogFunction::~CLogFunction()
 
 
 
-void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
-{
-	int nExitPlaceAdd = 2; // 2,3,4,5,6,7,8,9 +(nExitPlaceStep)
-	bool bPrevCount2 = (anPrevCount>1);
-
-	// Заблокировать, если этого еще не сделали
-	MSectionLock CS;
-	if (!pCS)
-		CS.Lock(gpSrv->csProc);
-
-#ifdef USE_COMMIT_EVENT
-	// Если кто-то регистрировался как "ExtendedConsole.dll"
-	// то проверить, а не свалился ли процесс его вызвавший
-	if (gpSrv && gpSrv->nExtConsolePID)
-	{
-		DWORD nExtPID = gpSrv->nExtConsolePID;
-		bool bExist = false;
-		for (UINT i = 0; i < gpSrv->nProcessCount; i++)
-		{
-			if (gpSrv->pnProcesses[i] == nExtPID)
-			{
-				bExist = true; break;
-			}
-		}
-		if (!bExist)
-		{
-			if (gpSrv->hExtConsoleCommit)
-			{
-				CloseHandle(gpSrv->hExtConsoleCommit);
-				gpSrv->hExtConsoleCommit = NULL;
-			}
-			gpSrv->nExtConsolePID = 0;
-		}
-	}
-#endif
-
-#ifndef WIN64
-	// Найти "ntvdm.exe"
-	if (abChanged && !gpSrv->nNtvdmPID && !IsWindows64())
-	{
-		//BOOL lbFarExists = FALSE, lbTelnetExist = FALSE;
-
-		if (gpSrv->nProcessCount > 1)
-		{
-			HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-
-			if (hSnap != INVALID_HANDLE_VALUE)
-			{
-				PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
-
-				if (Process32First(hSnap, &prc))
-				{
-					do
-					{
-						for (UINT i = 0; i < gpSrv->nProcessCount; i++)
-						{
-							if (prc.th32ProcessID != gnSelfPID
-							        && prc.th32ProcessID == gpSrv->pnProcesses[i])
-							{
-								//if (IsFarExe(prc.szExeFile))
-								//{
-								//	lbFarExists = TRUE;
-								//	//if (gpSrv->nProcessCount <= 2) // нужно проверить и ntvdm
-								//	//	break; // возможно, в консоли еще есть и telnet?
-								//}
-
-								//#ifndef WIN64
-								//else
-								if (!gpSrv->nNtvdmPID && lstrcmpiW(prc.szExeFile, L"ntvdm.exe")==0)
-								{
-									gpSrv->nNtvdmPID = prc.th32ProcessID;
-									break;
-								}
-								//#endif
-
-								//// 23.04.2010 Maks - telnet нужно определять, т.к. у него проблемы с Ins и курсором
-								//else if (lstrcmpiW(prc.szExeFile, L"telnet.exe")==0)
-								//{
-								//	lbTelnetExist = TRUE;
-								//}
-							}
-						}
-
-						//if (lbFarExists && lbTelnetExist
-						//	#ifndef WIN64
-						//        && gpSrv->nNtvdmPID
-						//	#endif
-						//    )
-						//{
-						//	break; // чтобы условие выхода внятнее было
-						//}
-					}
-					while (Process32Next(hSnap, &prc));
-				}
-
-				CloseHandle(hSnap);
-			}
-		}
-
-		//gpSrv->bTelnetActive = lbTelnetExist;
-	}
-#endif
-
-	gpSrv->dwProcessLastCheckTick = GetTickCount();
-
-	// Если корневой процесс проработал достаточно (10 сек), значит он живой и gbAlwaysConfirmExit можно сбросить
-	// Если gbAutoDisableConfirmExit==FALSE - сброс подтверждение закрытия консоли не выполняется
-	if (gbAlwaysConfirmExit  // если уже не сброшен
-	        && gbAutoDisableConfirmExit // требуется ли вообще такая проверка (10 сек)
-	        && anPrevCount > 1 // если в консоли был зафиксирован запущенный процесс
-	        && gpSrv->hRootProcess) // и корневой процесс был вообще запущен
-	{
-		if ((gpSrv->dwProcessLastCheckTick - gpSrv->nProcessStartTick) > CHECK_ROOTOK_TIMEOUT)
-		{
-			_ASSERTE(gnConfirmExitParm==0);
-			// эта проверка выполняется один раз
-			gbAutoDisableConfirmExit = FALSE;
-			// 10 сек. прошло, теперь необходимо проверить, а жив ли процесс?
-			DWORD dwProcWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
-
-			if (dwProcWait == WAIT_OBJECT_0)
-			{
-				// Корневой процесс завершен, возможно, была какая-то проблема?
-				gbRootAliveLess10sec = TRUE; // корневой процесс проработал менее 10 сек
-			}
-			else
-			{
-				// Корневой процесс все еще работает, считаем что все ок и подтверждения закрытия консоли не потребуется
-				DisableAutoConfirmExit();
-				//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT; // менять nProcessStartTick не нужно. проверка только по флажкам
-			}
-		}
-	}
-
-	if (gbRootWasFoundInCon == 0 && gpSrv->nProcessCount > 1 && gpSrv->hRootProcess && gpSrv->dwRootProcess)
-	{
-		if (WaitForSingleObject(gpSrv->hRootProcess, 0) == WAIT_OBJECT_0)
-		{
-			gbRootWasFoundInCon = 2; // в консоль процесс не попал, и уже завершился
-		}
-		else
-		{
-			for (UINT n = 0; n < gpSrv->nProcessCount; n++)
-			{
-				if (gpSrv->dwRootProcess == gpSrv->pnProcesses[n])
-				{
-					// Процесс попал в консоль
-					gbRootWasFoundInCon = 1; break;
-				}
-			}
-		}
-	}
-
-	// Только для x86. На x64 ntvdm.exe не бывает.
-	#ifndef WIN64
-	WARNING("gpSrv->bNtvdmActive нигде не устанавливается");
-	if (gpSrv->nProcessCount == 2 && !gpSrv->bNtvdmActive && gpSrv->nNtvdmPID)
-	{
-		// Возможно было запущено 16битное приложение, а ntvdm.exe не выгружается при его закрытии
-		// gnSelfPID не обязательно будет в gpSrv->pnProcesses[0]
-		if ((gpSrv->pnProcesses[0] == gnSelfPID && gpSrv->pnProcesses[1] == gpSrv->nNtvdmPID)
-		        || (gpSrv->pnProcesses[1] == gnSelfPID && gpSrv->pnProcesses[0] == gpSrv->nNtvdmPID))
-		{
-			// Послать в нашу консоль команду закрытия
-			PostMessage(ghConWnd, WM_CLOSE, 0, 0);
-		}
-	}
-	#endif
-
-	WARNING("Если в консоли ДО этого были процессы - все условия вида 'gpSrv->nProcessCount == 1' обломаются");
-
-	bool bForcedTo2 = false;
-	DWORD nWaitDbg1 = -1, nWaitDbg2 = -1;
-	// Похоже "пример" не соответствует условию, оставлю пока, для истории
-	// -- Пример - запускаемся из фара. Количество процессов ИЗНАЧАЛЬНО - 5
-	// -- cmd вываливается сразу (path not found)
-	// -- количество процессов ОСТАЕТСЯ 5 и ни одно из ниже условий не проходит
-	if (anPrevCount == 1 && gpSrv->nProcessCount == 1
-		&& gpSrv->nProcessStartTick && gpSrv->dwProcessLastCheckTick
-		&& ((gpSrv->dwProcessLastCheckTick - gpSrv->nProcessStartTick) > CHECK_ROOTSTART_TIMEOUT)
-		&& (nWaitDbg1 = WaitForSingleObject(ghExitQueryEvent,0)) == WAIT_TIMEOUT
-		// выходить можно только если корневой процесс завершился
-		&& gpSrv->hRootProcess && ((nWaitDbg2 = WaitForSingleObject(gpSrv->hRootProcess,0)) != WAIT_TIMEOUT))
-	{
-		anPrevCount = 2; // чтобы сработало следующее условие
-		bForcedTo2 = true;
-		//2010-03-06 - установка флажка должна быть при старте сервера
-		//if (!gbAlwaysConfirmExit) gbAlwaysConfirmExit = TRUE; // чтобы консоль не схлопнулась
-	}
-
-	if (anPrevCount > 1 && gpSrv->nProcessCount == 1)
-	{
-		if (gpSrv->pnProcesses[0] != gnSelfPID)
-		{
-			_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
-		}
-		else
-		{
-			#ifdef DEBUG_ISSUE_623
-			_ASSERTE(FALSE && "Calling SetTerminateEvent");
-			#endif
-
-			// !!! Во время сильной загрузки процессора периодически
-			// !!! случается, что ConEmu отваливается быстрее, чем в
-			// !!! консоли появится фар. Обратить внимание на nPrevProcessedDbg[]
-			// !!! в вызывающей функции. Откуда там появилось 2 процесса,
-			// !!! и какого фига теперь стал только 1?
-			_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
-			// !!! ****
-
-
-			if (pCS)
-				pCS->Unlock();
-			else
-				CS.Unlock();
-
-			//2010-03-06 это не нужно, проверки делаются по другому
-			//if (!gbAlwaysConfirmExit && (gpSrv->dwProcessLastCheckTick - gpSrv->nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT) {
-			//	gbAlwaysConfirmExit = TRUE; // чтобы консоль не схлопнулась
-			//}
-			if (gbAlwaysConfirmExit && (gpSrv->dwProcessLastCheckTick - gpSrv->nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT)
-				gbRootAliveLess10sec = TRUE; // корневой процесс проработал менее 10 сек
-
-			if (bForcedTo2)
-				nExitPlaceAdd = bPrevCount2 ? 3 : 4;
-			else if (bPrevCount2)
-				nExitPlaceAdd = 5;
-
-			if (!nExitQueryPlace) nExitQueryPlace = nExitPlaceAdd/*2,3,4,5,6,7,8,9*/+(nExitPlaceStep);
-
-			ShutdownSrvStep(L"All processes are terminated, SetEvent(ghExitQueryEvent)");
-			SetTerminateEvent(ste_ProcessCountChanged);
-		}
-	}
-
-	UNREFERENCED_PARAMETER(nWaitDbg1); UNREFERENCED_PARAMETER(nWaitDbg2); UNREFERENCED_PARAMETER(bForcedTo2);
-}
-
-BOOL ProcessAdd(DWORD nPID, MSectionLock *pCS /*= NULL*/)
-{
-	MSectionLock CS;
-	if ((pCS == NULL) && (gpSrv->csProc != NULL))
-	{
-		pCS = &CS;
-		CS.Lock(gpSrv->csProc);
-	}
-
-	UINT nPrevCount = gpSrv->nProcessCount;
-	BOOL lbChanged = FALSE;
-	_ASSERTE(nPID!=0);
-
-	// Добавить процесс в список
-	_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
-	BOOL lbFound = FALSE;
-	for (DWORD n = 0; n < nPrevCount; n++)
-	{
-		if (gpSrv->pnProcesses[n] == nPID)
-		{
-			lbFound = TRUE;
-			break;
-		}
-	}
-	if (!lbFound)
-	{
-		if (nPrevCount < gpSrv->nMaxProcesses)
-		{
-			pCS->RelockExclusive(200);
-			gpSrv->pnProcesses[gpSrv->nProcessCount++] = nPID;
-			lbChanged = TRUE;
-		}
-		else
-		{
-			_ASSERTE(nPrevCount < gpSrv->nMaxProcesses);
-		}
-	}
-
-	return lbChanged;
-}
-
-BOOL ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS /*= NULL*/)
-{
-	BOOL lbChanged = FALSE;
-
-	MSectionLock CS;
-	if ((pCS == NULL) && (gpSrv->csProc != NULL))
-	{
-		pCS = &CS;
-		CS.Lock(gpSrv->csProc);
-	}
-
-	// Удалить процесс из списка
-	_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
-	DWORD nChange = 0;
-	for (DWORD n = 0; n < nPrevCount; n++)
-	{
-		if (gpSrv->pnProcesses[n] == nPID)
-		{
-			pCS->RelockExclusive(200);
-			lbChanged = TRUE;
-			gpSrv->nProcessCount--;
-			continue;
-		}
-		if (lbChanged)
-		{
-			gpSrv->pnProcesses[nChange] = gpSrv->pnProcesses[n];
-		}
-		nChange++;
-	}
-
-	return lbChanged;
-}
-
-#ifdef _DEBUG
-void DumpProcInfo(LPCWSTR sLabel, DWORD nCount, DWORD* pPID)
-{
-#ifdef WINE_PRINT_PROC_INFO
-	DWORD nErr = GetLastError();
-	wchar_t szDbgMsg[255];
-	msprintf(szDbgMsg, countof(szDbgMsg), L"%s: Err=%u, Count=%u:", sLabel ? sLabel : L"", nErr, nCount);
-	nCount = min(nCount,10);
-	for (DWORD i = 0; pPID && (i < nCount); i++)
-	{
-		int nLen = lstrlen(szDbgMsg);
-		msprintf(szDbgMsg+nLen, countof(szDbgMsg)-nLen, L" %u", pPID[i]);
-	}
-	wcscat_c(szDbgMsg, L"\r\n");
-	_wprintf(szDbgMsg);
-#endif
-}
-#define DUMP_PROC_INFO(s,n,p) //DumpProcInfo(s,n,p)
-#else
-#define DUMP_PROC_INFO(s,n,p)
-#endif
-
-BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
-{
-	//static DWORD dwLastCheckTick = GetTickCount();
-	UINT nPrevCount = gpSrv->nProcessCount;
-#ifdef _DEBUG
-	DWORD nCurProcessesDbg[128] = {}; // для отладки, получение текущего состояния консоли
-	DWORD nPrevProcessedDbg[128] = {}; // для отладки, запомнить предыдущее состояние консоли
-	if (gpSrv->pnProcesses && gpSrv->nProcessCount)
-		memmove(nPrevProcessedDbg, gpSrv->pnProcesses, min(countof(nPrevProcessedDbg),gpSrv->nProcessCount)*sizeof(*gpSrv->pnProcesses));
-#endif
-
-	if (gpSrv->nProcessCount <= 0)
-	{
-		abForce = TRUE;
-	}
-
-	if (!abForce)
-	{
-		DWORD dwCurTick = GetTickCount();
-
-		if ((dwCurTick - gpSrv->dwProcessLastCheckTick) < (DWORD)CHECK_PROCESSES_TIMEOUT)
-			return FALSE;
-	}
-
-	BOOL lbChanged = FALSE;
-	MSectionLock CS; CS.Lock(gpSrv->csProc);
-
-	if (gpSrv->nProcessCount == 0)
-	{
-		gpSrv->pnProcesses[0] = gnSelfPID;
-		gpSrv->nProcessCount = 1;
-	}
-
-	if (gpSrv->DbgInfo.bDebuggerActive)
-	{
-		//if (gpSrv->hRootProcess) {
-		//	if (WaitForSingleObject(gpSrv->hRootProcess, 0) == WAIT_OBJECT_0) {
-		//		gpSrv->nProcessCount = 1;
-		//		return TRUE;
-		//	}
-		//}
-		//gpSrv->pnProcesses[1] = gpSrv->dwRootProcess;
-		//gpSrv->nProcessCount = 2;
-		return FALSE;
-	}
-
-	#ifdef _DEBUG
-	bool bDumpProcInfo = gbIsWine;
-	#endif
-
-	bool bProcFound = false;
-	bool bConsoleOnly = (gpSrv->hRootProcessGui == NULL);
-	bool bMayBeConsolePaf = gpSrv->Portable.nPID && (gpSrv->Portable.nSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
-
-	if (pfnGetConsoleProcessList && (bConsoleOnly || bMayBeConsolePaf))
-	{
-		WARNING("Переделать, как-то слишком сложно получается");
-		DWORD nCurCount = 0;
-		nCurCount = pfnGetConsoleProcessList(gpSrv->pnProcessesGet, gpSrv->nMaxProcesses);
-		#ifdef _DEBUG
-		SetLastError(0);
-		int nCurCountDbg = pfnGetConsoleProcessList(nCurProcessesDbg, countof(nCurProcessesDbg));
-		DUMP_PROC_INFO(L"WinXP mode", nCurCountDbg, nCurProcessesDbg);
-		#endif
-		lbChanged = (gpSrv->nProcessCount != nCurCount);
-
-		bProcFound = bConsoleOnly && (nCurCount > 0);
-
-		if (nCurCount == 0)
-		{
-			_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
-
-			// Похоже что сюда мы попадаем также при ошибке 0xC0000142 запуска root-process
-			#ifdef _DEBUG
-			_ASSERTE(FALSE && "(nCurCount==0)?");
-			// Some diagnostics for debugger
-			DWORD nErr;
-			HWND hConWnd = GetConsoleWindow(); nErr = GetLastError();
-			HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE); nErr = GetLastError();
-			CONSOLE_SCREEN_BUFFER_INFO sbi = {}; BOOL bSbi = GetConsoleScreenBufferInfo(hOut, &sbi); nErr = GetLastError();
-			DWORD nWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
-			GetExitCodeProcess(gpSrv->hRootProcess, &nErr);
-			#endif
-
-			// Это значит в Win7 свалился conhost.exe
-			//if ((gnOsVer >= 0x601) && !gbIsWine)
-			{
-				#ifdef _DEBUG
-				DWORD dwErr = GetLastError();
-				#endif
-				gpSrv->nProcessCount = 1;
-				SetEvent(ghQuitEvent);
-
-				if (!nExitQueryPlace) nExitQueryPlace = 1+(nExitPlaceStep);
-
-				SetTerminateEvent(ste_CheckProcessCount);
-				return TRUE;
-			}
-		}
-		else
-		{
-			if (nCurCount > gpSrv->nMaxProcesses)
-			{
-				DWORD nSize = nCurCount + 100;
-				DWORD* pnPID = (DWORD*)calloc(nSize, sizeof(DWORD));
-
-				if (pnPID)
-				{
-					CS.RelockExclusive(200);
-					nCurCount = pfnGetConsoleProcessList(pnPID, nSize);
-
-					if (nCurCount > 0 && nCurCount <= nSize)
-					{
-						free(gpSrv->pnProcessesGet);
-						gpSrv->pnProcessesGet = pnPID; pnPID = NULL;
-						free(gpSrv->pnProcesses);
-						gpSrv->pnProcesses = (DWORD*)calloc(nSize, sizeof(DWORD));
-						_ASSERTE(nExitQueryPlace == 0 || nCurCount == 1);
-						gpSrv->nProcessCount = nCurCount;
-						gpSrv->nMaxProcesses = nSize;
-					}
-
-					if (pnPID)
-						free(pnPID);
-				}
-			}
-
-			// PID-ы процессов в консоли могут оказаться перемешаны. Нас же интересует gnSelfPID на первом месте
-			gpSrv->pnProcesses[0] = gnSelfPID;
-			DWORD nCorrect = 1, nMax = gpSrv->nMaxProcesses, nDosBox = 0;
-			if (gbUseDosBox)
-			{
-				if (ghDosBoxProcess && WaitForSingleObject(ghDosBoxProcess, 0) == WAIT_TIMEOUT)
-				{
-					gpSrv->pnProcesses[nCorrect++] = gnDosBoxPID;
-					nDosBox = 1;
-				}
-				else if (ghDosBoxProcess)
-				{
-					ghDosBoxProcess = NULL;
-				}
-			}
-			for (DWORD n = 0; n < nCurCount && nCorrect < nMax; n++)
-			{
-				if (gpSrv->pnProcessesGet[n] != gnSelfPID)
-				{
-					if (gpSrv->pnProcesses[nCorrect] != gpSrv->pnProcessesGet[n])
-					{
-						gpSrv->pnProcesses[nCorrect] = gpSrv->pnProcessesGet[n];
-						lbChanged = TRUE;
-					}
-					nCorrect++;
-				}
-			}
-			nCurCount += nDosBox;
-
-
-			if (nCurCount < gpSrv->nMaxProcesses)
-			{
-				// Сбросить в 0 ячейки со старыми процессами
-				_ASSERTE(gpSrv->nProcessCount < gpSrv->nMaxProcesses);
-
-				if (nCurCount < gpSrv->nProcessCount)
-				{
-					UINT nSize = sizeof(DWORD)*(gpSrv->nProcessCount - nCurCount);
-					memset(gpSrv->pnProcesses + nCurCount, 0, nSize);
-				}
-
-				_ASSERTE(nCurCount>0);
-				_ASSERTE(nExitQueryPlace == 0 || nCurCount == 1);
-				gpSrv->nProcessCount = nCurCount;
-			}
-
-			if (!lbChanged)
-			{
-				UINT nSize = sizeof(DWORD)*min(gpSrv->nMaxProcesses,START_MAX_PROCESSES);
-
-				#ifdef _DEBUG
-				_ASSERTE(!IsBadWritePtr(gpSrv->pnProcessesCopy,nSize));
-				_ASSERTE(!IsBadWritePtr(gpSrv->pnProcesses,nSize));
-				#endif
-
-				lbChanged = memcmp(gpSrv->pnProcessesCopy, gpSrv->pnProcesses, nSize) != 0;
-				MCHKHEAP;
-
-				if (lbChanged)
-					memmove(gpSrv->pnProcessesCopy, gpSrv->pnProcesses, nSize);
-
-				MCHKHEAP;
-			}
-		}
-
-		if (!bProcFound && bMayBeConsolePaf && (nCurCount > 0) && gpSrv->pnProcesses)
-		{
-			for (DWORD i = 0; i < nCurCount; i++)
-			{
-				if (gpSrv->pnProcesses[i] == gpSrv->Portable.nPID)
-				{
-					// В консоли обнаружен процесс запущенный из ChildGui (e.g. CommandPromptPortable.exe -> cmd.exe)
-                    bProcFound = true;
-				}
-			}
-		}
-	}
-
-	// Wine related: GetConsoleProcessList may fails
-	// or ChildGui related: GUI app started in tab and (optionally) it starts another app (console or gui)
-	if (!bProcFound)
-	{
-		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
-		gpSrv->pnProcesses[0] = gnSelfPID;
-
-		HANDLE hRootProcess = gpSrv->hRootProcess;
-		DWORD  nRootPID = gpSrv->dwRootProcess;
-
-		if (hRootProcess || gpSrv->Portable.hProcess)
-		{
-			DWORD nRootWait = hRootProcess ? WaitForSingleObject(hRootProcess, 0) : WAIT_OBJECT_0;
-			// PortableApps?
-			if (nRootWait == WAIT_OBJECT_0)
-			{
-				if (gpSrv->Portable.hProcess)
-				{
-					nRootWait = WaitForSingleObject(gpSrv->Portable.hProcess, 0);
-					if (nRootWait == WAIT_TIMEOUT)
-						nRootPID = gpSrv->Portable.nPID;
-				}
-			}
-			// Ok, Check it
-			if (nRootWait == WAIT_OBJECT_0)
-			{
-				gpSrv->pnProcesses[1] = 0;
-				lbChanged = gpSrv->nProcessCount != 1;
-				gpSrv->nProcessCount = 1;
-			}
-			else
-			{
-				gpSrv->pnProcesses[1] = nRootPID;
-				lbChanged = gpSrv->nProcessCount != 2;
-				_ASSERTE(nExitQueryPlace == 0);
-				gpSrv->nProcessCount = 2;
-			}
-		}
-		else if (gpSrv->hRootProcessGui)
-		{
-			if (!IsWindow(gpSrv->hRootProcessGui))
-			{
-				// Process handle must be opened!
-				_ASSERTE(gpSrv->hRootProcess != NULL);
-				// Fin
-				gpSrv->pnProcesses[1] = 0;
-				lbChanged = gpSrv->nProcessCount != 1;
-				gpSrv->nProcessCount = 1;
-			}
-		}
-
-		DUMP_PROC_INFO(L"Win2k mode", gpSrv->nProcessCount, gpSrv->pnProcesses);
-	}
-
-	gpSrv->dwProcessLastCheckTick = GetTickCount();
-
-	ProcessCountChanged(lbChanged, nPrevCount, &CS);
-
-
-	return lbChanged;
-}
 
 int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam)
 {
