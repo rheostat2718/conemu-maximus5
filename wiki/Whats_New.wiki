@@ -6,6 +6,19 @@ You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
 
+==Build 140529==
+  * Hide tab error tooltip after receiving tabs from Far plugin.
+  * Active tab was not changed if Far window was switched from ConEmu plugin (F12 macro).
+
+
+==Build 140528==
+  * Issue 1588: Crash when setting ‘Settings > Main > Cell = -1’.
+  * Show Far editors/viewers tabs from all panes, but not active VCon only.
+  * Issue 1594: Do not expect space after ‘file.ext:line:’ in hyperlink detector.
+  * Update Far panel tab title immediately after pressing Ctrl-F10 in editor.
+  * Do not add trailing space while pasting with RBtnClick.
+
+
 ==Build 140523==
   * Do not push ‘background’ tabs on top of recent stack during task creation.
   * Do not block tab activation (VCon actually) if VCon has the only tab or that tab already active.
