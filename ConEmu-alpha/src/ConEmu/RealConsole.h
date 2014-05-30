@@ -524,7 +524,7 @@ class CRealConsole
 		CEFarWindowType GetActiveTabType();
 		bool GetTab(int tabIdx, /*OUT*/ CTab& rTab);
 		int GetModifiedEditors();
-		BOOL ActivateFarWindow(int anWndIndex);
+		bool ActivateFarWindow(int anWndIndex);
 		DWORD CanActivateFarWindow(int anWndIndex);
 		bool IsSwitchFarWindowAllowed();
 		void OnConsoleKeyboardLayout(DWORD dwNewLayout);
@@ -543,6 +543,7 @@ class CRealConsole
 		void LogString(LPCWSTR asText, BOOL abShowTime = FALSE);
 		bool isActive(bool abAllowGroup = false);
 		bool isInFocus();
+		bool isFarPanelAllowed();
 		bool isFilePanel(bool abPluginAllowed = false, bool abSkipEditViewCheck = false);
 		bool isEditor();
 		bool isEditorModified();
@@ -700,7 +701,7 @@ class CRealConsole
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
 		CmdArg ms_DefTitle;
-		wchar_t ms_ProfilePathTemp[MAX_PATH+1];
+		//wchar_t ms_ProfilePathTemp[MAX_PATH+1]; -- commented code
 		bool mb_WasStartDetached;
 		wchar_t ms_RootProcessName[MAX_PATH];
 		int mn_RootProcessIcon;
@@ -745,6 +746,7 @@ class CRealConsole
 		DWORD m_TerminatedPIDs[128]; UINT mn_TerminatedIdx;
 		//
 		DWORD mn_FarPID;
+		int   mn_FarNoPanelsCheck; // "Far /e ..."
 		DWORD mn_ActivePID;
 		void SetActivePID(DWORD anNewPID);
 		DWORD mn_LastSetForegroundPID; // PID процесса, которому в последний раз было разрешено AllowSetForegroundWindow

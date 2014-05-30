@@ -249,6 +249,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_SelectModeSkipVk = 0;
 	mn_ProcessCount = mn_ProcessClientCount = 0;
 	mn_FarPID = mn_ActivePID = 0; //mn_FarInputTID = 0;
+	mn_FarNoPanelsCheck = 0;
 	mn_LastProcessNamePID = 0; ms_LastProcessName[0] = 0; mn_LastAppSettingsId = -1;
 	memset(m_FarPlugPIDs, 0, sizeof(m_FarPlugPIDs)); mn_FarPlugPIDsCount = 0;
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
@@ -3286,6 +3287,8 @@ void CRealConsole::ResetVarsOnStart()
 
 	hConWnd = NULL;
 
+	mn_FarNoPanelsCheck = 0;
+
 	// setXXX для удобства
 	setGuiWndPID(NULL, 0, NULL); // set m_ChildGui.nGuiWndPID to 0
 	// ZeroStruct для четкости
@@ -5307,6 +5310,12 @@ LPCWSTR CRealConsole::GetTabTitle(CTab& tab)
 		{
 			pszName = gpConEmu->GetDefaultTabLabel();
 		}
+	}
+
+	if (!pszName)
+	{
+		_ASSERTE(pszName!=NULL);
+		pszName = L"???";
 	}
 
 	return pszName;
@@ -9046,6 +9055,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 
 	HANDLE hUpdate = tabs.m_Tabs.UpdateBegin();
 
+	bool bTabsChanged = false;
 	bool bHasModal = false;
 	CTab ActiveTab("RealConsole.cpp:ActiveTab",__LINE__);
 
@@ -9061,7 +9071,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 		bHasModal |= (TypeAndFlags & fwt_ModalFarWnd) == fwt_ModalFarWnd;
 
 		if (tabs.m_Tabs.UpdateFarWindow(hUpdate, mp_VCon, apTabs[i].Name, TypeAndFlags, nPID, apTabs[i].Pos, apTabs[i].EditViewId, ActiveTab))
-			tabs.mb_TabsWasChanged = true;
+			bTabsChanged = true;
 	}
 
 	_ASSERTE(!bRenameByArgs || (anTabsCount==1));
@@ -9080,6 +9090,9 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 	tabs.StoreActiveTab(ActiveTab.Tab());
 
 	if (tabs.m_Tabs.UpdateEnd(hUpdate, GetFarPID(true)))
+		bTabsChanged = true;
+
+	if (bTabsChanged)
 		tabs.mb_TabsWasChanged = true;
 
 	#ifdef _DEBUG
@@ -9089,6 +9102,12 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 	// Передернуть gpConEmu->mp_TabBar->..
 	if (gpConEmu->isValid(mp_VCon))    // Во время создания консоли она еще не добавлена в список...
 	{
+		// Если была показана ошибка "This tab can't be activated now"
+		if (bTabsChanged && gpConEmu->isActive(mp_VCon, false))
+		{
+			// скрыть ее
+			gpConEmu->mp_TabBar->ShowTabError(NULL, 0);
+		}
 		// На время появления автотабов - отключалось
 		gpConEmu->mp_TabBar->SetRedraw(TRUE);
 		gpConEmu->mp_TabBar->Update();
@@ -9865,23 +9884,29 @@ bool CRealConsole::IsSwitchFarWindowAllowed()
 	return true;
 }
 
-BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
+bool CRealConsole::ActivateFarWindow(int anWndIndex)
 {
+	if (!this)
+		return false;
+
+	if ((anWndIndex == tabs.nActiveFarWindow) || (!anWndIndex && (tabs.mn_tabsCount <= 1)))
+		return true;
+
 	if (!IsSwitchFarWindowAllowed())
-		return FALSE;
+		return false;
 
 	DWORD dwPID = CanActivateFarWindow(anWndIndex);
 
 	if (!dwPID)
 	{
-		return FALSE;
+		return false;
 	}
 	else if (dwPID == (DWORD)-1)
 	{
-		return TRUE; // Нужное окно уже выделено, лучше не дергаться...
+		return true; // Нужное окно уже выделено, лучше не дергаться...
 	}
 
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	//DWORD nWait = -1;
 	CConEmuPipe pipe(dwPID, 100);
 
@@ -9924,7 +9949,7 @@ BOOL CRealConsole::ActivateFarWindow(int anWndIndex)
 					if ((anWndIndex >= 0) && ((DWORD)anWndIndex < TabHdr.nTabCount) && (TabHdr.nTabCount > 0))
 					{
 						if (tabs[anWndIndex].Current)
-							lbRc = TRUE;
+							lbRc = true;
 					}
 				}
 
@@ -10335,7 +10360,11 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 			// Move Dest pointer and add one trailing space (line delimiter)
 			pszDst += cchLine;
 			// No need to check ptr, memory for space-termination was reserved
-			*(pszDst++) = L' ';
+			if (pszSrc < pszEnd)
+			{
+				// Delimit lines with space
+				*(pszDst++) = L' ';
+			}
 		}
 		// Z-terminate our string
 		*pszDst = 0;
@@ -11071,6 +11100,23 @@ void CRealConsole::OnTitleChanged()
 	wcscpy(Title, TitleCmp);
 	SetWindowText(mp_VCon->GetView(), TitleCmp);
 
+	if (tabs.nActiveType & (fwt_Viewer|fwt_Editor))
+	{
+		// После Ctrl-F10 в редакторе фара меняется текущая панель (директория)
+		// В заголовке консоли панель фара?
+		if ((TitleCmp[0] == L'{')
+			&& ((TitleCmp[1] == L'\\' && TitleCmp[2] == L'\\')
+				|| (isDriveLetter(TitleCmp[1]) && (TitleCmp[2] == L':' && TitleCmp[3] == L'\\'))))
+		{
+			if ((wcsstr(TitleCmp, L"} - ") != NULL)
+				&& (wcscmp(ms_PanelTitle, TitleCmp) != 0))
+			{
+				wcscpy_c(ms_PanelTitle, TitleCmp);
+				gpConEmu->mp_TabBar->Update();
+			}
+		}
+	}
+
 	// Обработка прогресса операций
 	//short nLastProgress = m_Progress.Progress;
 	short nNewProgress;
@@ -11159,6 +11205,53 @@ void CRealConsole::OnTitleChanged()
 	{
 		gpConEmu->mp_TabBar->Update(); // сменить заголовок закладки?
 	}
+}
+
+// Если фар запущен как "far /e ..." то панелей в нем вообще нет
+bool CRealConsole::isFarPanelAllowed()
+{
+	if (!this)
+		return false;
+	// Если текущий процесс НЕ фар - то и проверять нечего, "консоль" считается за "панель"
+	DWORD nActivePID = GetActivePID();
+	bool  bRootIsFar = IsFarExe(ms_RootProcessName);
+	if (!nActivePID && !bRootIsFar)
+		return true;
+	// Известен PID фара?
+	DWORD nFarPID = GetFarPID();
+	if (nFarPID)
+	{
+		// Проверим, получена ли информация из плагина
+		const CEFAR_INFO_MAPPING *pFar = GetFarInfo();
+		if (pFar)
+		{
+			// Если получено из плагина
+			return pFar->bFarPanelAllowed;
+		}
+	}
+	// Пытаемся разобрать строку аргументов
+	if (bRootIsFar && (!nActivePID || (nActivePID == nFarPID)))
+	{
+		if (mn_FarNoPanelsCheck)
+			return (mn_FarNoPanelsCheck == 1);
+		CmdArg szArg;
+		LPCWSTR pszCmdLine = GetCmd();
+		while (NextArg(&pszCmdLine, szArg) == 0)
+		{
+			LPCWSTR ps = szArg.ms_Arg;
+			if ((ps[0] == L'-' || ps[0] == L'/')
+				&& (ps[1] == L'e' || ps[1] == L'E' || ps[1] == L'v' || ps[1] == L'V')
+				&& (ps[2] == 0))
+			{
+				// Считаем что фар запущен как редактор, панелей нет
+				mn_FarNoPanelsCheck = 2;
+				return false;
+			}
+		}
+		mn_FarNoPanelsCheck = 1;
+	}
+	// Во всех остальных случаях, считаем что "панели есть"
+	return true;
 }
 
 bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditViewCheck /*= false*/)

@@ -249,12 +249,16 @@ int CTabBarClass::GetTabIcon(bool bAdmin)
 
 void CTabBarClass::SelectTab(int i)
 {
-	mn_CurSelTab = mp_Rebar->SelectTabInt(i); // Меняем выделение, только если оно реально меняется
+	if (mp_Rebar->IsTabbarCreated())
+		mn_CurSelTab = mp_Rebar->SelectTabInt(i); // Меняем выделение, только если оно реально меняется
+	else if (i >= 0 && i < GetItemCount())
+		mn_CurSelTab = i;
 }
 
 int CTabBarClass::GetCurSel()
 {
-	mn_CurSelTab = mp_Rebar->GetCurSelInt();
+	if (mp_Rebar->IsTabbarCreated())
+		mn_CurSelTab = mp_Rebar->GetCurSelInt();
 	return mn_CurSelTab;
 }
 
@@ -285,7 +289,7 @@ int CTabBarClass::CountActiveTabs(int nMax /*= 0*/)
 
 		if (bHideInactiveConsoleTabs)
 		{
-			if (!gpConEmu->isActive(pVCon))
+			if (!CVConGroup::isActive(pVCon))
 				continue;
 		}
 
@@ -446,6 +450,136 @@ void CTabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
 	UpdatePosition();
 }
 
+int  CTabBarClass::UpdateAddTab(HANDLE hUpdate, int& tabIdx, int& nCurTab, bool& bStackChanged, CVirtualConsole* pVCon, DWORD nFlags/*UpdateAddTabFlags*/)
+{
+	CRealConsole *pRCon = pVCon->RCon();
+	if (!pRCon)
+	{
+		_ASSERTE(pRCon!=NULL);
+		return 0;
+	}
+
+	bool bVConActive = CVConGroup::isActive(pVCon, false);
+	bool bAllWindows = (gpSet->bShowFarWindows && !(pRCon->GetActiveTabType() & fwt_ModalFarWnd));
+	int rFrom = bAllWindows ? 0 : pRCon->GetActiveTab();
+	int rFound = 0;
+
+	for (int I = rFrom; bAllWindows || !rFound; I++)
+	{
+		#ifdef _DEBUG
+			if (this != gpConEmu->mp_TabBar)
+			{
+				_ASSERTE(this == gpConEmu->mp_TabBar);
+			}
+			MCHKHEAP;
+		#endif
+
+		// Check first, if the tab exists
+		CTab tab(__FILE__,__LINE__);
+		if (!pRCon->GetTab(I, tab))
+			break;
+
+		// bShowFarWindows проверяем, чтобы не проколоться с недоступностью единственного таба
+		if (gpSet->bHideDisabledTabs && gpSet->bShowFarWindows)
+		{
+			if (!pRCon->CanActivateFarWindow(I))
+				continue;
+		}
+
+
+		#ifdef _DEBUG
+			if (this != gpConEmu->mp_TabBar)
+			{
+				_ASSERTE(this == gpConEmu->mp_TabBar);
+			}
+			MCHKHEAP;
+		#endif
+
+		// Additional flags (to add or not to add)
+		if (nFlags & (uat_PanelsOrModalsOnly|uat_PanelsOnly))
+		{
+			if ((tab->Type() != fwt_Panels))
+			{
+				if (nFlags & uat_PanelsOnly)
+					continue;
+				if (!(tab->Flags() & fwt_ModalFarWnd))
+					continue;
+				// Редакторы/вьюверы из "far /e ..." здесь НЕ добавлять!
+				// Они либо показываются как "Консоль" (без сплитов)
+				// Либо как отдельный таб редактора
+				if (!pRCon->isFarPanelAllowed())
+					continue;
+			}
+		}
+		if (nFlags & uat_NonModals)
+		{
+			// Смысл в том, что если VCon активна,
+			// то модальный редактор показан *первой* вкладкой группы (вместо панелей).
+			// Для НЕ активных VCon - модальный редактор нужно все-равно допихнуть в табы,
+			// а то таб этого редактор вообще не будет виден пользователю.
+			if (bVConActive && (tab->Flags() & fwt_ModalFarWnd) && pRCon->isFarPanelAllowed())
+				continue;
+		}
+		if (nFlags & uat_NonPanels)
+		{
+			if ((tab->Type() == fwt_Panels) && pRCon->isFarPanelAllowed())
+				continue;
+		}
+
+		// Prepare tab to display
+		WARNING("TabIcon, trim words?");
+		int iTabIcon = PrepareTab(tab, pVCon);
+
+		#if 0
+		vct.pVCon = pVCon;
+		vct.nFarWindowId = I;
+		#endif
+
+
+		m_Tabs.UpdateAppend(hUpdate, tab, FALSE);
+
+		// Физически (WinAPI) добавляет закладку, или меняет (при необходимости) заголовок существующей
+		mp_Rebar->AddTabInt(tab->GetLabel(), tabIdx, (tab->Flags() & fwt_Elevated)==fwt_Elevated, iTabIcon);
+
+		// Add current (selected) tab to the top of recent stack
+		if ((tab->Flags() & fwt_CurrentFarWnd) && bVConActive)
+		{
+			// !!! RCon must return ONLY ONE active tab !!!
+			// with only temorarily exception during edit/view activation from panels
+
+			#ifdef _DEBUG
+			static int iFails = 0;
+			if (nCurTab == -1)
+			{
+				iFails = 0;
+			}
+			else
+			{
+				_ASSERTE((nCurTab == -1) || (nCurTab == 0 && iFails == 0 && tab->Type() == fwt_Panels));
+				iFails++;
+			}
+			#endif
+
+			nCurTab = tabIdx;
+			if (AddStack(tab))
+				bStackChanged = true;
+		}
+
+		rFound++;
+		tabIdx++;
+
+
+		#ifdef _DEBUG
+			if (this != gpConEmu->mp_TabBar)
+			{
+				_ASSERTE(this == gpConEmu->mp_TabBar);
+			}
+		#endif
+	}
+
+	return rFound;
+}
+
 void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 {
 	#ifdef _DEBUG
@@ -488,7 +622,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	mn_InUpdate ++;
 
 	MCHKHEAP
-	int V, I, tabIdx = 0, nCurTab = -1, rFrom, rFound;
+	int V, I, tabIdx = 0, nCurTab = -1;
 	BOOL bShowFarWindows = gpSet->bShowFarWindows;
 
 	// Выполняться должно только в основной нити, так что CriticalSection не нужна
@@ -553,12 +687,10 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 				continue;
 			CVirtualConsole* pVCon = guard.VCon();
 
-			BOOL lbActive = gpConEmu->isActive(pVCon, false);
+			BOOL lbActive = CVConGroup::isActive(pVCon, false);
 
-			if (gpSet->bHideInactiveConsoleTabs)
-			{
-				if (!lbActive) continue;
-			}
+			if (gpSet->bHideInactiveConsoleTabs && !lbActive)
+				continue;
 
 			if (gpSet->isOneTabPerGroup)
 			{
@@ -583,103 +715,53 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 					if (!lbActive)
 					{
-						lbActive = gpConEmu->isActive(pVCon, true);
+						lbActive = CVConGroup::isActive(pVCon, true);
+					}
+
+					// Показывать редакторы из всех групп?
+					if (gpSet->bShowFarWindows)
+					{
+						MArray<CVConGuard*> Panes;
+						int nPanes = pGr->GetGroupPanes(&Panes);
+
+						// Только если в группе более одного таба - тогда нужно дополниетльная логика населения...
+						if (nPanes > 1)
+						{
+							// Первым табом - показать текущую панель, либо МОДАЛЬНЫЙ редактор/вьювер
+							// Редакторы из "far /e ..." здесь НЕ добавлять!
+							if (!pVCon->RCon()->isFarPanelAllowed()
+								|| !UpdateAddTab(hUpdate, tabIdx, nCurTab, bStackChanged, pVCon, uat_PanelsOrModalsOnly))
+							{
+								// Если есть - добавить ОДНУ панель, чтобы табы сплита не прыгали туда-сюда
+								for (int K = 0; K < nPanes; K++)
+								{
+									if (Panes[K]->VCon()->RCon()->isFarPanelAllowed())
+									{
+										if (UpdateAddTab(hUpdate, tabIdx, nCurTab, bStackChanged,
+												Panes[K]->VCon(), uat_PanelsOnly) > 0)
+											break;
+									}
+								}
+							}
+
+							// Потом - все оставшиеся редакторы/вьюверы (в том числе и "far /e ...")
+							for (int K = 0; K < nPanes; K++)
+							{
+								UpdateAddTab(hUpdate, tabIdx, nCurTab, bStackChanged,
+									Panes[K]->VCon(), uat_NonModals|uat_NonPanels);
+							}
+
+							// Release
+							CVConGroup::FreePanesArray(Panes);
+
+							// Already processed, next VCon
+							continue;
+						}
 					}
 				}
 			}
 
-			CRealConsole *pRCon = pVCon->RCon();
-			if (!pRCon)
-			{
-				_ASSERTE(pRCon!=NULL);
-				continue;
-			}
-
-			// (Panels=1, Viewer=2, Editor=3) |(Elevated=0x100) |(NotElevated=0x200) |(Modal=0x400)
-			bool bAllWindows = (bShowFarWindows && !(pRCon->GetActiveTabType() & fwt_ModalFarWnd));
-			rFrom = bAllWindows ? 0 : pRCon->GetActiveTab();
-			rFound = 0;
-
-			for (I = rFrom; bAllWindows || !rFound; I++)
-			{
-				#ifdef _DEBUG
-					if (this != gpConEmu->mp_TabBar)
-					{
-						_ASSERTE(this == gpConEmu->mp_TabBar);
-					}
-					MCHKHEAP;
-				#endif
-
-
-				// bShowFarWindows проверяем, чтобы не проколоться с недоступностью единственного таба
-				if (gpSet->bHideDisabledTabs && bShowFarWindows)
-				{
-					if (!pRCon->CanActivateFarWindow(I))
-						continue;
-				}
-
-				CTab tab(__FILE__,__LINE__);
-				if (!pRCon->GetTab(I, tab))
-					break;
-
-
-				#ifdef _DEBUG
-					if (this != gpConEmu->mp_TabBar)
-					{
-						_ASSERTE(this == gpConEmu->mp_TabBar);
-					}
-					MCHKHEAP;
-				#endif
-
-
-				WARNING("TabIcon, trim words?");
-				int iTabIcon = PrepareTab(tab, pVCon);
-
-				#if 0
-				vct.pVCon = pVCon;
-				vct.nFarWindowId = I;
-				#endif
-
-
-				m_Tabs.UpdateAppend(hUpdate, tab, FALSE);
-
-				// Физически (WinAPI) добавляет закладку, или меняет (при необходимости) заголовок существующей
-				mp_Rebar->AddTabInt(tab->GetLabel(), tabIdx, (tab->Flags() & fwt_Elevated)==fwt_Elevated, iTabIcon);
-
-				if (lbActive && (tab->Flags() & fwt_CurrentFarWnd))
-				{
-					// !!! RCon must return ONLY ONE active tab !!!
-					// with only temorarily exception during edit/view activation from panels
-
-					#ifdef _DEBUG
-					static int iFails = 0;
-					if (nCurTab == -1)
-					{
-						iFails = 0;
-					}
-					else
-					{
-						_ASSERTE((nCurTab == -1) || (nCurTab == 0 && iFails == 0 && tab->Type() == fwt_Panels));
-						iFails++;
-					}
-					#endif
-
-					nCurTab = tabIdx;
-					if (AddStack(tab))
-						bStackChanged = true;
-				}
-
-				rFound++;
-				tabIdx++;
-
-
-				#ifdef _DEBUG
-					if (this != gpConEmu->mp_TabBar)
-					{
-						_ASSERTE(this == gpConEmu->mp_TabBar);
-					}
-				#endif
-			}
+			UpdateAddTab(hUpdate, tabIdx, nCurTab, bStackChanged, pVCon, uat_AnyTab);
 		}
 
 		Groups.Release();
@@ -1411,12 +1493,17 @@ void CTabBarClass::PrintRecentStack()
 		CTabID* p = m_TabStack[i];
 		if (p == mp_DummyTab)
 			continue;
+		if (!p)
+		{
+			_ASSERTE(p!=NULL);
+			continue;
+		}
 		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%2u: %s", i+1,
 			(p->Info.Status == tisPassive) ? L"<passive> " :
 			(p->Info.Status == tisEmpty) ? L"<not_init> " :
 			(p->Info.Status == tisInvalid) ? L"<invalid> " :
 			L"");
-		lstrcpyn(szDbg+lstrlen(szDbg), m_TabStack[i]->GetLabel(), 60);
+		lstrcpyn(szDbg+lstrlen(szDbg), p->GetLabel(), 60);
 		wcscat_c(szDbg, L"\n");
 		DEBUGSTRRECENT(szDbg);
 	}
@@ -1785,7 +1872,6 @@ void CTabBarClass::OnChooseTabPopup()
 {
 	RECT rcBtnRect = {0};
 	mp_Rebar->GetToolBtnRect(TID_ACTIVE_NUMBER, &rcBtnRect);
-	MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcBtnRect, 2);
 	POINT pt = {rcBtnRect.right,rcBtnRect.bottom};
 
 	gpConEmu->ChooseTabFromMenu(FALSE, pt, TPM_RIGHTALIGN|TPM_TOPALIGN);
@@ -1808,7 +1894,7 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 		if (!(pVCon = gpConEmu->GetVCon(V))) continue;
 
 		#ifdef _DEBUG
-		BOOL lbActive = gpConEmu->isActive(pVCon, false);
+		BOOL lbActive = CVConGroup::isActive(pVCon, false);
 		#endif
 
 		//111120 - Эту опцию игнорируем. Если редактор открыт в другой консоли - активируем ее потом

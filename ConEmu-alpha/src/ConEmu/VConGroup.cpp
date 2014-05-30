@@ -1423,6 +1423,7 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 						// Если ищем конкретный редактор/вьювер
 						if (asName && *asName)
 						{
+							// Note. Для панелей - тут пустая строка
 							LPCWSTR tabName = tab->Name.Ptr();
 							if (lstrcmpi(tabName, asName) == 0)
 							{
@@ -3303,6 +3304,7 @@ bool CVConGroup::ConActivateNext(bool abNext)
 	return false;
 }
 
+// Если rPanes==NULL - просто вернуть количество сплитов
 int CVConGroup::GetGroupPanes(MArray<CVConGuard*>* rPanes)
 {
 	if (!this)

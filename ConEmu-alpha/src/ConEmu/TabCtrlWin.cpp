@@ -117,20 +117,11 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			return 0;
 		}
 		case WM_SETCURSOR:
-
-			if (gpSet->isTabs && !gpSet->isQuakeStyle
-				&& (gpConEmu->GetWindowMode() == wmNormal)
-				&& gpSet->isCaptionHidden())
-			{
-				if (TabHitTest() == HTCAPTION)
-				{
-					SetCursor(/*gpSet->isQuakeStyle ? gpConEmu->mh_CursorArrow :*/ gpConEmu->mh_CursorMove);
-					return TRUE;
-				}
-			}
-
+		{
+			if (OnSetCursorRebar())
+				return TRUE;
 			break;
-
+		}
 		case WM_MOUSEMOVE:
 		case WM_LBUTTONDOWN:
 		case WM_LBUTTONUP:
@@ -270,61 +261,20 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		} break;
 		case WM_RBUTTONUP:
 		{
+			TBBUTTON tb = {};
 			POINT pt = {(int)(short)LOWORD(lParam),(int)(short)HIWORD(lParam)};
 			int nIdx = SendMessage(hwnd, TB_HITTEST, 0, (LPARAM)&pt);
-
 			// If the return value is zero or a positive value, it is
 			// the zero-based index of the nonseparator item in which the point lies.
-			//if (nIdx >= 0 && nIdx < MAX_CONSOLE_COUNT)
-			_ASSERTE(TID_ACTIVE_NUMBER==1);
-			if (nIdx == (TID_ACTIVE_NUMBER-1))
+			if ((nIdx >= 0) && SendMessage(hwnd, TB_GETBUTTON, nIdx, (LPARAM)&tb))
 			{
-				CVConGuard VCon;
-				CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
-
-				if (!gpConEmu->isActive(pVCon, false))
-				{
-					if (!gpConEmu->ConActivate(nIdx))
-					{
-						if (!gpConEmu->isActive(pVCon, false))
-						{
-							return 0;
-						}
-					}
-				}
-
-				//ClientToScreen(hwnd, &pt);
-				RECT rcBtnRect = {0};
-				SendMessage(hwnd, TB_GETRECT, TID_ACTIVE_NUMBER, (LPARAM)&rcBtnRect);
-				MapWindowPoints(hwnd, NULL, (LPPOINT)&rcBtnRect, 2);
-				POINT pt = {rcBtnRect.right,rcBtnRect.bottom};
-
-				gpConEmu->mp_Menu->ShowPopupMenu(pVCon, pt, TPM_RIGHTALIGN|TPM_TOPALIGN);
+				OnMouseToolbar(WM_RBUTTONUP, tb.idCommand, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 			}
-			else
-			{
-				LRESULT nTestIdxMin = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_MINIMIZE, 0);
-				LRESULT nTestIdxClose = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_APPCLOSE, 0);
-				if ((nIdx == nTestIdxMin) || (nIdx == nTestIdxClose))
-				{
-					Icon.HideWindowToTray();
-					return 0;
-				}
-
-				LRESULT nTestIdxMax = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_MAXIMIZE, 0);
-				if (nIdx == nTestIdxMax)
-				{
-					gpConEmu->DoFullScreen();
-					return 0;
-				}
-
-				LRESULT nTestIdx = SendMessage(hwnd, TB_COMMANDTOINDEX, TID_CREATE_CON, 0);
-				if (nIdx == nTestIdx)
-				{
-					gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, TRUE);
-				}
-			}
-
+			break;
+		}
+		case WM_SETFOCUS:
+		{
+			gpConEmu->setFocus();
 			return 0;
 		}
 	}
@@ -782,6 +732,7 @@ int CTabPanelWin::GetTabFromPoint(POINT ptCur, bool bScreen /*= true*/, bool bOv
 	return iTabIndex;
 }
 
+// Screen(!) coordinates!
 bool CTabPanelWin::GetToolBtnRect(int nCmd, RECT* rcBtnRect)
 {
 	if (!mp_Owner->IsTabsShown())
@@ -795,7 +746,7 @@ bool CTabPanelWin::GetToolBtnRect(int nCmd, RECT* rcBtnRect)
 	}
 
 	SendMessage(mh_Toolbar, TB_GETRECT, nCmd/*например TID_CREATE_CON*/, (LPARAM)rcBtnRect);
-	MapWindowPoints(mh_Toolbar, ghWnd, (LPPOINT)rcBtnRect, 2);
+	MapWindowPoints(mh_Toolbar, NULL, (LPPOINT)rcBtnRect, 2);
 
 	return true;
 }

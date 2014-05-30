@@ -4066,9 +4066,9 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		case CER_CONSOLE_CUR: // switch (tWhat)
 		case CER_CONSOLE_NTVDMOFF: // switch (tWhat)
 		{
-			rc = CVConGroup::CalcRect(tWhat, rc, tFromNow, pVCon, tTabAction);
-			_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
-			return rc;
+			RECT rcRet = CVConGroup::CalcRect(tWhat, rc, tFromNow, pVCon, tTabAction);
+			_ASSERTE(rcRet.right>rcRet.left && rcRet.bottom>rcRet.top);
+			return rcRet;
 		} break;
 
 		case CER_MONITOR:    // switch (tWhat)
@@ -7546,6 +7546,11 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 
 				if (lbRunAdmin) // don't reset one that may come from apDefArgs
 					args.RunAsAdministrator = crb_On;
+
+				// If any previous tab was marked as "active"/"foreground" for starting group,
+				// we need to run others tabs in "background"
+				if (pSetActive && CVConGroup::isValid(pSetActive))
+					args.BackgroundTab = crb_On;
 
 				pVCon = CreateCon(&args, false, true);
 
