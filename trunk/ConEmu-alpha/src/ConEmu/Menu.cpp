@@ -415,9 +415,6 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 	else if (gpConEmu->mp_TabBar && gpConEmu->mp_TabBar->IsTabsShown())
 	{
 		gpConEmu->mp_TabBar->Toolbar_GetBtnRect(TID_CREATE_CON, &rcBtnRect);
-		//SendMessage(mh_Toolbar, TB_GETRECT, TID_CREATE_CON, (LPARAM)&rcBtnRect);
-		//MapWindowPoints(mh_Toolbar, NULL, (LPPOINT)&rcBtnRect, 2);
-		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcBtnRect, 2);
 		lpExcl = &rcBtnRect;
 	}
 	else
@@ -1668,14 +1665,15 @@ HMENU CConEmuMenu::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 						| ((tab->Flags() & etfDisabled) ? (MF_DISABLED|MF_GRAYED) : 0)
 						#endif
 						;
-					int nLen = tab->Name.Length();
+					LPCWSTR pszName = pRCon->GetTabTitle(tab);
+					int nLen = lstrlen(pszName);
 					if (!R)
 						wsprintf(szText, L"%i: ", V+1);
 					else
 						wcscpy_c(szText, L"      ");
 					if (nLen <= nMaxStrLen)
 					{
-						wcscat_c(szText, tab->Name.Ptr());
+						wcscat_c(szText, pszName);
 					}
 					else
 					{
@@ -1683,12 +1681,12 @@ HMENU CConEmuMenu::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 						_ASSERTE((nCurLen+10)<nMaxStrLen);
 						if (tab->Type() == fwt_Panels)
 						{
-							lstrcpyn(szText+nCurLen, tab->Name.Ptr(), nMaxStrLen-1-nCurLen);
+							lstrcpyn(szText+nCurLen, pszName, nMaxStrLen-1-nCurLen);
 						}
 						else
 						{
 							szText[nCurLen++] = L'\x2026'; szText[nCurLen] = 0;
-							lstrcpyn(szText+nCurLen, tab->Name.Ptr()+nLen-nMaxStrLen, nMaxStrLen-1-nCurLen);
+							lstrcpyn(szText+nCurLen, pszName+nLen-nMaxStrLen, nMaxStrLen-1-nCurLen);
 						}
 						wcscat_c(szText, L"\x2026"); //...
 					}

@@ -85,6 +85,7 @@ extern BOOL gbIgnoreUpdateTabs;
 extern BOOL gbRequestUpdateTabs;
 extern BOOL gbClosingModalViewerEditor;
 extern CESERVER_REQ* gpTabs;
+extern BOOL gbForceSendTabs;
 extern int gnCurrentWindowType; // WTYPE_PANELS / WTYPE_VIEWER / WTYPE_EDITOR
 
 typedef struct tag_PanelViewRegInfo
@@ -218,7 +219,7 @@ extern int gnPluginOpenFrom;
 //extern HANDLE ghInputSynchroExecuted;
 //extern BOOL gbCmdCallObsolete;
 extern LPVOID gpReqCommandData;
-BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult = NULL);
+BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERVER_REQ** ppResult = NULL, bool bForceSendTabs = false);
 BOOL CheckPlugKey();
 void NotifyChangeKey();
 

@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
+#define DEBUGSTRWARN(s) DEBUGSTR(s)
 
 #include <windows.h>
 #include "header.h"
@@ -209,7 +210,11 @@ CVirtualConsole* CTabPanelBase::FarSendChangeTab(int tabIndex)
 	else
 	{
 		nCallEnd = TimeGetTime();
-		_ASSERTE((nCallEnd - nCallStart) < ACTIVATE_TAB_CRITICAL);
+		if ((nCallEnd - nCallStart) > ACTIVATE_TAB_CRITICAL)
+		{
+			DEBUGSTRWARN(L"*** Long Far tab activation duration! ***\n");
+			_ASSERTE(((nCallEnd - nCallStart) <= ACTIVATE_TAB_CRITICAL) || IsDebuggerPresent());
+		}
 	}
 
 	// Чтобы лишнее не мелькало - активируем консоль
@@ -355,6 +360,70 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 
 LRESULT CTabPanelBase::OnMouseToolbar(UINT uMsg, int nCmdId, int x, int y)
 {
-	//TODO:
+	switch (uMsg)
+	{
+		case WM_RBUTTONUP:
+		{
+			switch (nCmdId)
+			{
+				case TID_ACTIVE_NUMBER:
+				{
+					CVConGuard VCon;
+					CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
+					if (pVCon)
+					{
+						RECT rcBtnRect = {0};
+						GetToolBtnRect(nCmdId, &rcBtnRect);
+						POINT pt = {rcBtnRect.right,rcBtnRect.bottom};
+
+						gpConEmu->mp_Menu->ShowPopupMenu(pVCon, pt, TPM_RIGHTALIGN|TPM_TOPALIGN);
+					}
+					break;
+				}
+
+				case TID_MINIMIZE:
+				case TID_APPCLOSE:
+				{
+					Icon.HideWindowToTray();
+					break;
+				}
+
+				case TID_MAXIMIZE:
+				{
+					gpConEmu->DoFullScreen();
+					break;
+				}
+
+				case TID_CREATE_CON:
+				{
+					gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, TRUE);
+					break;
+				}
+			}
+
+			break;
+		} // WM_RBUTTONUP
+	}
+
 	return 0;
+}
+
+bool CTabPanelBase::OnSetCursorRebar()
+{
+	if (gpSet->isTabs && !gpSet->isQuakeStyle
+		&& (gpConEmu->GetWindowMode() == wmNormal)
+		&& gpSet->isCaptionHidden())
+	{
+		POINT ptCur = {};
+		GetCursorPos(&ptCur);
+		int nHitTest = GetTabFromPoint(ptCur);
+
+		if (nHitTest == -1)
+		{
+			SetCursor(/*gpSet->isQuakeStyle ? gpConEmu->mh_CursorArrow :*/ gpConEmu->mh_CursorMove);
+			return true;
+		}
+	}
+
+	return false;
 }
