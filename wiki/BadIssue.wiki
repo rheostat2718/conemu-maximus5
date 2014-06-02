@@ -1,4 +1,4 @@
-﻿#Why bad issues has no sense
+﻿#summary Why bad issues has no sense
 
 =Be verbose=
 Appreciating yours reporting efforts, but *only properly written issues are meaningful*.
