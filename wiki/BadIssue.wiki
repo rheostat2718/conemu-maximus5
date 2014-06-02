@@ -1,4 +1,4 @@
-#Why bad issues has no sense
+ï»¿#Why bad issues has no sense
 
 =Be verbose=
 Appreciating yours reporting efforts, but *only properly written issues are meaningful*.
@@ -7,9 +7,9 @@ Bad issues has no sense, developers can't fix them and reporters waste their tim
 
 For example,
 
-  * ‘There was some error, but I will not tell you what’
-  * ‘I was doing something, do not remember what, and application crashes’
-  * ‘Crash’
+  * â€˜There was some error, but I will not tell you whatâ€™
+  * â€˜I was doing something, do not remember what, and application crashesâ€™
+  * â€˜Crashâ€™
 
 Wondering, why some users do not even read what they posting?
 If reporter want to help developer make the application better,
@@ -21,7 +21,7 @@ to fix something abstract...
 
 ==Software version==
 One of the most significant information, omitted by many reporters.
-And do not say ‘I'm using last version’. Only numbers!
+And do not say â€˜I'm using last versionâ€™. Only numbers!
 
 !ConEmu version is visible in the status bar, Settings or About dialogs.
 Just press `Win+Alt+A` to be sure (SystemMenu \ Help \ About).
