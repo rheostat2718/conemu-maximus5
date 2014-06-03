@@ -245,7 +245,7 @@ struct HookModeFar gFarMode = {sizeof(HookModeFar), TRUE/*bFarHookMode*/};
 extern SetFarHookMode_t SetFarHookMode;
 
 
-PluginAndMenuCommands gpPluginMenu[menu_Last] = 
+PluginAndMenuCommands gpPluginMenu[menu_Last] =
 {
 	{CEMenuEditOutput, menu_EditConsoleOutput, pcc_EditConsoleOutput},
 	{CEMenuViewOutput, menu_ViewConsoleOutput, pcc_ViewConsoleOutput},
@@ -520,7 +520,7 @@ void TouchReadPeekConsoleInputs(int Peek /*= -1*/)
 	{
 		SetEvent(ghFarAliveEvent);
 	}
-	
+
 	//gpFarInfo->nFarReadIdx++;
 	//gpFarInfoMapping->nFarReadIdx = gpFarInfo->nFarReadIdx;
 #ifdef _DEBUG
@@ -1095,7 +1095,7 @@ BOOL UngetDummyMouseEvent(BOOL abRead, HookCallbackArg* pArgs)
 				pIn->PeekReadInfo.Buffer->Event.MouseEvent = gLastMouseReadEvent;
 				pIn->PeekReadInfo.Buffer->Event.MouseEvent.dwButtonState = 0;
 				pIn->PeekReadInfo.Buffer->Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-			
+
 				CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 				if (pOut) ExecuteFreeResult(pOut);
 				ExecuteFreeResult(pIn);
@@ -1139,11 +1139,11 @@ BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs)
 		if (UngetDummyMouseEvent(FALSE, pArgs))
 			return FALSE; // реальный ReadConsoleInput вызван не будет
 	}
-		
+
 	//// Выставить флажок "Жив" можно и при вызове из плагина
 	//if (gpConMapInfo && gpFarInfo && gpFarInfoMapping)
 	//	TouchReadPeekConsoleInputs(1);
-		
+
 	//if (pArgs->IsExecutable != HEO_Executable)
 	//	return TRUE;  // и только при вызове из far.exe
 
@@ -1224,7 +1224,7 @@ BOOL OnConsoleReadInputWork(HookCallbackArg* pArgs)
 	//// Выставить флажок "Жив" можно и при вызове из плагина
 	//if (gpConMapInfo && gpFarInfo && gpFarInfoMapping)
 	//	TouchReadPeekConsoleInputs(0);
-	//	
+	//
 	//if (pArgs->IsExecutable != HEO_Executable)
 	//	return TRUE;  // и только при вызове из far.exe
 
@@ -1748,6 +1748,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 }
 
 #if defined(CRTSTARTUP)
+#pragma message("!!!CRTSTARTUP defined!!!")
 extern "C" {
 	BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved);
 };
@@ -1791,7 +1792,7 @@ HWND WINAPI GetFarHWND2(int anConEmuOnly)
 	{
 		return FarHwnd;
 	}
-	
+
 	if (ConEmuHwnd)
 	{
 		if (IsWindow(ConEmuHwnd))
@@ -2536,7 +2537,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 		//	TODO("Путь передается аргументом через pipe!");
 		//	LogCreateProcessCheck((wchar_t*)pCommandData);
 		//}
-		//else 
+		//else
 		if (nCmd == CMD_SET_CON_FONT)
 		{
 			CESERVER_REQ_SETFONT* pFont = (CESERVER_REQ_SETFONT*)pCommandData;
@@ -2736,7 +2737,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 				#ifdef _DEBUG
 				//r.Event.MouseEvent.dwMousePosition.X = 5;
 				#endif
-				
+
 				PostMacro((gFarVersion.dwBuild <= 2850) ? L"MsLClick" : L"Keys('MsLClick')", &r);
 			}
 			else
@@ -2795,7 +2796,7 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			// "пустого" события движения мышки в консоль сразу после ACTL_KEYMACRO
 			RedrawAll();
 			//PostMacro((wchar_t*)L"@F11 %N=Menu.Select(\"EMenu\",0); $if (%N==0) %N=Menu.Select(\"EMenu\",2); $end $if (%N>0) Enter $while (Menu) Enter $end $else $MMode 1 MsgBox(\"ConEmu\",\"EMenu not found in F11\",0x00010001) $end");
-			
+
 			const wchar_t* pszMacro = NULL;
 
 			if (pszUserMacro && *pszUserMacro)
@@ -2906,12 +2907,14 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 			}
 			else
 			{
+				// Добавим префикс "^", чтобы не вообще посылать "нажатия кнопок" в плагины
+				// Иначе, если например активна панель с RegEditor'ом, то результат будет неожиданным )
 				if (gFarVersion.dwVerMajor==1)
-					_wcscpy_c(pszMacro, cchMax, L"@$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 \"");
+					_wcscpy_c(pszMacro, cchMax, L"@^$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 \"");
 				else if (!gFarVersion.IsFarLua())
-					_wcscpy_c(pszMacro, cchMax, L"@$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 print(\"");
+					_wcscpy_c(pszMacro, cchMax, L"@^$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 print(\"");
 				else
-					_wcscpy_c(pszMacro, cchMax, L"@if Area.Viewer or Area.Editor then Keys(\"F12 0\") end if Area.Shell then Keys(\"ShiftF4\") print(\"");
+					_wcscpy_c(pszMacro, cchMax, L"@^if Area.Viewer or Area.Editor then Keys(\"F12 0\") end if Area.Shell then Keys(\"ShiftF4\") print(\"");
 				wchar_t* pDst = pszMacro + lstrlen(pszMacro);
 				while (*pSrc)
 				{
@@ -3694,7 +3697,7 @@ void CommonPluginStartup()
 		CloseHandle(snapshot);
 	}
 
-	
+
 	//if (gpConMapInfo)  //2010-03-04 Имеет смысл только при запуске из-под ConEmu
 	//{
 	//	//CheckResources(TRUE);
@@ -3863,7 +3866,7 @@ void InitHWND(/*HWND ahFarHwnd*/)
 	if (!gFarVersion.dwVerMajor)
 	{
 		LoadFarVersion();  // пригодится уже здесь!
-		
+
 		if (gFarVersion.dwVerMajor == 3)
 		{
 			lbExportsChanged = ChangeExports( Far3Func, ghPluginModule );
@@ -4488,7 +4491,7 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 		// when receiving saving event receiver is still reported as modified
 		if (editorSave && lstrcmpi(FileName, Name) == 0)
 			Modified = 0;
-		
+
 
 		// Облагородить заголовок таба с Ctrl-O
 		wchar_t szConOut[MAX_PATH];
@@ -4504,11 +4507,11 @@ BOOL AddTab(int &tabCount, bool losingFocus, bool editorSave,
 				}
 				else
 					lstrcpyn(szConOut, GetMsgW(CEConsoleOutput), countof(szConOut));
-				
+
 				Name = szConOut;
 			}
 		}
-		
+
 
 		lbCh = (gpTabs->Tabs.tabs[tabCount].Current != (Current/*losingFocus*/ ? 1 : 0)/*(losingFocus ? 0 : Current)*/)
 		    || (gpTabs->Tabs.tabs[tabCount].Type != Type)
@@ -5432,7 +5435,7 @@ void PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec)
 {
 	if (!asMacro || !*asMacro)
 		return;
-		
+
 	_ASSERTE(GetCurrentThreadId()==gnMainThreadId);
 
 	MOUSE_EVENT_RECORD mre;
@@ -5659,7 +5662,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 
 			free(pIn);
 		} break;
-		
+
 		case menu_SwitchTabVisible: // Показать/спрятать табы
 		case menu_SwitchTabNext:
 		case menu_SwitchTabPrev:
@@ -5685,7 +5688,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			CESERVER_REQ* pOut = ExecuteGuiCmd(FarHwnd, pIn, FarHwnd);
 			if (pOut) ExecuteFreeResult(pOut);
 		} break;
-		
+
 		case menu_ShowTabsList:
 		{
 			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETALLTABS, sizeof(CESERVER_REQ_HDR));
@@ -5771,7 +5774,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			}
 			ExecuteFreeResult(pIn);
 		} break;
-		
+
 		case menu_ConEmuMacro: // Execute GUI macro (gialog)
 		{
 			if (gFarVersion.dwVerMajor==1)
@@ -5783,7 +5786,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 			else
 				FUNC_X(GuiMacroDlgW)();
 		} break;
-		
+
 		case menu_AttachToConEmu: // Attach to GUI (если FAR был CtrlAltTab)
 		{
 			if (TerminalMode) break;  // низзя
@@ -5841,7 +5844,7 @@ BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID, bool bFromAttach /*= fa
 			_ASSERTE(pOut!=NULL);
 		}
 
-		ExecuteFreeResult(pIn); 
+		ExecuteFreeResult(pIn);
 
 		// Если команда успешно выполнена - выходим
 		if (lbRc)
@@ -6124,7 +6127,7 @@ BOOL Attach2Gui()
 				{
 					RequestLocalServerParm Parm = {sizeof(Parm), slsf_ReinitWindows};
 					//if (gFarVersion.dwVerMajor >= 3)
-					//	Parm.Flags |= 
+					//	Parm.Flags |=
 					fRequestLocalServer(&Parm);
 				}
 			}
@@ -6343,7 +6346,7 @@ bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent/*
 {
 	bool lbRc = false;
 	_ASSERTE(pszCommand && *pszCommand);
-	
+
 	if (bSilent)
 	{
 		DWORD nCmdLen = lstrlen(pszCommand);
@@ -6353,7 +6356,7 @@ bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent/*
 			pIn->NewCmd.hFromConWnd = FarHwnd;
 			if (pszCurDir)
 				lstrcpyn(pIn->NewCmd.szCurDir, pszCurDir, countof(pIn->NewCmd.szCurDir));
-				
+
 			lstrcpyn(pIn->NewCmd.szCommand, pszCommand, nCmdLen+1);
 
 			HWND hGuiRoot = GetConEmuHWND(1);
@@ -6383,7 +6386,7 @@ bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent/*
 		DWORD nExitCode = 0;
 		GetConsoleMode(hStdin, &oldConsoleMode);
 		SetConsoleMode(hStdin, ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT); // подбиралось методом тыка
-		
+
 		#ifdef _DEBUG
 		if (!bSilent)
 		{
@@ -6405,12 +6408,12 @@ bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent/*
 			GetExitCodeProcess(pri.hProcess, &nExitCode);
 			CloseHandle(pri.hProcess);
 			CloseHandle(pri.hThread);
-			
+
 			#ifdef _DEBUG
 			if (!bSilent)
 				wprintf(L"\nConEmuC: Process was terminated, ExitCode=%i\n\n", nExitCode);
 			#endif
-			
+
 			lbRc = true;
 		}
 		else
@@ -6424,7 +6427,7 @@ bool RunExternalProgramW(wchar_t* pszCommand, wchar_t* pszCurDir, bool bSilent/*
 		//wprintf(L"Cmd: <%s>\nArg: <%s>\nDir: <%s>\n\n", strCmd, strArgs, pszCurDir);
 		SetConsoleMode(hStdin, oldConsoleMode);
 	}
-	
+
 	return lbRc;
 }
 
@@ -6441,7 +6444,7 @@ void ShowConsoleInfo()
 	GetConsoleScreenBufferInfo(hConOut, &csbi);
 	CONSOLE_CURSOR_INFO ci = {};
 	GetConsoleCursorInfo(hConOut, &ci);
-	
+
 	wchar_t szInfo[1024];
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 		L"ConEmu Console information\n"

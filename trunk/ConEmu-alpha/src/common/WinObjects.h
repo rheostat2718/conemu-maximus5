@@ -62,11 +62,10 @@ typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);
 bool FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
-bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll = false);
-bool FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax);
+bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll = false, int anListCount = -1);
 bool DirectoryExists(LPCWSTR asPath);
 bool MyCreateDirectory(wchar_t* asPath);
-bool IsFilePath(LPCWSTR asFilePath);
+bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired = false);
 bool IsPathNeedQuot(LPCWSTR asPath);
 bool IsUserAdmin();
 bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
@@ -144,7 +143,7 @@ HANDLE DuplicateProcessHandle(DWORD anTargetPID);
 void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso = true); // используется в GUI при загрузке настроек
 void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath = false);
 void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue);
-wchar_t* GetEnvVar(LPCWSTR VarName, DWORD cchDefaultMax = 2000);
+wchar_t* GetEnvVar(LPCWSTR VarName);
 #endif
 LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits = csb_SameOS);
 wchar_t* GetComspec(const ConEmuComspec* pOpt);
