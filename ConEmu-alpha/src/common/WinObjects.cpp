@@ -286,7 +286,8 @@ bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 
 // asDirectory - folder, where to check files (doesn't have to have trailing "\")
 // asFileList  - "\0" separated, "\0\0" teminated list of file names (may have subfolders)
-bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll /*= false*/)
+// but if (anListCount != -1) - only first anListCount files in asFileList will be checked
+bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll /*= false*/, int anListCount /*= -1*/)
 {
 	if (!asDirectory || !*asDirectory)
 		return false;
@@ -321,77 +322,19 @@ bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll /*= false*/
 			break;
 		}
 
-		pszCur += nNameLen+1;
+		if (anListCount == -1)
+		{
+			pszCur += nNameLen+1;
+		}
+		else
+		{
+			anListCount--;
+			if (anListCount < 1)
+				break;
+		}
 	}
 
 	return bFound;
-}
-
-bool FileExistsSearch(wchar_t* rsFilePath, size_t cchPathMax)
-{
-	if (!rsFilePath || !*rsFilePath)
-	{
-		_ASSERTEX(rsFilePath && *rsFilePath);
-		return false;
-	}
-
-	if (FileExists(rsFilePath))
-	{
-		return true;
-	}
-
-	// Переменные окружения
-	if (wcschr(rsFilePath, L'%'))
-	{
-		bool bFound = false;
-		wchar_t* pszExpand = ExpandEnvStr(rsFilePath);
-		if (pszExpand && FileExists(pszExpand))
-		{
-			_ASSERTEX(lstrlen(pszExpand) < (INT_PTR)cchPathMax);
-			lstrcpyn(rsFilePath, pszExpand, (int)cchPathMax);
-			bFound = true;
-		}
-		SafeFree(pszExpand);
-
-		if (bFound)
-		{
-			return true;
-		}
-	}
-
-	// Search "Path"
-	LPCWSTR pszSearchFile = rsFilePath;
-	LPCWSTR pszSlash = wcsrchr(rsFilePath, L'\\');
-	if (pszSlash && ((pszSlash - rsFilePath) >= MAX_PATH))
-		return FALSE; // No need to continue, this is invalid path to executable
-
-	wchar_t* pszSearchPath = NULL;
-	if (pszSlash)
-	{
-		if ((pszSearchPath = lstrdup(rsFilePath)) != NULL)
-		{
-			pszSearchFile = pszSlash + 1;
-			pszSearchPath[pszSearchFile - rsFilePath] = 0;
-		}
-	}
-
-	// попытаемся найти
-	wchar_t *pszFilePart;
-	wchar_t szFind[MAX_PATH+1];
-	LPCWSTR pszExt = PointToExt(rsFilePath);
-
-	DWORD nLen = SearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
-
-	SafeFree(pszSearchPath);
-
-	if (nLen && (nLen < countof(szFind)))
-	{
-		_ASSERTEX(lstrlen(szFind) < (INT_PTR)cchPathMax);
-		lstrcpyn(rsFilePath, szFind, (int)cchPathMax);
-		return true;
-	}
-
-	return false;
 }
 
 bool DirectoryExists(LPCWSTR asPath)
@@ -496,8 +439,11 @@ bool MyCreateDirectory(wchar_t* asPath)
 }
 
 // Первичная проверка, может ли asFilePath быть путем
-bool IsFilePath(LPCWSTR asFilePath)
+bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired /*= false*/)
 {
+	if (!asFilePath || !*asFilePath)
+		return false;
+
 	// Если в пути встречаются недопустимые символы
 	if (wcschr(asFilePath, L'"') ||
 	        wcschr(asFilePath, L'>') ||
@@ -521,6 +467,14 @@ bool IsFilePath(LPCWSTR asFilePath)
 
 		if (wcschr(pszColon+1, L':'))
 			return false;
+	}
+
+	if (abFullRequired)
+	{
+		if ((asFilePath[0] == L'\\' && asFilePath[1] == L'\\' && asFilePath[2] && wcschr(asFilePath+3,L'\\'))
+				|| (isDriveLetter(asFilePath[0]) && asFilePath[1] == L':' && asFilePath[2]))
+			return true;
+		return false;
 	}
 
 	// May be file path
@@ -3516,17 +3470,27 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 		GetComspecFromEnvVar(pOpt->Comspec64, countof(pOpt->Comspec64), csb_x64);
 }
 
-wchar_t* GetEnvVar(LPCWSTR VarName, DWORD cchDefaultMax /*= 2000*/)
+wchar_t* GetEnvVar(LPCWSTR VarName)
 {
 	if (!VarName || !*VarName)
 	{
 		return NULL;
 	}
 
-	_ASSERTE(cchDefaultMax >= MAX_PATH);
+	DWORD cchMax, nRc, nErr;
 
-	DWORD cchMax = cchDefaultMax, nRc, nErr;
-	wchar_t* pszVal = (wchar_t*)malloc(cchMax*sizeof(*pszVal));
+	nRc = GetEnvironmentVariable(VarName, NULL, 0);
+	if (nRc == 0)
+	{
+		// Weird. This may be empty variable or not existing variable
+		nErr = GetLastError();
+		if (nErr == ERROR_ENVVAR_NOT_FOUND)
+			return NULL;
+		return lstrdup(L"");
+	}
+
+	cchMax = nRc+1;
+	wchar_t* pszVal = (wchar_t*)calloc(cchMax,sizeof(*pszVal));
 	if (!pszVal)
 	{
 		_ASSERTE((pszVal!=NULL) && "GetEnvVar memory allocation failed");
@@ -3534,33 +3498,10 @@ wchar_t* GetEnvVar(LPCWSTR VarName, DWORD cchDefaultMax /*= 2000*/)
 	}
 
 	nRc = GetEnvironmentVariable(VarName, pszVal, cchMax);
-	if (nRc == 0)
+	if ((nRc == 0) || (nRc >= cchMax))
 	{
-		// Weird. This may be empty variable or not existing variable
-		nErr = GetLastError();
-		if (nErr == ERROR_ENVVAR_NOT_FOUND)
-			SafeFree(pszVal);
-		return pszVal;
-	}
-
-	// If buffer is not large enough to hold the data, the return value is the buffer size,
-	// in characters, required to hold the string and its terminating null character.
-	if (nRc >= cchMax)
-	{
-		cchMax = nRc+1;
-		pszVal = (wchar_t*)realloc(pszVal, cchMax*sizeof(*pszVal));
-		if (!pszVal)
-		{
-			_ASSERTE((pszVal!=NULL) && "GetEnvVar memory reallocation failed");
-			return NULL;
-		}
-
-		nRc = GetEnvironmentVariable(VarName, pszVal, cchMax);
-		if ((nRc == 0) || (nRc >= cchMax))
-		{
-			_ASSERTE(nRc > 0 && nRc < cchMax);
-			SafeFree(pszVal);
-		}
+		_ASSERTE(nRc > 0 && nRc < cchMax);
+		SafeFree(pszVal);
 	}
 
 	return pszVal;

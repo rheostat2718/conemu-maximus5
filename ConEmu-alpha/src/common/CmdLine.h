@@ -28,6 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#define CmdEscapeNeededChars  L"<>()&|^\""
+#define QuotationNeededChars  (L" " CmdEscapeNeededChars)
+
 struct CmdArg
 {
 public:
@@ -50,14 +53,18 @@ public:
 	wchar_t ms_LastTokenSave[32];
 	#endif
 
+	bool mb_RestorePath; // Если используется для сохранения переменной %PATH%, восстановить при закрытии объекта
+
 public:
 	operator LPCWSTR() const { return ms_Arg; };
 
 	wchar_t* GetBuffer(INT_PTR cchMaxLen);
 	wchar_t* Detach();
+	LPCWSTR  Attach(wchar_t* asPtr);
 	void Empty();
 	bool IsEmpty();
 	LPCWSTR Set(LPCWSTR asNewValue, int anChars = -1);
+	void SavePathVar(LPCWSTR asCurPath);
 	void SetAt(INT_PTR nIdx, wchar_t wc);
 
 	void GetPosFrom(const CmdArg& arg);
@@ -78,4 +85,13 @@ bool IsFarExe(LPCWSTR asModuleName);
 BOOL IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, LPCWSTR* rsArguments, BOOL *rbNeedCutStartEndQuot,
 			   CmdArg &szExe,
 			   BOOL& rbRootIsCmdExe, BOOL& rbAlwaysConfirmExit, BOOL& rbAutoDisableConfirmExit);
+bool IsQuotationNeeded(LPCWSTR pszPath);
 bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle = NULL);
+
+bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath = true);
+
+#ifndef CONEMU_MINIMAL
+bool SearchAppPaths(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg* rpsPathRestore = NULL);
+#endif
+
+wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams);
