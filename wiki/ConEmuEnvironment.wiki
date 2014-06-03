@@ -32,6 +32,7 @@ csudo dism.exe /online /enable-feature /featurename:NetFX3 /All /Source:D:\sourc
 =Debug purposed variables=
 || *Name* || *Description* || *Example* ||
 || `ConEmuSleepIndicator` || turning on monitoring feature of ‘Sleep in background’, when `ConEmuSleepIndicator=NUM` !ConEmu will turn off !NumLock when going sleep and turn on !NumLock when full active back || `NUM` or `OFF` ||
+|| `ConEmuReportExe` || show message box like ‘hi.exe loaded’ when `hi.exe` started inside ConEmu tab; option ‘Inject ConEmuHk’ must be enabled || `hi.exe` ||
 
 
 =Export variables=
