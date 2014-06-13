@@ -30,6 +30,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TCHAR.h>
 #include <Tlhelp32.h>
 #include <shlwapi.h>
+#pragma warning(disable: 4091)
+#include <Shlobj.h>
+#pragma warning(default: 4091)
+#include "../ConEmu/ShObjIdl_Part.h"
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
 #include "SetHook.h"
@@ -135,6 +139,8 @@ CShellProc::CShellProc()
 	mb_TempConEmuWnd = FALSE;
 	mh_PreConEmuWnd = ghConEmuWnd; mh_PreConEmuWndDC = ghConEmuWndDC;
 
+	hOle32 = NULL;
+
 	// Current application is GUI subsystem run in ConEmu tab?
 	CheckIsCurrentGuiClient();
 
@@ -182,6 +188,11 @@ CShellProc::~CShellProc()
 		free(mlp_ExecInfoA);
 	if (mlp_ExecInfoW)
 		free(mlp_ExecInfoW);
+
+	if (hOle32)
+	{
+		FreeLibrary(hOle32);
+	}
 }
 
 int CShellProc::StartDefTermHooker(DWORD nForePID)
@@ -190,6 +201,83 @@ int CShellProc::StartDefTermHooker(DWORD nForePID)
 	DWORD nResult = 0, nErrCode = 0;
 	int iRc = ::StartDefTermHooker(nForePID, hProcess, nResult, m_SrvMapping.ComSpec.ConEmuBaseDir, nErrCode);
 	return iRc;
+}
+
+bool CShellProc::InitOle32()
+{
+	if (hOle32)
+		return true;
+
+	hOle32 = LoadLibrary(L"Ole32.dll");
+	if (!hOle32)
+		return false;
+
+	CoInitializeEx_f = (CoInitializeEx_t)GetProcAddress(hOle32, "CoInitializeEx");
+	CoCreateInstance_f = (CoCreateInstance_t)GetProcAddress(hOle32, "CoCreateInstance");
+	if (!CoInitializeEx_f || !CoCreateInstance_f)
+	{
+		_ASSERTEX(CoInitializeEx_f && CoCreateInstance_f);
+		FreeLibrary(hOle32);
+		return false;
+	}
+
+	return true;
+}
+
+bool CShellProc::GetLinkProperties(LPCWSTR asLnkFile, CmdArg& rsExe, CmdArg& rsArgs, CmdArg& rsWorkDir)
+{
+	bool bRc = false;
+	IPersistFile* pFile = NULL;
+	IShellLinkW*  pShellLink = NULL;
+	HRESULT hr;
+	DWORD nLnkSize;
+	wchar_t szPath[MAX_PATH+1];
+	static bool bCoInitialized = false;
+
+	if (!FileExists(asLnkFile, &nLnkSize))
+		goto wrap;
+
+	if (!InitOle32())
+		goto wrap;
+
+	hr = CoCreateInstance_f(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (void**)&pShellLink);
+	if (FAILED(hr) && !bCoInitialized)
+	{
+		bCoInitialized = true;
+		hr = CoInitializeEx_f(NULL, COINIT_MULTITHREADED);
+		if (SUCCEEDED(hr))
+			hr = CoCreateInstance_f(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (void**)&pShellLink);
+	}
+	if (FAILED(hr) || !pShellLink)
+		goto wrap;
+
+	hr = pShellLink->QueryInterface(IID_IPersistFile, (void**)&pFile);
+	if (FAILED(hr) || !pFile)
+		goto wrap;
+
+	hr = pFile->Load(asLnkFile, STGM_READ);
+	if (FAILED(hr))
+		goto wrap;
+
+	hr = pShellLink->GetPath(rsExe.GetBuffer(MAX_PATH), MAX_PATH, NULL, 0);
+	if (FAILED(hr) || !*szPath)
+		goto wrap;
+
+	hr = pShellLink->GetWorkingDirectory(rsWorkDir.GetBuffer(MAX_PATH+1), MAX_PATH+1);
+	if (FAILED(hr))
+		goto wrap;
+
+	hr = pShellLink->GetArguments(rsArgs.GetBuffer(nLnkSize), nLnkSize);
+	if (FAILED(hr))
+		goto wrap;
+
+	bRc = true;
+wrap:
+	if (pFile)
+		pFile->Release();
+	if (pShellLink)
+		pShellLink->Release();
+	return bRc;
 }
 
 HWND CShellProc::FindCheckConEmuWindow()
@@ -1088,7 +1176,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 
 		if (aCmd == eShellExecute)
 		{
-			_wcscat_c((*psParam), nCchSize, L" /AUTOATTACH /ROOT ");
+			_wcscat_c((*psParam), nCchSize, L" /ATTACHDEFTERM /ROOT ");
 		}
 		else
 		{
@@ -1422,6 +1510,21 @@ int CShellProc::PrepareExecuteParms(
 	_ASSERTE(*psFile==NULL && *psParam==NULL);
 	if (!ghConEmuWndDC && !isDefaultTerminalEnabled())
 		return 0; // Перехватывать только под ConEmu
+
+	CmdArg szLnkExe, szLnkArg, szLnkDir;
+	if (asFile && (aCmd == eShellExecute))
+	{
+		LPCWSTR pszExt = PointToExt(asFile);
+		if (pszExt && (lstrcmpi(pszExt, L".lnk") == 0))
+		{
+			if (GetLinkProperties(asFile, szLnkExe, szLnkArg, szLnkDir))
+			{
+				_ASSERTE(asParam == NULL);
+				asFile = szLnkExe.ms_Arg;
+				asParam = szLnkArg.ms_Arg;
+			}
+		}
+	}
 
 	bool bAnsiCon = false;
 	for (int i = 0; (i <= 1); i++)
@@ -1817,10 +1920,10 @@ int CShellProc::PrepareExecuteParms(
 	mb_NeedInjects = FALSE;
 	//wchar_t szBaseDir[MAX_PATH+2]; szBaseDir[0] = 0;
 	CESERVER_REQ *pIn = NULL;
-	pIn = NewCmdOnCreate(aCmd, 
-			asAction, asFile, asParam, 
-			anShellFlags, anCreateFlags, anStartFlags, anShowCmd, 
-			mn_ImageBits, mn_ImageSubsystem, 
+	pIn = NewCmdOnCreate(aCmd,
+			asAction, asFile, asParam,
+			anShellFlags, anCreateFlags, anStartFlags, anShowCmd,
+			mn_ImageBits, mn_ImageSubsystem,
 			hIn, hOut, hErr/*, szBaseDir, mb_DosBoxAllowed*/);
 	if (pIn)
 	{
@@ -1892,7 +1995,7 @@ int CShellProc::PrepareExecuteParms(
 	}
 	// Если GUI приложение работает во вкладке ConEmu - запускать консольные приложение в новой вкладке ConEmu
 	// Use mb_isCurrentGuiClient instead of ghAttachGuiClient, because of 'CommandPromptPortable.exe' for example
-	if (!bNewConsoleArg 
+	if (!bNewConsoleArg
 		&& mb_isCurrentGuiClient && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 		&& ((anShowCmd == NULL) || (*anShowCmd != SW_HIDE)))
 	{
@@ -2009,7 +2112,7 @@ int CShellProc::PrepareExecuteParms(
 		goto wrap; // гуй - не перехватывать (если только не указан "-new_console")
 	}
 
-	// Подставлять ConEmuC.exe нужно только для того, чтобы 
+	// Подставлять ConEmuC.exe нужно только для того, чтобы
 	//	1. в фаре включить длинный буфер и запомнить длинный результат в консоли (ну и ConsoleAlias обработать)
 	//	2. при вызовах ShellExecute/ShellExecuteEx, т.к. не факт,
 	//     что этот ShellExecute вызовет CreateProcess из kernel32 (который перехвачен).
@@ -2044,7 +2147,7 @@ int CShellProc::PrepareExecuteParms(
 		bGoChangeParm = ((bLongConsoleOutput)
 			|| (lbGuiApp && (bNewConsoleArg || bForceNewConsole)) // хотят GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
 			// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
-			|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1) 
+			|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1)
 				&& (bNewConsoleArg
 					|| (bLongConsoleOutput && (aCmd == eShellExecute))
 					|| (bCurConsoleArg && (m_Args.LongOutputDisable != crb_On))
@@ -2130,10 +2233,10 @@ int CShellProc::PrepareExecuteParms(
 				}
 				#endif
 			}
-			pIn = NewCmdOnCreate(eParmsChanged, 
-					asAction, *psFile, *psParam, 
-					anShellFlags, anCreateFlags, anStartFlags, anShowCmd, 
-					mn_ImageBits, mn_ImageSubsystem, 
+			pIn = NewCmdOnCreate(eParmsChanged,
+					asAction, *psFile, *psParam,
+					anShellFlags, anCreateFlags, anStartFlags, anShowCmd,
+					mn_ImageBits, mn_ImageSubsystem,
 					hIn, hOut, hErr/*, szBaseDir, mb_DosBoxAllowed*/);
 			if (pIn)
 			{
@@ -2147,7 +2250,7 @@ int CShellProc::PrepareExecuteParms(
 	}
 	else
 	{
-		//lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, pszBaseDir, 
+		//lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, pszBaseDir,
 		//				ms_ExeTmp, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 		// Хуки нельзя ставить в 16битные приложение - будет облом, ntvdm.exe игнорировать!
 		// И если просили не ставить хуки (-new_console:i) - тоже
@@ -2221,6 +2324,11 @@ wrap:
 				}
 			}
 		}
+	}
+
+	if (lbChanged && (psStartDir && !*psStartDir) && !szLnkDir.IsEmpty())
+	{
+		*psStartDir = szLnkDir.Detach();
 	}
 
 	return lbChanged ? 1 : 0;
@@ -2331,8 +2439,8 @@ BOOL CShellProc::FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phW
 		if (GetVersionEx((LPOSVERSIONINFO)&osv))
 		{
 			if ((osv.dwMajorVersion >= 6)
-				|| (osv.dwMajorVersion == 5 
-				&& (osv.dwMinorVersion > 1 
+				|| (osv.dwMajorVersion == 5
+				&& (osv.dwMinorVersion > 1
 				|| (osv.dwMinorVersion == 1 && osv.wServicePackMajor >= 1))))
 			{
 				(*pfMask) |= SEE_MASK_NOZONECHECKS;
@@ -2579,13 +2687,37 @@ void CShellProc::OnAllocConsoleFinished()
 
 	BOOL bAttachCreated = FALSE;
 	_ASSERTEX(gbPrepareDefaultTerminal && gbIsNetVsHost);
+	if (!m_GuiMapping.cbSize)
+	{
+		_ASSERTEX(m_GuiMapping.cbSize);
+		m_GuiMapping.sConEmuArgs[0] = 0;
+	}
 
+	bool bForceNewWnd = false;
 	size_t cchMax = MAX_PATH+80;
 	wchar_t* pszCmdLine = (wchar_t*)malloc(cchMax*sizeof(*pszCmdLine));
 	if (pszCmdLine)
 	{
 		_ASSERTEX(m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
-		msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /TRMPID=%u", m_SrvMapping.ComSpec.ConEmuBaseDir, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"), gnSelfPID);
+
+		if (m_GuiMapping.cbSize && m_GuiMapping.sConEmuArgs[0] && wcsstr(m_GuiMapping.sConEmuArgs, L"-new_console:"))
+		{
+			RConStartArgs args;
+			args.pszSpecialCmd = lstrdup(m_GuiMapping.sConEmuArgs);
+			if (args.ProcessNewConArg() > 0)
+			{
+				bForceNewWnd = (args.ForceNewWindow == crb_On);
+			}
+		}
+
+		TODO("По идее, здесь еще должны быть и другие аргументы из m_GuiMapping.sConEmuArgs. Конфиг, например");
+
+		msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /TRMPID=%u%s",
+			m_SrvMapping.ComSpec.ConEmuBaseDir,
+			WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"),
+			gnSelfPID,
+			bForceNewWnd ? L" /GHWND=NEW" : L"");
+
 		STARTUPINFO si = {sizeof(si)};
 		PROCESS_INFORMATION pi = {};
 		bAttachCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, m_SrvMapping.ComSpec.ConEmuBaseDir, &si, &pi);
@@ -2617,12 +2749,12 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 		{
 			if (!abSucceeded)
 			{
-				msprintf(pszDbgMsg, cchLen, L"Create(ParentPID=%u): Failed, ErrCode=0x%08X", 
+				msprintf(pszDbgMsg, cchLen, L"Create(ParentPID=%u): Failed, ErrCode=0x%08X",
 					GetCurrentProcessId(), GetLastError());
 			}
 			else
 			{
-				msprintf(pszDbgMsg, cchLen, L"Create(ParentPID=%u): Ok, PID=%u", 
+				msprintf(pszDbgMsg, cchLen, L"Create(ParentPID=%u): Ok, PID=%u",
 					GetCurrentProcessId(), lpPI->dwProcessId);
 				if (WaitForSingleObject(lpPI->hProcess, 0) == WAIT_OBJECT_0)
 				{

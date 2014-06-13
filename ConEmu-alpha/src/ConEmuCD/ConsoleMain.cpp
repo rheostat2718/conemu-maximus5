@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 //  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
 //	#define SHOW_STARTED_MSGBOX
+//	#define SHOW_ADMIN_STARTED_MSGBOX
 //	#define SHOW_MAIN_MSGBOX
 //	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
@@ -201,6 +202,7 @@ UINT  gnPTYmode = 0; // 1 enable PTY, 2 - disable PTY (work as plain console), 0
 BOOL  gbRootIsCmdExe = TRUE;
 BOOL  gbAttachFromFar = FALSE;
 BOOL  gbAlternativeAttach = FALSE; // Подцепиться к существующей консоли, без внедрения в процесс ConEmuHk.dll
+BOOL  gbAttachDefTerm = FALSE;
 BOOL  gbSkipWowChange = FALSE;
 BOOL  gbConsoleModeFlags = TRUE;
 DWORD gnConsoleModeFlags = 0; //(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
@@ -818,8 +820,15 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 {
 	TODO("можно при ошибках показать консоль, предварительно поставив 80x25 и установив крупный шрифт");
 
-	#ifdef SHOW_MAIN_MSGBOX
-	if (!IsDebuggerPresent())
+	#if defined(SHOW_MAIN_MSGBOX) || defined(SHOW_ADMIN_STARTED_MSGBOX)
+	bool bShowWarn = false;
+	#if defined(SHOW_MAIN_MSGBOX)
+	if (!IsDebuggerPresent()) bShowWarn = true;
+	#endif
+	#if defined(SHOW_ADMIN_STARTED_MSGBOX)
+	if (IsUserAdmin()) bShowWarn = true;
+	#endif
+	if (bShowWarn)
 	{
 		char szMsg[MAX_PATH+128]; msprintf(szMsg, countof(szMsg), WIN3264TEST("ConEmuCD.dll","ConEmuCD64.dll") " loaded, PID=%u, TID=%u\r\n", GetCurrentProcessId(), GetCurrentThreadId());
 		int nMsgLen = lstrlenA(szMsg);
@@ -2834,111 +2843,13 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		}
 		#endif
 
-		// Preparing Events
-		wchar_t szName[64]; HANDLE hEvent = NULL, hEventReady = NULL;
-		_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOK, nRemotePID);
-		if (!abDefTermOnly)
-		{
-			// When running in normal mode (NOT set up as default terminal)
-			// we need full initialization procedure, not a light one when hooking explorer.exe
-			hEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szName);
-			if (hEvent)
-			{
-				ResetEvent(hEvent);
-				CloseHandle(hEvent);
-			}
-		}
-		else
-		{
-			hEvent = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
-			SetEvent(hEvent);
-			_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOKOK, nRemotePID);
-			hEventReady = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
-			ResetEvent(hEventReady);
-		}
-		// Creating as remote thread, need to determine MainThread?
-		_wsprintf(szName, SKIPLEN(countof(szName)) CECONEMUROOTTHREAD, nRemotePID);
-		hEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szName);
-		if (hEvent)
-		{
-			ResetEvent(hEvent);
-			CloseHandle(hEvent);
-		}
-
-		int iHookRc = -1;
-		bool bAlreadyInjected = false;
-		// Hey, may be ConEmuHk.dll is already loaded?
-		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nRemotePID);
-		MODULEENTRY32 mi = {sizeof(mi)};
-		if (hSnap && Module32First(hSnap, &mi))
-		{
-			// 130829 - Let load newer(!) ConEmuHk.dll into target process.
-
-			LPCWSTR pszConEmuHk = WIN3264TEST(L"conemuhk.", L"conemuhk64.");
-			size_t nDllNameLen = lstrlen(pszConEmuHk);
-			// Out preferred module name
-			wchar_t szOurName[40] = {};
-			wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
-			_wsprintf(szOurName, SKIPLEN(countof(szOurName))
-				CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
-				WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
-			CharLowerBuff(szOurName, lstrlen(szOurName));
-
-			// Go to enumeration
-			wchar_t szName[64];
-			do {
-				LPCWSTR pszName = PointToName(mi.szModule);
-				// Name of hooked module may be changed (copied to %APPDATA%)
-				if (pszName && *pszName)
-				{
-					lstrcpyn(szName, pszName, countof(szName));
-					CharLowerBuff(szName, lstrlen(szName));
-					// ConEmuHk*.*.dll?
-					if (wmemcmp(szName, pszConEmuHk, nDllNameLen) == 0
-						&& wmemcmp(szName+lstrlen(szName)-4, L".dll", 4) == 0)
-					{
-						// Yes! ConEmuHk.dll already loaded into nRemotePID!
-						// But what is the version? Let don't downgrade loaded version!
-						if (lstrcmp(szName, szOurName) >= 0)
-						{
-							// OK, szName is newer or equal to our build
-							iHookRc = 0;
-							bAlreadyInjected = true;
-						}
-						// Stop enumeration
-						break;
-					}
-				}
-			} while (Module32Next(hSnap, &mi));
-
-			// Check done
-		}
-		SafeCloseHandle(hSnap);
-
-
 		// Go to hook
-		if (iHookRc == -1)
-		{
-			// InjectRemote waits for thread termination
-			iHookRc = InjectRemote(nRemotePID, abDefTermOnly);
-			// But check the result of the operation
-			if ((iHookRc == 0) && hEventReady)
-			{
-				_ASSERTE(abDefTermOnly);
-				DWORD nWaitReady = WaitForSingleObject(hEventReady, CEDEFAULTTERMHOOKWAIT/*==0*/);
-				if (nWaitReady == WAIT_TIMEOUT)
-				{
-					iHookRc = -300; // Failed to start hooking thread in remote process
-				}
-			}
-		}
+		// InjectRemote waits for thread termination
+		int iHookRc = InjectRemote(nRemotePID, abDefTermOnly);
 
-		SafeCloseHandle(hEvent);
-		SafeCloseHandle(hEventReady);
-
-		if (iHookRc == 0)
+		if (iHookRc == 0 || iHookRc == 1)
 		{
-			return bAlreadyInjected ? CERR_HOOKS_WAS_ALREADY_SET : CERR_HOOKS_WAS_SET;
+			return iHookRc ? CERR_HOOKS_WAS_ALREADY_SET : CERR_HOOKS_WAS_SET;
 		}
 
 		// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
@@ -4362,7 +4273,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				gbAttachMode = am_Simple;
 			gnRunMode = RM_SERVER;
 		}
-		else if (wcscmp(szArg, L"/AUTOATTACH")==0)
+		else if ((wcscmp(szArg, L"/AUTOATTACH")==0) || (wcscmp(szArg, L"/ATTACHDEFTERM")==0))
 		{
 			#if defined(SHOW_ATTACH_MSGBOX)
 			if (!IsDebuggerPresent())
@@ -4377,6 +4288,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			gbAttachMode = am_Auto;
 			gbAlienMode = TRUE;
 			gbNoCreateProcess = TRUE;
+			gbAttachDefTerm = (wcscmp(szArg, L"/ATTACHDEFTERM")==0);
 
 			// Еще может быть "/GHWND=NEW" но оно ниже. Там ставится "gpSrv->bRequestNewGuiWnd=TRUE"
 
@@ -4972,6 +4884,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		return iFRc;
 	}
 
+	if (gbAttachDefTerm && !gbParmVisibleSize)
+	{
+		// To avoid "small" and trimmed text after starting console
+		_ASSERTE(gcrVisibleSize.X==80 && gcrVisibleSize.Y==25);
+		gbParmVisibleSize = TRUE;
+	}
+
 	// Параметры из комстроки разобраны. Здесь могут уже быть известны
 	// gpSrv->hGuiWnd {/GHWND}, gnConEmuPID {/GPID}, gpSrv->dwGuiAID {/AID}
 	// gbAttachMode для ключей {/ADMIN}, {/ATTACH}, {/AUTOATTACH}, {/GUIATTACH}
@@ -5006,7 +4925,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 		}
 
-		if (!gbAlternativeAttach && !gpSrv->dwRootProcess)
+		if (!gbAlternativeAttach && !gbAttachDefTerm && !gpSrv->dwRootProcess)
 		{
 			// В принципе, сюда мы можем попасть при запуске, например: "ConEmuC.exe /ADMIN /ROOT cmd"
 			// Но только не при запуске "из ConEmu" (т.к. будут установлены gpSrv->hGuiWnd, gnConEmuPID)

@@ -29,7 +29,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include <Wininet.h>
+#pragma warning(disable: 4091)
 #include <shlobj.h>
+#pragma warning(default: 4091)
 #include "Update.h"
 #include "UpdateSet.h"
 #include "Options.h"
@@ -629,9 +631,9 @@ void CConEmuUpdate::GetVersionsFromIni(LPCWSTR pszUpdateVerLocation, wchar_t (&s
 	struct {
 		LPCWSTR szSect, szPref, szName;
 	} Vers[] = {
-		{sectionConEmuStable,    L"Stable:\t",  L" stable" },
-		{sectionConEmuPreview, L"\nPreview:\t", L" preview"},
-		{sectionConEmuDevel,   L"\nDevel:\t",   L" devel"  }
+		{sectionConEmuStable,        CV_Stable L":\t",  L" " CV_STABLE },
+		{sectionConEmuPreview, L"\n" CV_Preview L":\t", L" " CV_PREVIEW},
+		{sectionConEmuDevel,   L"\n" CV_Devel L":\t",   L" " CV_DEVEL  }
 	};
 
 	szServer[0] = 0;
@@ -1604,7 +1606,7 @@ bool CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 				pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
 
 				_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\nClick here to download",
-					(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer",
+					(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL,
 					ms_NewVersion);
 				Icon.ShowTrayIcon(pszMsg, tsa_Source_Updater);
 
@@ -1699,7 +1701,7 @@ bool CConEmuUpdate::QueryConfirmationDownload()
 		tsk.pszMainIcon = MAKEINTRESOURCE(IDI_ICON1);
 
 	_wsprintf(szNewVer, SKIPLEN(countof(szNewVer)) L"New %s version available: %s",
-		(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer", ms_NewVersion);
+		(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL, ms_NewVersion);
 	tsk.pszMainInstruction = szNewVer;
 
 	_wsprintf(szWWW, SKIPLEN(countof(szWWW)) L"<a href=\"%s\">%s</a>", gsWhatsNew, szWhatsNewLabel);
@@ -1735,7 +1737,7 @@ MsgOnly:
 	pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
 
 	_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\n\nVersions on server\n%s\n\n%s\n%s\n\nDownload?",
-		(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer",
+		(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL,
 		ms_NewVersion,
 		ms_VerOnServer,
 		pszServerPath,
@@ -1785,8 +1787,8 @@ bool CConEmuUpdate::QueryConfirmationUpdate()
 	tsk.pszFooter = szWWW;
 
 	_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Close and update\nto %s version %s",
-		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new stable"
-		: (mp_Set->isUpdateUseBuilds==3) ? L"new preview" : L"new developer", ms_NewVersion);
+		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new " CV_STABLE
+		: (mp_Set->isUpdateUseBuilds==3) ? L"new " CV_PREVIEW : L"new " CV_DEVEL, ms_NewVersion);
 	btns[0].nButtonID  = IDYES;    btns[0].pszButtonText = szMsg;
 	wcscpy_c(szBtn2, (mb_ManualCallMode == 1) ? L"Cancel" : L"Postpone\nupdate will be started when you close ConEmu window");
 	btns[1].nButtonID  = IDCANCEL; btns[1].pszButtonText = szBtn2;
@@ -1805,8 +1807,8 @@ MsgOnly:
 	_wsprintf(szMsg, SKIPLEN(countof(szMsg))
 		L"Do you want to close ConEmu and\n"
 		L"update to %s version %s?",
-		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new stable"
-		: (mp_Set->isUpdateUseBuilds==3) ? L"new preview" : L"new developer", ms_NewVersion);
+		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new " CV_STABLE
+		: (mp_Set->isUpdateUseBuilds==3) ? L"new " CV_PREVIEW : L"new " CV_DEVEL, ms_NewVersion);
 
 	iBtn = MessageBox(NULL, szMsg, ms_DefaultTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO);
 
@@ -1844,7 +1846,7 @@ void CConEmuUpdate::QueryConfirmationNoNewVer()
 		tsk.pszMainIcon = MAKEINTRESOURCE(IDI_ICON1);
 
 	_wsprintf(szCurVer, SKIPLEN(countof(szCurVer)) L"No newer %s version is available",
-		(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer");
+		(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL);
 	tsk.pszMainInstruction = szCurVer;
 
 	_wsprintf(szWWW, SKIPLEN(countof(szWWW)) L"<a href=\"%s\">%s</a>", gsWhatsNew, szWhatsNewLabel);
@@ -1881,7 +1883,7 @@ MsgOnly:
 		L"Versions on server\n%s\n\n"
 		L"No newer %s version is available",
 		ms_CurVerInfo, ms_VerOnServer,
-		(mp_Set->isUpdateUseBuilds==1) ? L"stable" : (mp_Set->isUpdateUseBuilds==3) ? L"preview" : L"developer", 0);
+		(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL, 0);
 
 	iBtn = MessageBox(NULL, szMsg, ms_DefaultTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONINFORMATION|MB_OK);
 
@@ -1922,6 +1924,23 @@ short CConEmuUpdate::GetUpdateProgress()
 	}
 
 	return -1;
+}
+
+wchar_t* CConEmuUpdate::GetCurVerInfo()
+{
+	wchar_t* pszVerInfo = NULL;
+
+	if (lstrcmpi(ms_NewVersion, ms_OurVersion) > 0)
+	{
+		pszVerInfo = lstrmerge(L"Obsolete, recommended update to ", ms_NewVersion,
+			(mp_Set->isUpdateUseBuilds==1) ? L" " CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? L" " CV_PREVIEW : L" " CV_DEVEL);
+	}
+	else if (ms_CurVerInfo[0])
+		pszVerInfo = lstrdup(ms_CurVerInfo);
+	else
+		pszVerInfo = lstrdup(ms_OurVersion);
+
+	return pszVerInfo;
 }
 
 void CConEmuUpdate::WaitAllInstances()

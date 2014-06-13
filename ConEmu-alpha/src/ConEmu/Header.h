@@ -549,6 +549,13 @@ enum CEStatusFlags
 	csf_NoVerticalPad       = 0x00000008,
 };
 
+enum CECopyMode
+{
+	cm_CopySel = 0, // Copy current selection (old bCopyAll==false)
+	cm_CopyAll = 1, // Copy full buffer (old bCopyAll==true)
+	cm_CopyVis = 2, // Copy visible screen area
+};
+
 enum CEPasteMode
 {
 	pm_Standard  = 0, // Paste with possible "Return" keypresses
@@ -644,9 +651,9 @@ union CESize
 		return true;
 	};
 
-	void SetFromRaw(bool IsWidth, DWORD Raw)
+	void SetFromRaw(bool IsWidth, DWORD aRaw)
 	{
-		CESize v; v.Raw = Raw;
+		CESize v; v.Raw = aRaw;
 		if (v.Style == ss_Standard || v.Style == ss_Pixels || v.Style == ss_Percents)
 		{
 			this->Set(IsWidth, v.Style, v.Value);
@@ -747,3 +754,12 @@ void StripWords(wchar_t* pszText, const wchar_t* pszWords);
 
 // One message cycle step
 bool ProcessMessage(MSG& Msg);
+
+// Predefined user messages
+#define UM_RELOAD_HERE_LIST (WM_APP+31)
+#define UM_RELOAD_AUTORUN   (WM_APP+32)
+#define UM_USER_CONTROLS    (WM_APP+33)
+#define UM_FILL_CMDLIST     (WM_APP+34)
+#define UM_SEARCH           (WM_APP+35)
+#define UM_SEARCH_FOCUS     (WM_APP+36)
+#define UM_EDIT_KILL_FOCUS  (WM_APP+37)

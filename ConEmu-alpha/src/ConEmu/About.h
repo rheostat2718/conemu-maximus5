@@ -133,7 +133,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"Grzegorz Kozub: new toolbar images"
 
 #define pAboutTitle \
-	L"Console emulation program. Visit home page:"
+	L"Console Emulation program (local terminal)"
 //#define pAboutUrl
 //	L"http://conemu-maximus5.googlecode.com"
 
@@ -210,13 +210,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    close active tab or group (6)\r\n" \
 	L"    close all active processes of the active group (7)\r\n" \
 	L"    close all tabs (8)\r\n" \
-	L"Copy(<What>[,<Format>])\r\n" \
+	L"Copy(<What>[,<Format>[,\"<File>\"]])\r\n" \
 	L"  - Copy active console contents\r\n" \
 	L"    What==0: current selection\r\n" \
 	L"    What==1: all buffer contents\r\n" \
+	L"    What==2: visible area contents\r\n" \
 	L"    Format==0: plain text, not formatting\r\n" \
 	L"    Format==1: copy HTML format\r\n" \
 	L"    Format==2: copy as HTML\r\n" \
+	L"    File: if specified - save to file instead of clipboard\r\n" \
 	L"FindEditor(\"<FullEditFileName>\")\r\n" \
 	L"FindViewer(\"<FullViewerFileName>\")\r\n" \
 	L"FindFarWindow(<WindowType>,\"<WindowTitle>\")\r\n" \
@@ -277,6 +279,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Cmd==8: paste path from clipboard converted to CygWin style\r\n" \
 	L"     Cmd==9: paste all lines space-separated\r\n" \
 	L"     Cmd==10: paste all lines space-separated, without confirmations\r\n" \
+	L"PasteFile(<Cmd>[,\"<File>\"])\r\n" \
+	L"  - Paste <File> contents, omit <File> to show selection dialog\r\n" \
+	L"     Cmd==0: paste all lines\r\n" \
+	L"     Cmd==1: paste first line\r\n" \
+	L"     Cmd==2: paste all lines, without confirmations\r\n" \
+	L"     Cmd==3: paste first line, without confirmations\r\n" \
+	L"     Cmd==9: paste all lines space-separated\r\n" \
+	L"     Cmd==10: paste all lines space-separated, without confirmations\r\n" \
 	L"Print([\"<Text>\"[,\"<Text2>\"[...]]])\r\n" \
 	L"  - Alias for Paste(2,\"<Text>\")\r\n" \
 	L"Progress(<Type>[,<Value>])\r\n" \
@@ -286,8 +296,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Type=2: set error state in progress\r\n" \
 	L"Rename(<Type>,[\"<Title>\"])\r\n" \
 	L"  - Rename tab (Type=0) or console title (Type=1)\r\n" \
-	L"SetOption(\"<Name>\",<Value>)\r\n" \
+	L"SetOption(\"<Name>\",<Value>[,<IsRelative>])\r\n" \
 	L"  - Name=one of allowed for changing ConEmu options\r\n" \
+	L"    IsRelative=1 to use relative instead of absolute for some options\r\n" \
 	L"    \"AlphaValue\": set transparency level of active window\r\n" \
 	L"      Value: 40 .. 255 (255==Opaque)\r\n" \
 	L"    \"AlphaValueInactive\": set transparency level of inactive window\r\n" \

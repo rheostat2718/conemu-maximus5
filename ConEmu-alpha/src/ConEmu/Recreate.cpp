@@ -29,7 +29,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include <lm.h>
+#pragma warning(disable: 4091)
 #include <ShlObj.h>
+#pragma warning(default: 4091)
 #include "ConEmu.h"
 #include "Recreate.h"
 #include "VirtualConsole.h"
@@ -138,9 +140,6 @@ void CRecreateDlg::Close()
 
 INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-#define UM_USER_CONTROLS (WM_USER+121)
-#define UM_FILL_CMDLIST (WM_USER+122)
-
 	CRecreateDlg* pDlg = NULL;
 	if (messg == WM_INITDIALOG)
 	{

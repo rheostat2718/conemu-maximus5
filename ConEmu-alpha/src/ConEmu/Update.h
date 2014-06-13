@@ -36,6 +36,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define UPD_PROGRESS_CONFIRM_UPDATE   98
 #define UPD_PROGRESS_EXIT_AND_UPDATE  99
 
+#define CV_STABLE  L"stable"
+#define CV_PREVIEW L"preview"
+#define CV_DEVEL   L"alpha"
+#define CV_Stable  L"stable"
+#define CV_Preview L"preview"
+#define CV_Devel   L"alpha"
+
 struct ConEmuUpdateSettings;
 class CConEmuUpdate;
 class MSection;
@@ -131,6 +138,8 @@ public:
 	UpdateStep InUpdate();
 
 	short GetUpdateProgress();
+
+	wchar_t* GetCurVerInfo();
 
 protected:
 	void RequestTerminate();
