@@ -190,13 +190,15 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
         close active tab or group (6)
         close all active processes of the active group (7)
         close all tabs (8)
-    Copy(<What>[,<Format>])
+    Copy(<What>[,<Format>[,"<File>"]])
       - Copy active console contents
         What==0: current selection
         What==1: all buffer contents
+        What==2: visible area contents
         Format==0: plain text, not formatting
         Format==1: copy HTML format
         Format==2: copy as HTML
+        File: if specified - save to file instead of clipboard
     FindEditor("<FullEditFileName>"),
     FindViewer("<FullViewerFileName>"),
     FindFarWindow(<WindowType>,"<WindowTitle>")
@@ -251,6 +253,14 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        Cmd==8: paste path from clipboard converted to CygWin style
        Cmd==9: paste all lines space-separated
        Cmd==10: paste all lines space-separated, without confirmations
+    PasteFile(<Cmd>[,"<File>"])
+     - Paste <File> contents, omit <File> to show selection dialog
+       Cmd==0: paste all lines
+       Cmd==1: paste first line
+       Cmd==2: paste all lines, without confirmations
+       Cmd==3: paste first line, without confirmations
+       Cmd==9: paste all lines space-separated
+       Cmd==10: paste all lines space-separated, without confirmations
     Print(["<Text>"[,"<Text2>"[...]]])
      - Alias for Paste(2,"<Text>")
     Progress(<Type>[,<Value>])
@@ -260,8 +270,9 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        Type=2: set error state in progress
     Rename(<Type>,["<Title>"])
       - Rename tab (Type=0) or console title (Type=1)
-    SetOption("<Name>",<Value>)
+    SetOption("<Name>",<Value>[,<IsRelative>])
       - Name=one of allowed for changing ConEmu options
+        IsRelative=1 to use relative instead of absolute for some options
         "AlphaValue": set transparency level of active window
           Value: 40 .. 255 (255==Opaque)
         "AlphaValueInactive": set transparency level of inactive window
