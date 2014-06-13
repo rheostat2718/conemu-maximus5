@@ -159,7 +159,7 @@ BOOL gbDllStopCalled = FALSE;
 
 //BOOL gbSkipInjects = FALSE;
 BOOL gbHooksWasSet = false;
-BOOL gbDllDeinitialized = false; 
+BOOL gbDllDeinitialized = false;
 
 extern BOOL StartupHooks(HMODULE ahOurDll);
 extern void ShutdownHooks();
@@ -179,6 +179,7 @@ extern HHOOK ghGuiClientRetHook;
 CEStartupEnv* gpStartEnv = NULL;
 DWORD   gnSelfPID = 0;
 BOOL    gbSelfIsRootConsoleProcess = FALSE;
+BOOL    gbForceStartPipeServer = FALSE;
 DWORD   gnServerPID = 0;
 DWORD   gnPrevAltServerPID = 0;
 BOOL    gbWasSucceededInRead = FALSE;
@@ -953,7 +954,8 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		gbIsVStudio = true;
 	}
 
-	if ((lstrcmpi(pszName, L"chrome.exe") == 0)
+	if (gbIsNetVsHost
+		|| (lstrcmpi(pszName, L"chrome.exe") == 0)
 		|| (lstrcmpi(pszName, L"firefox.exe") == 0)
 		|| (lstrcmpi(pszName, L"link.exe") == 0))
 	{
@@ -1065,7 +1067,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 			gnHookServerNeedStart = 1;
 
-			if (gnImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI)
+			if (gbForceStartPipeServer || (gnImageSubsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI))
 			{
 				// For GUI applications - start server thread immediately
 				StartHookServer();
@@ -1143,7 +1145,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			gnGuiPID = GuiMapping->nGuiPID;
 			ghConEmuWnd = GuiMapping->hGuiWnd;
 			bAttachExistingWindow = gbAttachGuiClient = TRUE;
-			//ghAttachGuiClient = 
+			//ghAttachGuiClient =
 		}
 		else
 		{
@@ -1246,7 +1248,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		#ifdef _DEBUG
 		//wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
 		//GetModuleFileName(NULL, szModule, countof(szModule));
-		_ASSERTE((gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0) || gbAttachGuiClient || gbPrepareDefaultTerminal);
+		_ASSERTE((gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0) || gbAttachGuiClient || gbPrepareDefaultTerminal || (gbIsNetVsHost && ghConWnd));
 		//if (!lstrcmpi(pszName, L"far.exe") || !lstrcmpi(pszName, L"mingw32-make.exe"))
 		//if (!lstrcmpi(pszName, L"as.exe"))
 		//	MessageBoxW(NULL, L"as.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
@@ -1640,6 +1642,9 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 				gEvtThreadRoot.nErrCode = GetLastError();
 			//SafeCloseHandle(gEvtThreadRoot.hProcessFlag);
 
+			// When calling Attach (Win+G) from ConEmu GUI
+			gbForceStartPipeServer = (!bCurrentThreadIsMain);
+
 			if (!gbSelfIsRootConsoleProcess)
 			{
 				msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOK, gnSelfPID);
@@ -1718,7 +1723,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			_ASSERTEX(FALSE && "Hooks starting in background thread?");
 			//HANDLE hEvents[2];
 			//hEvents[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
-			//hEvents[1] = 
+			//hEvents[1] =
 			ghStartThread = CreateThread(NULL, 0, DllStart, NULL/*(LPVOID)(hEvents[0])*/, 0, &gnStartThreadID);
 			if (ghStartThread == NULL)
 			{
@@ -2125,8 +2130,8 @@ void StartPTY()
 		return;
 	}
 
-	gpCEIO_In = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1); 
-	gpCEIO_Out = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1); 
+	gpCEIO_In = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1);
+	gpCEIO_Out = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1);
 	gpCEIO_Err = (ConEmuInOutPipe*)calloc(sizeof(ConEmuInOutPipe),1);
 
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);

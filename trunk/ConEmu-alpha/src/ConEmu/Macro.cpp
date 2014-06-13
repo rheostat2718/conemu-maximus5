@@ -157,8 +157,10 @@ namespace ConEmuMacro
 	LPWSTR MsgBox(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Palette([<Cmd>[,"<NewPalette>"]])
 	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	// Paste (<Cmd>[,"<Text>"])
+	// Paste (<Cmd>[,"<Text>"[,"<Text2>"[...]]])
 	LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// PasteFile (<Cmd>[,"<File>"])
+	LPWSTR PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// print("<Text>") - alias for Paste(2,"<Text>")
 	LPWSTR Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Progress(<Type>[,<Value>])
@@ -224,6 +226,7 @@ namespace ConEmuMacro
 		{MsgBox, {L"MsgBox"}},
 		{Palette, {L"Palette"}},
 		{Paste, {L"Paste"}},
+		{PasteFile, {L"PasteFile"}},
 		{Print, {L"Print"}},
 		{Progress, {L"Progress"}},
 		{Rename, {L"Rename"}},
@@ -1606,24 +1609,47 @@ LPWSTR ConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		return lstrdup(L"InvalidArg");
 
 	bool bCopy = false;
+	CECopyMode CopyMode;
+	CmdArg szDstBuf;
+	LPWSTR pszDstFile = NULL;
 
 	if (p->GetIntArg(0, nWhat))
 	{
+		LPWSTR pszTemp;
 		if (!p->GetIntArg(1, nFormat))
+		{
 			nFormat = gpSet->isCTSHtmlFormat;
+		}
+		else if (p->GetStrArg(2, pszTemp))
+		{
+			pszDstFile = pszTemp;
+			// Cygwin style path?
+			if (wcschr(pszTemp, L'/'))
+			{
+				if (szDstBuf.Attach(MakeWinPath(pszTemp)))
+					pszDstFile = szDstBuf.ms_Arg;
+			}
+		}
 
 		switch (nWhat)
 		{
 		case 0:
+			CopyMode = cm_CopySel; break;
 		case 1:
-			bCopy = apRCon->DoSelectionCopy((nWhat==1), nFormat);
-			break;
+			CopyMode = cm_CopyAll; break;
+		case 2:
+			CopyMode = cm_CopyVis; break;
+		default:
+			goto wrap;
 		}
+
+		bCopy = apRCon->DoSelectionCopy(CopyMode, nFormat, pszDstFile);
 
 		if (bCopy)
 			return lstrdup(L"OK");
 	}
 
+wrap:
 	return lstrdup(L"InvalidArg");
 }
 
@@ -1681,12 +1707,66 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		else if (nCommand == 9 || nCommand == 10)
 		{
 			PasteMode = pm_OneLine;
+			_ASSERTE((nCommand != 10) || bNoConfirm);
 		}
 
 		apRCon->Paste(PasteMode, pszText, bNoConfirm, (nCommand == 8)/*abCygWin*/);
 
 		SafeFree(pszChooseBuf);
 		return lstrdup(L"OK");
+	}
+
+	return lstrdup(L"InvalidArg");
+}
+
+// PasteFile (<Cmd>[,"<File>"])
+LPWSTR ConEmuMacro::PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	bool bOk = false;
+	int nCommand = 0;
+	LPWSTR pszFile = NULL;
+	wchar_t* ptrBuf = NULL;
+	DWORD nBufSize = 0, nErrCode = 0;
+
+	if (!apRCon)
+		return lstrdup(L"InvalidArg");
+
+	if (p->GetIntArg(0, nCommand))
+	{
+		CEPasteMode PasteMode = (nCommand & 1) ? pm_FirstLine : pm_Standard;
+		bool bNoConfirm = (nCommand & 2) != 0;
+
+		wchar_t* pszChooseBuf = NULL;
+
+		if (!(nCommand >= 0 && nCommand <= 10))
+		{
+			return lstrdup(L"InvalidArg");
+		}
+
+		if (!p->GetStrArg(1, pszFile) || !pszFile || !*pszFile)
+		{
+			pszChooseBuf = SelectFile(L"Choose file for paste", NULL, NULL, NULL, false);
+			if (!pszChooseBuf)
+				return lstrdup(L"NoFileSelected");
+			pszFile = pszChooseBuf;
+		}
+
+		if (nCommand == 9 || nCommand == 10)
+		{
+			PasteMode = pm_OneLine;
+			_ASSERTE((nCommand != 10) || bNoConfirm);
+		}
+
+		if ((ReadTextFile(pszFile, 0x100000, ptrBuf, nBufSize, nErrCode) == 0) && nBufSize)
+		{
+			apRCon->Paste(PasteMode, ptrBuf, bNoConfirm);
+			bOk = true;
+		}
+
+		SafeFree(pszChooseBuf);
+		SafeFree(ptrBuf);
+
+		return bOk ? lstrdup(L"OK") : lstrdup(L"ReadFileFailed");
 	}
 
 	return lstrdup(L"InvalidArg");
@@ -2132,6 +2212,7 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 	LPWSTR pszResult = NULL;
 	LPWSTR pszName = NULL;
 	int nValue = 0;
+	int nRel = 0;
 
 	if (!p->GetStrArg(0, pszName))
 		return lstrdup(L"InvalidArg");
@@ -2163,6 +2244,8 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 	{
 		if (p->GetIntArg(1, nValue))
 		{
+			if (p->GetIntArg(2, nRel) && nRel) // Use relative values?
+				nValue = max(0,min(255,(((int)(UINT)gpSet->bgImageDarker)+nValue)));
 			if (nValue >= 0 && nValue < 256 && nValue != (int)(UINT)gpSet->bgImageDarker)
 			{
 				gpSetCls->SetBgImageDarker(nValue, true);
@@ -2194,12 +2277,12 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 	else if (!lstrcmpi(pszName, L"AlphaValue"))
 	{
 		if (p->GetIntArg(1, nValue))
-			pszResult = TransparencyHelper(0, nValue);
+			pszResult = TransparencyHelper((p->GetIntArg(2, nRel) && nRel) ? 1 : 0, nValue);
 	}
 	else if (!lstrcmpi(pszName, L"AlphaValueInactive"))
 	{
 		if (p->GetIntArg(1, nValue))
-			pszResult = TransparencyHelper(2, nValue);
+			pszResult = TransparencyHelper((p->GetIntArg(2, nRel) && nRel) ? 3 : 2, nValue);
 	}
 	else if (!lstrcmpi(pszName, L"AlphaValueSeparate"))
 	{

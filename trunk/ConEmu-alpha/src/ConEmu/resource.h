@@ -59,6 +59,7 @@
 #define IDD_HELP                        221
 #define IDD_ACTION                      222
 #define IDD_HOTKEY                      223
+#define IDI_SEARCH                      224
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -905,11 +906,9 @@
 #define cbMinimizeOnLoseFocus           2567
 #define cbFocusInChildWindows           2568
 #define tOptionSearch                   2569
-#define cbOptionSearch                  2570
 #define tStorage                        2571
 #define cbExportConfig                  2572
 #define stStorage                       2573
-#define stOptionSearch                  2574
 #define vkSetFocusGui                   2575
 #define vkSetFocusChild                 2576
 #define vkChildSystemMenu               2577
@@ -1012,14 +1011,16 @@
 #define sAnsiLogPath                    2680
 #define tAnsiLogPath                    2680
 #define stGotoEditorCmdHelp             2681
+#define tAboutSearch                    2682
+#define stConEmuVersion                 2683
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        224
+#define _APS_NEXT_RESOURCE_VALUE        225
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2682
+#define _APS_NEXT_CONTROL_VALUE         2684
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

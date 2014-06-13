@@ -576,13 +576,11 @@ CAPTION "Settings..."
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     CONTROL         "List1",tvSetupCategories,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_SHOWSELALWAYS | WS_BORDER | WS_HSCROLL | WS_TABSTOP,4,19,90,232
+    EDITTEXT        tOptionSearch,4,3,90,13,ES_AUTOHSCROLL | ES_WANTRETURN
     LTEXT           " ",tSetupPagePlace,95,19,326,234,WS_BORDER
     DEFPUSHBUTTON   "Save settings",bSaveSettings,351,258,70,14
     PUSHBUTTON      "Reset...",bResetSettings,164,258,51,14
     PUSHBUTTON      "Reload...",bReloadSettings,222,258,51,14
-    LTEXT           "Find:",stOptionSearch,5,5,17,8
-    EDITTEXT        tOptionSearch,23,3,55,13,ES_AUTOHSCROLL
-    PUSHBUTTON      ">",cbOptionSearch,79,2,15,14
     LTEXT           "Storage:",stStorage,106,5,29,8
     EDITTEXT        tStorage,141,3,227,13,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "Export...",cbExportConfig,371,2,50,14
@@ -954,8 +952,8 @@ BEGIN
     CONTROL         "Vertical",cbStatusVertSep,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,96,58,42,8
     CONTROL         "System colors",cbStatusSystemColors,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,250,58,61,8
     LTEXT           "Available columns:",IDC_STATIC,11,76,60,8
-    LTEXT           "Selected columns:",IDC_STATIC,181,76,58,8
     LISTBOX         lbStatusAvailable,9,86,137,137,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    LTEXT           "Selected columns:",IDC_STATIC,181,76,58,8
     LISTBOX         lbStatusSelected,179,86,137,137,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
     PUSHBUTTON      ">>",cbStatusAddAll,151,95,23,14
     PUSHBUTTON      ">",cbStatusAddSelected,151,111,23,14
@@ -1354,10 +1352,12 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,368,187,50,14
     ICON            IDI_ICON1,pIconCtrl,7,7,20,20,WS_DISABLED
-    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,412,16
+    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,356,16
     EDITTEXT        tAboutText,7,50,411,131,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
-    LTEXT           "Console emulation program. Visit home page:",stConEmuAbout,104,7,268,8
-    LTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,104,18,268,8,SS_NOTIFY
+    EDITTEXT        tAboutSearch,365,33,53,13,ES_AUTOHSCROLL | ES_WANTRETURN
+    CTEXT           "Console Emulation program (local terminal)",stConEmuAbout,32,7,312,8
+    CTEXT           "http://conemu-maximus5.googlecode.com",stConEmuUrl,167,189,185,8,SS_NOTIFY
+    CTEXT           "Version status:",stConEmuVersion,32,17,312,8
 END
 
 IDD_ACTION DIALOGEX 0, 0, 325, 157
@@ -1425,6 +1425,10 @@ BEGIN
         RIGHTMARGIN, 318
         TOPMARGIN, 7
         BOTTOMMARGIN, 198
+    END
+
+    IDD_FIND, DIALOG
+    BEGIN
     END
 
     IDD_ATTACHDLG, DIALOG
@@ -1557,10 +1561,6 @@ BEGIN
 
     IDD_ABOUT, DIALOG
     BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 372
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 143
     END
 
     IDD_ACTION, DIALOG
@@ -1626,6 +1626,7 @@ IDI_ICON1               ICON                    "ConEmu.ico"
 IDI_ICON2               ICON                    "Far.ico"
 IDI_ICON3               ICON                    "Far2.ico"
 IDI_SHIELD              ICON                    "shield.ico"
+IDI_SEARCH              ICON                    "Search.ico"
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 

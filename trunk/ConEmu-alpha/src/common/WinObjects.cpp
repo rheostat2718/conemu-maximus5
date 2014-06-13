@@ -39,7 +39,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TlHelp32.h>
 
 #ifndef CONEMU_MINIMAL
+#pragma warning(disable: 4091)
 #include <shlobj.h>
+#pragma warning(default: 4091)
 #include "Monitors.h"
 #endif
 
@@ -2803,14 +2805,14 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 	if (!pszBuffer)
 		return;
 
-	size_t cchCur = 0, dwLen;
+	size_t cchCur = 0;
 
 	if (abWriteTime)
 	{
 		SYSTEMTIME st; GetLocalTime(&st);
 		char szTime[32];
 		_wsprintfA(szTime, SKIPLEN(countof(szTime)) "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-		dwLen = lstrlenA(szTime);
+		INT_PTR dwLen = lstrlenA(szTime);
 		memmove(pszBuffer+cchCur, szTime, dwLen);
 		cchCur += dwLen;
 	}
@@ -3325,7 +3327,7 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 				if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\JP Software", 0, KEY_READ|nOpt, &hk))
 				{
 					wchar_t szName[MAX_PATH+1]; DWORD nLen;
-					for (DWORD n = 0; !bFound && !RegEnumKeyEx(hk, n, szName, &(nLen = countof(szName)-1), 0,0,0,0); n++)
+					for (DWORD k = 0; !bFound && !RegEnumKeyEx(hk, k, szName, &(nLen = countof(szName)-1), 0,0,0,0); k++)
 					{
 						HKEY hk2;
 						if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
@@ -3335,7 +3337,7 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 
 							for (size_t n = 0; n < countof(rsNames); n++)
 							{
-								memset(szPath, 0, sizeof(szPath)); DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
+								ZeroStruct(szPath); DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
 								if (!RegQueryValueExW(hk2, rsNames[n], NULL, NULL, (LPBYTE)szPath, &nSize) && *szPath)
 								{
 									wchar_t* psz, *pszEnd;
@@ -3399,7 +3401,7 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 						HKEY hk2;
 						if (!RegOpenKeyEx(hk, szName, 0, KEY_READ|nOpt, &hk2))
 						{
-							wchar_t szPath[MAX_PATH+1] = {}; DWORD nSize = (countof(szPath)-1)*sizeof(szPath[0]);
+							ZeroStruct(szPath); DWORD nSize = (countof(szPath) - 1)*sizeof(szPath[0]);
 							if (!RegQueryValueExW(hk2, L"Publisher", NULL, NULL, (LPBYTE)szPath, &nSize)
 								&& !lstrcmpi(szPath, L"JP Software"))
 							{
@@ -3953,5 +3955,89 @@ int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChar
 
 	SafeFree(pszDataA);
 	return 0;
+}
+
+// Returns negative numbers on errors
+int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen/* = -1*/, DWORD OutCP /*= CP_UTF8*/, bool WriteBOM /*= true*/, LPDWORD rnErrCode /*= NULL*/)
+{
+	int iRc = 0;
+	int iWriteLen = 0;
+	DWORD nWritten = 0;
+	LPCVOID ptrBuf = NULL;
+	char* pszMultibyte = NULL;
+	HANDLE hFile = NULL;
+
+	if (OutCP == 1200)
+	{
+		ptrBuf = asBuffer;
+		iWriteLen = (anSrcLen >= 0) ? (anSrcLen * sizeof(*asBuffer)) : (lstrlen(asBuffer) * sizeof(*asBuffer));
+	}
+	else //if (DefaultCP == CP_UTF8)
+	{
+		int iMBLen = WideCharToMultiByte(OutCP, 0, asBuffer, anSrcLen, NULL, 0, NULL, NULL);
+		if (iMBLen < 0)
+		{
+			iRc = -2;
+			goto wrap;
+		}
+
+		pszMultibyte = (char*)malloc(iMBLen);
+		if (!pszMultibyte)
+		{
+			iRc = -3;
+			goto wrap;
+		}
+
+		iWriteLen = WideCharToMultiByte(OutCP, 0, asBuffer, anSrcLen, pszMultibyte, iMBLen, NULL, NULL);
+	}
+
+	if (iWriteLen < 0)
+	{
+		iRc = -2;
+		goto wrap;
+	}
+
+	hFile = CreateFile(asPath, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (!hFile || (hFile == INVALID_HANDLE_VALUE))
+	{
+		iRc = -1;
+		goto wrap;
+	}
+
+	if (WriteBOM)
+	{
+		BYTE UTF8BOM[] = {'\xEF','\xBB','\xBF'};
+		BYTE CP1200BOM[] = {'\xFF','\xFE'};
+		BOOL bWrite = TRUE; DWORD nBomSize = 0;
+
+		switch (OutCP)
+		{
+		case CP_UTF8:
+			iRc = (WriteFile(hFile, UTF8BOM, 3, &nBomSize, NULL) && (nBomSize == 3)) ? nBomSize : -4;
+			break;
+		case 1200:
+			iRc = (WriteFile(hFile, CP1200BOM, 2, &nBomSize, NULL) && (nBomSize == 2)) ? nBomSize : -4;
+			break;
+		}
+
+		if (iRc < 0)
+			goto wrap;
+	}
+
+	if (!WriteFile(hFile, ptrBuf, (DWORD)iWriteLen, &nWritten, NULL) || ((DWORD)iWriteLen != nWritten))
+	{
+		iRc = -5;
+		goto wrap;
+	}
+
+	_ASSERTE(iRc >= 0);
+	iRc += nWritten;
+wrap:
+	if (rnErrCode)
+		*rnErrCode = GetLastError();
+	if (hFile && (hFile != INVALID_HANDLE_VALUE))
+		CloseHandle(hFile);
+	SafeFree(pszMultibyte);
+	return iRc;
 }
 #endif

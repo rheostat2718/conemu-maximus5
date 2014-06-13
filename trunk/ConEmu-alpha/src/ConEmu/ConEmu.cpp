@@ -43,7 +43,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "AboutDlg.h"
 #include <Tlhelp32.h>
+#pragma warning(disable: 4091)
 #include <Shlobj.h>
+#pragma warning(default: 4091)
 #include "ShObjIdl_Part.h"
 //#include <lm.h>
 //#include "../common/ConEmuCheck.h"
@@ -1234,9 +1236,9 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 						{
 							wchar_t szRoot[MAX_PATH+1];
 							wcscpy_c(szRoot, ms_ConEmuExeDir);
-							wchar_t* pszSlash = wcsrchr(szRoot, L'\\');
-							if (pszSlash)
-								*pszSlash = 0;
+							wchar_t* pszRootSlash = wcsrchr(szRoot, L'\\');
+							if (pszRootSlash)
+								*pszRootSlash = 0;
 							nLen = SearchPath(szRoot, pszSearchFile, pszExt ? NULL : L".exe", countof(szFind), szFind, &pszFilePart);
 						}
 						if (nLen && (nLen < countof(szFind)))
@@ -5252,7 +5254,7 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	}
 
 	#ifdef _DEBUG
-	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	DWORD_PTR dwStyleDbg1 = GetWindowLongPtr(ghWnd, GWL_STYLE);
 	#endif
 
 	if (isPictureView())
@@ -5718,7 +5720,7 @@ wrap:
 	mp_TabBar->OnWindowStateChanged();
 
 	#ifdef _DEBUG
-	dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+	DWORD_PTR dwStyleDbg2 = GetWindowLongPtr(ghWnd, GWL_STYLE);
 	#endif
 
 	// Transparency styles may was changed occasionally, check them
@@ -9161,28 +9163,30 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 	HWND hInfo = gpSetCls->mh_Tabs[gpSetCls->thi_Info];
 
 	CVConGuard VCon;
-	GetActiveVCon(&VCon);
-
 	wchar_t szNo[32], szFlags[255]; szNo[0] = szFlags[0] = 0;
-	DWORD nProgramStatus = VCon->RCon()->GetProgramStatus();
-	DWORD nFarStatus = VCon->RCon()->GetFarStatus();
-	if (nProgramStatus&CES_TELNETACTIVE) wcscat_c(szFlags, L"Telnet ");
-	//CheckDlgButton(hInfo, cbsTelnetActive, (nProgramStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
-	if (nProgramStatus&CES_NTVDM) wcscat_c(szFlags, L"16bit ");
-	//CheckDlgButton(hInfo, cbsNtvdmActive, (nProgramStatus&CES_NTVDM) ? BST_CHECKED : BST_UNCHECKED);
-	if (nProgramStatus&CES_FARACTIVE) wcscat_c(szFlags, L"Far ");
-	//CheckDlgButton(hInfo, cbsFarActive, (nProgramStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
-	if (nFarStatus&CES_FILEPANEL) wcscat_c(szFlags, L"Panels ");
-	//CheckDlgButton(hInfo, cbsFilePanel, (nFarStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
-	if (nFarStatus&CES_EDITOR) wcscat_c(szFlags, L"Editor ");
-	//CheckDlgButton(hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
-	if (nFarStatus&CES_VIEWER) wcscat_c(szFlags, L"Viewer ");
-	//CheckDlgButton(hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
-	if (nFarStatus&CES_WASPROGRESS) wcscat_c(szFlags, L"%%Progress ");
-	//CheckDlgButton(hInfo, cbsProgress, ((nFarStatus&CES_WASPROGRESS) /*|| VCon->RCon()->GetProgress(NULL)>=0*/) ? BST_CHECKED : BST_UNCHECKED);
-	if (nFarStatus&CES_OPER_ERROR) wcscat_c(szFlags, L"%%Error ");
-	//CheckDlgButton(hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
-	_wsprintf(szNo, SKIPLEN(countof(szNo)) L"%i/%i", VCon->RCon()->GetFarPID(), VCon->RCon()->GetFarPID(TRUE));
+
+	if (GetActiveVCon(&VCon) >= 0)
+	{
+		DWORD nProgramStatus = VCon->RCon()->GetProgramStatus();
+		DWORD nFarStatus = VCon->RCon()->GetFarStatus();
+		if (nProgramStatus&CES_TELNETACTIVE) wcscat_c(szFlags, L"Telnet ");
+		//CheckDlgButton(hInfo, cbsTelnetActive, (nProgramStatus&CES_TELNETACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+		if (nProgramStatus&CES_NTVDM) wcscat_c(szFlags, L"16bit ");
+		//CheckDlgButton(hInfo, cbsNtvdmActive, (nProgramStatus&CES_NTVDM) ? BST_CHECKED : BST_UNCHECKED);
+		if (nProgramStatus&CES_FARACTIVE) wcscat_c(szFlags, L"Far ");
+		//CheckDlgButton(hInfo, cbsFarActive, (nProgramStatus&CES_FARACTIVE) ? BST_CHECKED : BST_UNCHECKED);
+		if (nFarStatus&CES_FILEPANEL) wcscat_c(szFlags, L"Panels ");
+		//CheckDlgButton(hInfo, cbsFilePanel, (nFarStatus&CES_FILEPANEL) ? BST_CHECKED : BST_UNCHECKED);
+		if (nFarStatus&CES_EDITOR) wcscat_c(szFlags, L"Editor ");
+		//CheckDlgButton(hInfo, cbsEditor, (nFarStatus&CES_EDITOR) ? BST_CHECKED : BST_UNCHECKED);
+		if (nFarStatus&CES_VIEWER) wcscat_c(szFlags, L"Viewer ");
+		//CheckDlgButton(hInfo, cbsViewer, (nFarStatus&CES_VIEWER) ? BST_CHECKED : BST_UNCHECKED);
+		if (nFarStatus&CES_WASPROGRESS) wcscat_c(szFlags, L"%%Progress ");
+		//CheckDlgButton(hInfo, cbsProgress, ((nFarStatus&CES_WASPROGRESS) /*|| VCon->RCon()->GetProgress(NULL)>=0*/) ? BST_CHECKED : BST_UNCHECKED);
+		if (nFarStatus&CES_OPER_ERROR) wcscat_c(szFlags, L"%%Error ");
+		//CheckDlgButton(hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
+		_wsprintf(szNo, SKIPLEN(countof(szNo)) L"%i/%i", VCon->RCon()->GetFarPID(), VCon->RCon()->GetFarPID(TRUE));
+	}
 
 	if (hInfo)
 	{
