@@ -1033,7 +1033,25 @@ wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath)
 	return pszSlashed;
 }
 
-wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, bool bAutoQuote /*= true*/, bool bCygwin /*= false*/)
+bool FixDirEndSlash(wchar_t* rsPath)
+{
+	int nLen = rsPath ? lstrlen(rsPath) : 0;
+	// Do not cut slash from "C:\"
+	if ((nLen > 3) && (rsPath[nLen-1] == L'\\'))
+	{
+		rsPath[nLen-1] = 0;
+		return true;
+	}
+	else if ((nLen > 0) && (rsPath[nLen-1] == L':'))
+	{
+		// The root of drive must have end slash
+		rsPath[nLen] = L'\\'; rsPath[nLen+1] = 0;
+		return true;
+	}
+	return false;
+}
+
+wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/)
 {
 	wchar_t* pszResult = NULL;
 
@@ -1053,11 +1071,11 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 	{
 		if (SHGetPathFromIDList(pRc, szFolder))
 		{
-			if (bCygwin)
+			if (nFlags & sff_Cygwin)
 			{
-				pszResult = DupCygwinPath(szFolder, bAutoQuote);
+				pszResult = DupCygwinPath(szFolder, (nFlags & sff_AutoQuote));
 			}
-			else if (bAutoQuote && (wcschr(szFolder, L' ') != NULL))
+			else if ((nFlags & sff_AutoQuote) && (wcschr(szFolder, L' ') != NULL))
 			{
 				size_t cchLen = _tcslen(szFolder);
 				pszResult = (wchar_t*)malloc((cchLen+3)*sizeof(*pszResult));
@@ -1081,7 +1099,7 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 	return pszResult;
 }
 
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, bool abAutoQuote /*= true*/, bool bCygwin /*= false*/, bool bSaveNewFile /*= false*/)
+wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDefPath /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/)
 {
 	wchar_t* pszResult = NULL;
 
@@ -1090,16 +1108,17 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent 
 		_wcscpy_c(temp+1, countof(temp)-2, asDefFile);
 
 	OPENFILENAME ofn = {sizeof(ofn)};
-	ofn.hwndOwner = ghOpWnd;
+	ofn.hwndOwner = hParent;
 	ofn.lpstrFilter = asFilter ? asFilter : L"All files (*.*)\0*.*\0Text files (*.txt,*.ini,*.log)\0*.txt;*.ini;*.log\0Executables (*.exe,*.com,*.bat,*.cmd)\0*.exe;*.com;*.bat;*.cmd\0Scripts (*.vbs,*.vbe,*.js,*.jse)\0*.vbs;*.vbe;*.js;*.jse\0\0";
 	//ofn.lpstrFilter = L"All files (*.*)\0*.*\0\0";
 	ofn.lpstrFile = temp+1;
+	ofn.lpstrInitialDir = asDefPath;
 	ofn.nMaxFile = countof(temp)-10;
 	ofn.lpstrTitle = asTitle ? asTitle : L"Choose file";
 	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-		| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|(bSaveNewFile ? OFN_OVERWRITEPROMPT : OFN_FILEMUSTEXIST);
+		| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|((nFlags & sff_SaveNewFile) ? OFN_OVERWRITEPROMPT : OFN_FILEMUSTEXIST);
 
-	BOOL bRc = bSaveNewFile
+	BOOL bRc = (nFlags & sff_SaveNewFile)
 		? GetSaveFileName(&ofn)
 		: GetOpenFileName(&ofn);
 
@@ -1107,13 +1126,13 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, HWND hParent 
 	{
 		LPCWSTR pszName = temp+1;
 
-		if (bCygwin)
+		if (nFlags & sff_Cygwin)
 		{
-			pszResult = DupCygwinPath(pszName, abAutoQuote);
+			pszResult = DupCygwinPath(pszName, (nFlags & sff_AutoQuote));
 		}
 		else
 		{
-			if (abAutoQuote && (wcschr(pszName, L' ') != NULL))
+			if ((nFlags & sff_AutoQuote) && (wcschr(pszName, L' ') != NULL))
 			{
 				temp[0] = L'"';
 				wcscat_c(temp, L"\"");
@@ -3311,9 +3330,36 @@ void DebugFileExistTests()
 	b = FileExists(L"C:\\Documents and Settings\\Maks\\.ipython\\.");
 }
 
+void DebugNeedCmdUnitTests()
+{
+	BOOL b;
+	struct strTests { LPCWSTR pszCmd; BOOL bNeed; }
+	Tests[] = {
+		{L"\"C:\\cygwin\\bin\\make.exe -f \"makefile\" COMMON=\"../../../plugins/common\"\"", FALSE},
+		{L"\"\"C:\\FAR\\Far.exe  -new_console\"\"", FALSE},
+		{L"\"\"cmd\"\"", FALSE},
+		{L"cmd /c \"\"C:\\Program Files\\Windows NT\\Accessories\\wordpad.exe\" -?\"", FALSE},
+		{L"cmd /c \"dir c:\\\"", FALSE},
+		{L"abc.cmd", TRUE},
+		{L"pskill explorer & start explorer", TRUE},
+	};
+	LPCWSTR psArgs;
+	BOOL bNeedCut, bRootIsCmd, bAlwaysConfirm, bAutoDisable;
+	CmdArg szExe;
+	for (INT_PTR i = 0; i < countof(Tests); i++)
+	{
+		szExe.Empty();
+		RConStartArgs rcs; rcs.pszSpecialCmd = lstrdup(Tests[i].pszCmd);
+		rcs.ProcessNewConArg();
+		b = IsNeedCmd(TRUE, rcs.pszSpecialCmd, &psArgs, &bNeedCut, szExe, bRootIsCmd, bAlwaysConfirm, bAutoDisable);
+		_ASSERTE(b == Tests[i].bNeed);
+	}
+}
+
 void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
+	DebugNeedCmdUnitTests();
 	UnitMaskTests();
 	UnitDriveTests();
 	UnitExpandTest();

@@ -1677,8 +1677,13 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		if (p->GetRestStrArgs(1, pszText))
 		{
 			// Пустая строка допускается только при выборе файла/папки для вставки
-			if (!*pszText && !((nCommand >= 4) && (nCommand <= 7)))
-				return lstrdup(L"InvalidArg");
+			if (!*pszText)
+			{
+				if (!((nCommand >= 4) && (nCommand <= 7)))
+					return lstrdup(L"InvalidArg");
+				else
+					pszText = NULL;
+			}
 		}
 		else
 		{
@@ -1687,10 +1692,13 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 		if ((nCommand >= 4) && (nCommand <= 7))
 		{
+			CmdArg szDir;
+			LPCWSTR pszDefPath = apRCon->GetConsoleCurDir(szDir);
+
 			if ((nCommand == 4) || (nCommand == 6))
-				pszChooseBuf = SelectFile(L"Choose file pathname for paste", pszText, NULL, NULL, true, (nCommand == 6));
+				pszChooseBuf = SelectFile(L"Choose file pathname for paste", pszText, pszDefPath, ghWnd, NULL, sff_AutoQuote|((nCommand == 6)?sff_Cygwin:sff_Default));
 			else
-				pszChooseBuf = SelectFolder(L"Choose folder path for paste", pszText, NULL, true, (nCommand == 7));
+				pszChooseBuf = SelectFolder(L"Choose folder path for paste", pszText?pszText:pszDefPath, ghWnd, sff_AutoQuote|((nCommand == 6)?sff_Cygwin:sff_Default));
 
 			if (!pszChooseBuf)
 				return lstrdup(L"Cancelled");
@@ -1745,7 +1753,7 @@ LPWSTR ConEmuMacro::PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 
 		if (!p->GetStrArg(1, pszFile) || !pszFile || !*pszFile)
 		{
-			pszChooseBuf = SelectFile(L"Choose file for paste", NULL, NULL, NULL, false);
+			pszChooseBuf = SelectFile(L"Choose file for paste", NULL, NULL, NULL, NULL, sff_Default);
 			if (!pszChooseBuf)
 				return lstrdup(L"NoFileSelected");
 			pszFile = pszChooseBuf;
@@ -1813,6 +1821,7 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		DWORD dwControlState = 0, dwScan = 0;
 		int iScanCode = -1;
 		bool  bRight = false;
+		wchar_t* p;
 		// + the key
 		UINT VK = 0;
 		// Parse modifiers
@@ -1848,6 +1857,11 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		}
 
 	DoPost:
+		if (*pszKey == L'{' && ((p = wcschr(pszKey+2,L'}')) != NULL))
+		{
+			// Trim brackets from "{Enter}" for example
+			pszKey++; *p = 0;
+		}
 		VK = ConEmuHotKey::GetVkByKeyName(pszKey, &iScanCode, &dwControlState);
 		switch (VK)
 		{
@@ -1878,6 +1892,20 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 					pszKey = szSeq;
 				else
 					pszKey = NULL;
+			}
+
+			if (!(dwControlState & (SHIFT_PRESSED|RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED|RIGHT_CTRL_PRESSED|LEFT_CTRL_PRESSED))
+				&& !(pszKey && *pszKey))
+			{
+				switch (VK)
+				{
+				case VK_RETURN:
+					wcscpy_c(szSeq, L"\r"); pszKey = szSeq; break;
+				case VK_TAB:
+					wcscpy_c(szSeq, L"\t"); pszKey = szSeq; break;
+				case VK_BACK:
+					wcscpy_c(szSeq, L"\b"); pszKey = szSeq; break;
+				}
 			}
 
 			// Send it...

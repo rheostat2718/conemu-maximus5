@@ -491,14 +491,13 @@ CConEmuMain::CConEmuMain()
 		return;
 	}
 
-	// Запомнить текущую папку (на момент запуска)
-	StoreWorkDir();
-
-	//LoadVersionInfo(ms_ConEmuExe);
 	// Папка программы
 	wcscpy_c(ms_ConEmuExeDir, ms_ConEmuExe);
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 	*pszSlash = 0;
+
+	// Запомнить текущую папку (на момент запуска)
+	StoreWorkDir();
 
 	bool lbBaseFound = false;
 
@@ -822,25 +821,54 @@ void CConEmuMain::StoreWorkDir(LPCWSTR asNewCurDir /*= NULL*/)
 		{
 			wcscpy_c(ms_ConEmuWorkDir, asNewCurDir);
 			// The root of the drive must have trailing '\'
-			if (ms_ConEmuWorkDir[1] == L':' && !ms_ConEmuWorkDir[2])
-				wcscat_c(ms_ConEmuWorkDir, L"\\");
+			FixDirEndSlash(ms_ConEmuWorkDir);
 		}
 	}
 	else
 	{
 		// Запомнить текущую папку (на момент запуска)
-		DWORD nDirLen = GetCurrentDirectory(MAX_PATH, ms_ConEmuWorkDir);
+		wchar_t szDir[MAX_PATH+1] = L"";
+		DWORD nDirLen = GetCurrentDirectory(MAX_PATH, szDir);
 
 		if (!nDirLen || nDirLen>MAX_PATH)
 		{
-			//ms_ConEmuWorkDir[0] = 0;
-			wcscpy_c(ms_ConEmuWorkDir, ms_ConEmuExeDir);
+			// Do not force to %ConEmuDir%
+			//wcscpy_c(szDir, ms_ConEmuExeDir);
+			szDir[0] = 0;
 		}
-		// If it not a root of the drive
-		else if ((nDirLen > 3) && (ms_ConEmuWorkDir[nDirLen-1] == L'\\'))
+		else
 		{
-			ms_ConEmuWorkDir[nDirLen-1] = 0; // пусть будет БЕЗ слеша, для однообразия с ms_ConEmuExeDir
+			// If it not a root of the drive - cut end slash, to be the same with ms_ConEmuExeDir
+			FixDirEndSlash(szDir);
 		}
+
+		// Prepare WinDir for comparision
+		wchar_t szWinDir[MAX_PATH] = L"";
+		if (GetWindowsDirectory(szWinDir, MAX_PATH-10))
+			FixDirEndSlash(szWinDir);
+		wchar_t szSysDir[MAX_PATH];
+		wcscpy_c(szSysDir, szWinDir);
+		wcscat_c(szSysDir, L"\\system32");
+
+		// If current directory is C:\Windows, or C:\Windows\System32, or just %ConEmuDir%
+		// force working directory to the %UserProfile%
+		if (!*szDir
+			|| (lstrcmpi(szDir, szWinDir) == 0)
+			|| (lstrcmpi(szDir, szSysDir) == 0)
+			|| (lstrcmpi(szDir, ms_ConEmuExeDir) == 0))
+		{
+			if (SHGetSpecialFolderPath(NULL, szDir, CSIDL_PROFILE, FALSE))
+			{
+				FixDirEndSlash(szDir);
+			}
+			if (!*szDir)
+			{
+				// Finally, if all others failed
+				wcscpy_c(szDir, ms_ConEmuExeDir);
+			}
+		}
+
+		wcscpy_c(ms_ConEmuWorkDir, szDir);
 	}
 
 	wchar_t szDrive[MAX_PATH];
