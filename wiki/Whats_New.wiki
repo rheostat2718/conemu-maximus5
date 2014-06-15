@@ -14,8 +14,8 @@ https://sourceforge.net/p/potm/discussion/vote/thread/f3309aea/
 ==Build 140615==
   * GuiMacro. `Keys("Enter")`, `Keys("Tab")`, `Keys("Backspace")` was not working.
   * GuiMacro. Support alternative notation, e.g. `Keys("{Enter}")`.
-  * Issue 1125: cmd.exe in administrator mode was not autoattached to ConEmu (Ctrl+Shift+Enter from start menu)
-  * Force working directory to %UserProfile% if ConEmu.exe was started from `%WinDir%`, `%WinDir%\system32` or `%ConEmuDir%`. If you really need to use these working directories - force them with ‘/dir’ switch:
+  * Issue 1125: cmd.exe in administrator mode was not autoattached to !ConEmu (Ctrl+Shift+Enter from start menu)
+  * Force working directory to `%UserProfile%` if `ConEmu.exe` was started from `%WinDir%`, `%WinDir%\system32` or `%ConEmuDir%`. If you really need to use these working directories - force them with ‘/dir’ switch:
 {{{
 ConEmu.exe /dir C:\Windows\System32 /cmd PowerShell.exe
 }}}
