@@ -86,11 +86,11 @@ That is safe because ‘parent’ does not really need to get started process ha
 
 ==Starting debugging session==
 
-When you start Visual Studio debugger of your ‘ConAppSample’, ‘parent’ process
-(devenv.exe or WDExpress.exe) need to get the handle of your `ConAppSample.exe`
+When you start Visual Studio debugger of your ‘`ConAppSample`’, ‘parent’ process
+(devenv.exe or WDExpress.exe) need to get the handle of your ‘`ConAppSample.exe`’
 to be able to call debugging routines.
 
 That is why RealConsole window will flickers on screen before alternative attach procedure completes.
 
-Note, when you are debugging .Net console application, Visual Studio will run `ConAppSample.vshost.exe`,
+Note, when you are debugging .Net console application, Visual Studio will run ‘`ConAppSample.vshost.exe`’,
 if option ‘Enable the Visual Studio hosting process’ is checked in your project Properties\Debug.
