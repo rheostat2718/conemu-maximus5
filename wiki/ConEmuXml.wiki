@@ -9,3 +9,7 @@ The easiest (and may be most proper) way to provide it is ‘Export...’ button
 [https://code.google.com/p/conemu-maximus5/wiki/Settings#Settings_dialog ConEmu Settings dialog].
 
 Save your config in the new xml (*don't overwrite your existing config*) file and attach it to the created issue.
+
+==Note for !PortableApps.com format==
+When you are running ConEmu installed with ‘paf’ bundle,
+your settings will be stored in `<app>/Data/settings/ConEmu.xml`.

@@ -253,7 +253,7 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        Cmd==8: paste path from clipboard converted to CygWin style
        Cmd==9: paste all lines space-separated
        Cmd==10: paste all lines space-separated, without confirmations
-    PasteFile(<Cmd>[,"<File>"])
+    PasteFile(<Cmd>[,"<File>"[,"<CommentMark>"]])
      - Paste <File> contents, omit <File> to show selection dialog
        Cmd==0: paste all lines
        Cmd==1: paste first line
@@ -261,6 +261,7 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        Cmd==3: paste first line, without confirmations
        Cmd==9: paste all lines space-separated
        Cmd==10: paste all lines space-separated, without confirmations
+       If "<CommentMark>" specified - skip all lines starting with prefix
     Print(["<Text>"[,"<Text2>"[...]]])
      - Alias for Paste(2,"<Text>")
     Progress(<Type>[,<Value>])
