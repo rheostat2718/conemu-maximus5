@@ -208,7 +208,7 @@ powershell -new_console:C:twice.ico
   * Allow "/icon" task parameter to change tab icon too.
   * Restrict "/icon" task parameter to change already started instance window icon.
   * New !ConEmu.exe switch ‘`/FontDir "YourDir"`’ allows to register fonts from several specified folders
-  * Issue 1258: Ctrl+BackSpace delete words to the left including spaces.
+  * Issue 1258: `Ctrl+BackSpace` delete words to the left including spaces.
     Actually, not only spaces are taken to account: ‘`>])}$.,/\"`’.
   * About dialog `-new_console` fixes.
   * No need to unset hooks if our process is to be force killed by !TerminateProcess (minor speed up).
@@ -218,7 +218,7 @@ powershell -new_console:C:twice.ico
 /dir <workingdir>
 /icon <tabicon>
 /tab <tabtitle>
-}
+}}}
   * Warn on invalid switches in task parameters. Valid switches currently are
 {{{
 /dir <WorkingDir>
