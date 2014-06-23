@@ -208,7 +208,7 @@ powershell -new_console:C:twice.ico
   * Allow "/icon" task parameter to change tab icon too.
   * Restrict "/icon" task parameter to change already started instance window icon.
   * New !ConEmu.exe switch ‘`/FontDir "YourDir"`’ allows to register fonts from several specified folders
-  * Issue 1258: Ctrl+BackSpace delete words to the left including spaces.
+  * Issue 1258: `Ctrl+BackSpace` delete words to the left including spaces.
     Actually, not only spaces are taken to account: ‘`>])}$.,/\"`’.
   * About dialog `-new_console` fixes.
   * No need to unset hooks if our process is to be force killed by !TerminateProcess (minor speed up).
@@ -218,7 +218,7 @@ powershell -new_console:C:twice.ico
 /dir <workingdir>
 /icon <tabicon>
 /tab <tabtitle>
-}
+}}}
   * Warn on invalid switches in task parameters. Valid switches currently are
 {{{
 /dir <WorkingDir>
@@ -878,7 +878,7 @@ vcvarsall.bat x86 & ConEmuC /export=CON
   * Switch "/icon" was ignored for startup task.
   * Trailing spaces was increased when used «Auto save/restore of opened tabs».
   * Issue 1275: When minimized into TSA and all VCon are closed we need to restore and run new tab.
-  * New color scheme: "<Monokai>".
+  * New color scheme: ‘`<Monokai>`’.
   * Issue 1277: Far Manager shows «DrawWND» in the window title instead of panel path.
   * Issue 1279: Copy to clipboard fails if "Plain text only" is the active option.
   * New environment variables `"ConEmuDrive"` and `"ConEmuWorkDrive"`.
@@ -1042,7 +1042,7 @@ cmd.exe /k ClsEx.cmd
 ==Build 130807==
   * Forbid Far Manager plugins to change window styles of !ConEmu windows.
   * Some fixes in Far Manager command execution interceptor.
-  * New color scheme: "<Solarized (Luke Maciak)>".
+  * New color scheme: ‘`<Solarized (Luke Maciak)>`’.
   * New switch "-new_console:f" forces starting console active. May be useful when starting several consoles simultaneously. Example:
 {{{
 ConEmu.exe /cmdlist powershell -new_console:f ||| cmd -new_console:sH
@@ -1609,7 +1609,7 @@ ConEmuC /export[=CON|ALL] [Var1 [Var2 [...]]]
   * Искать текст теперь можно по всему буферу (а не только по видимой области). Флажок «Freeze console» требуется включить. To be continued...
   * В некоторых случаях !DosBox не стартовал из командной строки Far (doom.exe -warp 10).
   * Background: можно задать «сплошной цвет» а не только файл картинки. Введите в поле «Path» значение цвета !ColorRef (напимер «#300A24» без кавычек). Поддерживаемые форматы: «#RRGGBB» (hex), «0xBBGGRR» (hex), «xBBGGRR» (hex), «RRR,GGG,BBB» (dec), «RRR GGG BBB» (dec).
-  * Новая цветовая схема: <Ubuntu>. Если хотите получить «фиолетовый» фон - установите цвет #300A24 в качестве фоновой картинки на вкладке «Main».
+  * Новая цветовая схема: ‘`<Ubuntu>`’. Если хотите получить «фиолетовый» фон - установите цвет #300A24 в качестве фоновой картинки на вкладке «Main».
   * Умолчание для хоткея «Minimize/Restore» заменено на `Ctrl+~`.
   * Issue 795: Ошибка смены размера окна при Hide/Restore.
 
@@ -1910,7 +1910,7 @@ Wikipedia page [http://en.wikipedia.org/wiki/User:Maximus7792/ConEmu User:Maximu
 
 ==Build 120727==
   * Issue 643: Windows from powershell/.net does not appears on screen.
-  * Issue 652: New predefined palette <Solarized Light>.
+  * Issue 652: New predefined palette ‘`<Solarized Light>`’.
   * Speedup of ecompl Far Manager plugin.
   * В окне настроек в полях цветов теперь допустим ввод следующих форматов: «#RRGGBB» (hex), «0xBBGGRR» (hex), «xBBGGRR» (hex), «RRR,GGG,BBB» (dec), «RRR GGG BBB» (dec).
   * Для неактивного окна минимальное значение «прозрачности» установлено в 0. Т.е. теперь при потере фокуса окно может «исчезать» с экрана.
@@ -1958,7 +1958,7 @@ Wikipedia page [http://en.wikipedia.org/wiki/User:Maximus7792/ConEmu User:Maximu
   * Bytton «Apply» в режиме «Normal» не меняла текущее положение окна (X/Y).
   * Issue 638: bincmp fails.
   * После Apps+F и открытия диалога выскакивало контекстное меню.
-  * Добавлена палитра <!PowerShell>.
+  * Добавлена палитра ‘`<PowerShell>`’.
   * !ConEmu Inside: Windows 2000 and Windows 2003 supported.
   * Опять работаем в Windows 2000. Режим Alternative mode attach в Windows 2000 не доступен.
   * В альтернативном буфере (Win+A) кнопки !PgUp/!PgDn/Up/Down скроллируют окно (не нужно держать Ctrl).
@@ -2394,7 +2394,7 @@ http://lifehacker.com/5857540/the-best-terminal-emulator-for-windows
   * !ConEmu plugin: команда в меню плагина - 'Show all tabs list', макрос 'ConEmu.TabList.fml'
   * Issue 530: Ошибка в цветах Thumbnails/Tiles при включенном «Optional marking character».
   * Вкладка настроек 'Text selection' переименована в 'Mark & Paste'.
-  * Для консольных приложений (кроме Far) !ConEmu теперь может самостоятельно обрабатывать вставку текста из буфера обмена. По умолчанию, Ctrl+V вставляет первую строку содержимого буфера, а Shift+Ins вставляет текст полностью (генерируя нажатия <Enter> для перевода строк). Можно настроить подтверждение вставки многострочного текста (при вставке нескольких строк из буфера в ком.строку cmd.exe нажатия <Enter> могут привести к нежелательному исполнению команд). Можно настроить подтверждение вставки длинного текста (по умолчанию 200 символов).
+  * Для консольных приложений (кроме Far) !ConEmu теперь может самостоятельно обрабатывать вставку текста из буфера обмена. По умолчанию, Ctrl+V вставляет первую строку содержимого буфера, а Shift+Ins вставляет текст полностью (генерируя нажатия `<Enter>` для перевода строк). Можно настроить подтверждение вставки многострочного текста (при вставке нескольких строк из буфера в ком.строку cmd.exe нажатия `<Enter>` могут привести к нежелательному исполнению команд). Можно настроить подтверждение вставки длинного текста (по умолчанию 200 символов).
   * На вкладках 'Mark & Paste' и 'App distinct' добавлена настройка вставки из буфера обмена.
   * В 64-битных OS при запуске в новой вкладке "cmd" учитывается настройка битности желаемого !ComSpec.
   * Меню таба отображается по Apps+Space (раньше было Win+Apps).

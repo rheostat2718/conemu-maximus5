@@ -878,7 +878,7 @@ vcvarsall.bat x86 & ConEmuC /export=CON
   * Switch "/icon" was ignored for startup task.
   * Trailing spaces was increased when used ‘Auto save/restore of opened tabs’.
   * Issue 1275: When minimized into TSA and all VCon are closed we need to restore and run new tab.
-  * New color scheme: "<Monokai>".
+  * New color scheme: ‘`<Monokai>`’.
   * Issue 1277: Far Manager shows ‘DrawWND’ in the window title instead of panel path.
   * Issue 1279: Copy to clipboard fails if "Plain text only" is the active option.
   * New environment variables `"ConEmuDrive"` and `"ConEmuWorkDrive"`.
@@ -1043,7 +1043,7 @@ cmd.exe /k ClsEx.cmd
 ==Build 130807==
   * Forbid Far Manager plugins to change window styles of !ConEmu windows.
   * Some fixes in Far Manager command execution interceptor.
-  * New color scheme: "<Solarized (Luke Maciak)>".
+  * New color scheme: ‘`<Solarized (Luke Maciak)>`’.
   * New switch "-new_console:f" forces starting console active. May be useful when starting several consoles simultaneously. Example:
 {{{
 ConEmu.exe /cmdlist powershell -new_console:f ||| cmd -new_console:sH
@@ -1607,7 +1607,7 @@ ConEmuC /export[=CON|ALL] [Var1 [Var2 [...]]]
   * Searching in full console (not only visible area). Checkbox ‘Freeze console’ must be turned on. To be continued...
   * Sometimes !DosBox do not starts from Far command prompt (doom.exe -warp 10).
   * Background: you may set ‘solid color’. Just type in ‘Path’ field !ColorRef value (e.g. ‘#300A24’ without quotas) instead of background picture file. Supported formats are: ‘#RRGGBB’ (hex), ‘0xBBGGRR’ (hex), ‘xBBGGRR’ (hex), ‘RRR,GGG,BBB’ (dec), ‘RRR GGG BBB’ (dec).
-  * New predefined color scheme: <Ubuntu>. If you need purple background, set background color to #300A24 on ‘Main’ page.
+  * New predefined color scheme: ‘`<Ubuntu>`’. If you need purple background, set background color to #300A24 on ‘Main’ page.
   * Decided to change default hotkey for ‘Minimize/Restore’ - it's now `Ctrl+~`.
   * Issue 795: Reducing window size on Hide/Restore.
 
@@ -1912,7 +1912,7 @@ Wikipedia page [http://en.wikipedia.org/wiki/User:Maximus7792/ConEmu User:Maximu
 
 ==Build 120727==
   * Issue 643: Windows from powershell/.net does not appears on screen.
-  * Issue 652: New predefined palette <Solarized Light>.
+  * Issue 652: New predefined palette ‘`<Solarized Light>`’.
   * Speedup of ecompl Far Manager plugin.
   * Color values fields (Settings dialog) allows next formats: ‘#RRGGBB’ (hex), ‘0xBBGGRR’ (hex), ‘xBBGGRR’ (hex), ‘RRR,GGG,BBB’ (dec), ‘RRR GGG BBB’ (dec).
   * New minimal value for ‘transparency’ is 0. Now on focus lose window may completely disappears from screen.
@@ -1960,7 +1960,7 @@ Wikipedia page [http://en.wikipedia.org/wiki/User:Maximus7792/ConEmu User:Maximu
   * Button ‘Apply’ in the window mode ‘Normal’ was not changed window position (X/Y).
   * Issue 638: bincmp fails.
   * After Apps+F context menu unexpectedly appears in Find dialog.
-  * New color palette <!PowerShell>.
+  * New color palette ‘`<PowerShell>`’.
   * !ConEmu Inside: Windows 2000 and Windows 2003 supported.
   * Windows 2000 supported again. Alternative mode attach in Windows 2000 is not available.
   * While alternative buffer is active (Win+A) keys !PgUp/!PgDn/Up/Down will scroll console (holding Ctrl is not necessary).
@@ -2395,7 +2395,7 @@ All my attempts to post comments and contact the article author were ignored :(
   * !ConEmu plugin: new plugin menu item - 'Show all tabs list', you may use Far macro 'ConEmu.TabList.fml'
   * Issue 530: Bugfix in Thumbnails/Tiles colors when ‘Optional marking character’ is turned on.
   * Вкладка настроек 'Text selection' переименована в 'Mark & Paste'.
-  * !ConEmu may process internally pasting text from clipboard to console applications. By default, Ctrl+V pastes first line of text, Shift+Ins pastes all lines (<Enter> keypress are generated between lines). Optional multiline paste confirmation and large text confirmation (200 chars by default).
+  * !ConEmu may process internally pasting text from clipboard to console applications. By default, Ctrl+V pastes first line of text, Shift+Ins pastes all lines (`<Enter>` keypress are generated between lines). Optional multiline paste confirmation and large text confirmation (200 chars by default).
   * Pasting options on 'Mark & Paste' and 'App distinct' pages of 'Settings' dialog.
   * Preferred command processor (bits) is taked in account while starting "cmd" in new tab.
   * New Tab popup menu hotkey - Apps+Space (previously Win+Apps).
