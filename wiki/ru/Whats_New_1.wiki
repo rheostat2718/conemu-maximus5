@@ -1,6 +1,7 @@
 
 ==Более новые записи==
-  * [Whats_New 120101 .. текущая]
+  * [Whats_New Builds 140104 .. текущая]
+  * [Whats_New Builds 120101 .. 131225]
 
 ==Build 111220==
   * Улучшен детектор прогресса в консоли.
@@ -1487,4 +1488,4 @@ $if (callplugin(0x43454D55,"IsConEmu()")!=1 && env("ConEmuMacroResult")=="Yes") 
   * Разрешена смена размера консоли самим консольным приложением (например, командой 'MODE CON: COLS=80 LINES=25').
 
 ==Более старые записи==
-  * [http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/Release/ConEmu/WhatsNew-ConEmu.txt Полный лог изменений на SVN]
+  * [https://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-alpha/Release/ConEmu/WhatsNew-ConEmu.txt Полный лог изменений на SVN]
