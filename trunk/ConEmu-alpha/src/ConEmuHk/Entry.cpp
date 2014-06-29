@@ -76,10 +76,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuHooks.h"
 #include "RegHooks.h"
 #include "ShellProcessor.h"
-#include "UserImp.h"
 #include "GuiAttach.h"
 #include "Injects.h"
 #include "Ansi.h"
+#include "DefTermHk.h"
 #include "../ConEmu/version.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/CmdLine.h"
@@ -138,6 +138,10 @@ extern HMODULE ghOurModule;
 //HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 //UINT gnMsgActivateCon = 0; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 //SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
+
+/* ************ Executable name ************ */
+wchar_t gsExeName[80] = L"";
+/* ************ Executable name ************ */
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
@@ -394,6 +398,11 @@ void SetConEmuHkWindows(HWND hDcWnd, HWND hBackWnd)
 	ghConEmuWndBack = hBackWnd;
 }
 
+void SetServerPID(DWORD anMainSrvPID)
+{
+	gnServerPID = anMainSrvPID;
+}
+
 
 MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap = NULL;
 CESERVER_CONSOLE_MAPPING_HDR* gpConInfo = NULL;
@@ -436,10 +445,10 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 
 			// Проверка. Но если в GUI аттачится существующая консоль - ConEmuHk может загрузиться раньше,
 			// чем создадутся HWND, т.е. GuiPID известен, но HWND еще вообще нету.
-			_ASSERTE(!ghConEmuWnd || ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
-			_ASSERTE(!ghConEmuWnd || ghConEmuWndBack && user->isWindow(ghConEmuWndBack));
+			_ASSERTE(!ghConEmuWnd || ghConEmuWndDC && IsWindow(ghConEmuWndDC));
+			_ASSERTE(!ghConEmuWnd || ghConEmuWndBack && IsWindow(ghConEmuWndBack));
 
-			gnServerPID = gpConInfo->nServerPID;
+			SetServerPID(gpConInfo->nServerPID);
 		}
 		else
 		{
@@ -484,11 +493,8 @@ void OnConWndChanged(HWND ahNewConWnd)
 	if (ahNewConWnd)
 	{
 		#ifdef _DEBUG
-		if (user)
-		{
-			wchar_t sClass[64]; user->getClassNameW(ahNewConWnd, sClass, countof(sClass));
+			wchar_t sClass[64]; GetClassName(ahNewConWnd, sClass, countof(sClass));
 			_ASSERTEX(isConsoleClass(sClass));
-		}
 		#endif
 
 		if (ghConWnd != ahNewConWnd)
@@ -520,97 +526,6 @@ PipeServer<CESERVER_REQ> *gpHookServer = NULL;
 void CheckHookServer();
 
 bool gbShowExeMsgBox = false;
-
-bool InitDefaultTerm()
-{
-	bool lbRc = true;
-
-	#ifdef _DEBUG
-	char szInfo[100];
-	msprintf(szInfo, countof(szInfo), "!!! TH32CS_SNAPMODULE, TID=%u, InitDefaultTerm\n", GetCurrentThreadId());
-	OutputDebugStringA(szInfo);
-	#endif
-
-	gpDefaultTermParm = (ConEmuGuiMapping*)calloc(sizeof(*gpDefaultTermParm),1);
-
-	CShellProc sp;
-	sp.LoadSrvMapping(TRUE);
-
-	HMODULE hPrevHooks = NULL;
-	_ASSERTEX(gnSelfPID!=0 && ghOurModule!=NULL);
-	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, gnSelfPID);
-	if (hSnap != INVALID_HANDLE_VALUE)
-	{
-		MODULEENTRY32 mi = {sizeof(mi)};
-		//wchar_t szOurName[MAX_PATH] = L"";
-		//GetModuleFileName(ghOurModule, szOurName, MAX_PATH);
-		wchar_t szMinor[8] = L""; lstrcpyn(szMinor, WSTRING(MVV_4a), countof(szMinor));
-		wchar_t szAddName[40];
-		msprintf(szAddName, countof(szAddName),
-			CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
-			WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
-		//LPCWSTR pszOurName = PointToName(szOurName);
-		wchar_t* pszDot = wcschr(szAddName, L'.');
-		wchar_t szCheckName[MAX_PATH+1];
-
-		if (pszDot && Module32First(hSnap, &mi))
-		{
-			pszDot[1] = 0; // Need to check only name, without version number
-			int nCurLen = lstrlen(szAddName);
-			do {
-				if (mi.hModule == ghOurModule)
-					continue;
-				lstrcpyn(szCheckName, PointToName(mi.szExePath), nCurLen+1);
-				if (lstrcmpi(szCheckName, szAddName) == 0)
-				{
-					hPrevHooks = mi.hModule;
-					break; // Prev (old version) instance found!
-				}
-			} while (Module32Next(hSnap, &mi));
-		}
-
-		CloseHandle(hSnap);
-	}
-
-	//ghDefaultTerminalReady  = ... ;
-	if (hPrevHooks)
-	{
-		if (!FreeLibrary(hPrevHooks))
-		{
-			lbRc = false;
-		}
-	}
-
-	// For Visual Studio check all spawned processes (children of gnSelfPID), find *.vshost.exe
-	if (gbIsVStudio)
-	{
-		//_ASSERTE(FALSE && "Continue to find existing *.vshost.exe");
-		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-		if (hSnap != INVALID_HANDLE_VALUE)
-		{
-			PROCESSENTRY32 pe = {sizeof(pe)};
-			if (Process32First(hSnap, &pe)) do
-			{
-				if (pe.th32ParentProcessID == gnSelfPID)
-				{
-					if (IsVsNetHostExe(pe.szExeFile)) // *.vshost.exe
-					{
-						// Found! Hook it!
-						sp.StartDefTermHooker(pe.th32ProcessID);
-						break;
-					}
-				}
-			} while (Process32Next(hSnap, &pe));
-			CloseHandle(hSnap);
-		}
-	}
-
-	#ifdef _DEBUG
-	OutputDebugStringA("InitDefaultTerm finished\n");
-	#endif
-
-	return lbRc;
-}
 
 #if 0
 
@@ -867,10 +782,15 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 	#endif
 
-	// Must be extension?
-	_ASSERTEX(wcschr(pszName,L'.')!=NULL);
+	lstrcpyn(gsExeName, pszName, countof(gsExeName)-5);
+	if (!wcschr(gsExeName, L'.'))
+	{
+		// Must be extension?
+		_ASSERTEX(wcschr(pszName,L'.')!=NULL);
+		wcscat_c(gsExeName, L".exe");
+	}
 
-	if ((lstrcmpi(pszName, L"powershell.exe") == 0) || (lstrcmpi(pszName, L"powershell") == 0))
+	if (lstrcmpi(gsExeName, L"powershell.exe") == 0)
 	{
 		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		if (CEAnsi::IsOutputHandle(hStdOut))
@@ -889,20 +809,20 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			}
 		}
 	}
-	else if ((lstrcmpi(pszName, L"far.exe") == 0) || (lstrcmpi(pszName, L"far64.exe") == 0) || (lstrcmpi(pszName, L"far32.exe") == 0))
+	else if ((lstrcmpi(gsExeName, L"far.exe") == 0) || (lstrcmpi(gsExeName, L"far64.exe") == 0) || (lstrcmpi(gsExeName, L"far32.exe") == 0))
 	{
 		gbIsFarProcess = true;
 	}
-	else if ((lstrcmpi(pszName, L"cmd.exe") == 0) || (lstrcmpi(pszName, L"cmd") == 0))
+	else if (lstrcmpi(gsExeName, L"cmd.exe") == 0)
 	{
 		gbIsCmdProcess = true;
 		#if 0
 		CreateThread(NULL, 0, DummyLibLoaderCmdThread, NULL, 0, &gnDummyLibLoaderCmdThreadTID);
 		#endif
 	}
-	else if ((lstrcmpi(pszName, L"sh.exe") == 0) || (lstrcmpi(pszName, L"sh") == 0)
-		|| (lstrcmpi(pszName, L"bash.exe") == 0) || (lstrcmpi(pszName, L"bash") == 0)
-		|| (lstrcmpi(pszName, L"isatty.exe") == 0)
+	else if ((lstrcmpi(gsExeName, L"sh.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"bash.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"isatty.exe") == 0)
 		)
 	{
 		//_ASSERTEX(FALSE && "settings gbIsBashProcess");
@@ -910,11 +830,11 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 		TODO("Start redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
 		#if 0
-		if (lstrcmpi(pszName, L"isatty.exe") == 0)
+		if (lstrcmpi(gsExeName, L"isatty.exe") == 0)
 			StartPTY();
 		#endif
 	}
-	else if ((lstrcmpi(pszName, L"ssh.exe") == 0) || (lstrcmpi(pszName, L"ssh") == 0))
+	else if (lstrcmpi(gsExeName, L"ssh.exe") == 0)
 	{
 		gbIsSshProcess = true;
 		#if 0
@@ -924,40 +844,40 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		CreateThread(NULL, 0, DummyLibLoaderThread, NULL, 0, &gnDummyLibLoaderThreadTID);
 		#endif
 	}
-	else if ((lstrcmpi(pszName, L"hiew32.exe") == 0) || (lstrcmpi(pszName, L"hiew32") == 0))
+	else if (lstrcmpi(gsExeName, L"hiew32.exe") == 0)
 	{
 		gbIsHiewProcess = true;
 	}
-	else if ((lstrcmpi(pszName, L"dosbox.exe") == 0) || (lstrcmpi(pszName, L"dosbox") == 0))
+	else if (lstrcmpi(gsExeName, L"dosbox.exe") == 0)
 	{
 		gbDosBoxProcess = true;
 	}
-	else if ((lstrcmpi(pszName, L"vim.exe") == 0) || (lstrcmpi(pszName, L"vim") == 0))
+	else if (lstrcmpi(gsExeName, L"vim.exe") == 0)
 	{
 		gbIsVimProcess = true;
 		//CEAnsi::StartVimTerm(true);
 	}
-	else if (lstrcmpni(pszName, L"mintty", 6) == 0)
+	else if (lstrcmpni(gsExeName, L"mintty", 6) == 0) // Without extension? Or may be "minttyXXX.exe"?
 	{
 		gbIsMinTtyProcess = true;
 	}
-	else if ((lstrcmpi(pszName, L"notepad.exe") == 0) || (lstrcmpi(pszName, L"notepad") == 0))
+	else if (lstrcmpi(gsExeName, L"notepad.exe") == 0)
 	{
 		//_ASSERTE(FALSE && "Notepad.exe started!");
 	}
-	else if (IsVsNetHostExe(pszName)) // "*.vshost.exe"
+	else if (IsVsNetHostExe(pszName)) // "*.vshost.exe", "*" may be long, so we use pszName instead of limited gsExeName
 	{
 		gbIsNetVsHost = true;
 	}
-	else if ((lstrcmpi(pszName, L"devenv.exe") == 0) || (lstrcmpi(pszName, L"WDExpress.exe") == 0))
+	else if ((lstrcmpi(gsExeName, L"devenv.exe") == 0) || (lstrcmpi(gsExeName, L"WDExpress.exe") == 0))
 	{
 		gbIsVStudio = true;
 	}
 
 	if (gbIsNetVsHost
-		|| (lstrcmpi(pszName, L"chrome.exe") == 0)
-		|| (lstrcmpi(pszName, L"firefox.exe") == 0)
-		|| (lstrcmpi(pszName, L"link.exe") == 0))
+		|| (lstrcmpi(gsExeName, L"chrome.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"firefox.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"link.exe") == 0))
 	{
 		gbSkipVirtualAllocErr = true;
 	}
@@ -1040,6 +960,15 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	gnImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
 	// Определим тип (CUI/GUI)
 	GetImageSubsystem(gnImageSubsystem, gnImageBits);
+	// *.vshost.exe is used for debugging purpose in VC#
+	// And that PE is compiled as GUI executable, console allocated with AllocConsole
+	if (gbIsNetVsHost && (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) && ghConWnd)
+	{
+		// We can get here, if *.vshost.exe was started 'normally'
+		// and Win+G (attach) was initiated from ConEmu by user
+		_ASSERTE(ghConWnd == GetConsoleWindow());
+		gnImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+	}
 	// Проверка чего получилось
 	_ASSERTE(gnImageBits==WIN3264TEST(32,64));
 	_ASSERTE(gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_GUI || gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI);
@@ -1161,9 +1090,9 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				if (szVar[0] == L'0' && szVar[1] == L'x')
 				{
 					dwConEmuHwnd = wcstoul(szVar+2, &psz, 16);
-					if (!user->isWindow((HWND)dwConEmuHwnd))
+					if (!IsWindow((HWND)dwConEmuHwnd))
 						dwConEmuHwnd = 0;
-					else if (!user->getClassNameW((HWND)dwConEmuHwnd, szVar, countof(szVar)))
+					else if (!GetClassName((HWND)dwConEmuHwnd, szVar, countof(szVar)))
 						dwConEmuHwnd = 0;
 					else if (lstrcmp(szVar, VirtualConsoleClassMain) != 0)
 						dwConEmuHwnd = 0;
@@ -1172,7 +1101,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 
 			if (!gnServerPID && GetEnvironmentVariable(ENV_CONEMUSERVERPID_VAR_W, szVar, countof(szVar)))
 			{
-				gnServerPID = wcstoul(szVar, &psz, 10);
+				SetServerPID(wcstoul(szVar, &psz, 10));
 			}
 
 			if (dwConEmuHwnd)
@@ -1201,7 +1130,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 					{
 						if (pOut->AttachGuiApp.nFlags & agaf_Success)
 						{
-							user->allowSetForegroundWindow(pOut->hdr.nSrcPID); // PID ConEmu.
+							AllowSetForegroundWindow(pOut->hdr.nSrcPID); // PID ConEmu.
 							_ASSERTEX(gnGuiPID==0 || gnGuiPID==pOut->hdr.nSrcPID);
 							gnGuiPID = pOut->hdr.nSrcPID;
 							//ghConEmuWnd = (HWND)dwConEmuHwnd;
@@ -1210,10 +1139,10 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 							ghConEmuWnd = pOut->AttachGuiApp.hConEmuWnd;
 							SetConEmuHkWindows(pOut->AttachGuiApp.hConEmuDc, pOut->AttachGuiApp.hConEmuBack);
 							ghConWnd = pOut->AttachGuiApp.hSrvConWnd;
-							_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
+							_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
 							grcConEmuClient = pOut->AttachGuiApp.rcWindow;
 							_ASSERTE(pOut->AttachGuiApp.nServerPID && (pOut->AttachGuiApp.nPID == pOut->AttachGuiApp.nServerPID));
-							gnServerPID = pOut->AttachGuiApp.nServerPID;
+							SetServerPID(pOut->AttachGuiApp.nServerPID);
 							//gbGuiClientHideCaption = pOut->AttachGuiApp.bHideCaption;
 							gGuiClientStyles = pOut->AttachGuiApp.Styles;
 							if (pOut->AttachGuiApp.hkl)
@@ -1428,6 +1357,11 @@ void DllStop()
 	StopPTY();
 	#endif
 
+	if (gpDefTerm)
+	{
+		gpDefTerm->StopHookers();
+	}
+
 	print_timings(L"DllStop");
 	//gbDllStopCalled = TRUE; -- в конце
 
@@ -1486,7 +1420,7 @@ void DllStop()
 	{
 		DLOG0("unhookWindowsHookEx",0);
 		print_timings(L"unhookWindowsHookEx");
-		user->unhookWindowsHookEx(ghGuiClientRetHook);
+		UnhookWindowsHookEx(ghGuiClientRetHook);
 		DLOGEND();
 	}
 	#endif
@@ -1609,7 +1543,6 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			gnSelfPID = GetCurrentProcessId();
 			ghWorkingModule = (u64)hModule;
 			gfGetRealConsoleWindow = GetConsoleWindow;
-			user = (UserImp*)calloc(1, sizeof(*user));
 			DLOGEND1();
 
 
@@ -1714,9 +1647,6 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			//_ASSERTE(ghHeap == NULL);
 			//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 
-			if (gbPrepareDefaultTerminal)
-				user->setAllowLoadLibrary();
-
 
 			DLOG1_("DllMain.DllStart",ul_reason_for_call);
 			#ifdef HOOK_USE_DLLTHREAD
@@ -1752,8 +1682,6 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			}
 			#endif
 			DLOGEND1();
-
-			user->setAllowLoadLibrary();
 
 			if (gbIsSshProcess && bCurrentThreadIsMain && (GetCurrentThreadId() == gnHookMainThreadId))
 			{
@@ -1924,7 +1852,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 //					//if (hConEmu)
 //					//{
 //					//	wchar_t szClass[64];
-//					//	if (GetClassNameW(hConEmu, szClass, 63) && lstrcmpW(szClass, VirtualConsoleClass)==0)
+//					//	if (GetClassName(hConEmu, szClass, 63) && lstrcmpW(szClass, VirtualConsoleClass)==0)
 //					//	{
 //					//		//if (!gnMsgActivateCon) --> DllMain
 //					//		//	gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
@@ -2054,10 +1982,10 @@ void SendStarted()
 				ghConEmuWnd = pOut->StartStopRet.hWnd;
 				_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
 				SetConEmuHkWindows(pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
-				_ASSERTE(ghConEmuWndDC && user->isWindow(ghConEmuWndDC));
-				_ASSERTE(ghConEmuWndBack && user->isWindow(ghConEmuWndBack));
+				_ASSERTE(ghConEmuWndDC && IsWindow(ghConEmuWndDC));
+				_ASSERTE(ghConEmuWndBack && IsWindow(ghConEmuWndBack));
 
-				gnServerPID = pOut->StartStopRet.dwMainSrvPID;
+				SetServerPID(pOut->StartStopRet.dwMainSrvPID);
 				ExecuteFreeResult(pOut); pOut = NULL;
 			}
 		}
@@ -2215,6 +2143,81 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	if (!gpStartEnv)
 		return -1;
 
+	if ((Duplicate->sCommand[0] == 0) && (ghAttachGuiClient && IsWindow(ghAttachGuiClient)))
+	{
+		// Putty/Kitty?
+		if (lstrcmpi(gsExeName, L"PUTTY.EXE") == 0
+			|| lstrcmpi(gsExeName, L"KITTY.EXE") == 0 || lstrcmpi(gsExeName, L"KITTY_PORTABLE.EXE") == 0)
+		{
+			// Let's try to duplicate using PUTTY ability
+			const UINT IDM_DUPSESS = 0x0030; // from PUTTY's "WINDOW.C"
+
+			CShellProc::mn_LastStartedPID = 0;
+			CShellProc::mb_StartingNewGuiChildTab = true;
+			LRESULT lRc = SendMessage(ghAttachGuiClient, WM_SYSCOMMAND, IDM_DUPSESS, 0);
+			CShellProc::mb_StartingNewGuiChildTab = false;
+
+			if (lRc == 0)
+			{
+				DWORD nCreatedPID = CShellProc::mn_LastStartedPID;
+				HWND  hCreatedWnd = NULL;
+				if (nCreatedPID)
+				{
+					// Find create PUTTY/KITTY window
+					wchar_t szClass[100] = L"", szTest[100] = L"";
+					DWORD nPID;
+					GetClassName(ghAttachGuiClient, szClass, countof(szClass));
+					DWORD nStarted = GetTickCount(), nDelta, nMaxWait = 5000;
+					while ((nDelta = (GetTickCount() - nStarted)) < nMaxWait)
+					{
+						if ((hCreatedWnd = FindWindow(szClass, NULL)) != NULL)
+						{
+							if ((hCreatedWnd != ghAttachGuiClient)
+								&& GetWindowThreadProcessId(hCreatedWnd, &nPID)
+								&& (nPID == nCreatedPID))
+							{
+								break;
+							}
+							else
+							{
+								hCreatedWnd = NULL;
+							}
+						}
+						Sleep(200);
+					}
+
+					if (hCreatedWnd)
+					{
+						// Run new server, if window found
+						// ConEmuC.exe /GID=4984 /GHWND=00140500 /GUIATTACH=0009128A /PID=4656
+						wchar_t szSrvCmd[MAX_PATH+128] = L"", szSelf[MAX_PATH] = L"", *pch;
+						if (GetModuleFileName(ghOurModule, szSelf, countof(szSelf)))
+						{
+							pch = wcsrchr(szSelf, L'\\');
+							if (pch) *(pch+1) = 0;
+							msprintf(szSrvCmd, countof(szSrvCmd), L"\"%s%s\" /GID=%u /GHWND=%08X /GUIATTACH=%08X /PID=%u",
+								szSelf, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"),
+								gnGuiPID, (DWORD)(DWORD_PTR)ghConEmuWnd, (DWORD)(DWORD_PTR)hCreatedWnd, nCreatedPID);
+
+							STARTUPINFO si = {sizeof(si)};
+							si.wShowWindow = SW_HIDE;
+							si.dwFlags = STARTF_USESHOWWINDOW;
+							PROCESS_INFORMATION pi = {};
+							DWORD nCreateFlags = NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE;
+							if (CreateProcess(NULL, szSrvCmd, NULL, NULL, FALSE, nCreateFlags, NULL, NULL, &si, &pi))
+							{
+								CloseHandle(pi.hProcess);
+								CloseHandle(pi.hThread);
+							}
+						}
+					}
+				}
+
+				return 0;
+			}
+		}
+	}
+
 	// Well, allow user to run anything inheriting active process state
 	LPCWSTR pszCmdLine = Duplicate->sCommand[0] ? Duplicate->sCommand : gpStartEnv->pszCmdLine;
 
@@ -2284,7 +2287,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 		pszCmdLine);
 
 	si.dwFlags |= STARTF_USESHOWWINDOW;
-	si.wShowWindow = user->isWindowVisible(ghConWnd) ? SW_SHOWNORMAL : SW_HIDE;
+	si.wShowWindow = IsWindowVisible(ghConWnd) ? SW_SHOWNORMAL : SW_HIDE;
 
 	if (Duplicate->nColors)
 	{
@@ -2329,7 +2332,7 @@ HWND WINAPI GetRealConsoleWindow()
 	_ASSERTE(gfGetRealConsoleWindow);
 	HWND hConWnd = gfGetRealConsoleWindow ? gfGetRealConsoleWindow() : NULL; //GetConsoleWindow();
 #ifdef _DEBUG
-	wchar_t sClass[64]; user->getClassNameW(hConWnd, sClass, countof(sClass));
+	wchar_t sClass[64]; GetClassName(hConWnd, sClass, countof(sClass));
 	_ASSERTEX(hConWnd==NULL || isConsoleClass(sClass));
 #endif
 	return hConWnd;
@@ -2353,12 +2356,13 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			if (!ghConEmuWnd)
 			{
 				// gnGuiPID мог остаться от предыдущего 'detach'
-				if (user->getWindowThreadProcessId(pCmd->AttachGuiApp.hConEmuWnd, &gnGuiPID) && gnGuiPID)
+				if (GetWindowThreadProcessId(pCmd->AttachGuiApp.hConEmuWnd, &gnGuiPID) && gnGuiPID)
 				{
 					ghConEmuWnd = pCmd->AttachGuiApp.hConEmuWnd;
 				}
 			}
 			_ASSERTE(gnServerPID && (gnServerPID == pCmd->AttachGuiApp.nServerPID));
+			SetServerPID(pCmd->AttachGuiApp.nServerPID);
 			gbGuiClientExternMode = FALSE;
 			gGuiClientStyles = pCmd->AttachGuiApp.Styles;
 			//ghConEmuWndDC -- еще нету
@@ -2399,7 +2403,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				ghAttachGuiClient = NULL;
 				ghConEmuWnd = NULL;
 				SetConEmuHkWindows(NULL, NULL);
-				gnServerPID = 0;
+				SetServerPID(0);
 			}
 
 		} // CECMD_SETGUIEXTERN
@@ -2465,7 +2469,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 	case CECMD_STARTSERVER:
 		{
 			int nErrCode = -1;
-			wchar_t szSelf[MAX_PATH+16], *pszNamePtr, szArgs[128];
+			wchar_t szSelf[MAX_PATH+16], *pszNamePtr, szCmdLine[MAX_PATH+128];
 			PROCESS_INFORMATION pi = {};
 			STARTUPINFO si = {sizeof(si)};
 
@@ -2473,31 +2477,38 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			{
 				// Запускаем сервер той же битности, что и текущий процесс
 				_wcscpy_c(pszNamePtr, 16, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
+
 				if (gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_GUI)
 				{
 					_ASSERTEX(pCmd->NewServer.hAppWnd!=0);
-					msprintf(szArgs, countof(szArgs), L" /GID=%u /GHWND=%08X /GUIATTACH=%08X /PID=%u",
+					msprintf(szCmdLine, countof(szCmdLine),
+							L"\"%s\" /GID=%u /GHWND=%08X /GUIATTACH=%08X /PID=%u",
+							szSelf,
 							pCmd->NewServer.nGuiPID, (DWORD)pCmd->NewServer.hGuiWnd, (DWORD)pCmd->NewServer.hAppWnd, GetCurrentProcessId());
 					gbAttachGuiClient = TRUE;
 				}
 				else
 				{
 					_ASSERTEX(pCmd->NewServer.hAppWnd==0);
-					msprintf(szArgs, countof(szArgs), L" /GID=%u /GHWND=%08X /ATTACH /PID=%u",
+					msprintf(szCmdLine, countof(szCmdLine),
+						L"\"%s\" /GID=%u /GHWND=%08X /ATTACH /PID=%u",
+						szSelf,
 						pCmd->NewServer.nGuiPID, (DWORD)pCmd->NewServer.hGuiWnd, GetCurrentProcessId());
 				}
 
-				if (user->isWindowVisible(ghConWnd))
+				if (IsWindowVisible(ghConWnd))
 				{
 					si.dwFlags |= STARTF_USESHOWWINDOW;
 					si.wShowWindow = SW_SHOWNORMAL;
 				}
 
-				lbRc = CreateProcess(szSelf, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+				lbRc = CreateProcess(NULL, szCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 				if (lbRc)
 				{
 					CloseHandle(pi.hProcess); CloseHandle(pi.hThread);
 					nErrCode = 0;
+					_ASSERTE(gnServerPID==0 && "Must not be set yet");
+					SetServerPID(pi.dwProcessId);
 				}
 				else
 				{

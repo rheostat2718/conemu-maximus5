@@ -250,10 +250,13 @@ bool IsAutoAttachAllowed()
 {
 	if (!ghConWnd)
 		return false;
+
 	if (!IsWindowVisible(ghConWnd))
-		return false;
+		return (gbDefTermCall || gbAttachFromFar);
+
 	if (IsIconic(ghConWnd))
 		return false;
+
 	return true;
 }
 
@@ -266,7 +269,7 @@ int AttachRootProcess()
 
 	_ASSERTE((gpSrv->hRootProcess == NULL || gpSrv->hRootProcess == GetCurrentProcess()) && "Must not be opened yet");
 
-	if (!gpSrv->DbgInfo.bDebuggerActive && !IsWindowVisible(ghConWnd) && !(gnConEmuPID || gbAttachFromFar))
+	if (!gpSrv->DbgInfo.bDebuggerActive && !IsAutoAttachAllowed() && !(gnConEmuPID || gbAttachFromFar))
 	{
 		PRINT_COMSPEC(L"Console windows is not visible. Attach is unavailable. Exiting...\n", 0);
 		DisableAutoConfirmExit();
@@ -2576,7 +2579,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 		// "/config"!
 		wchar_t szConfigName[MAX_PATH] = {};
-		DWORD nCfgNameLen = GetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, szConfigName, countof(szConfigName));
+		DWORD nCfgNameLen = GetEnvironmentVariable(ENV_CONEMU_CONFIG_W, szConfigName, countof(szConfigName));
 		if (nCfgNameLen && (nCfgNameLen < countof(szConfigName)) && *szConfigName)
 		{
 			lstrcatW(pszSelf, L" /config \"");

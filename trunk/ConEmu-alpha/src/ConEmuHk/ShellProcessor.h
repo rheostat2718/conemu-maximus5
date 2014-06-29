@@ -35,6 +35,10 @@ struct RConStartArgs;
 
 class CShellProc
 {
+public:
+	static bool  mb_StartingNewGuiChildTab;
+	static DWORD mn_LastStartedPID;
+
 private:
 	RConStartArgs m_Args;
 
@@ -75,7 +79,6 @@ private:
 	BOOL mb_InShellExecuteEx;
 
 	CESERVER_CONSOLE_MAPPING_HDR m_SrvMapping;
-	ConEmuGuiMapping m_GuiMapping;
 
 	HWND mh_PreConEmuWnd, mh_PreConEmuWndDC;
 	BOOL mb_TempConEmuWnd;
@@ -121,11 +124,8 @@ public:
 	// Вызывается после успешного создания процесса
 	void OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *lpPI);
 	void OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE ahProcess);
-	// Или консоли (*.vshost.exe)
-	void OnAllocConsoleFinished();
 public:
 	// Helper
-	int StartDefTermHooker(DWORD nForePID);
 	bool GetLinkProperties(LPCWSTR asLnkFile, CmdArg& rsExe, CmdArg& rsArgs, CmdArg& rsWorkDir);
 	bool InitOle32();
 protected:

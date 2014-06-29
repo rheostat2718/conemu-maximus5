@@ -37,7 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "SetHook.h"
 #include "ConEmuHooks.h"
-#include "UserImp.h"
 #include "../common/ConsoleAnnotation.h"
 #include "ExtConsole.h"
 #include "../common/WinConsole.h"
@@ -49,7 +48,7 @@ DWORD AnsiTlsIndex = 0;
 ///* ***************** */
 
 #undef isPressed
-#define isPressed(inp) ((user->getKeyState(inp) & 0x8000) == 0x8000)
+#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
 #define ANSI_MAP_CHECK_TIMEOUT 1000
 
@@ -2632,7 +2631,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 							|| (r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)
 							|| (r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE)))
 				{
-					SetEnvironmentVariable(ENV_CONEMUANSI_WAITKEY,
+					SetEnvironmentVariable(ENV_CONEMU_WAITKEY,
 						(r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) ? L"RETURN" :
 						(r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)  ? L"SPACE" :
 						(r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE) ? L"ESC" :
@@ -2640,7 +2639,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 				}
 				else
 				{
-					SetEnvironmentVariable(ENV_CONEMUANSI_WAITKEY, L"");
+					SetEnvironmentVariable(ENV_CONEMU_WAITKEY, L"");
 				}
 			}
 			else if (Code.ArgSZ[2] == L'6' && Code.ArgSZ[3] == L';')

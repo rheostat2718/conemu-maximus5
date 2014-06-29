@@ -2,13 +2,13 @@ NAME = ConEmuHk
 SRCS = Entry.cpp \
        Ansi.cpp \
        ConEmuHooks.cpp \
+       DefTermHk.cpp \
        ExtConsole.cpp \
        Injects.cpp \
        RegHooks.cpp \
        SetHook.cpp \
        ShellProcessor.cpp \
        GuiAttach.cpp \
-       UserImp.cpp \
        ../common/CmdLine.cpp \
        ../common/Common.cpp \
        ../common/ConEmuCheck.cpp \

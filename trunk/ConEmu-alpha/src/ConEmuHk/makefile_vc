@@ -51,6 +51,7 @@ $(OBJDIR)\Entry.obj \
 $(OBJDIR)\Injects.obj \
 $(OBJDIR)\Ansi.obj \
 $(OBJDIR)\ConEmuHooks.obj \
+$(OBJDIR)\DefTermHk.obj \
 $(OBJDIR)\RegHooks.obj \
 $(OBJDIR)\Execute.obj \
 $(OBJDIR)\ExtConsole.obj \
@@ -68,8 +69,7 @@ $(OBJDIR)\Memory.obj \
 $(OBJDIR)\MSecurity.obj \
 $(OBJDIR)\MStrSafe.obj \
 $(OBJDIR)\GuiAttach.obj \
-$(OBJDIR)\RConStartArgs.obj \
-$(OBJDIR)\UserImp.obj
+$(OBJDIR)\RConStartArgs.obj
 
 USERLIBS = 
 
@@ -288,6 +288,8 @@ $(OBJDIR)\ConEmuCmd.obj: ConEmuCmd.cpp
 $(OBJDIR)\Ansi.obj: Ansi.cpp
 
 $(OBJDIR)\ConEmuHooks.obj: ConEmuHooks.cpp
+
+$(OBJDIR)\DefTermHk.obj: DefTermHk.cpp
 
 $(OBJDIR)\RegHooks.obj: RegHooks.cpp
 

@@ -86,6 +86,10 @@ namespace ConEmuAbout
 		{L"License", pAboutLicense},
 	};
 
+	wchar_t sLastOpenTab[32] = L"";
+
+	void TabSelected(HWND hDlg, int idx);
+
 	DWORD nTextSelStart = 0, nTextSelEnd = 0;
 };
 
@@ -167,7 +171,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			}
 
 			HWND hTab = GetDlgItem(hDlg, tbAboutTabs);
-			size_t nPage = 0;
+			INT_PTR nPage = -1;
 
 			for (size_t i = 0; i < countof(Pages); i++)
 			{
@@ -180,11 +184,15 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 					nPage = i;
 			}
 
-			SetDlgItemText(hDlg, tAboutText, Pages[nPage].Text);
 
-			if (nPage != 0)
+			if (nPage >= 0)
 			{
+				TabSelected(hDlg, nPage);
 				TabCtrl_SetCurSel(hTab, (int)nPage);
+			}
+			else if (!pszActivePage)
+			{
+				TabSelected(hDlg, 0);
 			}
 			else
 			{
@@ -267,7 +275,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			{
 				int iPage = TabCtrl_GetCurSel(nmhdr->hwndFrom);
 				if ((iPage >= 0) && (iPage < (int)countof(Pages)))
-					SetDlgItemText(hDlg, tAboutText, Pages[iPage].Text);
+					TabSelected(hDlg, iPage);
 			}
 			break;
 		}
@@ -319,7 +327,7 @@ void ConEmuAbout::searchProc(HWND hDlg, HWND hSearch, bool bReentr)
 			pszFrom += cchFrom;
 
 		LPCWSTR pszFind = StrStrI(pszFrom, pszPart);
-		if (!pszFind && (pszFrom != pszText))
+		if (!pszFind && bReentr && (pszFrom != pszText))
 			pszFind = StrStrI(pszText, pszPart);
 
 		if (pszFind)
@@ -357,7 +365,7 @@ void ConEmuAbout::searchProc(HWND hDlg, HWND hSearch, bool bReentr)
 			}
 			if (iFound >= 0)
 			{
-				SetDlgItemText(hDlg, tAboutText, Pages[iFound].Text);
+				TabSelected(hDlg, iFound);
 				TabCtrl_SetCurSel(hTab, iFound);
 				//SetFocus(hEdit);
 				bRetry = true;
@@ -421,12 +429,26 @@ void ConEmuAbout::OnInfo_FlattrLink()
 	}
 }
 
+void ConEmuAbout::TabSelected(HWND hDlg, int idx)
+{
+	if (idx < 0 || idx >= countof(Pages))
+		return;
+
+	wcscpy_c(sLastOpenTab, Pages[idx].Title);
+	SetDlgItemText(hDlg, tAboutText, Pages[idx].Text);
+}
 
 void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 {
 	InitCommCtrls();
 
 	bool bOk = false;
+
+	if (!asPageName && sLastOpenTab[0])
+	{
+		// Reopen last active tab
+		asPageName = sLastOpenTab;
+	}
 
 	{
 		DontEnable de;

@@ -1222,6 +1222,55 @@ void StripWords(wchar_t* pszText, const wchar_t* pszWords)
 	}
 }
 
+void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark)
+{
+	if (!pszText || !*pszText || !pszCommentMark || !*pszCommentMark)
+		return;
+
+	wchar_t* pszSrc = pszText;
+	wchar_t* pszDst = pszText;
+	INT_PTR iLeft = wcslen(pszText) + 1;
+	INT_PTR iCmp = wcslen(pszCommentMark);
+
+	while (iLeft > 1)
+	{
+		wchar_t* pszEOL = wcspbrk(pszSrc, L"\r\n");
+		if (!pszEOL)
+			pszEOL = pszSrc + iLeft;
+		else if (pszEOL[0] == L'\r' && pszEOL[1] == L'\n')
+			pszEOL += 2;
+		else
+			pszEOL ++;
+
+		INT_PTR iLine = pszEOL - pszSrc;
+
+		if (wcsncmp(pszSrc, pszCommentMark, iCmp) == 0)
+		{
+			// Drop this line
+			if (iLeft <= iLine)
+			{
+				_ASSERTE(iLeft >= iLine);
+				*pszDst = 0;
+				break;
+			}
+			else
+			{
+				wmemmove(pszDst, pszEOL, iLeft - iLine);
+				iLeft -= iLine;
+			}
+		}
+		else
+		{
+			// Skip to next line
+            iLeft -= iLine;
+            pszSrc += iLine;
+            pszDst += iLine;
+		}
+	}
+
+	*pszDst = 0;
+}
+
 BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
@@ -3335,8 +3384,8 @@ void DebugNeedCmdUnitTests()
 	BOOL b;
 	struct strTests { LPCWSTR pszCmd; BOOL bNeed; }
 	Tests[] = {
-		{L"\"C:\\cygwin\\bin\\make.exe -f \"makefile\" COMMON=\"../../../plugins/common\"\"", FALSE},
-		{L"\"\"C:\\FAR\\Far.exe  -new_console\"\"", FALSE},
+		{L"\"C:\\windows\\notepad.exe -f \"makefile\" COMMON=\"../../../plugins/common\"\"", FALSE},
+		{L"\"\"C:\\windows\\notepad.exe  -new_console\"\"", FALSE},
 		{L"\"\"cmd\"\"", FALSE},
 		{L"cmd /c \"\"C:\\Program Files\\Windows NT\\Accessories\\wordpad.exe\" -?\"", FALSE},
 		{L"cmd /c \"dir c:\\\"", FALSE},
@@ -3356,6 +3405,25 @@ void DebugNeedCmdUnitTests()
 	}
 }
 
+void DebugStrUnitTest()
+{
+	struct strTests { wchar_t szTest[100], szCmp[100]; }
+	Tests[] = {
+		{L"Line1\n#Comment1\nLine2\r\n#Comment2\r\nEnd of file", L"Line1\nLine2\r\nEnd of file"},
+		{L"Line1\n#Comment1\r\n", L"Line1\n"}
+	};
+	int iCmp;
+	for (INT_PTR i = 0; i < countof(Tests); i++)
+	{
+		StripLines(Tests[i].szTest, L"#");
+		iCmp = wcscmp(Tests[i].szTest, Tests[i].szCmp);
+		_ASSERTE(iCmp == 0);
+		StripLines(Tests[i].szTest, L"#");
+		iCmp = wcscmp(Tests[i].szTest, Tests[i].szCmp);
+		_ASSERTE(iCmp == 0);
+	}
+}
+
 void DebugUnitTests()
 {
 	RConStartArgs::RunArgTests();
@@ -3368,6 +3436,7 @@ void DebugUnitTests()
 	DebugVersionTest();
 	DebugFileExistTests();
 	ConEmuMacro::UnitTests();
+	DebugStrUnitTest();
 }
 #endif
 
@@ -3423,6 +3492,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
 	DEBUGSTRSTARTUP(L"WinMain entered");
 	int iMainRc = 0;
+
+#ifdef _DEBUG
+	gbAllowChkHeap = true;
+#endif
 
 	if (!IsDebuggerPresent())
 	{
@@ -4107,8 +4180,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpSetCls->isAdvLogging = (BYTE)(curCommand[4] - L'0'); // 1..4
 				}
-				else if (!klstricmp(curCommand, _T("/single")))
+				else if (!klstricmp(curCommand, _T("/single")) || !klstricmp(curCommand, _T("/reuse")))
 				{
+					// "/reuse" switch to be remastered
 					gpSetCls->SingleInstanceArg = sgl_Enabled;
 				}
 				else if (!klstricmp(curCommand, _T("/nosingle")))
@@ -4395,17 +4469,28 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Only when ExitAfterActionPrm, otherwise - it will be called from ConEmu's PostCreate
 	if (SetUpDefaultTerminal)
 	{
-		if (ExitAfterActionPrm)
-		{
-			//Just will exit after all running processes will be infiltrated
-			//MessageBox(L"'/Exit' switch can not be used together with '/SetDefTerm'!", MB_ICONSTOP);
-			gpSetCls->ibExitAfterDefTermSetup = true;
-			gpSetCls->ibDisableSaveSettingsOnExit = true;
-			ExitAfterActionPrm = false;
-		}
+		_ASSERTE(!gpConEmu->DisableSetDefTerm);
 
 		gpSet->isSetDefaultTerminal = true;
 		gpSet->isRegisterOnOsStartup = true;
+
+		if (ExitAfterActionPrm)
+		{
+			if (gpConEmu->mp_DefTrm)
+			{
+				// Update registry with ‘DefTerm-...’ settings
+				gpConEmu->mp_DefTrm->ApplyAndSave(true, true);
+				// Hook all required processes and exit
+				gpConEmu->mp_DefTrm->StartGuiDefTerm(true, true);
+			}
+			else
+			{
+				_ASSERTE(gpConEmu->mp_DefTrm);
+			}
+
+			// Exit now
+			gpSetCls->ibDisableSaveSettingsOnExit = true;
+		}
 	}
 
 	// Actions done

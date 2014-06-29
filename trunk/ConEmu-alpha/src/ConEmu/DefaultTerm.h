@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012 Maximus5
+Copyright (c) 2012-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,55 +29,32 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "../common/MArray.h"
+#include "../common/DefTermBase.h"
 
-class CDefaultTerminal
+class CDefaultTerminal : public CDefTermBase
 {
 public:
 	CDefaultTerminal();
-	~CDefaultTerminal();
+	virtual ~CDefaultTerminal();
 
-	bool CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread = true);
-	void PostCreated(bool bWaitForReady = false, bool bShowErrors = false);
+	void StartGuiDefTerm(bool bManual, bool bNoThreading = false);
+	void OnTaskbarCreated();
+
 	void CheckRegisterOsStartup();
+	void ApplyAndSave(bool bApply, bool bSaveToReg);
 	bool IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, bool* pbLeaveInTSA);
-	void OnHookedListChanged();
-	//void OnDefTermStarted(CESERVER_REQ* pIn);
 
-	bool isDefaultTerminalAllowed();
+	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false); // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
 
-private:
-	struct ProcessInfo
-	{
-		HANDLE    hProcess;
-		DWORD     nPID;
-		//BOOL    bHooksSucceeded;
-		DWORD     nHookTick; // informational field
-	};
-	struct ProcessIgnore
-	{
-		DWORD nPID;
-		DWORD nTick;
-	};
-private:
-	HWND mh_LastWnd, mh_LastIgnoredWnd, mh_LastCall;
-	//HANDLE mh_SignEvent;
-	BOOL mb_ReadyToHook;
-	MArray<ProcessInfo> m_Processed;
-	void ClearProcessed(bool bForceAll);
-	static DWORD WINAPI PostCreatedThread(LPVOID lpParameter);
-	static DWORD WINAPI PostCheckThread(LPVOID lpParameter);
-	bool CheckShellWindow();
-	bool mb_Initialized;
-	DWORD mn_PostThreadId;
-	bool  mb_PostCreatedThread;
-	MArray<HANDLE> m_Threads;
-	CRITICAL_SECTION mcs;
-	void ClearThreads(bool bForceTerminate);
-	struct ThreadArg
-	{
-		CDefaultTerminal* pTerm;
-		HWND hFore;
-		DWORD nForePID;
-	};
+protected:
+	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL);
+	virtual void ShowTrayIconError(LPCWSTR asErrText); // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
+	virtual void ReloadSettings(); // Copy from gpSet or load from [HKCU]
+	virtual void PreCreateThread();
+	virtual void PostCreateThreadFinished();
+	virtual void AutoClearThreads();
+	virtual void ConhostLocker(bool bLock, bool& bWasLocked);
+	// nPID = 0 when hooking is done (remove status bar notification)
+	// sName is executable name or window class name
+	virtual bool NotifyHookingStatus(DWORD nPID, LPCWSTR sName);
 };
