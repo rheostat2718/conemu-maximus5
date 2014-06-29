@@ -69,11 +69,15 @@ extern CEStartupEnv* gpStartEnv;
 #include "../common/InQueue.h"
 #include "../common/MMap.h"
 
+void SetServerPID(DWORD anMainSrvPID);
+
 //extern MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap;
 //extern CESERVER_CONSOLE_MAPPING_HDR* gpConInfo;
 CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate=FALSE);
 void OnConWndChanged(HWND ahNewConWnd);
 bool AttachServerConsole();
+typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
+AttachConsole_t GetAttachConsoleProc();
 
 typedef HWND (WINAPI* GetConsoleWindow_T)();
 extern GetConsoleWindow_T gfGetRealConsoleWindow;
@@ -164,9 +168,7 @@ extern bool gbSkipVirtualAllocErr;
 extern bool gbPrepareDefaultTerminal;
 extern bool gbIsNetVsHost;
 extern bool gbIsVStudio;
-//extern HANDLE ghDefaultTerminalReady;
-extern ConEmuGuiMapping* gpDefaultTermParm; // полный путь к ConEmu.exe (GUI), "/config", параметры для "confirm" и "no-injects"
-bool isDefaultTerminalEnabled();
+extern int  gnVsHostStartConsole;
 /* ************ Globals for "Default terminal ************ */
 
 void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName = NULL);
@@ -207,14 +209,7 @@ extern "C" {
 
 	#define getThreadId() WIN3264TEST(((DWORD*) __readfsdword(24))[9],GetCurrentThreadId())
 
-	#if !defined(_DEBUG)
-		#define getTime GetTickCount
-	#elif defined(__GNUC__)
-		#define getTime GetTickCount
-	#else
-		#define getTime timeGetTime
-		#pragma comment(lib, "winmm.lib")
-	#endif
+	#define getTime GetTickCount
 
 	// Originally from http://preshing.com/20120522/lightweight-in-memory-logging
 	namespace HookLogger

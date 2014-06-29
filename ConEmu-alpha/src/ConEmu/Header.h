@@ -118,7 +118,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TIMER_RCLICKPAINT_ELAPSE 20
 #define TIMER_ADMSHIELD_ID 7
 #define TIMER_ADMSHIELD_ELAPSE 1000
-#define TIMER_RUNQUEUE_ID 8
 #define TIMER_QUAKE_AUTOHIDE_ID 9
 #define TIMER_QUAKE_AUTOHIDE_ELAPSE 100
 #define TIMER_FAILED_TABBAR_ID 10 // FAILED_TABBAR_TIMERID
@@ -759,6 +758,9 @@ bool NextLine(const wchar_t*& pszFrom, wchar_t** pszLine);
 
 // pszWords - '|'separated
 void StripWords(wchar_t* pszText, const wchar_t* pszWords);
+
+// pszCommentMark - for example L"#"
+void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark);
 
 // One message cycle step
 bool ProcessMessage(MSG& Msg);

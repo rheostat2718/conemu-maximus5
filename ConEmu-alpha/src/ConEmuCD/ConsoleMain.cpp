@@ -176,6 +176,8 @@ int     gbRootWasFoundInCon = 0;
 BOOL    gbComspecInitCalled = FALSE;
 AttachModeEnum gbAttachMode = am_None; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console, или /GUIATTACH, или /ADMIN)
 BOOL    gbAlienMode = FALSE;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
+BOOL    gbDefTermCall = FALSE; // сервер запущен из DefTerm приложения (*.vshost.exe), конcоль может быть скрыта
+BOOL    gbCreatingHiddenConsole = FALSE; // Используется для "тихого" открытия окна RealConsole из *.vshost.exe
 BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
@@ -2335,8 +2337,13 @@ int CheckAttachProcess()
 {
 	LogFunction(L"CheckAttachProcess");
 
-	BOOL lbArgsFailed = FALSE;
+	int liArgsFailed = 0;
 	wchar_t szFailMsg[512]; szFailMsg[0] = 0;
+	DWORD nProcesses[20] = {};
+	DWORD nProcCount;
+	BOOL lbRootExists = FALSE;
+	wchar_t szProc[255] = {}, szTmp[10] = {};
+	DWORD nFindId;
 
 	if (gpSrv->hRootProcessGui)
 	{
@@ -2344,7 +2351,7 @@ int CheckAttachProcess()
 		{
 			_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach of GUI application was requested,\n"
 				L"but required HWND(0x%08X) not found!", (DWORD)gpSrv->hRootProcessGui);
-			lbArgsFailed = TRUE;
+			liArgsFailed = 1;
 			// will return CERR_CARGUMENT
 		}
 		else
@@ -2355,7 +2362,7 @@ int CheckAttachProcess()
 				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach of GUI application was requested,\n"
 					L"but PID(%u) of HWND(0x%08X) does not match Root(%u)!",
 					nPid, (DWORD)gpSrv->hRootProcessGui, gpSrv->dwRootProcess);
-				lbArgsFailed = TRUE;
+				liArgsFailed = 2;
 				// will return CERR_CARGUMENT
 			}
 		}
@@ -2363,20 +2370,33 @@ int CheckAttachProcess()
 	else if (pfnGetConsoleProcessList==NULL)
 	{
 		wcscpy_c(szFailMsg, L"Attach to console app was requested, but required WinXP or higher!");
-		lbArgsFailed = TRUE;
+		liArgsFailed = 3;
 		// will return CERR_CARGUMENT
 	}
 	else
 	{
-		DWORD nProcesses[20];
-		DWORD nProcCount = pfnGetConsoleProcessList(nProcesses, 20);
+		nProcCount = pfnGetConsoleProcessList(nProcesses, 20);
+
+		if ((nProcCount == 1) && gbCreatingHiddenConsole)
+		{
+			// Подождать, пока вызвавший процесс прицепится к нашей созданной консоли
+			DWORD nStart = GetTickCount(), nMaxDelta = 30000, nDelta = 0;
+			while (nDelta < nMaxDelta)
+			{
+				Sleep(100);
+				nProcCount = pfnGetConsoleProcessList(nProcesses, 20);
+				if (nProcCount > 1)
+					break;
+				nDelta = (GetTickCount() - nStart);
+			}
+		}
 
 		// 2 процесса, потому что это мы сами и минимум еще один процесс в этой консоли,
 		// иначе смысла в аттаче нет
 		if (nProcCount < 2)
 		{
 			wcscpy_c(szFailMsg, L"Attach to console app was requested, but there is no console processes!");
-			lbArgsFailed = TRUE;
+			liArgsFailed = 4;
 			//will return CERR_CARGUMENT
 		}
 		// не помню, зачем такая проверка была введена, но (nProcCount > 2) мешает аттачу.
@@ -2384,10 +2404,9 @@ int CheckAttachProcess()
 		//// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
 		else if ((gpSrv->dwRootProcess != 0) || (nProcCount > 2))
 		{
-			BOOL lbRootExists = (gpSrv->dwRootProcess == 0);
+			lbRootExists = (gpSrv->dwRootProcess == 0);
 			// И ругаться только под отладчиком
-			wchar_t szProc[255] = {0}, szTmp[10]; //StringCchPrintf(szProc, countof(szProc), L"%i, %i, %i", nProcesses[0], nProcesses[1], nProcesses[2]);
-			DWORD nFindId = 0;
+			nFindId = 0;
 
 			for (int n = ((int)nProcCount-1); n >= 0; n--)
 			{
@@ -2419,19 +2438,19 @@ int CheckAttachProcess()
 			if ((gpSrv->dwRootProcess != 0) && !lbRootExists)
 			{
 				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach to GUI was requested, but\n" L"root process (%u) does not exists", gpSrv->dwRootProcess);
-				lbArgsFailed = TRUE;
+				liArgsFailed = 5;
 				//will return CERR_CARGUMENT
 			}
 			else if ((gpSrv->dwRootProcess == 0) && (nProcCount > 2))
 			{
 				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach to GUI was requested, but\n" L"there is more than 2 console processes: %s\n", szProc);
-				lbArgsFailed = TRUE;
+				liArgsFailed = 6;
 				//will return CERR_CARGUMENT
 			}
 		}
 	}
 
-	if (lbArgsFailed)
+	if (liArgsFailed)
 	{
 		LPCWSTR pszCmdLine = GetCommandLineW(); if (!pszCmdLine) pszCmdLine = L"";
 
@@ -3869,6 +3888,12 @@ void SetWorkEnvVar()
 	SetEnvironmentVariable(ENV_CONEMUWORKDRIVE_VAR_W, GetDrive(szPath, szDrive, countof(szDrive)));
 	GetModuleFileName(ghOurModule, szPath, countof(szPath));
 	SetEnvironmentVariable(ENV_CONEMUDRIVE_VAR_W, GetDrive(szPath, szDrive, countof(szDrive)));
+
+	// Same as gpConEmu->ms_ConEmuBuild
+	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
+	msprintf(szDrive, countof(szDrive), L"%02u%02u%02u%s%s",
+		(MVV_1%100), MVV_2, MVV_3, szVer4[0]&&szVer4[1]?L"-":L"", szVer4);
+	SetEnvironmentVariable(ENV_CONEMU_BUILD_W, szDrive);
 }
 
 // 1. Заменить подстановки вида: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
@@ -4339,6 +4364,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			pszStart = szArg.ms_Arg+14;
 			gpSrv->dwParentFarPID = wcstoul(pszStart, &pszEnd, 10);
 		}
+		else if (wcscmp(szArg, L"/CREATECON")==0)
+		{
+			gbCreatingHiddenConsole = TRUE;
+			//_ASSERTE(FALSE && "Continue to create con");
+		}
 		else if (wcsncmp(szArg, L"/PID=", 5)==0 || wcsncmp(szArg, L"/TRMPID=", 8)==0
 			|| wcsncmp(szArg, L"/FARPID=", 8)==0 || wcsncmp(szArg, L"/CONPID=", 8)==0)
 		{
@@ -4350,6 +4380,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			if (wcsncmp(szArg, L"/TRMPID=", 8)==0)
 			{
 				// This is called from *.vshost.exe when "AllocConsole" just created
+				gbDefTermCall = TRUE;
 				gbDontInjectConEmuHk = TRUE;
 				pszStart = szArg.ms_Arg+8;
 			}
@@ -4799,6 +4830,17 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			gnCmdUnicodeMode = 2;
 		}
+		else if (lstrcmpi(szArg, L"/CONFIG")==0)
+		{
+			if ((iRc = NextArg(&lsCmdLine, szArg)) != 0)
+			{
+				_ASSERTE(FALSE && "Config name was not specified!");
+				_wprintf(L"Config name was not specified!\r\n");
+				break;
+			}
+			// Reuse config if starting "ConEmu.exe" from console server!
+			SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, szArg);
+		}
 		// После этих аргументов - идет то, что передается в CreateProcess!
 		else if (wcscmp(szArg, L"/ROOT")==0 || wcscmp(szArg, L"/root")==0)
 		{
@@ -4906,7 +4948,9 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 		BOOL lbIsWindowVisible = FALSE;
 		// Добавим проверку на telnet
-		if (!ghConWnd || !(lbIsWindowVisible = IsWindowVisible(ghConWnd)) || isTerminalMode())
+		if (!ghConWnd
+			|| !(lbIsWindowVisible = IsAutoAttachAllowed())
+			|| isTerminalMode())
 		{
 			// Но это может быть все-таки наше окошко. Как проверить...
 			// Найдем первый параметр
@@ -5462,7 +5506,8 @@ wrap:
 	#if defined(_DEBUG) && defined(SHOW_EXITWAITKEY_MSGBOX)
 	wchar_t szTitle[128];
 	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC[Srv]: PID=%u", GetCurrentProcessId());
-	MessageBox(NULL, asConfirm ? asConfirm : L"???", szTitle, MB_ICONEXCLAMATION|MB_SYSTEMMODAL);
+	if (!gbStopExitWaitForKey)
+		MessageBox(NULL, asConfirm ? asConfirm : L"???", szTitle, MB_ICONEXCLAMATION|MB_SYSTEMMODAL);
 	#endif
 	return nKeyPressed;
 }

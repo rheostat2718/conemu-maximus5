@@ -1861,10 +1861,6 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	{
 		_ASSERTE(pRCon->mh_MainSrv==NULL);
 
-		// -- pushed to queue from ::Constructor!
-		//// Move all "CreateProcess-es" to Main Thread
-		//gpConEmu->mp_RunQueue->RequestRConStartup(pRCon);
-
 		HANDLE hWait[] = {pRCon->mh_TermEvent, pRCon->mh_StartExecuted};
 		DWORD nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, INFINITE);
 		if ((nWait == WAIT_OBJECT_0) || !pRCon->mb_StartResult)
@@ -3312,8 +3308,8 @@ BOOL CRealConsole::StartProcess()
 		return FALSE;
 	}
 
-	// Must be executed in Main Thread
-	_ASSERTE(gpConEmu->isMainThread());
+	// Must be executed in Runner Thread
+	_ASSERTE(gpConEmu->mp_RunQueue->isRunnerThread());
 	// Monitor thread must be started already
 	_ASSERTE(mn_MonitorThreadID!=0);
 
@@ -3782,7 +3778,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	_ASSERTE(nWndWidth>0 && nWndHeight>0);
 
 	const DWORD nAID = GetMonitorThreadID();
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(gpConEmu->mp_RunQueue->isRunnerThread());
 	_ASSERTE(mn_MonitorThreadID!=0 && mn_MonitorThreadID==nAID && nAID!=GetCurrentThreadId());
 
 	nCurLen = _tcslen(psCurCmd);
@@ -13094,7 +13090,11 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 
 	SafeFree(pszInfo);
 
-	lstrcpyn(m_ConStatus.szText, asStatus, countof(m_ConStatus.szText));
+	size_t cchMax = countof(m_ConStatus.szText);
+	if (asStatus[0])
+		lstrcpyn(m_ConStatus.szText, asStatus, cchMax);
+	else
+		wmemset(m_ConStatus.szText, 0, cchMax);
 	m_ConStatus.Options = Options;
 
 	if (!gpSet->isStatusBarShow && !(Options & cso_Critical) && (asStatus && *asStatus))

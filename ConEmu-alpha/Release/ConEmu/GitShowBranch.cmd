@@ -88,6 +88,10 @@ set gitbranch_ln=%~1
 call :eval
 goto :EOF
 
+:drop_ext
+for /F "delims=." %%l in ("%gitbranch%") do set gitbranch=%%l
+goto :EOF
+
 :run
 
 
@@ -96,7 +100,7 @@ if "%TEMP:~-1%" == "\" (set gitlogpath=%TEMP:~0,-1%) else (set gitlogpath=%TEMP%
 set git_out=%gitlogpath%\conemu_git_1.log
 set git_err=%gitlogpath%\conemu_git_2.log
 
-call %ConEmuGitPath%  -c color.status=false status --short --branch 1>"%git_out%" 2>"%git_err%"
+call %ConEmuGitPath% -c color.status=false status --short --branch --porcelain 1>"%git_out%" 2>"%git_err%"
 if errorlevel 1 (
 del "%git_out%">nul
 del "%git_err%">nul
@@ -128,7 +132,12 @@ goto prepare
 )
 
 rem "set" does not like brackets
-if "%gitbranch%" == "## HEAD (no branch)" set gitbranch=## HEAD.no_branch
+if "%gitbranch%" == "## HEAD (no branch)" (
+set gitbranch=## HEAD.no_branch
+) else (
+rem Drop external branch name (alpha...origin/alpha)
+call :drop_ext
+)
 
 rem Are there changes? Or we need to display branch name only?
 if "%gitbranch_add% %gitbranch_chg% %gitbranch_del%" == "0 0 0" (

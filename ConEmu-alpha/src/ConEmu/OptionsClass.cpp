@@ -280,7 +280,6 @@ CSettings::CSettings()
 	UpdateDpi();
 
 	// Go
-	ibExitAfterDefTermSetup = false;
 	isResetBasicSettings = false;
 	isFastSetupDisabled = false;
 	isDontCascade = false;
@@ -900,7 +899,7 @@ void CSettings::SetConfigName(LPCWSTR asConfigName)
 		wcscpy_c(ConfigPath, CONEMU_ROOT_KEY L"\\.Vanilla");
 		ConfigName[0] = 0;
 	}
-	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, ConfigName);
+	SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, ConfigName);
 }
 
 bool CSettings::SetOption(LPCWSTR asName, int anValue)
@@ -3829,6 +3828,7 @@ LRESULT CSettings::OnInitDialog_DefTerm(HWND hWnd2, bool abInitial)
 	CheckDlgButton(hWnd2, cbDefaultTerminalStartup, bRegister);
 	CheckDlgButton(hWnd2, cbDefaultTerminalTSA, bLeaveInTSA);
 	EnableWindow(GetDlgItem(hWnd2, cbDefaultTerminalTSA), bRegister);
+	CheckDlgButton(hWnd2, cbDefTermAgressive, gpSet->isRegisterAgressive);
 	CheckDlgButton(hWnd2, cbDefaultTerminalNoInjects, gpSet->isDefaultTerminalNoInjects);
 	CheckDlgButton(hWnd2, cbDefaultTerminalUseExisting, !gpSet->isDefaultTerminalNewWindow);
 	CheckRadioButton(hWnd2, rbDefaultTerminalConfAuto, rbDefaultTerminalConfNever, rbDefaultTerminalConfAuto+gpSet->nDefaultTerminalConfirmClose);
@@ -6386,19 +6386,18 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		case rbDefaultTerminalConfAlways:
 		case rbDefaultTerminalConfNever:
 			{
-				bool bUpdateGuiMapping = false;
 				bool bSetupDefaultTerminal = false;
 
 				switch (CB)
 				{
 				case cbDefaultTerminal:
 					gpSet->isSetDefaultTerminal = IsChecked(hWnd2, cbDefaultTerminal);
-					bUpdateGuiMapping = true;
 					bSetupDefaultTerminal = gpSet->isSetDefaultTerminal;
 					break;
 				case cbDefaultTerminalStartup:
 				case cbDefaultTerminalTSA:
-					if (IsChecked(hWnd2, cbDefaultTerminalStartup))
+				case cbDefTermAgressive:
+					if (IsChecked(hWnd2, cbDefaultTerminalStartup) || IsChecked(hWnd2, cbDefTermAgressive))
 					{
 						if (!gpSet->isSetDefaultTerminal)
 						{
@@ -6409,7 +6408,6 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 							}
 							gpSet->isSetDefaultTerminal = true;
 							checkDlgButton(hWnd2, cbDefaultTerminal, BST_CHECKED);
-							bUpdateGuiMapping = true;
 							bSetupDefaultTerminal = true;
 						}
 						gpSet->isRegisterOnOsStartup = true;
@@ -6419,17 +6417,16 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpSet->isRegisterOnOsStartup = false;
 					}
 					gpSet->isRegisterOnOsStartupTSA = IsChecked(hWnd2, cbDefaultTerminalTSA);
+					gpSet->isRegisterAgressive = IsChecked(hWnd2, cbDefTermAgressive);
 					EnableWindow(GetDlgItem(hWnd2, cbDefaultTerminalTSA), gpSet->isRegisterOnOsStartup);
 					// And update registry
 					gpConEmu->mp_DefTrm->CheckRegisterOsStartup();
 					break;
 				case cbDefaultTerminalNoInjects:
 					gpSet->isDefaultTerminalNoInjects = IsChecked(hWnd2, cbDefaultTerminalNoInjects);
-					bUpdateGuiMapping = true;
 					break;
 				case cbDefaultTerminalUseExisting:
 					gpSet->isDefaultTerminalNewWindow = !IsChecked(hWnd2, cbDefaultTerminalUseExisting);
-					bUpdateGuiMapping = true;
 					break;
 				case rbDefaultTerminalConfAuto:
 				case rbDefaultTerminalConfAlways:
@@ -6437,14 +6434,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					gpSet->nDefaultTerminalConfirmClose =
 						IsChecked(hWnd2, rbDefaultTerminalConfAuto) ? 0 :
 						IsChecked(hWnd2, rbDefaultTerminalConfAlways) ? 1 : 2;
-					bUpdateGuiMapping = true;
 					break;
 				}
 
-				if (bUpdateGuiMapping)
-				{
-					gpConEmu->OnGlobalSettingsChanged();
-				}
+				gpConEmu->mp_DefTrm->ApplyAndSave(true, true);
 
 				if (gpSet->isSetDefaultTerminal && bSetupDefaultTerminal)
 				{
@@ -6453,7 +6446,9 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					// Redraw checkboxes to avoid lags in painting while installing hooks
 					RedrawWindow(hWnd2, NULL, NULL, RDW_UPDATENOW|RDW_ALLCHILDREN);
 					// Инициировать эксплорер, если он еще не был обработан
-					gpConEmu->mp_DefTrm->PostCreated(true, true);
+					gpConEmu->mp_DefTrm->StartGuiDefTerm(true);
+					// Вернуть фокус в окно настроек
+					SetForegroundWindow(ghOpWnd);
 				}
 			}
 			break;

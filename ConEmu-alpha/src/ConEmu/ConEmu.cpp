@@ -288,8 +288,10 @@ CConEmuMain::CConEmuMain()
 	//#define D(N) (1##N-100)
 
 	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
+	// Same as ConsoleMain.cpp::SetWorkEnvVar()
 	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L"%02u%02u%02u%s%s",
 		(MVV_1%100), MVV_2, MVV_3, szVer4[0]&&szVer4[1]?L"-":L"", szVer4);
+	// And title
 	_wsprintf(ms_ConEmuDefTitle, SKIPLEN(countof(ms_ConEmuDefTitle)) L"ConEmu %s [%i%s]",
 		ms_ConEmuBuild, WIN3264TEST(32,64), RELEASEDEBUGTEST(L"",L"D"));
 
@@ -633,8 +635,8 @@ CConEmuMain::CConEmuMain()
 	// Добавить в окружение переменную с папкой к ConEmu.exe
 	SetEnvironmentVariable(ENV_CONEMUDIR_VAR_W, ms_ConEmuExeDir);
 	SetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, ms_ConEmuBaseDir);
-	SetEnvironmentVariable(ENV_CONEMUANSI_BUILD_W, ms_ConEmuBuild);
-	SetEnvironmentVariable(ENV_CONEMUANSI_CONFIG_W, L"");
+	SetEnvironmentVariable(ENV_CONEMU_BUILD_W, ms_ConEmuBuild);
+	SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, L"");
 	// переменная "ConEmuArgs" заполняется в ConEmuApp.cpp:PrepareCommandLine
 
 	wchar_t szDrive[MAX_PATH];
@@ -764,7 +766,6 @@ CConEmuMain::CConEmuMain()
 	mn_MsgTaskBarCreated = RegisterMessage("TaskbarCreated",L"TaskbarCreated");
 	mn_MsgTaskBarBtnCreated = RegisterMessage("TaskbarButtonCreated",L"TaskbarButtonCreated");
 	mn_MsgSheelHook = RegisterMessage("SHELLHOOK",L"SHELLHOOK");
-	mn_MsgRequestRunProcess = RegisterMessage("RequestRunProcess");
 	mn_MsgDeleteVConMainThread = RegisterMessage("DeleteVConMainThread");
 	mn_MsgReqChangeCurPalette = RegisterMessage("ChangeCurrentPalette");
 	mn_MsgMacroExecSync = RegisterMessage("MacroExecSync");
@@ -1371,7 +1372,7 @@ bool CConEmuMain::IsFastSetupDisabled()
 
 bool CConEmuMain::IsAllowSaveSettingsOnExit()
 {
-	return !(gpSetCls->ibDisableSaveSettingsOnExit || gpSetCls->ibExitAfterDefTermSetup || IsResetBasicSettings());
+	return !(gpSetCls->ibDisableSaveSettingsOnExit || IsResetBasicSettings());
 }
 
 void CConEmuMain::OnUseGlass(bool abEnableGlass)
@@ -2706,36 +2707,6 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	//wcscpy_c(m_GuiInfo.sConEmuDir, ms_ConEmuExeDir);
 	//wcscpy_c(m_GuiInfo.sConEmuBaseDir, ms_ConEmuBaseDir);
 	_wcscpyn_c(m_GuiInfo.sConEmuArgs, countof(m_GuiInfo.sConEmuArgs), mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(m_GuiInfo.sConEmuArgs));
-
-	/* Default terminal begin */
-	m_GuiInfo.bUseDefaultTerminal = gpSet->isSetDefaultTerminal;
-	wchar_t szOpt[16] = {}; wchar_t* pszOpt = szOpt;
-	LPCWSTR pszConfig = gpSetCls->GetConfigName();
-	switch (gpSet->nDefaultTerminalConfirmClose)
-	{
-		case 0: break; // auto
-		case 1: *(pszOpt++) = L'c'; break; // always
-		case 2: *(pszOpt++) = L'n'; break; // never
-	}
-	if (gpSet->isDefaultTerminalNoInjects)
-		*(pszOpt++) = L'i';
-	if (gpSet->isDefaultTerminalNewWindow)
-		*(pszOpt++) = L'N';
-	_ASSERTE(pszOpt < (szOpt+countof(szOpt)));
-	// Preparing arguments
-	m_GuiInfo.sDefaultTermArg[0] = 0;
-	if (pszConfig && *pszConfig)
-	{
-		wcscat_c(m_GuiInfo.sDefaultTermArg, L"/config \"");
-		wcscat_c(m_GuiInfo.sDefaultTermArg, pszConfig);
-		wcscat_c(m_GuiInfo.sDefaultTermArg, L"\" ");
-	}
-	if (*szOpt)
-	{
-		wcscat_c(m_GuiInfo.sDefaultTermArg, L"-new_console:");
-		wcscat_c(m_GuiInfo.sDefaultTermArg, szOpt);
-	}
-	/* Default terminal end */
 
 	// *********************
 	// *** ComSpec begin ***
@@ -10515,7 +10486,7 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 		bLastRealAlso = abRealAlso;
 		bLastDialogsAlso = abDialogsAlso;
 
-		if (!isMe && nForePID && mp_DefTrm && gpSet->isSetDefaultTerminal && gpConEmu->isMainThread())
+		if (!isMe && nForePID && mp_DefTrm->IsReady() && gpSet->isSetDefaultTerminal && gpConEmu->isMainThread())
 		{
 			// If user want to use ConEmu as default terminal for CUI apps
 			// we need to hook GUI applications (e.g. explorer)
@@ -11727,7 +11698,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
 		}
 
-		mp_DefTrm->PostCreated();
+		mp_DefTrm->StartGuiDefTerm(false);
 	}
 
 	mn_StartupFinished = abReceived ? ss_PostCreate2Finished : ss_PostCreate1Finished;
@@ -12858,6 +12829,9 @@ void CConEmuMain::OnTaskbarCreated()
 	// И передернуть все TaskBarGhost
 	CVConGroup::OnTaskbarCreated();
 
+	// Refresh DefTerm hooking
+	if (mp_DefTrm) mp_DefTrm->OnTaskbarCreated();
+
 	// Dummy
 	if (mp_DragDrop) mp_DragDrop->OnTaskbarCreated();
 }
@@ -12893,6 +12867,9 @@ void CConEmuMain::OnDefaultTermChanged()
 {
 	if (!this || !mp_DefTrm)
 		return;
+
+	// Save to registry only from Settings window or ConEmu startup
+	mp_DefTrm->ApplyAndSave(true, false);
 
 	mp_DefTrm->OnHookedListChanged();
 }
@@ -17402,10 +17379,6 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 			OnTimer_AdmShield();
 			break;
 
-		case TIMER_RUNQUEUE_ID:
-			mp_RunQueue->ProcessRunQueue(false);
-			break;
-
 		case TIMER_QUAKE_AUTOHIDE_ID:
 			OnTimer_QuakeFocus();
 			break;
@@ -17421,23 +17394,6 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 
 	mb_InTimer = FALSE;
 	return result;
-}
-
-void CConEmuMain::SetRunQueueTimer(bool bSet, UINT uElapse)
-{
-	static bool bLastSet = false;
-
-	if (bSet)
-	{
-		if (!bLastSet)
-			SetKillTimer(true, TIMER_RUNQUEUE_ID, uElapse);
-	}
-	else
-	{
-		SetKillTimer(false, TIMER_RUNQUEUE_ID, 0);
-	}
-
-	bLastSet = bSet;
 }
 
 void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
@@ -19161,11 +19117,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				this->OnTaskbarButtonCreated();
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 				return result;
-			}
-			else if (messg == this->mn_MsgRequestRunProcess)
-			{
-				this->mp_RunQueue->ProcessRunQueue(true);
-				return 0;
 			}
 			else if (messg == this->mn_MsgDeleteVConMainThread)
 			{

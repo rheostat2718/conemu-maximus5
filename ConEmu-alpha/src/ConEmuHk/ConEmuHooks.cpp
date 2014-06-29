@@ -34,6 +34,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#undef REPORT_VIRTUAL_ALLOC
 #endif
 
+#ifdef _DEBUG
+	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
+#else
+	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
+#endif
+
 #define DROP_SETCP_ON_WIN2K3R2
 //#define SHOWDEBUGSTR -- специально отключено, CONEMU_MINIMAL, OutputDebugString могут нарушать работу процессов
 //#define SKIPHOOKLOG
@@ -75,9 +81,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetHook.h"
 #include "../common/execute.h"
 #include "ConEmuHooks.h"
+#include "DefTermHk.h"
 #include "RegHooks.h"
 #include "ShellProcessor.h"
-#include "UserImp.h"
 #include "GuiAttach.h"
 #include "Ansi.h"
 #include "../common/CmdLine.h"
@@ -110,7 +116,7 @@ void PatchDialogParentWnd(HWND& hWndParent);
 
 
 #undef isPressed
-#define isPressed(inp) ((user->getKeyState(inp) & 0x8000) == 0x8000)
+#define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
 //110131 попробуем просто добвавить ее в ExcludedModules
 //#include <WinInet.h>
@@ -227,33 +233,11 @@ bool gbDosBoxProcess = false;
 bool gbSkipVirtualAllocErr = false;
 /* ************ Don't show VirtualAlloc errors ************ */
 
-/* ************ Globals for "Default terminal ************ */
-bool gbPrepareDefaultTerminal = false;
-bool gbIsNetVsHost = false;
-bool gbIsVStudio = false;
-//HANDLE ghDefaultTerminalReady = NULL; // 
-ConEmuGuiMapping* gpDefaultTermParm = NULL;
-// forward and external
-bool InitHooksDefaultTrm();
-extern bool InitDefaultTerm();
-// helper
-bool isDefaultTerminalEnabled()
-{
-	if (!gbPrepareDefaultTerminal || !gpDefaultTermParm)
-		return false;
-	if ((gpDefaultTermParm->cbSize != sizeof(*gpDefaultTermParm)) || (gpDefaultTermParm->nProtocolVersion != CESERVER_REQ_VER))
-		return false;
-	if (!*gpDefaultTermParm->sConEmuExe || !gpDefaultTermParm->bUseDefaultTerminal)
-		return false;
-	return true;
-}
-/* ************ Globals for "Default terminal ************ */
-
-
 /* ************ From Entry.cpp ************ */
 #if defined(__GNUC__)
 extern "C"
 #endif
+// Вызывается из OnTerminateProcess и OnTerminateThread
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved);
 /* ************ From Entry.cpp ************ */
 
@@ -660,38 +644,43 @@ bool InitHooksDefaultTrm()
 		{(void*)OnWinExec,				"WinExec",				kernel32},
 		// Need for hook "Run as administrator"
 		{(void*)OnShellExecuteExW,		"ShellExecuteExW",		shell32},
+		{0}
+	};
+	HookItem HooksCmdLine[] =
+	{
 		// Issue 1125: "Run as administrator" too. Must be last export
 		{(void*)OnShellExecCmdLine,		"ShellExecCmdLine",		shell32,   265},
+		{0}
+	};
+	HookItem HooksVshost[] =
+	{
 		// Issue 1312: .Net applications runs in "*.vshost.exe" helper GUI apllication when debugging
 		{(void*)OnAllocConsole,			"AllocConsole",			kernel32}, // Only for "*.vshost.exe"?
+		{(void*)OnShowWindow,			"ShowWindow",			user32},
 		/* ************************ */
 		{0}
 	};
 
-	size_t iNullIdx = countof(HooksCommon)-1;
-	size_t iAllocIdx = countof(HooksCommon)-2;
-	size_t iCmdLineIdx = countof(HooksCommon)-3;
-
-	//if (GetModuleHandle(L"MSCOREE.DLL") != NULL) -- excess check?
-	_ASSERTE(HooksCommon[iAllocIdx].NewAddress == (void*)OnAllocConsole);
-	if (!gbIsNetVsHost)
-	{
-		HooksCommon[iAllocIdx] = HooksCommon[iNullIdx];
-	}
+	InitHooks(HooksCommon);
 
 	// Windows 8. There is new undocumented function "ShellExecCmdLine" used by Explorer
-	if (!(gpStartEnv->os.dwMajorVersion == 6 && gpStartEnv->os.dwMinorVersion <= 2))
+	#ifndef _WIN32_WINNT_WIN8
+		#define _WIN32_WINNT_WIN8 0x602
+	#endif
+	_ASSERTE(_WIN32_WINNT_WIN8==0x602);
+	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN8), LOBYTE(_WIN32_WINNT_WIN8)};
+	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
+	BOOL isWindows8 = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+	if (isWindows8)
 	{
-		_ASSERTEX(HooksCommon[iCmdLineIdx].NameOrdinal == 265);
-		HooksCommon[iCmdLineIdx] = HooksCommon[iAllocIdx];
-		HooksCommon[iAllocIdx] = HooksCommon[iNullIdx];
-	}
-	else
-	{
-		//_ASSERTEX(FALSE && "Continue to hook");
+		InitHooks(HooksCmdLine);
 	}
 
-	InitHooks(HooksCommon);
+	// "*.vshost.exe" uses special helper
+	if (gbIsNetVsHost)
+	{
+		InitHooks(HooksVshost);
+	}
 
 	return true;
 }
@@ -791,10 +780,10 @@ bool InitHooksFar()
 		}
 		free(pszExe);
 	}
-	
+
 	if (!lbIsFar)
 		return true; // не хукать
-	
+
 	HookItem HooksFarOnly[] =
 	{
 	//	{OnlstrcmpiA,      "lstrcmpiA",      kernel32, 0},
@@ -974,7 +963,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 	wchar_t sClass[128];
 	if (ghConWnd)
 	{
-		user->getClassNameW(ghConWnd, sClass, countof(sClass));
+		GetClassName(ghConWnd, sClass, countof(sClass));
 		_ASSERTE(isConsoleClass(sClass));
 	}
 
@@ -1022,7 +1011,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 		HLOG1_("StartupHooks.InitHooks",1);
 		InitHooksUser32();
 		HLOGEND1();
-		
+
 		// Far only functions
 		HLOG1_("StartupHooks.InitHooks",2);
 		InitHooksFar();
@@ -1069,7 +1058,7 @@ BOOL StartupHooks(HMODULE ahOurDll)
 //void ShutdownHooks()
 //{
 //	UnsetAllHooks();
-//	
+//
 //	//// Завершить работу с реестром
 //	//DoneHooksReg();
 //
@@ -1106,11 +1095,11 @@ BOOL StartupHooks(HMODULE ahOurDll)
 // Forward
 BOOL GuiSetForeground(HWND hWnd);
 void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT uCount, DWORD dwTimeout);
-//BOOL PrepareExecuteParmsA(enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags, 
+//BOOL PrepareExecuteParmsA(enum CmdOnCreateType aCmd, LPCSTR asAction, DWORD anFlags,
 //				LPCSTR asFile, LPCSTR asParam,
 //				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
 //				LPSTR* psFile, LPSTR* psParam, DWORD& nImageSubsystem, DWORD& nImageBits);
-//BOOL PrepareExecuteParmsW(enum CmdOnCreateType aCmd, LPCWSTR asAction, DWORD anFlags, 
+//BOOL PrepareExecuteParmsW(enum CmdOnCreateType aCmd, LPCWSTR asAction, DWORD anFlags,
 //				LPCWSTR asFile, LPCWSTR asParam,
 //				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr,
 //				LPWSTR* psFile, LPWSTR* psParam, DWORD& nImageSubsystem, DWORD& nImageBits);
@@ -1162,7 +1151,7 @@ BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LP
 	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
-	
+
 
 	if (ph && ph->PreCallBack)
 	{
@@ -1199,7 +1188,7 @@ BOOL WINAPI OnCreateProcessA(LPCSTR lpApplicationName,  LPSTR lpCommandLine,  LP
 		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 		ph->PostCallBack(&args);
 	}
-	
+
 	SetLastError(dwErr);
 	return lbRc;
 }
@@ -1338,7 +1327,7 @@ UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow)
 	BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 	DWORD dwErr = 0;
-	
+
 	CShellProc* sp = new CShellProc();
 	if (!sp || !sp->OnCreateProcessA(NULL, &lpCmdLine, NULL, &nCreateFlags, sa))
 	{
@@ -1366,7 +1355,7 @@ UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow)
 		SETARGS10(&lbRc, lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 		ph->PostCallBack(&args);
 	}
-	
+
 	SetLastError(dwErr);
 	return lbRc;
 #endif
@@ -1623,7 +1612,7 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 	//LPSTR pszTempApp = NULL, pszTempArg = NULL;
 	//lpNew = (LPSHELLEXECUTEINFOA)malloc(lpExecInfo->cbSize);
 	//memmove(lpNew, lpExecInfo, lpExecInfo->cbSize);
-	
+
 	CShellProc* sp = new CShellProc();
 	if (!sp || !sp->OnShellExecuteExA(&lpExecInfo))
 	{
@@ -1640,7 +1629,7 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 
 	//	HANDLE hDummy = NULL;
 	//	DWORD nImageSubsystem = 0, nImageBits = 0;
-	//	if (PrepareExecuteParmsA(eShellExecute, lpNew->lpVerb, lpNew->fMask, 
+	//	if (PrepareExecuteParmsA(eShellExecute, lpNew->lpVerb, lpNew->fMask,
 	//			lpNew->lpFile, lpNew->lpParameters,
 	//			hDummy, hDummy, hDummy,
 	//			&pszTempApp, &pszTempArg, nImageSubsystem, nImageBits))
@@ -1650,17 +1639,17 @@ BOOL WINAPI OnShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo)
 	//		lpNew->lpParameters = pszTempArg;
 	//	}
 	//}
-	
+
 	BOOL lbRc;
 
 	//if (gFarMode.bFarHookMode && gFarMode.bShellNoZoneCheck)
 	//	lpExecInfo->fMask |= SEE_MASK_NOZONECHECKS;
-		
+
 	//gbInShellExecuteEx = TRUE;
 
 	lbRc = F(ShellExecuteExA)(lpExecInfo);
 	DWORD dwErr = GetLastError();
-	
+
 	//if (lbRc && gfGetProcessId && lpNew->hProcess)
 	//{
 	//	dwProcessID = gfGetProcessId(lpNew->hProcess);
@@ -1857,7 +1846,7 @@ HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, L
 		if (!hwnd || hwnd == GetConsoleWindow())
 			hwnd = ghConEmuWnd;
 	}
-	
+
 	//gbInShellExecuteEx = TRUE;
 	CShellProc* sp = new CShellProc();
 	if (!sp || !sp->OnShellExecuteA(&lpOperation, &lpFile, &lpParameters, &lpDirectory, NULL, (DWORD*)&nShowCmd))
@@ -1870,7 +1859,7 @@ HINSTANCE WINAPI OnShellExecuteA(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, L
 	HINSTANCE lhRc;
 	lhRc = F(ShellExecuteA)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
 	DWORD dwErr = GetLastError();
-	
+
 	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, NULL); //-V112
 	delete sp;
 
@@ -1894,7 +1883,7 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 		if (!hwnd || hwnd == GetConsoleWindow())
 			hwnd = ghConEmuWnd;
 	}
-	
+
 	//gbInShellExecuteEx = TRUE;
 	CShellProc* sp = new CShellProc();
 	if (!sp || !sp->OnShellExecuteW(&lpOperation, &lpFile, &lpParameters, &lpDirectory, NULL, (DWORD*)&nShowCmd))
@@ -1907,7 +1896,7 @@ HINSTANCE WINAPI OnShellExecuteW(HWND hwnd, LPCWSTR lpOperation, LPCWSTR lpFile,
 	HINSTANCE lhRc;
 	lhRc = F(ShellExecuteW)(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
 	DWORD dwErr = GetLastError();
-	
+
 	sp->OnShellFinished(((INT_PTR)lhRc > 32), lhRc, NULL); //-V112
 	delete sp;
 
@@ -2015,7 +2004,7 @@ BOOL WINAPI OnShowCursor(BOOL bShow)
 			bShow = TRUE; // Disallow cursor hiding
 		}
 	}
-	
+
 	if (F(ShowCursor))
 	{
 		bRc = F(ShowCursor)(bShow);
@@ -2030,7 +2019,14 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 	ORIGINALFASTEX(ShowWindow,NULL);
 	BOOL lbRc = FALSE, lbGuiAttach = FALSE, lbInactiveTab = FALSE;
 	static bool bShowWndCalled = false;
-	
+
+	if (gbPrepareDefaultTerminal && ghConWnd && (hWnd == ghConWnd) && nCmdShow && (gnVsHostStartConsole > 0))
+	{
+		DefTermMsg(L"ShowWindow(hConWnd) calling");
+		nCmdShow = SW_HIDE;
+		gnVsHostStartConsole--;
+	}
+
 	if (ghConEmuWndDC && (hWnd == ghConEmuWndDC || hWnd == ghConWnd))
 	{
 		#ifdef _DEBUG
@@ -2059,7 +2055,7 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 		if (!bShowWndCalled)
 		{
 			bShowWndCalled = true;
-			if (!lbRc && nCmdShow && !user->isWindowVisible(hWnd))
+			if (!lbRc && nCmdShow && !IsWindowVisible(hWnd))
 			{
 				F(ShowWindow)(hWnd, nCmdShow);
 			}
@@ -2068,7 +2064,7 @@ BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 		// Если вкладка НЕ активная - то вернуть фокус в ConEmu
 		if (lbGuiAttach && lbInactiveTab && nCmdShow && ghConEmuWnd)
 		{
-			user->setForegroundWindow(ghConEmuWnd);
+			SetForegroundWindow(ghConEmuWnd);
 		}
 	}
 	DWORD dwErr = GetLastError();
@@ -2092,7 +2088,7 @@ HWND WINAPI OnSetParent(HWND hWndChild, HWND hWndNewParent)
 		_ASSERTE(hWndChild != ghConEmuWndDC);
 		return NULL; // обманем
 	}
-	
+
 	if (hWndNewParent && ghConEmuWndDC)
 	{
 		_ASSERTE(hWndNewParent!=ghConEmuWnd);
@@ -2220,7 +2216,7 @@ HWND WINAPI OnGetAncestor(HWND hWnd, UINT gaFlags)
 			else
 			{
 				wchar_t szName[255];
-				user->getClassNameW(hWnd, szName, countof(szName));
+				GetClassName(hWnd, szName, countof(szName));
 				if (wcsncmp(szName, L"WindowsForms", 12) == 0)
 				{
 					GetWindowText(hWnd, szName, countof(szName));
@@ -2351,7 +2347,7 @@ BOOL WINAPI OnSetForegroundWindow(HWND hWnd)
 
 		//if (gbShowOnSetForeground && lbRc)
 		//{
-		//	if (user->isWindow(hWnd) && !IsWindowVisible(hWnd))
+		//	if (IsWindow(hWnd) && !IsWindowVisible(hWnd))
 		//		ShowWindow(hWnd, SW_SHOW);
 		//}
 	}
@@ -2371,11 +2367,11 @@ BOOL WINAPI OnSetMenu(HWND hWnd, HMENU hMenu)
 		if ((gnAttachGuiClientFlags & (agaf_WS_CHILD|agaf_NoMenu|agaf_DotNet)) == (agaf_WS_CHILD|agaf_NoMenu))
 		{
 			gnAttachGuiClientFlags &= ~(agaf_WS_CHILD|agaf_NoMenu);
-			DWORD_PTR dwStyle = user->getWindowLongPtrW(ghAttachGuiClient, GWL_STYLE);
+			DWORD_PTR dwStyle = GetWindowLongPtr(ghAttachGuiClient, GWL_STYLE);
 			DWORD_PTR dwNewStyle = (dwStyle & ~WS_CHILD) | (gnAttachGuiClientStyle & WS_POPUP);
 			if (dwStyle != dwNewStyle)
 			{
-				user->setWindowLongPtrW(ghAttachGuiClient, GWL_STYLE, dwNewStyle);
+				SetWindowLongPtr(ghAttachGuiClient, GWL_STYLE, dwNewStyle);
 			}
 		}
 	}
@@ -2402,7 +2398,7 @@ BOOL WINAPI OnMoveWindow(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL 
 		// GUI приложениями запрещено самостоятельно двигаться внутри ConEmu
 		OnSetGuiClientWindowPos(hWnd, NULL, X, Y, nWidth, nHeight, 0);
 	}
-	
+
 	if (F(MoveWindow))
 		lbRc = F(MoveWindow)(hWnd, X, Y, nWidth, nHeight, bRepaint);
 
@@ -2602,9 +2598,9 @@ BOOL WINAPI OnGetWindowPlacement(HWND hWnd, WINDOWPLACEMENT *lpwndpl)
 		lbRc = F(GetWindowPlacement)(hWnd, lpwndpl);
 
 	if (lbRc && ghConEmuWndDC && !gbGuiClientExternMode && ghAttachGuiClient
-		&& hWnd == ghAttachGuiClient && user)
+		&& hWnd == ghAttachGuiClient)
 	{
-		user->mapWindowPoints(ghConEmuWndDC, NULL, (LPPOINT)&lpwndpl->rcNormalPosition, 2);
+		MapWindowPoints(ghConEmuWndDC, NULL, (LPPOINT)&lpwndpl->rcNormalPosition, 2);
 	}
 
 	return lbRc;
@@ -2829,7 +2825,7 @@ BOOL WINAPI OnGetMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgF
 
 	if (lRc && ghAttachGuiClient)
 		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
-		
+
 	return lRc;
 }
 BOOL WINAPI OnGetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax)
@@ -2843,7 +2839,7 @@ BOOL WINAPI OnGetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgF
 
 	if (lRc && ghAttachGuiClient)
 		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
-	
+
 	_ASSERTRESULT(TRUE);
 	return lRc;
 }
@@ -2858,7 +2854,7 @@ BOOL WINAPI OnPeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsg
 
 	if (lRc && ghAttachGuiClient)
 		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
-		
+
 	return lRc;
 }
 BOOL WINAPI OnPeekMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgFilterMax, UINT wRemoveMsg)
@@ -2872,7 +2868,7 @@ BOOL WINAPI OnPeekMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsg
 
 	if (lRc && ghAttachGuiClient)
 		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
-		
+
 	return lRc;
 }
 
@@ -2971,8 +2967,8 @@ HWND WINAPI OnCreateDialogIndirectParamA(HINSTANCE hInstance, LPCDLGTEMPLATE lpT
 
 		if (hWnd && bAttachGui)
 		{
-			lStyle = (DWORD)user->getWindowLongPtrW(hWnd, GWL_STYLE);
-			lStyleEx = (DWORD)user->getWindowLongPtrW(hWnd, GWL_EXSTYLE);
+			lStyle = (DWORD)GetWindowLongPtr(hWnd, GWL_STYLE);
+			lStyleEx = (DWORD)GetWindowLongPtr(hWnd, GWL_EXSTYLE);
 			if (CheckCanCreateWindow((LPCSTR)32770, NULL, lStyle, lStyleEx, hWndParent, bAttachGui, bStyleHidden) && bAttachGui)
 			{
 				OnGuiWindowAttached(hWnd, NULL, (LPCSTR)32770, NULL, lStyle, lStyleEx, bStyleHidden);
@@ -3009,8 +3005,8 @@ HWND WINAPI OnCreateDialogIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATE lpT
 
 		if (hWnd && bAttachGui)
 		{
-			lStyle = (DWORD)user->getWindowLongPtrW(hWnd, GWL_STYLE);
-			lStyleEx = (DWORD)user->getWindowLongPtrW(hWnd, GWL_EXSTYLE);
+			lStyle = (DWORD)GetWindowLongPtr(hWnd, GWL_STYLE);
+			lStyleEx = (DWORD)GetWindowLongPtr(hWnd, GWL_EXSTYLE);
 			if (CheckCanCreateWindow((LPCSTR)32770, NULL, lStyle, lStyleEx, hWndParent, bAttachGui, bStyleHidden) && bAttachGui)
 			{
 				OnGuiWindowAttached(hWnd, NULL, NULL, (LPCWSTR)32770, lStyle, lStyleEx, bStyleHidden);
@@ -3033,7 +3029,7 @@ HWND WINAPI OnCreateDialogParamA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWN
 	DWORD lStyle = 0; //lpTemplate ? lpTemplate->style : 0;
 	DWORD lStyleEx = 0; //lpTemplate ? lpTemplate->dwExtendedStyle : 0;
 
-	// Загрузить ресурс диалога, и глянуть его параметры lStyle/lStyleEx	
+	// Загрузить ресурс диалога, и глянуть его параметры lStyle/lStyleEx
 	HRSRC hDlgSrc = FindResourceA(hInstance, lpTemplateName, /*RT_DIALOG*/MAKEINTRESOURCEA(5));
 	if (hDlgSrc)
 	{
@@ -3082,7 +3078,7 @@ HWND WINAPI OnCreateDialogParamW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HW
 	DWORD lStyle = 0; //lpTemplate ? lpTemplate->style : 0;
 	DWORD lStyleEx = 0; //lpTemplate ? lpTemplate->dwExtendedStyle : 0;
 
-	// Загрузить ресурс диалога, и глянуть его параметры lStyle/lStyleEx	
+	// Загрузить ресурс диалога, и глянуть его параметры lStyle/lStyleEx
 	HRSRC hDlgSrc = FindResourceW(hInstance, lpTemplateName, RT_DIALOG);
 	if (hDlgSrc)
 	{
@@ -3205,7 +3201,7 @@ DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, L
 			//MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
 			//ConInfo.InitName(CECONMAPNAME, (DWORD)hConWnd); //-V205
 			//CESERVER_CONSOLE_MAPPING_HDR *pInfo = ConInfo.Open();
-			//if (pInfo 
+			//if (pInfo
 			//	&& (pInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
 			//	//&& (pInfo->nProtocolVersion == CESERVER_REQ_VER)
 			//	)
@@ -3455,7 +3451,7 @@ void OnReadConsoleStart(BOOL bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 			}
 		}
 	}
-	
+
 	if (!bCatch)
 	{
 		gReadConsoleInfo.InReadConsoleTID = 0;
@@ -3740,7 +3736,7 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 
 				TODO("DBCS!!! Must to convert cursor pos ('DBCS') to char pos!");
 				// Ok, теперь нужно проверить, не был ли клик сделан "за пределами строки ввода"
-				
+
 				SHORT y = csbi.dwCursorPosition.Y;
 				while (true)
 				{
@@ -3832,7 +3828,7 @@ BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin)
 					nPrevChars = nPrint;
 					nPrevSpaces = nWhole - nPrint;
 					_ASSERTEX(nPrevSpaces>=0);
-					
+
 
 					// Цикл + условие
 					if (nChars > 0)
@@ -4130,7 +4126,7 @@ bool InitializeClink()
 	//	STARTUPINFO si = {sizeof(si)};
 	//	PROCESS_INFORMATION pi = {};
 	//	bRunRc = CreateProcess(NULL, szClinkArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, szClinkDir, &si, &pi);
-	//	
+	//
 	//	if (bRunRc)
 	//	{
 	//		WaitForSingleObject(pi.hProcess, INFINITE);
@@ -4152,7 +4148,7 @@ bool InitializeClink()
 	//		wchar_t szClinkModule[MAX_PATH+30];
 	//		_wsprintf(szClinkModule, SKIPLEN(countof(szClinkModule)) L"%s\\clink\\%s",
 	//			pConMap->ComSpec.ConEmuBaseDir, WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
-	//		
+	//
 	//		ghClinkDll = LoadLibrary(szClinkModule);
 	//		if (!ghClinkDll)
 	//			return false;
@@ -4199,7 +4195,7 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 			}
 			if (gbAllowClinkUsage && gszClinkCmdLine && lstrcmpi(lpValueName, L"AutoRun") == 0)
 			{
-				
+
 				// Is already loaded?
 				HMODULE hClink = GetModuleHandle(WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
 				if (hClink == NULL)
@@ -4346,7 +4342,7 @@ BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 						else
 						{
 							lstrcpyn((wchar_t*)lpBuffer, L"cd\r\n", nNumberOfCharsToRead);
-						
+
 						}
 						*lpNumberOfCharsRead = lstrlen((wchar_t*)lpBuffer);
 					}
@@ -4601,11 +4597,11 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 
 	if (!gFarMode.bFarHookMode || !gFarMode.bMonitorConsoleInput || !nRead || !lpBuffer)
 		return;
-		
+
 	//// Пока - только Read. Peek игнорируем
 	//if (acPeekRead != 'R')
 	//	return;
-	
+
 	CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_PEEKREADINFO, sizeof(CESERVER_REQ_HDR) //-V119
 		+sizeof(CESERVER_REQ_PEEKREADINFO)+(nRead-1)*sizeof(INPUT_RECORD));
 	if (pIn)
@@ -4618,7 +4614,7 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 		pIn->PeekReadInfo.nPID = GetCurrentProcessId();
 		pIn->PeekReadInfo.bMainThread = (pIn->PeekReadInfo.nTID == gnHookMainThreadId);
 		memmove(pIn->PeekReadInfo.Buffer, lpBuffer, nRead*sizeof(INPUT_RECORD));
-	
+
 		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 		if (pOut) ExecuteFreeResult(pOut);
 		ExecuteFreeResult(pIn);
@@ -4685,13 +4681,13 @@ BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	//#ifdef USE_INPUT_SEMAPHORE
 	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
 	//#endif
-	
+
 	if (ph && ph->PostCallBack)
 	{
 		SETARGS4(&lbRc,hConsoleInput,lpBuffer,nLength,lpNumberOfEventsRead);
 		ph->PostCallBack(&args);
 	}
-	
+
 	if (lbRc && lpNumberOfEventsRead && *lpNumberOfEventsRead && lpBuffer)
 		OnPeekReadConsoleInput('P', 'A', hConsoleInput, lpBuffer, *lpNumberOfEventsRead);
 
@@ -4969,6 +4965,13 @@ BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuf
 	return lbRc;
 }
 
+AttachConsole_t GetAttachConsoleProc()
+{
+	static HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+	static AttachConsole_t _AttachConsole = hKernel ? (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole") : NULL;
+	return _AttachConsole;
+}
+
 bool AttachServerConsole()
 {
 	bool lbAttachRc = false;
@@ -4977,9 +4980,7 @@ bool AttachServerConsole()
 	if (hCurCon == NULL && gnServerPID != 0)
 	{
 		// функция есть только в WinXP и выше
-		typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
-		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-		AttachConsole_t _AttachConsole = hKernel ? (AttachConsole_t)GetProcAddress(hKernel, "AttachConsole") : NULL;
+		AttachConsole_t _AttachConsole = GetAttachConsoleProc();
 		if (_AttachConsole)
 		{
 			lbAttachRc = _AttachConsole(gnServerPID);
@@ -5013,15 +5014,37 @@ BOOL WINAPI OnAllocConsole(void)
 			return lbRc;
 	}
 
+	if (gbPrepareDefaultTerminal && gbIsNetVsHost)
+	{
+		if (!ghConWnd)
+			gnVsHostStartConsole = 2;
+		else
+			gnVsHostStartConsole = 0;
+	}
+
+	// Попытаться создать консольное окно "по тихому"
+	if (gpDefTerm && !hOldConWnd && !gnServerPID)
+	{
+		HWND hCreatedCon = gpDefTerm->AllocHiddenConsole();
+		if (hCreatedCon)
+		{
+			hOldConWnd = hCreatedCon;
+			lbAllocated = TRUE;
+		}
+	}
+
 	// GUI приложение во вкладке. Если окна консоли еще нет - попробовать прицепиться
 	// к родительской консоли (консоли серверного процесса)
 	if ((gbAttachGuiClient || ghAttachGuiClient) && !gbPrepareDefaultTerminal)
 	{
 		if (AttachServerConsole())
 		{
+			hOldConWnd = GetRealConsoleWindow();
 			lbAllocated = TRUE; // Консоль уже есть, ничего не надо
 		}
 	}
+
+	DefTermMsg(L"AllocConsole calling");
 
 	if (!lbAllocated && F(AllocConsole))
 	{
@@ -5070,15 +5093,19 @@ BOOL WINAPI OnAllocConsole(void)
 	//MessageBox(NULL, szAlloc, L"OnAllocConsole called", MB_SYSTEMMODAL);
 	#endif
 
-	if (hNewConWnd && (hNewConWnd != hOldConWnd) && gbPrepareDefaultTerminal && gbIsNetVsHost)
+	if (hNewConWnd && (hNewConWnd != hOldConWnd) && gpDefTerm && gbIsNetVsHost)
 	{
-		CShellProc* sp = new CShellProc();
-		if (sp)
-		{
-			sp->OnAllocConsoleFinished();
-			delete sp;
-		}
+		DefTermMsg(L"Calling gpDefTerm->OnAllocConsoleFinished");
+		gpDefTerm->OnAllocConsoleFinished();
 		SetLastError(0);
+	}
+	else if (hNewConWnd)
+	{
+		DefTermMsg(L"Console was already allocated");
+	}
+	else
+	{
+		DefTermMsg(L"Something was wrong");
 	}
 
 	TODO("Можно бы по настройке установить параметры. Кодовую страницу, например");
@@ -5122,7 +5149,7 @@ HWND WINAPI OnGetConsoleWindow(void)
 
 	_ASSERTE(F(GetConsoleWindow) != GetRealConsoleWindow);
 
-	if (ghConEmuWndDC && user->isWindow(ghConEmuWndDC) /*ghConsoleHwnd*/)
+	if (ghConEmuWndDC && IsWindow(ghConEmuWndDC) /*ghConsoleHwnd*/)
 	{
 		if (ghAttachGuiClient)
 		{
@@ -5304,7 +5331,7 @@ BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes)
 		SETARGS2(&lbRc, hConsoleOutput, wAttributes);
 		ph->PreCallBack(&args);
 	}
-	
+
 	#ifdef _DEBUG
 	// Если во вкладку ConEmu приаттачено GUI приложение - нам пофигу
 	// что оно делает со своей консолью
@@ -5348,49 +5375,46 @@ INT_PTR CALLBACK SimpleApiDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 {
 	SimpleApiFunctionArg* P = NULL;
 
-	//typedef LONG_PTR (WINAPI* SetWindowLongPtr_t)(HWND,int,LONG_PTR);
-	//SetWindowLongPtr_t SetWindowLongPtr_f = (SetWindowLongPtr_t)GetProcAddress(ghUser32,WIN3264TEST("SetWindowLongW","SetWindowLongPtrW"));
-	
 	if (uMsg == WM_INITDIALOG)
 	{
 		P = (SimpleApiFunctionArg*)lParam;
-		user->setWindowLongPtrW(hwndDlg, GWLP_USERDATA, lParam);
-		
+		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, lParam);
+
 		int x = 0, y = 0;
 		RECT rcDC = {};
-		if (!user->getWindowRect(ghConEmuWndDC, &rcDC))
-			user->systemParametersInfoW(SPI_GETWORKAREA, 0, &rcDC, 0);
+		if (!GetWindowRect(ghConEmuWndDC, &rcDC))
+			SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcDC, 0);
 		if (rcDC.right > rcDC.left && rcDC.bottom > rcDC.top)
 		{
 			x = max(rcDC.left, ((rcDC.right+rcDC.left-300)>>1));
 			y = max(rcDC.top, ((rcDC.bottom+rcDC.top-200)>>1));
 		}
-		
+
 		//typedef BOOL (WINAPI* SetWindowText_t)(HWND,LPCWSTR);
 		//SetWindowText_t SetWindowText_f = (SetWindowText_t)GetProcAddress(ghUser32, "SetWindowTextW");
 
-		
+
 		switch (P->funcType)
 		{
 			case SimpleApiFunctionArg::sft_ChooseColorA:
 				((LPCHOOSECOLORA)P->pArg)->hwndOwner = hwndDlg;
-				user->setWindowTextW(hwndDlg, L"ConEmu ColorPicker");
+				SetWindowTextW(hwndDlg, L"ConEmu ColorPicker");
 				break;
 			case SimpleApiFunctionArg::sft_ChooseColorW:
 				((LPCHOOSECOLORW)P->pArg)->hwndOwner = hwndDlg;
-				user->setWindowTextW(hwndDlg, L"ConEmu ColorPicker");
+				SetWindowTextW(hwndDlg, L"ConEmu ColorPicker");
 				break;
 		}
-		
-		user->setWindowPos(hwndDlg, HWND_TOP, x, y, 0, 0, SWP_SHOWWINDOW);
-		
+
+		SetWindowPos(hwndDlg, HWND_TOP, x, y, 0, 0, SWP_SHOWWINDOW);
+
 		P->bResult = P->funcPtr(P->pArg);
 		P->nLastError = GetLastError();
-		
+
 		//typedef BOOL (WINAPI* EndDialog_t)(HWND,INT_PTR);
 		//EndDialog_t EndDialog_f = (EndDialog_t)GetProcAddress(ghUser32, "EndDialog");
-		user->endDialog(hwndDlg, 1);
-		
+		EndDialog(hwndDlg, 1);
+
 		return FALSE;
 	}
 
@@ -5400,11 +5424,11 @@ INT_PTR CALLBACK SimpleApiDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 		{
 			MINMAXINFO* p = (MINMAXINFO*)lParam;
 			p->ptMinTrackSize.x = p->ptMinTrackSize.y = 0;
-			user->setWindowLongPtrW(hwndDlg, DWLP_MSGRESULT, 0);
+			SetWindowLongPtr(hwndDlg, DWLP_MSGRESULT, 0);
 		}
 		return TRUE;
 	}
-	
+
 	return FALSE;
 }
 
@@ -5427,23 +5451,14 @@ BOOL MyChooseColor(SimpleApiFunction_t funcPtr, void* lpcc, BOOL abUnicode)
 		return Arg.bResult;
 	}
 	pTempl->style = WS_POPUP|/*DS_MODALFRAME|DS_CENTER|*/DS_SETFOREGROUND;
-	
-	
-	//typedef INT_PTR (WINAPI* DialogBoxIndirectParam_t)(HINSTANCE,LPCDLGTEMPLATE,HWND,DLGPROC,LPARAM);
-	//DialogBoxIndirectParam_t DialogBoxIndirectParam_f = (DialogBoxIndirectParam_t)GetProcAddress(ghUser32, "DialogBoxIndirectParamW");
-	
-	//if (DialogBoxIndirectParam_f)
-	//{
 
-	INT_PTR iRc = user->dialogBoxIndirectParamW(ghOurModule, pTempl, NULL, SimpleApiDialogProc, (LPARAM)&Arg);
+	INT_PTR iRc = DialogBoxIndirectParam(ghOurModule, pTempl, NULL, SimpleApiDialogProc, (LPARAM)&Arg);
 	if (iRc == 1)
 	{
 		lbRc = Arg.bResult;
 		SetLastError(Arg.nLastError);
 	}
 
-	//}
-	
 	return lbRc;
 }
 
@@ -5479,7 +5494,7 @@ BOOL WINAPI OnSetConsoleKeyShortcuts(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DW
 	if (F(SetConsoleKeyShortcuts))
 		lbRc = F(SetConsoleKeyShortcuts)(bSet, bReserveKeys, p1, n1);
 
-	if (ghConEmuWnd && user->isWindow(ghConEmuWnd))
+	if (ghConEmuWnd && IsWindow(ghConEmuWnd))
 	{
 		DWORD nLastErr = GetLastError();
 		DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(BYTE)*2;
@@ -5755,8 +5770,8 @@ BOOL GuiSetForeground(HWND hWnd)
 			ExecutePrepareCmd(pIn, CECMD_SETFOREGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(u64)); //-V119
 
 			DWORD nConEmuPID = ASFW_ANY;
-			user->getWindowThreadProcessId(ghConEmuWndDC, &nConEmuPID);
-			user->allowSetForegroundWindow(nConEmuPID);
+			GetWindowThreadProcessId(ghConEmuWndDC, &nConEmuPID);
+			AllowSetForegroundWindow(nConEmuPID);
 
 			pIn->qwData[0] = (u64)hWnd;
 			HWND hConWnd = GetRealConsoleWindow();
@@ -6087,7 +6102,7 @@ HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMo
 	wchar_t szDebugInfo[255];
 	msprintf(szDebugInfo, countof(szDebugInfo), L"CreateConsoleScreenBuffer(0x%X,0x%X,0x%X,0x%X,0x%X)",
 		dwDesiredAccess, dwShareMode, (DWORD)(DWORD_PTR)lpSecurityAttributes, dwFlags, (DWORD)(DWORD_PTR)lpScreenBufferData);
-		
+
 	#endif
 
 	if ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) != (FILE_SHARE_READ|FILE_SHARE_WRITE))
@@ -6142,7 +6157,7 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 		RequestLocalServerParm Parm = {(DWORD)sizeof(Parm), slsf_SetOutHandle, &ghCurrentOutBuffer};
 		RequestLocalServer(&Parm);
 	}
-	
+
 	return lbRc;
 }
 
@@ -6175,7 +6190,7 @@ BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const 
 		tmp = *lpConsoleWindow;
 		if (((tmp.Right - tmp.Left + 1) != crLocked.X) || ((tmp.Bottom - tmp.Top + 1) != crLocked.Y))
 		{
-			
+
 			// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
 			// Размер может менять только пользователь ресайзом окна ConEmu
 			if ((tmp.Right - tmp.Left + 1) != crLocked.X)
@@ -6468,7 +6483,7 @@ COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 	typedef COORD (WINAPI* OnGetLargestConsoleWindowSize_t)(HANDLE hConsoleOutput);
 	ORIGINALFAST(GetLargestConsoleWindowSize);
 	COORD cr = {80,25}, crLocked = {0,0};
-	
+
 	if (ghConEmuWndDC && IsVisibleRectLocked(crLocked))
 	{
 		cr = crLocked;
@@ -6488,7 +6503,7 @@ COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 			cr.Y = 255;
 		}
 	}
-	
+
 	return cr;
 }
 
@@ -6498,7 +6513,7 @@ BOOL WINAPI OnSetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosi
 	ORIGINALFAST(SetConsoleCursorPosition);
 
 	BOOL lbRc;
-	
+
 	if (gbIsVimAnsi)
 	{
 		#ifdef DUMP_VIM_SETCURSORPOS
@@ -6538,7 +6553,7 @@ void PatchDialogParentWnd(HWND& hWndParent)
 
 	if (ghConEmuWndDC)
 	{
-		if (!hWndParent || !user->isWindowVisible(hWndParent))
+		if (!hWndParent || !IsWindowVisible(hWndParent))
 			hWndParent = ghConEmuWnd;
 	}
 }
@@ -6569,13 +6584,13 @@ HDC WINAPI OnGetDC(HWND hWnd)
 	typedef HDC (WINAPI* OnGetDC_t)(HWND hWnd);
 	ORIGINALFASTEX(GetDC,NULL);
 	HDC hDC = NULL;
-	
+
 	if (F(GetDC))
 		hDC = F(GetDC)(hWnd);
-	
+
 	if (hDC && ghConEmuWndDC && hWnd == ghConEmuWndDC)
 		ghTempHDC = hDC;
-	
+
 	return hDC;
 }
 
@@ -6584,13 +6599,13 @@ HDC WINAPI OnGetDCEx(HWND hWnd, HRGN hrgnClip, DWORD flags)
 	typedef HDC (WINAPI* OnGetDCEx_t)(HWND hWnd, HRGN hrgnClip, DWORD flags);
 	ORIGINALFASTEX(GetDCEx,NULL);
 	HDC hDC = NULL;
-	
+
 	if (F(GetDCEx))
 		hDC = F(GetDCEx)(hWnd, hrgnClip, flags);
-	
+
 	if (hDC && ghConEmuWndDC && hWnd == ghConEmuWndDC)
 		ghTempHDC = hDC;
-	
+
 	return hDC;
 }
 
@@ -6599,13 +6614,13 @@ int WINAPI OnReleaseDC(HWND hWnd, HDC hDC)
 	typedef int (WINAPI* OnReleaseDC_t)(HWND hWnd, HDC hDC);
 	ORIGINALFASTEX(ReleaseDC,NULL);
 	int iRc = 0;
-	
+
 	if (F(ReleaseDC))
 		iRc = F(ReleaseDC)(hWnd, hDC);
-	
+
 	if (ghTempHDC == hDC)
 		ghTempHDC = NULL;
-	
+
 	return iRc;
 }
 
@@ -6614,7 +6629,7 @@ int WINAPI OnStretchDIBits(HDC hdc, int XDest, int YDest, int nDestWidth, int nD
 	typedef int (WINAPI* OnStretchDIBits_t)(HDC hdc, int XDest, int YDest, int nDestWidth, int nDestHeight, int XSrc, int YSrc, int nSrcWidth, int nSrcHeight, const VOID *lpBits, const BITMAPINFO *lpBitsInfo, UINT iUsage, DWORD dwRop);
 	ORIGINALFASTEX(StretchDIBits,NULL);
 	int iRc = 0;
-	
+
 	if (F(StretchDIBits))
 		iRc = F(StretchDIBits)(hdc, XDest, YDest, nDestWidth, nDestHeight, XSrc, YSrc, nSrcWidth, nSrcHeight, lpBits, lpBitsInfo, iUsage, dwRop);
 
@@ -6639,7 +6654,7 @@ int WINAPI OnStretchDIBits(HDC hdc, int XDest, int YDest, int nDestWidth, int nD
 			ExecuteFreeResult(pIn);
 		}
 	}
-		
+
 	return iRc;
 }
 
@@ -6648,7 +6663,7 @@ BOOL WINAPI OnBitBlt(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 	typedef int (WINAPI* OnBitBlt_t)(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeight, HDC hdcSrc, int nXSrc, int nYSrc, DWORD dwRop);
 	ORIGINALFASTEX(BitBlt,NULL);
 	BOOL bRc = FALSE;
-	
+
 	if (F(BitBlt))
 		bRc = F(BitBlt)(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, dwRop);
 
@@ -6673,7 +6688,7 @@ BOOL WINAPI OnBitBlt(HDC hdcDest, int nXDest, int nYDest, int nWidth, int nHeigh
 			ExecuteFreeResult(pIn);
 		}
 	}
-		
+
 	return bRc;
 }
 
@@ -6751,7 +6766,7 @@ BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUF
 		GetConsoleModeCached(NULL, NULL);
 		return FALSE;
 	}
-	
+
 	if (!lpConsoleScreenBufferInfo)
 	{
 		_ASSERTEX(lpConsoleScreenBufferInfo!=NULL);
@@ -6817,7 +6832,7 @@ BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced /*
 		_ASSERTEX(lpMode!=NULL);
 		return FALSE;
 	}
-	
+
 	if (s_hConHandle && (s_hConHandle == hConsoleHandle))
 	{
 		nTickDelta = GetTickCount() - s_LastCheckTick;
