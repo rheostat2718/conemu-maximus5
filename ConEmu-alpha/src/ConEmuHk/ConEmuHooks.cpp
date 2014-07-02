@@ -355,6 +355,7 @@ BOOL WINAPI OnChooseColorW(LPCHOOSECOLORW lpcc);
 //HWND WINAPI OnCreateWindowW(LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 HWND WINAPI OnCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 HWND WINAPI OnCreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle, int x, int y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
+HWND WINAPI OnSetFocus(HWND hWnd);
 BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow);
 BOOL WINAPI OnShowCursor(BOOL bShow);
 HWND WINAPI OnSetParent(HWND hWndChild, HWND hWndNewParent);
@@ -710,6 +711,7 @@ bool InitHooksUser32()
 		{(void*)OnCreateWindowExW,		"CreateWindowExW",		user32},
 		{(void*)OnShowCursor,			"ShowCursor",			user32},
 		{(void*)OnShowWindow,			"ShowWindow",			user32},
+		{(void*)OnSetFocus,				"SetFocus",				user32},
 		{(void*)OnSetParent,			"SetParent",			user32},
 		{(void*)OnGetParent,			"GetParent",			user32},
 		{(void*)OnGetWindow,			"GetWindow",			user32},
@@ -2013,6 +2015,24 @@ BOOL WINAPI OnShowCursor(BOOL bShow)
 	return bRc;
 }
 
+HWND WINAPI OnSetFocus(HWND hWnd)
+{
+	typedef HWND (WINAPI* OnSetFocus_t)(HWND hWnd);
+	ORIGINALFASTEX(SetFocus,NULL);
+	HWND hRet = NULL;
+	DWORD nPID = 0, nTID = 0;
+
+	if (ghAttachGuiClient && ((nTID = GetWindowThreadProcessId(hWnd, &nPID)) != 0))
+	{
+		ghAttachGuiFocused = (nPID == GetCurrentProcessId()) ? hWnd : NULL;
+	}
+
+	if (F(SetFocus))
+		hRet = F(SetFocus)(hWnd);
+
+	return hRet;
+}
+
 BOOL WINAPI OnShowWindow(HWND hWnd, int nCmdShow)
 {
 	typedef BOOL (WINAPI* OnShowWindow_t)(HWND hWnd, int nCmdShow);
@@ -2721,6 +2741,20 @@ void PatchGuiMessage(bool bReceived, HWND& hWnd, UINT& Msg, WPARAM& wParam, LPAR
 					ExecuteFreeResult(pOut);
 				}
 			}
+			#if 0
+			// Если окно ChildGui активируется кликом - то ConEmu (holder)
+			// может остаться "под" предыдущим окном бывшим в фокусе...
+			// Победить пока не получается.
+			DWORD nTID = 0, nPID = 0;
+			HWND hFore = GetForegroundWindow();
+			if (hFore && ((nTID = GetWindowThreadProcessId(hFore, &nPID)) != 0))
+			{
+				if ((nPID != GetCurrentProcessId()) && (nPID != gnGuiPID))
+				{
+					SetForegroundWindow(ghConEmuWnd);
+				}
+			}
+			#endif
 		}
 		break;
 
@@ -5620,6 +5654,17 @@ LPVOID WINAPI OnVirtualAlloc(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocation
 		// clink use bunch of VirtualAlloc to try to find suitable memory location
 		// Some processes raises that error too often (in debug)
 		bool bReport = (!gbIsCmdProcess || (dwSize != 0x1000)) && !gbSkipVirtualAllocErr;
+		if (bReport)
+		{
+			// Do not report for .Net application
+			static int iNetChecked = 0;
+			if (!iNetChecked)
+			{
+				HMODULE hClr = GetModuleHandle(L"mscoree.dll");
+				iNetChecked = hClr ? 2 : 1;
+			}
+			bReport = (iNetChecked == 1);
+		}
 		int iBtn = bReport ? GuiMessageBox(NULL, szText, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL|MB_ICONSTOP) : IDCANCEL;
 		if (iBtn == IDOK)
 		{
@@ -5985,7 +6030,28 @@ bool GetTime(bool bSystem, LPSYSTEMTIME lpSystemTime)
 {
 	bool bHacked = false;
 	wchar_t szEnvVar[32] = L""; // 2013-01-01T15:16:17.95
-	if (GetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR, szEnvVar, countof(szEnvVar)) && *szEnvVar)
+
+	static wchar_t szEnvVarSave[32] = L"";
+	static DWORD nEnvVarLastCheck = 0;
+	DWORD nCurTick = GetTickCount();
+	DWORD nCheckDelta = nCurTick - nEnvVarLastCheck;
+	const DWORD nCheckDeltaMax = 1000;
+	if (!nEnvVarLastCheck || (nCheckDelta >= nCheckDeltaMax))
+	{
+		nEnvVarLastCheck = nCurTick;
+		GetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR, szEnvVar, countof(szEnvVar));
+		lstrcpyn(szEnvVarSave, szEnvVar, countof(szEnvVarSave));
+	}
+	else if (*szEnvVarSave)
+	{
+		lstrcpyn(szEnvVar, szEnvVarSave, countof(szEnvVar));
+	}
+	else
+	{
+		goto wrap;
+	}
+
+	if (*szEnvVar)
 	{
 		SYSTEMTIME st = {0}; FILETIME ft; wchar_t* p = szEnvVar;
 
