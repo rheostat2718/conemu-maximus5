@@ -112,7 +112,7 @@ CTabBarClass::CTabBarClass()
 	mn_PostUpdateTick = 0;
 	//mn_MsgUpdateTabs = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 	memset(&m_Tab4Tip, 0, sizeof(m_Tab4Tip));
-	mb_InKeySwitching = FALSE;
+	mb_InKeySwitching = false;
 	ms_TmpTabText[0] = 0;
 	mn_InUpdate = 0;
 	mp_DummyTab = new CTabID(NULL, NULL, fwt_Panels|fwt_CurrentFarWnd, 0, 0, 0);
@@ -378,11 +378,55 @@ bool CTabBarClass::GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndI
 	return lbRc;
 }
 
-LRESULT CTabBarClass::OnTimer(WPARAM wParam)
+// Для поиска табов консоли (если показываются редакторы/вьюверы)
+int CTabBarClass::GetFirstLastVConTab(CVirtualConsole* pVCon, bool bFirst, int nFromTab /*= -1*/)
+{
+	int iFound = -1;
+	CTab tab(__FILE__,__LINE__);
+	int iFrom, iTo, iStep, iCount;
+
+	iCount = m_Tabs.GetCount();
+	if (iCount < 1)
+		goto wrap;
+
+	if ((nFromTab < -1) || (nFromTab >= iCount))
+		nFromTab = -1;
+
+	if (bFirst)
+	{
+		// Ищем крайний левый
+		iFrom = (nFromTab >= 0) ? nFromTab : (iCount - 1);
+		iTo = -1;
+		iStep = -1;
+	}
+	else
+	{
+		// Ищем крайний правый
+		iFrom = (nFromTab >= 0) ? nFromTab : 0;
+		iTo = iCount;
+		iStep = 1;
+	}
+
+	for (int i = iFrom; i != iTo; i = i+iStep)
+	{
+		if (!m_Tabs.GetTabByIndex(i, tab))
+			break;
+
+		if (pVCon == (CVirtualConsole*)tab->Info.pVCon)
+			iFound = i;
+		else
+			break;
+	}
+
+wrap:
+	return iFound;
+}
+
+bool CTabBarClass::OnTimer(WPARAM wParam)
 {
 	if (mp_Rebar)
 		return mp_Rebar->OnTimerInt(wParam);
-	return 0;
+	return false;
 }
 
 bool CTabBarClass::IsTabsActive()
@@ -832,7 +876,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	if (mb_InKeySwitching)
 	{
 		if (mn_CurSelTab >= nCurCount)  // Если выбранный таб вылез за границы
-			mb_InKeySwitching = FALSE;
+			mb_InKeySwitching = false;
 	}
 
 	if (!mb_InKeySwitching && nCurTab != -1)
@@ -946,26 +990,24 @@ void CTabBarClass::Reposition()
 	mp_Rebar->RepositionInt();
 }
 
-LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
+bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 {
 	if (!this)
 		return false;
 
 	if (!_active)
-	{
 		return false;
-	}
 
-	LRESULT lResult = 0;
+	lResult = 0;
 
 	if (mp_Rebar->OnNotifyInt(nmhdr, lResult))
-		return lResult;
+		return true;
 
 
 	if (nmhdr->code == TBN_GETINFOTIP && mp_Rebar->IsToolbarNotify(nmhdr))
 	{
 		if (!gpSet->isMultiShowButtons)
-			return 0;
+			return false;
 
 		LPNMTBGETINFOTIP pDisp = (LPNMTBGETINFOTIP)nmhdr;
 
@@ -973,7 +1015,7 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 		if (pDisp->iItem == TID_ACTIVE_NUMBER)
 		{
 			if (!pDisp->pszText || !pDisp->cchTextMax)
-				return false;
+				return true;
 
 			CVConGuard VCon;
 			CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
@@ -1038,7 +1080,8 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 			gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, isPressed(VK_SHIFT));
 			break;
 		}
-		return TBDDRET_DEFAULT;
+		lResult = TBDDRET_DEFAULT;
+		return true;
 	}
 
 	if (nmhdr->code == TTN_GETDISPINFO && mp_Rebar->IsTabbarNotify(nmhdr))
@@ -1055,17 +1098,17 @@ LRESULT CTabBarClass::OnNotify(LPNMHDR nmhdr)
 		{
 			// Если в табе нет "…" - тип не нужен
 			if (!mp_Rebar->GetTabText(iPage, ms_TmpTabText, countof(ms_TmpTabText)))
-				return 0;
+				return true;
 			if (!wcschr(ms_TmpTabText, L'\x2026' /*"…"*/))
-				return 0;
+				return true;
 
 			CVConGuard VCon;
 			if (!GetVConFromTab(iPage, &VCon, &wndIndex))
-				return 0;
+				return true;
 
 			CTab tab(__FILE__,__LINE__);
 			if (!VCon->RCon()->GetTab(wndIndex, tab))
-				return 0;
+				return true;
 
 			lstrcpyn(ms_TmpTabText, VCon->RCon()->GetTabTitle(tab), countof(ms_TmpTabText));
 			pDisp->lpszText = ms_TmpTabText;
@@ -1677,19 +1720,19 @@ void CTabBarClass::Switch(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
 		// mh_Tabbar может быть и создан, Но отключен пользователем!
 		if (gpSet->isTabLazy && mp_Rebar->IsTabbarCreated() && gpSet->isTabs)
 		{
-			mb_InKeySwitching = TRUE;
+			mb_InKeySwitching = true;
 			// Пока Ctrl не отпущен - только подсвечиваем таб, а не переключаем реально
 			SelectTab(nNewSel);
 		}
 		else
 		{
 			mp_Rebar->FarSendChangeTab(nNewSel);
-			mb_InKeySwitching = FALSE;
+			mb_InKeySwitching = false;
 		}
 	}
 }
 
-BOOL CTabBarClass::IsInSwitch()
+bool CTabBarClass::IsInSwitch()
 {
 	return mb_InKeySwitching;
 }
@@ -1699,7 +1742,7 @@ void CTabBarClass::SwitchCommit()
 	if (!mb_InKeySwitching) return;
 
 	int nCurSel = GetCurSel();
-	mb_InKeySwitching = FALSE;
+	mb_InKeySwitching = false;
 	CVirtualConsole* pVCon = mp_Rebar->FarSendChangeTab(nCurSel);
 	UNREFERENCED_PARAMETER(pVCon);
 }
@@ -1708,7 +1751,7 @@ void CTabBarClass::SwitchRollback()
 {
 	if (mb_InKeySwitching)
 	{
-		mb_InKeySwitching = FALSE;
+		mb_InKeySwitching = false;
 		Update();
 	}
 }
@@ -1815,21 +1858,21 @@ bool CTabBarClass::AddStack(CTab& tab)
 	return bStackChanged;
 }
 
-BOOL CTabBarClass::CanActivateTab(int nTabIdx)
+bool CTabBarClass::CanActivateTab(int nTabIdx)
 {
 	CVConGuard VCon;
 	DWORD wndIndex = 0;
 
 	if (!GetVConFromTab(nTabIdx, &VCon, &wndIndex))
-		return FALSE;
+		return false;
 
 	if (!VCon->RCon()->CanActivateFarWindow(wndIndex))
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
-BOOL CTabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
+bool CTabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	//if (!IsShown()) return FALSE; -- всегда. Табы теперь есть в памяти
 	BOOL lbAltPressed = isPressed(VK_MENU);
@@ -1841,7 +1884,7 @@ BOOL CTabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 		else
 			SwitchPrev(lbAltPressed);
 
-		return TRUE;
+		return true;
 	}
 	else if (mb_InKeySwitching && messg == WM_KEYDOWN && !lbAltPressed
 	        && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT))
@@ -1852,10 +1895,10 @@ BOOL CTabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 		Switch(bForward);
 		gpSet->isTabRecent = bRecent;
 
-		return TRUE;
+		return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 void CTabBarClass::SetRedraw(BOOL abEnableRedraw)

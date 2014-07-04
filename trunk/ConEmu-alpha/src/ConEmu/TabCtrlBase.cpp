@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "Menu.h"
 
+#define TAB_DRAG_START_DELTA 5
 
 CTabPanelBase::CTabPanelBase(CTabBarClass* ap_Owner)
 {
@@ -56,6 +57,8 @@ CTabPanelBase::CTabPanelBase(CTabBarClass* ap_Owner)
 	ms_TabErrText[0] = 0;
 	memset(&tiBalloon,0,sizeof(tiBalloon));
 	mn_prevTab = -1;
+	mn_LBtnDrag = 0;
+	mh_DragCursor = NULL;
 }
 
 CTabPanelBase::~CTabPanelBase()
@@ -120,15 +123,16 @@ void CTabPanelBase::ShowTabErrorInt(LPCTSTR asInfo, int tabIndex)
 //	return m_TabIcons.GetTabIcon(bAdmin);
 //}
 
-LRESULT CTabPanelBase::OnTimerInt(WPARAM wParam)
+bool CTabPanelBase::OnTimerInt(WPARAM wParam)
 {
 	if (wParam == TIMER_FAILED_TABBAR_ID)
 	{
 		gpConEmu->SetKillTimer(false, TIMER_FAILED_TABBAR_ID, 0);
 		SendMessage(mh_Balloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiBalloon);
 		SendMessage(mh_TabTip, TTM_ACTIVATE, TRUE, 0);
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 //void CTabPanelBase::InitIconList()
@@ -288,72 +292,233 @@ LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
 	return 0;
 }
 
+void CTabPanelBase::DoTabDrag(UINT uMsg)
+{
+	if (mn_LBtnDrag && !isPressed(VK_LBUTTON))
+	{
+		EndTabDrag();
+		return;
+	}
+
+	POINT ptCur = {}; GetCursorPos(&ptCur);
+	if (mn_LBtnDrag == 1)
+	{
+		if (_abs(ptCur.x - mpt_DragStart.x) <= TAB_DRAG_START_DELTA)
+		{
+			// Еще не начали
+			return;
+		}
+
+		mn_LBtnDrag = 2;
+
+		if (!mh_DragCursor)
+			mh_DragCursor = LoadCursor(g_hInstance, MAKEINTRESOURCE(IDC_MOVE));
+		if (mh_DragCursor)
+			SetCursor(mh_DragCursor);
+	}
+
+	int iHoverTab = GetTabFromPoint(ptCur, true, false);
+	int iActiveTab = GetCurSelInt();
+	if ((iHoverTab >= 0) && (iActiveTab >= 0) && (iHoverTab != iActiveTab))
+	{
+		bool bLeftward = (iHoverTab < iActiveTab);
+		CVConGuard VHover, VActive;
+		DWORD nHoverWnd = 0, nActiveWnd = 0;
+		RECT rcHover = {}, rcActive = {};
+		RECT rcNew = {}, rcOld = {};
+		int iHoverWidth, iActiveWidth;
+		int iFindNew, iFindOld;
+
+		if (!mp_Owner->GetVConFromTab(iHoverTab, &VHover, &nHoverWnd))
+			goto wrap;
+		if (!mp_Owner->GetVConFromTab(iActiveTab, &VActive, &nActiveWnd))
+			goto wrap;
+
+		TODO("Драг редакторов/вьюверах в пределах табов одного VCon");
+		if (VHover.VCon() == VActive.VCon())
+			goto wrap;
+
+		if (!GetTabRect(iActiveTab, &rcActive))
+			goto wrap;
+
+		if (!GetTabRect(iHoverTab, &rcHover))
+			goto wrap;
+
+		// Если отображаются табы редакторов/вьюверов - нужны доп.телодвижения,
+		// иначе rcNew/rcOld будут содержать "крайние/активные" координаты,
+		// а после рокировки табов они поменяются.
+		// Например, слева от текущего - три таба редактора и только потом панель,
+		// и если тащится только один таб с "cmd", то он "прыгнет" не на одну влево
+		// а через три, в итоге при движении мышки будет постоянное мельтешение.
+		iFindNew = mp_Owner->GetFirstLastVConTab(VHover.VCon(), bLeftward, iHoverTab);
+		if ((iFindNew < 0) || !GetTabRect(iFindNew, &rcNew))
+			rcNew = rcHover;
+		iFindOld = mp_Owner->GetFirstLastVConTab(VActive.VCon(), !bLeftward, iActiveTab);
+		if ((iFindOld < 0) || !GetTabRect(iFindOld, &rcOld))
+			rcOld = rcActive;
+
+		// Если текущий таб короче нового - то нужны доп.проверки
+		// чтобы при драге таб не стал мельтешить вправо/влево
+		iHoverWidth = (max(rcHover.right,rcNew.right) - min(rcHover.left,rcNew.left));
+		_ASSERTE(iHoverWidth>0);
+		iActiveWidth = (max(rcActive.right,rcOld.right) - min(rcActive.left,rcOld.left));
+		_ASSERTE(iActiveWidth>0);
+
+		if (iActiveWidth < iHoverWidth)
+		{
+			if (bLeftward)
+			{
+				// Драг влево
+				//if ((rcActive.right - iHoverWidth) > (rcHover.left + iActiveWidth))
+				if (ptCur.x > (rcNew.left + iActiveWidth))
+					goto wrap;
+			}
+			else
+			{
+				// Драг вправо
+				//if ((rcActive.left + iHoverWidth) < (rcHover.right - iActiveWidth))
+				if (ptCur.x < (rcNew.right - iActiveWidth))
+					goto wrap;
+			}
+		}
+
+		CVConGroup::MoveActiveTab(VActive.VCon(), bLeftward);
+	}
+
+wrap:
+	if (uMsg == WM_LBUTTONUP)
+	{
+		EndTabDrag();
+	}
+}
+
+void CTabPanelBase::EndTabDrag()
+{
+	if (!mn_LBtnDrag)
+		return;
+
+	mn_LBtnDrag = 0;
+	SetCursor(LoadCursor(NULL, IDC_ARROW));
+}
+
 LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 {
 	if (nTabIdx == -1)
 		nTabIdx = GetTabFromPoint(MakePoint(x,y), false);
 
-	if (uMsg == WM_LBUTTONDOWN)
+	switch (uMsg)
 	{
-		// Приходит, например, из ReBar по клику НАД табами
-		int lnCurTab = GetCurSelInt();
-		if (lnCurTab != nTabIdx)
+	case WM_LBUTTONDOWN:
 		{
-			FarSendChangeTab(nTabIdx);
-		}
-	}
-	else if ((uMsg == WM_MBUTTONUP)
-		|| (uMsg == WM_RBUTTONUP)
-		|| ((uMsg == WM_LBUTTONDBLCLK) && gpSet->nTabBtnDblClickAction))
-	{
-		if (nTabIdx >= 0)
-		{
-			CVirtualConsole* pVCon = NULL;
-			// для меню нужны экранные координаты, получим их сразу, чтобы менюшка вплывала на клике
-			// а то вдруг мышка уедет, во время активации таба...
-			POINT ptCur = {0,0}; GetCursorPos(&ptCur);
-			pVCon = FarSendChangeTab(nTabIdx);
-
-			if (pVCon)
+			// Может приходить и из ReBar по клику НАД табами
+			mn_LBtnDrag = 1;
+			GetCursorPos(&mpt_DragStart);
+			int lnCurTab = GetCurSelInt();
+			if (lnCurTab != nTabIdx)
 			{
-				CVConGuard guard(pVCon);
-				BOOL lbCtrlPressed = isPressed(VK_CONTROL);
-
-				if (uMsg == WM_LBUTTONDBLCLK)
+				FarSendChangeTab(nTabIdx);
+			}
+			break;
+		}
+	case WM_LBUTTONUP:
+		{
+			if (mn_LBtnDrag)
+			{
+				DoTabDrag(uMsg);
+			}
+			break;
+		}
+	case WM_MOUSEMOVE:
+		{
+			if (mn_LBtnDrag)
+				DoTabDrag(uMsg);
+			break;
+		}
+	case WM_SETCURSOR:
+		{
+			if (mn_LBtnDrag)
+			{
+				if (isPressed(VK_LBUTTON))
 				{
-					switch (gpSet->nTabBtnDblClickAction)
+					if (mh_DragCursor)
 					{
-					case 1:
-						// Чтобы клик случайно не провалился в консоль
-						gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
-						// Аналог AltF9
-						gpConEmu->DoMaximizeRestore();
-						break;
-					case 2:
-						guard->RCon()->CloseTab();
-						break;
-					case 3:
-						gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_RESTART);
-						break;
-					case 4:
-						gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_DUPLICATE);
-						break;
+						POINT ptCur = {}; GetCursorPos(&ptCur);
+						if (_abs(ptCur.x - mpt_DragStart.x) > TAB_DRAG_START_DELTA)
+						{
+							SetCursor(mh_DragCursor);
+							if (mn_LBtnDrag == 1)
+								mn_LBtnDrag = 2;
+							return TRUE;
+						}
 					}
-				}
-				else if (uMsg == WM_RBUTTONUP && !lbCtrlPressed)
-				{
-					gpConEmu->mp_Menu->ShowPopupMenu(guard.VCon(), ptCur);
 				}
 				else
 				{
-					guard->RCon()->CloseTab();
+					EndTabDrag();
 				}
-
-				// борьба с оптимизатором в релизе
-				gpConEmu->isValid(pVCon);
 			}
+			return FALSE;
 		}
+	case WM_MBUTTONUP:
+	case WM_RBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+		{
+			if (((uMsg == WM_LBUTTONDBLCLK) && !gpSet->nTabBtnDblClickAction))
+				break;
+
+			if (nTabIdx >= 0)
+			{
+				CVirtualConsole* pVCon = NULL;
+				// для меню нужны экранные координаты, получим их сразу, чтобы менюшка вплывала на клике
+				// а то вдруг мышка уедет, во время активации таба...
+				POINT ptCur = {0,0}; GetCursorPos(&ptCur);
+				pVCon = FarSendChangeTab(nTabIdx);
+
+				if (pVCon)
+				{
+					CVConGuard guard(pVCon);
+					BOOL lbCtrlPressed = isPressed(VK_CONTROL);
+
+					if (uMsg == WM_LBUTTONDBLCLK)
+					{
+						switch (gpSet->nTabBtnDblClickAction)
+						{
+						case 1:
+							// Чтобы клик случайно не провалился в консоль
+							gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
+							// Аналог AltF9
+							gpConEmu->DoMaximizeRestore();
+							break;
+						case 2:
+							guard->RCon()->CloseTab();
+							break;
+						case 3:
+							gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_RESTART);
+							break;
+						case 4:
+							gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, guard.VCon(), IDM_DUPLICATE);
+							break;
+						}
+					}
+					else if (uMsg == WM_RBUTTONUP && !lbCtrlPressed)
+					{
+						gpConEmu->mp_Menu->ShowPopupMenu(guard.VCon(), ptCur);
+					}
+					else
+					{
+						guard->RCon()->CloseTab();
+					}
+
+					// борьба с оптимизатором в релизе
+					gpConEmu->isValid(pVCon);
+				}
+			}
+			break;
+		} // WM_MBUTTONUP, WM_RBUTTONUP, WM_LBUTTONDBLCLK
 	}
+
+	if (mn_LBtnDrag && !isPressed(VK_LBUTTON))
+		EndTabDrag();
 
 	return 0;
 }
