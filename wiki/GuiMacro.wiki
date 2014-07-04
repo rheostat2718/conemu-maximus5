@@ -310,16 +310,16 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
      - Set status bar text
     Tab(<Cmd>[,<Parm>])
      - Control ConEmu tabs
-       Cmd==0 - show/hide tabs
-       Cmd==1 - commit lazy changes
-       Cmd==2 - switch next (eq. CtrlTab)
-       Cmd==3 - switch prev (eq. CtrlShiftTab)
-       Cmd==4 - switch tab direct (no recent mode), Parm=(1,-1)
-       Cmd==5 - switch tab recent, Parm=(1,-1)
-       Cmd==6 - switch console direct (no recent mode), Parm=(1,-1)
-       Cmd==7 - activate console by number, Parm=(1-based console index)
-       Cmd==8 - show tabs list menu (indiffirent Far/Not Far)
-       Cmd==9: close active tab, same as Close(3)
+       Cmd==0:  show/hide tabs
+       Cmd==1:  commit lazy changes
+       Cmd==2:  switch next (eq. CtrlTab)
+       Cmd==3:  switch prev (eq. CtrlShiftTab)
+       Cmd==4:  switch tab direct (no recent mode), Parm=(1,-1)
+       Cmd==5:  switch tab recent, Parm=(1,-1)
+       Cmd==6:  switch console direct (no recent mode), Parm=(1,-1)
+       Cmd==7:  activate console by number, Parm=(1-based console index)
+       Cmd==8:  show tabs list menu (indiffirent Far/Not Far)
+       Cmd==9:  close active tab, same as Close(3)
        Cmd==10: switches visible split-panes, Parm=(1,-1)
     Task(Index[,"Dir"])
      - start task with 1-based index

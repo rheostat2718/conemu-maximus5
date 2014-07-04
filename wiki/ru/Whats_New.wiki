@@ -7,6 +7,16 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 140703==
+  * Support tabs dragging (reordering).
+  * Highlight&Goto: Issue 1624: Don't warn after starting external editor successfully.
+  * Highlight&Goto: External editor may fails if located in system32 while ConEmu is 32bit on 64bit OS.
+  * Highlight&Goto: Start editor after `LButtonUp`.
+  * Highlight&Goto: Ensure started external editor get focus.
+  * New settings page ‘Confirm’, some confirmation options moved here.
+  * New setting ‘Confirm tab duplicating (Duplicate root menu item)’ on ‘Confirm’ page.
+
+
 ==Build 140701==
   * Wrong deinitialization ConEmuHk sequence may cause crash on application exit.
   * HTML format copy: Eliminate line spacing and try to match font height.
