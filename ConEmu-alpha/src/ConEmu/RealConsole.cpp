@@ -3876,18 +3876,34 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 				   LPWSTR psCurCmd, LPCWSTR& lpszWorkDir,
 				   STARTUPINFO& si, PROCESS_INFORMATION& pi, SHELLEXECUTEINFO*& pp_sei,
-				   DWORD& dwLastError)
+				   DWORD& dwLastError, bool bExternal /*= false*/)
 {
 	BOOL lbRc = FALSE;
 
 	lpszWorkDir = pRCon->GetStartupDir();
+
+	MWow64Disable wow;
+	wow.Disable();
+
+	// Function may be used for starting GUI applications (errors & hyperlinks)
+	bool bConsoleProcess = true;
+	{
+		CmdArg szExe;
+		DWORD nSubSys = 0, nBits = 0, nAttrs = 0;
+		if (!IsNeedCmd(TRUE, psCurCmd, szExe))
+		{
+			if (GetImageSubsystem(szExe, nSubSys, nBits, nAttrs))
+				if (nSubSys == IMAGE_SUBSYSTEM_WINDOWS_GUI)
+					bConsoleProcess = false;
+		}
+	}
 
 	SetLastError(0);
 
 	// Если сам ConEmu запущен под админом - нет смысла звать ShellExecuteEx("RunAs")
 	if ((Args.RunAsAdministrator != crb_On) || gpConEmu->mb_IsUacAdmin)
 	{
-		LockSetForegroundWindow(LSFW_LOCK);
+		LockSetForegroundWindow(bExternal ? LSFW_UNLOCK : LSFW_LOCK);
 		pRCon->SetConStatus(L"Starting root process...", cso_ResetOnConsoleReady|cso_Critical);
 
 		if (Args.pszUserName != NULL)
@@ -3913,7 +3929,8 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 
 			lbRc = CreateProcessWithLogonW(Args.pszUserName, Args.pszDomain, Args.szUserPassword,
 				                        LOGON_WITH_PROFILE, NULL, pszChangedCmd ? pszChangedCmd : psCurCmd,
-				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+				                        NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
+										|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
 										, NULL, lpszWorkDir, &si, &pi);
 				//if (CreateProcessAsUser(Args.hLogonToken, NULL, psCurCmd, NULL, NULL, FALSE,
 				//	NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
@@ -3927,7 +3944,8 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 		else if (Args.RunAsRestricted == crb_On)
 		{
 			lbRc = CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
-				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
+									|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
 				                    , NULL, lpszWorkDir, &si, &pi, &dwLastError);
 
 			dwLastError = GetLastError();
@@ -3935,7 +3953,8 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 		else
 		{
 			lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE,
-				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
+				                    NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
+									|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
 				                    //|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
 				                    , NULL, lpszWorkDir, &si, &pi);
 
@@ -3944,7 +3963,10 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 
 		DEBUGSTRPROC(L"CreateProcess finished\n");
 		//if (Args.hLogonToken) { CloseHandle(Args.hLogonToken); Args.hLogonToken = NULL; }
-		LockSetForegroundWindow(LSFW_UNLOCK);
+		if (!bExternal)
+			LockSetForegroundWindow(LSFW_UNLOCK);
+		else if (lbRc && pi.dwProcessId)
+			AllowSetForegroundWindow(pi.dwProcessId);
 	}
 	else // Args.bRunAsAdministrator
 	{
@@ -3980,7 +4002,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 			//pp_sei->hwnd = /*NULL; */ ghWnd; // почему я тут NULL ставил?
 
 			// 121025 - remove SEE_MASK_NOCLOSEPROCESS
-			pp_sei->fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOASYNC;
+			pp_sei->fMask = SEE_MASK_NOASYNC | (bConsoleProcess ? SEE_MASK_NO_CONSOLE : 0);
 			// Issue 791: Console server fails to duplicate self Process handle to GUI
 			pp_sei->fMask |= SEE_MASK_NOCLOSEPROCESS;
 
@@ -7521,10 +7543,11 @@ void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWO
 			SetMainSrvPID(mn_MainSrv_PID, ahServerHandle);
 			//mh_MainSrv = ahServerHandle;
 		}
-		else
+		else if (ahServerHandle != mh_MainSrv)
 		{
 			SafeCloseHandle(ahServerHandle); // не нужен, у нас уже есть дескриптор процесса сервера
 		}
+		_ASSERTE(mn_MainSrv_PID == anServerPID);
 	}
 
 	//if (!mp_ConsoleInfo)
@@ -9268,7 +9291,8 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 	{
 		wchar_t szConfirm[255];
 		_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Do you want to duplicate tab with root '%s'?", p->Name);
-		if (bSkipMsg || ((MsgBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)))
+		if (bSkipMsg || !gpSet->isMultiDupConfirm
+			|| ((MsgBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)))
 		{
 			bool bRootCmdRedefined = false;
 			RConStartArgs args;

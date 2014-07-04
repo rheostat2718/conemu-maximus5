@@ -42,10 +42,15 @@ protected:
 	TOOLINFO   tiBalloon;
 	wchar_t    ms_TabErrText[512];
 	int        mn_prevTab;
+	int        mn_LBtnDrag;
+	HCURSOR    mh_DragCursor;
+	POINT      mpt_DragStart;
 
 protected:
 	//void InitIconList();
 	void InitTooltips(HWND hParent);
+	void DoTabDrag(UINT uMsg);
+	void EndTabDrag();
 
 public:
 	CTabPanelBase(CTabBarClass* ap_Owner);
@@ -94,7 +99,7 @@ public:
 public:
 	//int  GetTabIcon(bool bAdmin);
 	CVirtualConsole* FarSendChangeTab(int tabIndex);
-	virtual LRESULT OnTimerInt(WPARAM wParam);
+	virtual bool OnTimerInt(WPARAM wParam);
 	void ShowTabErrorInt(LPCTSTR asInfo, int tabIndex);
 	void UpdateTabFontInt();
 };

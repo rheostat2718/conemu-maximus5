@@ -2705,7 +2705,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 
 	if ((rc == etr_FileAndLine) || (rc == etr_Url))
 	{
-		if ((messg == WM_LBUTTONDOWN) && *szText)
+		if ((messg == WM_LBUTTONUP || messg == WM_LBUTTONDBLCLK) && *szText)
 		{
 			if (rc == etr_Url)
 			{
@@ -2883,19 +2883,51 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 											DWORD dwLastError = 0;
 											LPCWSTR pszDir = args.pszStartupDir;
 											STARTUPINFO si = {sizeof(si)};
+											si.dwFlags = STARTF_USESHOWWINDOW; si.wShowWindow = SW_SHOWNORMAL;
 											PROCESS_INFORMATION pi = {};
 
-											if (CRealConsole::CreateOrRunAs(mp_RCon, args, args.pszSpecialCmd, pszDir, si, pi, mpp_RunHyperlink, dwLastError))
+											if (CRealConsole::CreateOrRunAs(mp_RCon, args, args.pszSpecialCmd, pszDir, si, pi, mpp_RunHyperlink, dwLastError, true))
 											{
+												HANDLE hProcess = NULL;
 												if (mpp_RunHyperlink)
 												{
-													SafeCloseHandle(mpp_RunHyperlink->hProcess);
+													hProcess = mpp_RunHyperlink->hProcess;
 													SafeFree(mpp_RunHyperlink);
 												}
-												SafeCloseHandle(pi.hProcess);
+												else
+												{
+													hProcess = pi.hProcess;
+												}
 												SafeCloseHandle(pi.hThread);
+
+												// If Ctrl (or any other key) is still pressed during external editor startup,
+												// started application may fails to get the focus - it starts below ConEmu window
+												if (hProcess && pi.dwProcessId)
+												{
+													HWND hFore;
+													DWORD nStart = GetTickCount(), nMax = 3000, nDelay = 0;
+													// So, wait a little for 3sec, while ConEmu has focus
+													while (((hFore = GetForegroundWindow()) == ghWnd)
+														&& (WaitForSingleObject(hProcess, 100) == WAIT_TIMEOUT)
+														&& (nDelay <= nMax))
+													{
+														HWND hApp = FindProcessWindow(pi.dwProcessId);
+														if (hApp)
+														{
+															SetForegroundWindow(hApp);
+															break;
+														}
+
+														nDelay = (GetTickCount() - nStart);
+													}
+												}
+
+												SafeCloseHandle(hProcess);
 											}
-											DisplayLastError(args.pszSpecialCmd, dwLastError);
+											else
+											{
+												DisplayLastError(args.pszSpecialCmd, dwLastError);
+											}
 										}
 										else
 										{
