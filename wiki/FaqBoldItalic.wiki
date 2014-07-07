@@ -29,3 +29,16 @@ for using with `cmd.exe` prompt.
 *Bold and italic in cmd prompt*<br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuExtFonts2.png" title="ConEmu Settings: Bold and italic in cmd prompt">
 
+=Xterm-256 emulation=
+Another way is using xterm-256 ANSI sequences. For now, ConEmu provides limited support for that feature,
+extended codes are processed in the bottom of the scroll buffer only. When you lines goes up - extended
+attributes will be lost. How to put your prompt at the bottom described here: PromptAtTheBottom.
+
+Anyway, if you choose [AnsiEscapeCodes SGR 38 or 48] you may use bold/italic/underlined after them.
+
+{{{
+prompt $E[9999E$E[48;5;0m$E[38;5;7m$E[1m$P$E[m$S$E[48;5;0m$E[38;5;7m$E[4m$D$E[m$S$E[48;5;0m$E[38;5;7m$E[3m$T$E[m$g
+}}}
+
+*Bold/italic/underlined in cmd prompt*<br>
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuExtFonts3.png" title="ConEmu Settings: Bold, italic and underlined in cmd prompt">

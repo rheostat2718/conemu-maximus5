@@ -105,7 +105,7 @@ if "%ConEmuANSI%"=="OFF" echo Disabled
 || ESC [ 5 m || Set !BackOrUnderline ||
 || ESC [ 30…37 m || Set ANSI text color ||
 || ESC [ 38 ; 5 ; _n_ m || Set xterm text color, _n_ is color index from 0 to 255 ||
-|| ESC [ 48 ; 2 ; _r_ ; _g_ ; _b_ m || Set xterm 24-bit text color, _r_, _g_, _b_ are from 0 to 255 ||
+|| ESC [ 38 ; 2 ; _r_ ; _g_ ; _b_ m || Set xterm 24-bit text color, _r_, _g_, _b_ are from 0 to 255 ||
 || ESC [ 39 m || Reset text color to defauls ||
 || ESC [ 40…47 m || Set ANSI background color ||
 || ESC [ 48 ; 5 ; _n_ m || Set xterm background color, _n_ is color index from 0 to 255 ||
