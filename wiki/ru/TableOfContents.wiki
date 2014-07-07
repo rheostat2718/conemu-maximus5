@@ -86,6 +86,7 @@
       * [TipsAndTweaks Советы и хитрости]
       * [TccInsertOverwrite TCC Вставка/Замена]
       * [PromptAtTheBottom Prompt внизу окна]
+      * [FaqBoldItalic Жирный/Курсив/Подчеркнутый]
       * [PVSStudio PVS-Studio]
       * [MemoryDump MemoryDump]
       * [LogFiles Log файлы]

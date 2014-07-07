@@ -85,6 +85,7 @@
       * [TipsAndTweaks Tips and Tweaks]
       * [TccInsertOverwrite TCC Insert/Overwrite]
       * [PromptAtTheBottom Prompt at the bottom]
+      * [FaqBoldItalic Bold/Italic/Underlined]
       * [PVSStudio PVS-Studio]
       * [MemoryDump MemoryDump]
       * [LogFiles LogFiles]
