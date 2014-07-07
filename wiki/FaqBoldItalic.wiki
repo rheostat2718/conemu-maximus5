@@ -1,0 +1,31 @@
+﻿#summary How to display bold/italic/underlined text in the console
+
+ConEmu provides full-featured support of Windows console functions.
+That means you may run here any console applications designed for WinApi.
+On the other hand, Windows console does not provide official way to
+print bold/italic/underlined text.
+
+However, when you are using ConEmu you may use them. Here are some tricks.
+
+=Extend fonts feature=
+You may choose two background color indexes to force ConEmu to draw text using bold/italic outline.
+
+When you turn the feature *On* on the ‘Main’ page, by default,
+‘Light red’ background will be replaced with bold outlined text,
+and ‘Magenta’ background will be replaced with italic outlined text.
+
+Example for ‘cmd.exe’ prompt: bold ‘path’ followed by italic ‘time’ and normal ‘>’.
+{{{
+prompt $E[37;4;41m$P$E[m$S$E[37;4;45m$T$E[m$G
+}}}
+
+The drawback. You lose two background indexes and you must choose the background color
+they would replaced with. In the following examples, black color (`#0`) was selected
+for using with `cmd.exe` prompt.
+
+*Extend fonts settings*<br>
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuExtFonts1.png" title="ConEmu Settings: Extend fonts">
+
+*Bold and italic in cmd prompt*<br>
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuExtFonts2.png" title="ConEmu Settings: Bold and italic in cmd prompt">
+
