@@ -319,6 +319,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	m_UseLogs = gpSetCls->isAdvLogging;
 
 	mp_TrueColorerData = NULL;
+	mn_TrueColorMaxCells = 0;
 	memset(&m_TrueColorerHeader, 0, sizeof(m_TrueColorerHeader));
 
 	//mb_PluginDetected = FALSE;
@@ -950,22 +951,26 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	//mh_MainSrv = hProcess;
 	//mn_MainSrv_PID = anConemuC_PID;
 	SetMainSrvPID(anConemuC_PID, hProcess);
+	//Current AltServer
+	SetAltSrvPID(rStartStop->nAltServerPID);
 
 	SetHwnd(ahConWnd);
 	ProcessUpdate(&anConemuC_PID, 1);
 
 	CreateLogFiles();
+
 	// Инициализировать имена пайпов, событий, мэппингов и т.п.
 	InitNames();
-	//// Имя пайпа для управления ConEmuC
-	//swprintf_c(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_MainSrv_PID);
-	//swprintf_c(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_MainSrv_PID);
-	//MCHKHEAP
-	// Открыть map с данными, он уже должен быть создан
-	OpenMapHeader(TRUE);
-	//SetConsoleSize(MakeCoord(TextWidth,TextHeight));
-	// Командой - низя, т.к. сервер сейчас только что запустился и ждет GUI
-	//SetConsoleSize(rcCon.right,rcCon.bottom);
+
+	// Открыть/создать map с данными
+	OnServerStarted(anConemuC_PID, hProcess, rStartStop->dwKeybLayout, TRUE);
+
+	#ifdef _DEBUG
+	DWORD nSrvWait = WaitForSingleObject(mh_MainSrv, 0);
+	_ASSERTE(nSrvWait == WAIT_TIMEOUT);
+	#endif
+
+	// Prepare result
 	pRet->Info.bWasBufferHeight = bCurBufHeight;
 	pRet->Info.hWnd = ghWnd;
 	pRet->Info.hWndDc = mp_VCon->GetView();
@@ -3882,9 +3887,6 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 
 	lpszWorkDir = pRCon->GetStartupDir();
 
-	MWow64Disable wow;
-	wow.Disable();
-
 	// Function may be used for starting GUI applications (errors & hyperlinks)
 	bool bConsoleProcess = true;
 	{
@@ -3905,6 +3907,9 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 	{
 		LockSetForegroundWindow(bExternal ? LSFW_UNLOCK : LSFW_LOCK);
 		pRCon->SetConStatus(L"Starting root process...", cso_ResetOnConsoleReady|cso_Critical);
+
+		MWow64Disable wow;
+		wow.Disable();
 
 		if (Args.pszUserName != NULL)
 		{
@@ -4048,20 +4053,19 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 	return lbRc;
 }
 
-// Инициализировать имена пайпов, событий, мэппингов и т.п.
-// Только имена - реальных хэндлов еще может не быть!
+// Инициализировать/обновить имена пайпов, событий, мэппингов и т.п.
 void CRealConsole::InitNames()
 {
+	DWORD nSrvPID = mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID;
 	// Имя пайпа для управления ConEmuC
-	_wsprintf(ms_ConEmuC_Pipe, SKIPLEN(countof(ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", mn_MainSrv_PID);
+	_wsprintf(ms_ConEmuC_Pipe, SKIPLEN(countof(ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", nSrvPID);
 	_wsprintf(ms_MainSrv_Pipe, SKIPLEN(countof(ms_MainSrv_Pipe)) CESERVERPIPENAME, L".", mn_MainSrv_PID);
 	_wsprintf(ms_ConEmuCInput_Pipe, SKIPLEN(countof(ms_ConEmuCInput_Pipe)) CESERVERINPUTNAME, L".", mn_MainSrv_PID);
 	// Имя событие измененности данных в консоли
-	m_ConDataChanged.InitName(CEDATAREADYEVENT, mn_MainSrv_PID);
+	m_ConDataChanged.InitName(CEDATAREADYEVENT, nSrvPID);
 	//swprintf_c(ms_ConEmuC_DataReady, CEDATAREADYEVENT, mn_MainSrv_PID);
 	MCHKHEAP;
-	_ASSERTE(mn_AltSrv_PID==0); // Инициализация должна идти на основной сервер
-	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", mn_MainSrv_PID);
+	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", nSrvPID);
 	// Enable overlapped mode and termination by event
 	_ASSERTE(mh_TermEvent!=NULL);
 	m_GetDataPipe.SetTermEvent(mh_TermEvent);
@@ -6227,6 +6231,11 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 
 	DEBUGTEST(isServerAlive());
 
+	#ifdef _DEBUG
+	DWORD nSrvWait = ahMainSrv ? WaitForSingleObject(ahMainSrv, 0) : WAIT_TIMEOUT;
+	_ASSERTE(nSrvWait == WAIT_TIMEOUT);
+	#endif
+
 	mh_MainSrv = ahMainSrv;
 	mn_MainSrv_PID = anMainSrvPID;
 
@@ -6319,7 +6328,9 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 
 bool CRealConsole::ReopenServerPipes()
 {
+	#ifdef _DEBUG
 	DWORD nSrvPID = mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID;
+	#endif
 	HANDLE hSrvHandle = mh_MainSrv; // (nSrvPID == mn_MainSrv_PID) ? mh_MainSrv : mh_AltSrv;
 
 	if (isServerClosing())
@@ -6327,8 +6338,9 @@ bool CRealConsole::ReopenServerPipes()
 		_ASSERTE(FALSE && "ReopenServerPipes was called in MainServerClosing");
 	}
 
+	InitNames();
+
 	// переоткрыть event изменений в консоли
-	m_ConDataChanged.InitName(CEDATAREADYEVENT, nSrvPID);
 	if (m_ConDataChanged.Open() == NULL)
 	{
 		bool bSrvClosed = (WaitForSingleObject(hSrvHandle, 0) == WAIT_OBJECT_0);
@@ -6337,7 +6349,6 @@ bool CRealConsole::ReopenServerPipes()
 	}
 
 	// переоткрыть m_GetDataPipe
-	m_GetDataPipe.InitName(gpConEmu->GetDefaultTitle(), CESERVERREADNAME, L".", nSrvPID);
 	bool bOpened = m_GetDataPipe.Open();
 	if (!bOpened)
 	{
@@ -6345,10 +6356,6 @@ bool CRealConsole::ReopenServerPipes()
 		Assert((bOpened || mb_InCloseConsole) && "m_GetDataPipe.Open() failed"); UNREFERENCED_PARAMETER(bSrvClosed);
 		return false;
 	}
-
-	// обновить имя "серверного" пайпа
-	_wsprintf(ms_ConEmuC_Pipe, SKIPLEN(countof(ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", nSrvPID);
-	_wsprintf(ms_MainSrv_Pipe, SKIPLEN(countof(ms_MainSrv_Pipe)) CESERVERPIPENAME, L".", mn_MainSrv_PID);
 
 	bool bActive = isActive();
 
@@ -7532,7 +7539,7 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
 //}
 
 // Вызывается при окончании инициализации сервера из ConEmuC.exe:SendStarted (CECMD_CMDSTARTSTOP)
-void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout)
+void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout, BOOL abFromAttach /*= FALSE*/)
 {
 	_ASSERTE(anServerPID && (anServerPID == mn_MainSrv_PID));
 	if (ahServerHandle != NULL)
@@ -7550,13 +7557,12 @@ void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWO
 		_ASSERTE(mn_MainSrv_PID == anServerPID);
 	}
 
-	//if (!mp_ConsoleInfo)
-	if (!m_ConsoleMap.IsValid())
+	if (abFromAttach || !m_ConsoleMap.IsValid())
 	{
 		// Инициализировать имена пайпов, событий, мэппингов и т.п.
 		InitNames();
 		// Открыть map с данными, теперь он уже должен быть создан
-		OpenMapHeader();
+		OpenMapHeader(abFromAttach);
 	}
 
 	// И атрибуты Colorer
@@ -12771,6 +12777,7 @@ void CRealConsole::CloseColorMapping()
 	//	UnmapViewOfFile(mp_ColorHdr);
 	//mp_ColorHdr = NULL;
 	mp_TrueColorerData = NULL;
+	mn_TrueColorMaxCells = 0;
 	//}
 	//if (mh_ColorMapping) {
 	//	CloseHandle(mh_ColorMapping);
@@ -12802,6 +12809,12 @@ void CRealConsole::CreateColorMapping()
 	if (!this)
 	{
 		_ASSERTE(this!=NULL);
+		return;
+	}
+
+	if (mp_TrueColorerData)
+	{
+		// Mapping was already created
 		return;
 	}
 
@@ -12847,6 +12860,7 @@ void CRealConsole::CreateColorMapping()
 	//	goto wrap;
 	//}
 	pHdr = m_TrueColorerMap.Ptr();
+	mn_TrueColorMaxCells = nMapCells;
 	mp_TrueColorerData = (const AnnotationInfo*)(((LPBYTE)pHdr)+pHdr->struct_size);
 	lbResult = TRUE;
 wrap:
@@ -13585,8 +13599,11 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	{
 		if (!bPosted)
 		{
-			if (MsgBox(L"Detach console from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES)
+			if (gpSet->isMultiDetachConfirm
+				&& (MsgBox(L"Detach console from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES))
+			{
 				return;
+			}
 
 			mp_VCon->PostDetach(bSendCloseConsole);
 			return;

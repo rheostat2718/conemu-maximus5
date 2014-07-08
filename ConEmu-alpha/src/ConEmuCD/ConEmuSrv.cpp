@@ -2193,6 +2193,14 @@ void CheckConEmuHwnd()
 	}
 }
 
+void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR *pMap)
+{
+	pMap->nGuiPID = gnConEmuPID;
+	pMap->hConEmuRoot = ghConEmuWnd;
+	pMap->hConEmuWndDc = ghConEmuWndDC;
+	pMap->hConEmuWndBack = ghConEmuWndBack;
+}
+
 bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 {
 	LogFunction(L"TryConnect2Gui");
@@ -2361,10 +2369,8 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 		CESERVER_CONSOLE_MAPPING_HDR *pMap = gpSrv->pConsoleMap->Ptr();
 		if (pMap)
 		{
-			pMap->nGuiPID = pStartStopRet->Info.dwPID;
-			pMap->hConEmuRoot = ghConEmuWnd;
-			pMap->hConEmuWndDc = ghConEmuWndDC;
-			pMap->hConEmuWndBack = ghConEmuWndBack;
+			_ASSERTE(gnConEmuPID == pStartStopRet->Info.dwPID);
+			FixConsoleMappingHdr(pMap);
 			_ASSERTE(pMap->hConEmuRoot==NULL || pMap->nGuiPID!=0);
 		}
 
@@ -2391,7 +2397,23 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 			COORD crNewSize = {(SHORT)pStartStopRet->Info.nWidth, (SHORT)pStartStopRet->Info.nHeight};
 			//SMALL_RECT rcWnd = {0,pIn->StartStop.sbi.srWindow.Top};
 			SMALL_RECT rcWnd = {0};
-			SetConsoleSize((USHORT)pStartStopRet->Info.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
+
+			CESERVER_REQ *pSizeIn = NULL, *pSizeOut = NULL;
+			if (gpSrv->dwAltServerPID && ((pSizeIn = ExecuteNewCmd(CECMD_SETSIZESYNC, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE))) != NULL))
+			{
+				pSizeIn->SetSize.nBufferHeight = pStartStopRet->Info.nBufferHeight;
+				pSizeIn->SetSize.size = crNewSize;
+				pSizeIn->SetSize.nSendTopLine = -1;
+				pSizeIn->SetSize.rcWindow = rcWnd;
+
+				pSizeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pSizeIn, ghConWnd);
+			}
+			else
+			{
+				SetConsoleSize((USHORT)pStartStopRet->Info.nBufferHeight, crNewSize, rcWnd, "Attach2Gui:Ret");
+			}
+			ExecuteFreeResult(pSizeIn);
+			ExecuteFreeResult(pSizeOut);
 		}
 	}
 
@@ -2434,7 +2456,13 @@ HWND Attach2Gui(DWORD nTimeout)
 	DWORD dwErr = 0;
 	DWORD dwStartWaitIdleResult = -1;
 	// Будем подцепляться заново
-	gpSrv->bWasDetached = FALSE;
+	if (gpSrv->bWasDetached)
+	{
+		gpSrv->bWasDetached = FALSE;
+		gbAttachMode = am_Simple;
+		if (gpSrv->pConsole)
+			gpSrv->pConsole->bDataChanged = TRUE;
+	}
 
 	if (!gpSrv->pConsoleMap)
 	{
@@ -2637,6 +2665,13 @@ HWND Attach2Gui(DWORD nTimeout)
 	pIn->StartStop.nSubSystem = gnImageSubsystem;
 	// Сразу передать текущий KeyboardLayout
 	IsKeyboardLayoutChanged(&pIn->StartStop.dwKeybLayout);
+	// После детача/аттача
+	DWORD nAltWait;
+	if (gpSrv->dwAltServerPID && gpSrv->hAltServer
+		&& (WAIT_OBJECT_0 != (nAltWait = WaitForSingleObject(gpSrv->hAltServer, 0))))
+	{
+		pIn->StartStop.nAltServerPID = gpSrv->dwAltServerPID;
+	}
 
 	if (gbAttachFromFar)
 		pIn->StartStop.bRootIsCmdExe = FALSE;
@@ -3138,14 +3173,13 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 
 	EnterCriticalSection(&gpSrv->csColorerMappingCreate);
 
-	_ASSERTE(gpSrv->pColorerMapping == NULL);
+	// По идее, не должно быть пересоздания TrueColor мэппинга, разве что при Detach/Attach
+	_ASSERTE((gpSrv->pColorerMapping == NULL) || (gbAttachMode == am_Simple));
 
 	if (bForceRecreate)
 	{
 		if (gpSrv->pColorerMapping)
 		{
-			// По идее, не должно быть пересоздания TrueColor мэппинга
-			_ASSERTE(FALSE && "Recreating pColorerMapping?");
 			delete gpSrv->pColorerMapping;
 			gpSrv->pColorerMapping = NULL;
 		}
@@ -4494,14 +4528,31 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		}
 		#endif
 
-		if (ghConEmuWnd && !IsWindow(ghConEmuWnd))
+		// GUI отвалился или был Detach
+		if (ghConEmuWndDC && !IsWindow(ghConEmuWndDC))
 		{
 			gpSrv->bWasDetached = TRUE;
-			ghConEmuWnd = NULL;
 			SetConEmuWindows(NULL, NULL, NULL);
+			_ASSERTE(!ghConEmuWnd && !ghConEmuWndDC && !ghConEmuWndBack);
 			gnConEmuPID = 0;
 			UpdateConsoleMapHeader();
 			EmergencyShow(ghConWnd);
+		}
+
+		// Reattach?
+		if (!ghConEmuWndDC && gpSrv->bWasDetached && (gnRunMode == RM_ALTSERVER))
+		{
+			CESERVER_CONSOLE_MAPPING_HDR* pMap = gpSrv->pConsoleMap->Ptr();
+			if (pMap && pMap->hConEmuWndDc && IsWindow(pMap->hConEmuWndDc))
+			{
+				// Reset GUI HWND's
+				_ASSERTE(!gnConEmuPID);
+				SetConEmuWindows(pMap->hConEmuRoot, pMap->hConEmuWndDc, pMap->hConEmuWndBack);
+				_ASSERTE(gnConEmuPID && ghConEmuWnd && ghConEmuWndDC && ghConEmuWndBack);
+
+				// To be sure GUI will be updated with full info
+				gpSrv->pConsole->bDataChanged = TRUE;
+			}
 		}
 
 		// 17.12.2009 Maks - попробую убрать

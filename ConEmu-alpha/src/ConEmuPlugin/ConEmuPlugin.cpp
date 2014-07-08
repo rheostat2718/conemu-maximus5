@@ -126,7 +126,7 @@ extern "C" {
 
 
 HMODULE ghPluginModule = NULL; // ConEmu.dll - сам плагин
-HWND ConEmuHwnd = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
+HWND ghConEmuWndDC = NULL; // Содержит хэндл окна отрисовки. Это ДОЧЕРНЕЕ окно.
 DWORD gdwPreDetachGuiPID = 0;
 DWORD gdwServerPID = 0;
 BOOL TerminalMode = FALSE;
@@ -269,11 +269,11 @@ bool pcc_Selected(PluginMenuCommands nMenuID)
 	switch (nMenuID)
 	{
 	case menu_EditConsoleOutput:
-		if (ConEmuHwnd && IsWindow(ConEmuHwnd))
+		if (ghConEmuWndDC && IsWindow(ghConEmuWndDC))
 			bSelected = true;
 		break;
 	case menu_AttachToConEmu:
-		if (!((ConEmuHwnd && IsWindow(ConEmuHwnd)) || IsTerminalMode()))
+		if (!((ghConEmuWndDC && IsWindow(ghConEmuWndDC)) || IsTerminalMode()))
 			bSelected = true;
 		break;
 	case menu_ViewConsoleOutput:
@@ -294,7 +294,7 @@ bool pcc_Disabled(PluginMenuCommands nMenuID)
 	switch (nMenuID)
 	{
 	case menu_AttachToConEmu:
-		if ((ConEmuHwnd && IsWindow(ConEmuHwnd)) || IsTerminalMode())
+		if ((ghConEmuWndDC && IsWindow(ghConEmuWndDC)) || IsTerminalMode())
 			bDisabled = true;
 		break;
 	case menu_StartDebug:
@@ -308,7 +308,7 @@ bool pcc_Disabled(PluginMenuCommands nMenuID)
 	case menu_SwitchTabPrev:
 	case menu_SwitchTabCommit:
 	case menu_ConEmuMacro:
-		if (!ConEmuHwnd || !IsWindow(ConEmuHwnd))
+		if (!ghConEmuWndDC || !IsWindow(ghConEmuWndDC))
 			bDisabled = true;
 		break;
 	case menu_ConsoleInfo:
@@ -351,7 +351,7 @@ void WINAPI GetPluginInfoWcmn(void *piv)
 
 void CheckConEmuDetached()
 {
-	if (ConEmuHwnd)
+	if (ghConEmuWndDC)
 	{
 		// ConEmu могло подцепиться
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
@@ -361,14 +361,14 @@ void CheckConEmuDetached()
 		{
 			if (ConMap.Ptr()->hConEmuWndDc == NULL)
 			{
-				ConEmuHwnd = NULL;
+				ghConEmuWndDC = NULL;
 			}
 
 			ConMap.CloseMap();
 		}
 		else
 		{
-			ConEmuHwnd = NULL;
+			ghConEmuWndDC = NULL;
 		}
 	}
 }
@@ -413,7 +413,7 @@ HANDLE OpenPluginWcmn(int OpenFrom,INT_PTR Item,bool FromMacro)
 
 				if (!IsBadStringPtrW(pszCallCmd, 255) && *pszCallCmd)
 				{
-					if (!ConEmuHwnd)
+					if (!ghConEmuWndDC)
 					{
 						SetEnvironmentVariable(CEGUIMACRORETENVVAR, NULL);
 					}
@@ -1680,7 +1680,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			{
 				if (!StartupHooks(ghPluginModule))
 				{
-					if (ConEmuHwnd)
+					if (ghConEmuWndDC)
 					{
 						_ASSERTE(FALSE);
 						DEBUGSTR(L"!!! Can't install injects!!!\n");
@@ -1763,11 +1763,11 @@ BOOL WINAPI _DllMainCRTStartup(HANDLE hDll,DWORD dwReason,LPVOID lpReserved)
 
 BOOL WINAPI IsConsoleActive()
 {
-	if (ConEmuHwnd)
+	if (ghConEmuWndDC)
 	{
-		if (IsWindow(ConEmuHwnd))
+		if (IsWindow(ghConEmuWndDC))
 		{
-			HWND hParent = GetParent(ConEmuHwnd);
+			HWND hParent = GetParent(ghConEmuWndDC);
 
 			if (hParent)
 			{
@@ -1793,20 +1793,20 @@ HWND WINAPI GetFarHWND2(int anConEmuOnly)
 		return FarHwnd;
 	}
 
-	if (ConEmuHwnd)
+	if (ghConEmuWndDC)
 	{
-		if (IsWindow(ConEmuHwnd))
+		if (IsWindow(ghConEmuWndDC))
 		{
 			if (anConEmuOnly == 2)
 				return GetConEmuHWND(1);
-			return ConEmuHwnd;
+			return ghConEmuWndDC;
 		}
 
-		// Дескриптор уже должен быть сброшен!
-		_ASSERTE(ConEmuHwnd==NULL);
-		ConEmuHwnd = NULL;
+		//
+		ghConEmuWndDC = NULL;
 		//
 		SetConEmuEnvVar(NULL);
+		SetConEmuEnvVarChild(NULL,NULL);
 	}
 
 	if (anConEmuOnly)
@@ -3266,12 +3266,12 @@ BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
 	}
 
 	// Выполним сразу после SuspendThread, чтобы нить не посчитала, что мы подцепились обратно
-	gbWasDetached = (ConEmuHwnd!=NULL && IsWindow(ConEmuHwnd));
+	gbWasDetached = (ghConEmuWndDC!=NULL && IsWindow(ghConEmuWndDC));
 
-	if (ConEmuHwnd)
+	if (ghConEmuWndDC)
 	{
 		// Запомним, для удобства аттача
-		if (!GetWindowThreadProcessId(ConEmuHwnd, &gdwPreDetachGuiPID))
+		if (!GetWindowThreadProcessId(ghConEmuWndDC, &gdwPreDetachGuiPID))
 			gdwPreDetachGuiPID = 0;
 	}
 
@@ -3299,8 +3299,9 @@ BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs)
 	//CloseColorerHeader(); // Если было
 
 	CloseMapHeader();
-	ConEmuHwnd = NULL;
+	ghConEmuWndDC = NULL;
 	SetConEmuEnvVar(NULL);
+	SetConEmuEnvVarChild(NULL,NULL);
 	// Потом еще и FarHwnd сбросить нужно будет... Ну этим MonitorThreadProcW займется
 	return TRUE; // продолжить выполнение функции
 }
@@ -3366,9 +3367,9 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 	//DWORD dwProcId = GetCurrentProcessId();
 	DWORD dwStartTick = GetTickCount();
 	//DWORD dwMonitorTick = dwStartTick;
-	BOOL lbStartedNoConEmu = (ConEmuHwnd == NULL) && !gbStartedUnderConsole2;
+	BOOL lbStartedNoConEmu = (ghConEmuWndDC == NULL) && !gbStartedUnderConsole2;
 	//BOOL lbTryOpenMapHeader = FALSE;
-	//_ASSERTE(ConEmuHwnd!=NULL); -- ConEmu может подцепиться позднее!
+	//_ASSERTE(ghConEmuWndDC!=NULL); -- ConEmu может подцепиться позднее!
 
 	WARNING("В MonitorThread нужно также отслеживать и 'живость' сервера. Иначе приложение останется невидимым (");
 
@@ -3387,7 +3388,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 
 		// Если FAR запущен в "невидимом" режиме и по истечении таймаута
 		// так и не подцепились к ConEmu - всплыть окошко консоли
-		if (lbStartedNoConEmu && ConEmuHwnd == NULL && FarHwnd != NULL)
+		if (lbStartedNoConEmu && ghConEmuWndDC == NULL && FarHwnd != NULL)
 		{
 			DWORD dwCurTick = GetTickCount();
 			DWORD dwDelta = dwCurTick - dwStartTick;
@@ -3403,11 +3404,11 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			}
 		}
 
-		// Теоретически, нить обработки может запуститься и без ConEmuHwnd (под телнетом)
-		if (ConEmuHwnd && FarHwnd && (dwWait == WAIT_TIMEOUT))
+		// Теоретически, нить обработки может запуститься и без ghConEmuWndDC (под телнетом)
+		if (ghConEmuWndDC && FarHwnd && (dwWait == WAIT_TIMEOUT))
 		{
 			// Может быть ConEmu свалилось
-			if (!IsWindow(ConEmuHwnd) && ConEmuHwnd)
+			if (!IsWindow(ghConEmuWndDC) && ghConEmuWndDC)
 			{
 				HWND hConWnd = GetConEmuHWND(2);
 
@@ -3426,38 +3427,41 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 				{
 					EmergencyShow(FarHwnd);
 				}
+				else if (!gbWasDetached)
+				{
+					gbWasDetached = TRUE;
+					ghConEmuWndDC = NULL;
+				}
 			}
 		}
 
-		if (!gbWasDetached && !ConEmuHwnd)
+		if (gbWasDetached && !ghConEmuWndDC)
 		{
 			// ConEmu могло подцепиться
-			if (gpConMapInfo && gpConMapInfo->hConEmuWndDc)
+			if (gpConMapInfo && gpConMapInfo->hConEmuWndDc && IsWindow(gpConMapInfo->hConEmuWndDc))
 			{
 				gbWasDetached = FALSE;
-				ConEmuHwnd = (HWND)gpConMapInfo->hConEmuWndDc;
-			}
+				ghConEmuWndDC = (HWND)gpConMapInfo->hConEmuWndDc;
 
-			//MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
-			//ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd);
-			//if (ConMap.Open())
-			//{
-			//	ConEmuHwnd = (HWND)ConMap.Ptr()->hConEmuWnd;
-			//	ConMap.CloseMap();
-			//}
+				// Update our in-process env vars
+				SetConEmuEnvVar(gpConMapInfo->hConEmuRoot);
+				SetConEmuEnvVarChild(gpConMapInfo->hConEmuWndDc, gpConMapInfo->hConEmuWndBack);
 
-			if (ConEmuHwnd)
-			{
-				SetConEmuEnvVar(ConEmuHwnd);
+				// Передернуть отрисовку, чтобы обновить TrueColor
+				RedrawAll();
+
+				// Inform GUI about our Far/Plugin
 				InitResources();
 
-				// Обновить ТАБЫ после детача!
+				// Обновить ТАБЫ после реаттача
 				if (gnCurTabCount && gpTabs)
+				{
 					SendTabs(gnCurTabCount, TRUE);
+				}
 			}
 		}
 
-		//if (ConEmuHwnd && gbMonitorEnvVar && gsMonitorEnvVar[0]
+		//if (ghConEmuWndDC && gbMonitorEnvVar && gsMonitorEnvVar[0]
 		//        && (GetTickCount() - dwMonitorTick) > MONITORENVVARDELTA)
 		//{
 		//	UpdateEnvVar(gsMonitorEnvVar);
@@ -3484,7 +3488,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			}
 		}
 
-		if (/*ConEmuHwnd &&*/ gbTryOpenMapHeader)
+		if (/*ghConEmuWndDC &&*/ gbTryOpenMapHeader)
 		{
 			if (gpConMapInfo)
 			{
@@ -3507,7 +3511,7 @@ DWORD WINAPI MonitorThreadProcW(LPVOID lpParameter)
 			}
 		}
 
-		if (gbStartupHooksAfterMap && gpConMapInfo && ConEmuHwnd && IsWindow(ConEmuHwnd))
+		if (gbStartupHooksAfterMap && gpConMapInfo && ghConEmuWndDC && IsWindow(ghConEmuWndDC))
 		{
 			gbStartupHooksAfterMap = FALSE;
 			StartupHooks(ghPluginModule);
@@ -3708,7 +3712,7 @@ void CommonPluginStartup()
 
 	if (!StartupHooks(ghPluginModule))
 	{
-		if (ConEmuHwnd)
+		if (ghConEmuWndDC)
 		{
 			_ASSERTE(FALSE);
 			DEBUGSTR(L"!!! Can't install injects!!!\n");
@@ -3799,6 +3803,11 @@ int OpenMapHeader()
 
 			if (gpConMapInfo)
 			{
+				if (gpConMapInfo->hConEmuWndDc)
+				{
+					SetConEmuEnvVar(gpConMapInfo->hConEmuRoot);
+					SetConEmuEnvVarChild(gpConMapInfo->hConEmuWndDc, gpConMapInfo->hConEmuWndBack);
+				}
 				//if (gpConMapInfo->nLogLevel)
 				//	InstallTrapHandler();
 				iRc = 0;
@@ -3897,8 +3906,7 @@ void InitHWND(/*HWND ahFarHwnd*/)
 	//        ==1: Gui Main window
 	//        ==2: Console window
 	FarHwnd = GetConEmuHWND(2/*Console window*/);
-	ConEmuHwnd = GetConEmuHWND(0/*Gui console DC window*/);
-	SetConEmuEnvVar(ConEmuHwnd);
+	ghConEmuWndDC = GetConEmuHWND(0/*Gui console DC window*/);
 
 
 	{
@@ -3931,8 +3939,7 @@ void InitHWND(/*HWND ahFarHwnd*/)
 	//CheckColorerHeader();
 	//memset(hEventCmd, 0, sizeof(HANDLE)*MAXCMDCOUNT);
 	//int nChk = 0;
-	//ConEmuHwnd = GetConEmuHWND(FALSE/*abRoot*/  /*, &nChk*/);
-	//SetConEmuEnvVar(ConEmuHwnd);
+	//ghConEmuWndDC = GetConEmuHWND(FALSE/*abRoot*/  /*, &nChk*/);
 	gnMsgTabChanged = RegisterWindowMessage(CONEMUTABCHANGED);
 
 	if (!ghSetWndSendTabsEvent) ghSetWndSendTabsEvent = CreateEvent(0,0,0,0);
@@ -3968,11 +3975,11 @@ void InitHWND(/*HWND ahFarHwnd*/)
 	//ghInputThread = CreateThread(NULL, 0, InputThreadProcW, 0, 0, &gnInputThreadId);
 
 	// Если мы не под эмулятором - больше ничего делать не нужно
-	if (ConEmuHwnd)
+	if (ghConEmuWndDC)
 	{
 		//
 		DWORD dwPID, dwThread;
-		dwThread = GetWindowThreadProcessId(ConEmuHwnd, &dwPID);
+		dwThread = GetWindowThreadProcessId(ghConEmuWndDC, &dwPID);
 		typedef BOOL (WINAPI* AllowSetForegroundWindowT)(DWORD);
 		HMODULE hUser32 = GetModuleHandle(L"user32.dll");
 
@@ -4069,7 +4076,7 @@ void InitHWND(/*HWND ahFarHwnd*/)
 //{
 //	// и не под эмулятором нужно проверять макросы, иначе потом активация не сработает...
 //	//// Если мы не под эмулятором - больше ничего делать не нужно
-//	//if (!ConEmuHwnd) return;
+//	//if (!ghConEmuWndDC) return;
 //
 //
 //	// Проверка наличия макроса
@@ -4326,7 +4333,7 @@ bool UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Par
 	if (gbRequestUpdateTabs)
 		gbRequestUpdateTabs = FALSE;
 
-	if (ConEmuHwnd && FarHwnd)
+	if (ghConEmuWndDC && FarHwnd)
 		CheckResources(FALSE);
 
 	MSectionLock SC; SC.Lock(csTabs);
@@ -4564,7 +4571,7 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 	ExecutePrepareCmd(&gpTabs->hdr, CECMD_TABSCHANGED, gpTabs->hdr.cbSize);
 
 	// Это нужно делать только если инициировано ФАРОМ. Если запрос прислал ConEmu - не посылать...
-	if (tabCount && ConEmuHwnd && IsWindow(ConEmuHwnd) && abForceSend)
+	if (tabCount && ghConEmuWndDC && IsWindow(ghConEmuWndDC) && abForceSend)
 	{
 		gpTabs->Tabs.bMacroActive = IsMacroActive();
 		gpTabs->Tabs.bMainThread = (GetCurrentThreadId() == gnMainThreadId);
@@ -4615,7 +4622,7 @@ void SendTabs(int tabCount, BOOL abForceSend/*=FALSE*/)
 int WINAPI ProcessEditorInputW(void* Rec)
 {
 	// Даже если мы не под эмулятором - просто запомним текущее состояние
-	//if (!ConEmuHwnd) return 0; // Если мы не под эмулятором - ничего
+	//if (!ghConEmuWndDC) return 0; // Если мы не под эмулятором - ничего
 	if (gFarVersion.dwBuild>=FAR_Y2_VER)
 		return FUNC_Y2(ProcessEditorInputW)((LPCVOID)Rec);
 	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
@@ -4680,7 +4687,7 @@ void FillLoadedParm(struct ConEmuLoadedArg* pArg, HMODULE hSubPlugin, BOOL abLoa
 	pArg->hConEmu = ghPluginModule;
 	pArg->hPlugin = hSubPlugin;
 	pArg->bLoaded = abLoaded;
-	pArg->bGuiActive = abLoaded && (ConEmuHwnd != NULL);
+	pArg->bGuiActive = abLoaded && (ghConEmuWndDC != NULL);
 
 	// Сервисные функции
 	if (abLoaded)
@@ -5202,7 +5209,7 @@ void InitResources()
 		}
 	}
 
-	if (!ConEmuHwnd || !FarHwnd)
+	if (!ghConEmuWndDC || !FarHwnd)
 		return;
 	if (!*gpFarInfo->sLngEdit)
 	{
@@ -5275,7 +5282,7 @@ void InitResources()
 
 void CloseTabs()
 {
-	if (ConEmuHwnd && IsWindow(ConEmuHwnd) && FarHwnd)
+	if (ghConEmuWndDC && IsWindow(ghConEmuWndDC) && FarHwnd)
 	{
 		CESERVER_REQ in; // Пустая команда - значит FAR закрывается
 		ExecutePrepareCmd(&in, CECMD_TABSCHANGED, sizeof(CESERVER_REQ_HDR));
@@ -5791,7 +5798,7 @@ void ShowPluginMenu(PluginCallCommands nCallID /*= pcc_None*/)
 		{
 			if (TerminalMode) break;  // низзя
 
-			if (ConEmuHwnd && IsWindow(ConEmuHwnd)) break;  // Мы и так подключены?
+			if (ghConEmuWndDC && IsWindow(ghConEmuWndDC)) break;  // Мы и так подключены?
 
 			Attach2Gui();
 		} break;
@@ -6213,16 +6220,16 @@ BOOL StartDebugger()
 		h = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 	}
 
-	if (ConEmuHwnd)
+	if (ghConEmuWndDC)
 	{
-		DWORD nGuiPID = 0; GetWindowThreadProcessId(ConEmuHwnd, &nGuiPID);
+		DWORD nGuiPID = 0; GetWindowThreadProcessId(ghConEmuWndDC, &nGuiPID);
 		// Откроем дебаггер в новой вкладке ConEmu. При желании юзеру проще сделать Detach
 		// "/DEBUGPID=" обязательно должен быть первым аргументом
 
 		_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /ROOT \"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=9999",
 		          szConEmuC, szConEmuC, dwSelfPID, w, h);
 		//_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /ATTACH /GID=%u /GHWND=%08X /ROOT \"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=9999",
-		//          szConEmuC, nGuiPID, (DWORD)(DWORD_PTR)ConEmuHwnd, szConEmuC, dwSelfPID, w, h);
+		//          szConEmuC, nGuiPID, (DWORD)(DWORD_PTR)ghConEmuWndDC, szConEmuC, dwSelfPID, w, h);
 	}
 	else
 	{
@@ -6231,7 +6238,7 @@ BOOL StartDebugger()
 		          szConEmuC, dwSelfPID, w, h);
 	}
 
-	if (ConEmuHwnd)
+	if (ghConEmuWndDC)
 	{
 		si.dwFlags |= STARTF_USESHOWWINDOW;
 		si.wShowWindow = SW_HIDE;
@@ -6458,7 +6465,7 @@ void ShowConsoleInfo()
 		L"OutputAttr=0x%02X\n"
 		,
 		TerminalMode ? L"Yes" : L"No",
-		(DWORD)FarHwnd, (DWORD)ConEmuHwnd,
+		(DWORD)FarHwnd, (DWORD)ghConEmuWndDC,
 		gdwServerPID, GetCurrentProcessId(),
 		nConIn, nConOut,
 		csbi.dwSize.X, csbi.dwSize.Y,
@@ -6557,7 +6564,7 @@ void WINAPI OnLibraryLoaded(HMODULE ahModule)
 	//#endif
 
 	//// Если GUI неактивно (запущен standalone FAR) - сразу выйти
-	//if (ConEmuHwnd == NULL)
+	//if (ghConEmuWndDC == NULL)
 	//{
 	//	return;
 	//}
@@ -6577,7 +6584,7 @@ void WINAPI OnLibraryLoaded(HMODULE ahModule)
 			//arg.hConEmu = ghPluginModule;
 			//arg.hPlugin = ahModule;
 			//arg.bLoaded = TRUE;
-			//arg.bGuiActive = (ConEmuHwnd != NULL);
+			//arg.bGuiActive = (ghConEmuWndDC != NULL);
 			//// Сервисные функции
 			//arg.GetFarHWND = GetFarHWND;
 			//arg.GetFarHWND2 = GetFarHWND2;
@@ -6609,7 +6616,7 @@ void WINAPI OnLibraryLoaded(HMODULE ahModule)
 //		asLogFileName = NULL; // пока - только через CMD_LOG_SHELL
 //	}
 //
-//	if (!ConEmuHwnd)
+//	if (!ghConEmuWndDC)
 //	{
 //		gsLogCreateProcess[0] = 0;
 //	}
@@ -6617,7 +6624,7 @@ void WINAPI OnLibraryLoaded(HMODULE ahModule)
 //	{
 //		//DWORD dwGuiThreadId, dwGuiProcessId;
 //		//MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
-//		//dwGuiThreadId = GetWindowThreadProcessId(ConEmuHwnd, &dwGuiProcessId);
+//		//dwGuiThreadId = GetWindowThreadProcessId(ghConEmuWndDC, &dwGuiProcessId);
 //		//if (!dwGuiThreadId)
 //		//{
 //		//	_ASSERTE(dwGuiProcessId);
