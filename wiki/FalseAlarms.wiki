@@ -1,0 +1,7 @@
+﻿#summary Some antiviral programs are reporting false alarms
+
+=Softpedia guarantee=
+<a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml"><img border="0" src="http://s1.softpedia-static.com/base_img/softpedia_free_award_f.gif"/></a>
+
+=Related issues=
+Issue 1343, Issue 1119, Issue 729, Issue 712, Issue 597, Issue 596, Issue 555
