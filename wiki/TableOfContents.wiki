@@ -86,6 +86,7 @@
       * [TccInsertOverwrite TCC Insert/Overwrite]
       * [PromptAtTheBottom Prompt at the bottom]
       * [FaqBoldItalic Bold/Italic/Underlined]
+      * [FaqTabVsTitle Tab or Console title]
       * [PVSStudio PVS-Studio]
       * [MemoryDump MemoryDump]
       * [LogFiles LogFiles]

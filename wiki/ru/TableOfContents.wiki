@@ -87,6 +87,7 @@
       * [TccInsertOverwrite TCC Вставка/Замена]
       * [PromptAtTheBottom Prompt внизу окна]
       * [FaqBoldItalic Жирный/Курсив/Подчеркнутый]
+      * [FaqTabVsTitle Заголовок таба или консоли]
       * [PVSStudio PVS-Studio]
       * [MemoryDump MemoryDump]
       * [LogFiles Log файлы]
