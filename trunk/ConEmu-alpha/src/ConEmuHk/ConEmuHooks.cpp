@@ -233,6 +233,12 @@ bool gbDosBoxProcess = false;
 bool gbSkipVirtualAllocErr = false;
 /* ************ Don't show VirtualAlloc errors ************ */
 
+/* ************ Hooking time functions ************ */
+DWORD gnTimeEnvVarLastCheck = 0;
+wchar_t gszTimeEnvVarSave[32] = L"";
+/* ************ Hooking time functions ************ */
+
+
 /* ************ From Entry.cpp ************ */
 #if defined(__GNUC__)
 extern "C"
@@ -431,6 +437,8 @@ BOOL WINAPI OnStretchBlt(HDC hdcDest, int nXOriginDest, int nYOriginDest, int nW
 //BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode);
 //#endif
 //#endif
+BOOL WINAPI OnSetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue);
+BOOL WINAPI OnSetEnvironmentVariableW(LPCWSTR lpName, LPCWSTR lpValue);
 DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
 DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 #if 0
@@ -571,6 +579,8 @@ bool InitHooksCommon()
 			kernel32
 		},
 		#endif
+		{(void*)OnSetEnvironmentVariableA,	"SetEnvironmentVariableA",	kernel32},
+		{(void*)OnSetEnvironmentVariableW,	"SetEnvironmentVariableW",	kernel32},
 		{(void*)OnGetEnvironmentVariableA,	"GetEnvironmentVariableA",	kernel32},
 		{(void*)OnGetEnvironmentVariableW,	"GetEnvironmentVariableW",	kernel32},
 		#if 0
@@ -5056,7 +5066,7 @@ BOOL WINAPI OnAllocConsole(void)
 	// Попытаться создать консольное окно "по тихому"
 	if (gpDefTerm && !hOldConWnd && !gnServerPID)
 	{
-		HWND hCreatedCon = gpDefTerm->AllocHiddenConsole();
+		HWND hCreatedCon = gpDefTerm->AllocHiddenConsole(false);
 		if (hCreatedCon)
 		{
 			hOldConWnd = hCreatedCon;
@@ -5945,6 +5955,42 @@ void CheckVariables()
 	GetConMap(FALSE);
 }
 
+BOOL WINAPI OnSetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
+{
+	typedef BOOL (WINAPI* OnSetEnvironmentVariableA_t)(LPCSTR lpName, LPCSTR lpValue);
+	ORIGINALFAST(SetEnvironmentVariableA);
+
+	if (lpName && *lpName)
+	{
+		if (lstrcmpiA(lpName, ENV_CONEMUFAKEDT_VAR_A) == 0)
+		{
+			MultiByteToWideChar(CP_OEMCP, 0, lpValue ? lpValue : "", -1, gszTimeEnvVarSave, countof(gszTimeEnvVarSave)-1);
+		}
+	}
+
+	BOOL b = F(SetEnvironmentVariableA)(lpName, lpValue);
+
+	return b;
+}
+
+BOOL WINAPI OnSetEnvironmentVariableW(LPCWSTR lpName, LPCWSTR lpValue)
+{
+	typedef BOOL (WINAPI* OnSetEnvironmentVariableW_t)(LPCWSTR lpName, LPCWSTR lpValue);
+	ORIGINALFAST(SetEnvironmentVariableW);
+
+	if (lpName && *lpName)
+	{
+		if (lstrcmpi(lpName, ENV_CONEMUFAKEDT_VAR_W) == 0)
+		{
+			lstrcpyn(gszTimeEnvVarSave, lpValue ? lpValue : L"", countof(gszTimeEnvVarSave));
+		}
+	}
+
+	BOOL b = F(SetEnvironmentVariableW)(lpName, lpValue);
+
+	return b;
+}
+
 DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 {
 	typedef DWORD (WINAPI* OnGetEnvironmentVariableA_t)(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
@@ -6028,20 +6074,18 @@ bool GetTime(bool bSystem, LPSYSTEMTIME lpSystemTime)
 	bool bHacked = false;
 	wchar_t szEnvVar[32] = L""; // 2013-01-01T15:16:17.95
 
-	static wchar_t szEnvVarSave[32] = L"";
-	static DWORD nEnvVarLastCheck = 0;
 	DWORD nCurTick = GetTickCount();
-	DWORD nCheckDelta = nCurTick - nEnvVarLastCheck;
+	DWORD nCheckDelta = nCurTick - gnTimeEnvVarLastCheck;
 	const DWORD nCheckDeltaMax = 1000;
-	if (!nEnvVarLastCheck || (nCheckDelta >= nCheckDeltaMax))
+	if (!gnTimeEnvVarLastCheck || (nCheckDelta >= nCheckDeltaMax))
 	{
-		nEnvVarLastCheck = nCurTick;
-		GetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR, szEnvVar, countof(szEnvVar));
-		lstrcpyn(szEnvVarSave, szEnvVar, countof(szEnvVarSave));
+		gnTimeEnvVarLastCheck = nCurTick;
+		GetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR_W, szEnvVar, countof(szEnvVar));
+		lstrcpyn(gszTimeEnvVarSave, szEnvVar, countof(gszTimeEnvVarSave));
 	}
-	else if (*szEnvVarSave)
+	else if (*gszTimeEnvVarSave)
 	{
-		lstrcpyn(szEnvVar, szEnvVarSave, countof(szEnvVar));
+		lstrcpyn(szEnvVar, gszTimeEnvVarSave, countof(szEnvVar));
 	}
 	else
 	{

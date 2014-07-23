@@ -1219,14 +1219,14 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		if (iRc != 0)
 			goto wrap;
 		// ConEmuHk еще не загружен, а он необходим для многих функций
-		if (!gbAlternativeAttach && gbNoCreateProcess && gbAlienMode)
+		if (!gbAlternativeAttach && gbNoCreateProcess && gbAlienMode && !gbDontInjectConEmuHk)
 		{
 			if (gpSrv->dwRootProcess)
 			{
 				int iRemote = InjectRemote(gpSrv->dwRootProcess);
 				if (iRemote != 0 && iRemote != 1)
 				{
-					_printf("ServerInit warning: InjectRemote failed, Code=%i\n", iRemote);
+					_printf("ServerInit warning: InjectRemote PID=%u failed, Code=%i\n", gpSrv->dwRootProcess, iRemote);
 				}
 			}
 			else
@@ -3396,7 +3396,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 		nTop = 0;
 		nBottom = pSbi->dwSize.Y - 1;
 	}
-	else if (gpSrv->nTopVisibleLine!=-1)
+	else if (gpSrv->nTopVisibleLine != -1)
 	{
 		// А для 'буферного' режима позиция может быть заблокирована
 		nTop = gpSrv->nTopVisibleLine;

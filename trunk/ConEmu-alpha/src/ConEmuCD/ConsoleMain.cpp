@@ -62,6 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SHOWDEBUGSTR
 #define DEBUGSTRCMD(x) DEBUGSTR(x)
+#define DEBUGSTARTSTOPBOX(x) //MessageBox(NULL, x, WIN3264TEST(L"ConEmuC",L"ConEmuC64"), MB_ICONINFORMATION|MB_SYSTEMMODAL)
 #define DEBUGSTRFIN(x) DEBUGSTR(x)
 #define DEBUGSTRCP(x) DEBUGSTR(x)
 
@@ -664,22 +665,62 @@ bool CopyToClipboard(LPCWSTR asText)
 LPTOP_LEVEL_EXCEPTION_FILTER gpfnPrevExFilter = NULL;
 LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 {
-	wchar_t szFull[1024] = L"";
-	DWORD dwErr = CreateDumpForReport(ExceptionInfo, szFull);
-	wchar_t szAdd[1200];
-	wcscpy_c(szAdd, szFull);
-	wcscat_c(szAdd, L"\r\n\r\nPress <Yes> to copy this text to clipboard\r\nand open project web page");
+	bool bKernelTrap = (gnInReadConsoleOutput > 0);
+	wchar_t szExcptInfo[1024] = L"";
+	wchar_t szDmpFile[MAX_PATH+64] = L"";
+	wchar_t szAdd[2000];
+
+	DWORD dwErr = CreateDumpForReport(ExceptionInfo, szExcptInfo, szDmpFile);
+
+	szAdd[0] = 0;
+
+	if (bKernelTrap)
+	{
+		wcscat_c(szAdd, L"Due to Microsoft kernel bug the crash was occurred\r\n");
+		wcscat_c(szAdd, CEMSBUGWIKI /* http://code.google.com/p/conemu-maximus5/wiki/... */);
+		wcscat_c(szAdd, L"\r\n\r\n" L"The only possible workaround: enabling ‘Inject ConEmuHk’\r\n");
+		wcscat_c(szAdd, CEHOOKSWIKI /* http://code.google.com/p/conemu-maximus5/wiki/... */);
+		wcscat_c(szAdd, L"\r\n\r\n");
+	}
+
+	wcscat_c(szAdd, szExcptInfo);
+
+	if (szDmpFile[0])
+	{
+		wcscat_c(szAdd, L"\r\n\r\n" L"Memory dump was saved to\r\n");
+		wcscat_c(szAdd, szDmpFile);
+
+		if (!bKernelTrap)
+		{
+			wcscat_c(szAdd, L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n");
+			wcscat_c(szAdd, CEREPORTCRASH /* http://code.google.com/p/conemu-maximus5/... */);
+		}
+	}
+
+	wcscat_c(szAdd, L"\r\n\r\nPress <Yes> to copy this text to clipboard");
+	if (!bKernelTrap)
+	{
+		wcscat_c(szAdd, L"\r\nand open project web page");
+	}
+
+	// Message title
 	wchar_t szTitle[100], szExe[MAX_PATH] = L"", *pszExeName;
 	GetModuleFileName(NULL, szExe, countof(szExe));
 	pszExeName = (wchar_t*)PointToName(szExe);
 	if (pszExeName && lstrlen(pszExeName) > 63) pszExeName[63] = 0;
 	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s crashed, PID=%u", pszExeName ? pszExeName : L"<process>", GetCurrentProcessId());
 
-	int nBtn = MessageBox(NULL, szAdd, szTitle, MB_YESNO|MB_ICONSTOP|MB_SYSTEMMODAL);
+	DWORD nMsgFlags = MB_YESNO|MB_ICONSTOP|MB_SYSTEMMODAL
+		| (bKernelTrap ? MB_DEFBUTTON2 : 0);
+
+	int nBtn = MessageBox(NULL, szAdd, szTitle, nMsgFlags);
 	if (nBtn == IDYES)
 	{
-		CopyToClipboard(szFull);
-		ShellExecute(NULL, L"open", CEREPORTCRASH, NULL, NULL, SW_SHOWNORMAL);
+		CopyToClipboard(szAdd);
+		if (!bKernelTrap)
+		{
+			ShellExecute(NULL, L"open", CEREPORTCRASH, NULL, NULL, SW_SHOWNORMAL);
+		}
 	}
 
 	LONG lExRc = EXCEPTION_EXECUTE_HANDLER;
@@ -3997,6 +4038,55 @@ void CheckNeedSkipWowChange(LPCWSTR asCmdLine)
 }
 #endif
 
+// When DefTerm debug console is started for Win32 app
+// we need to allocate hidden console, and there is no
+// active process, until parent DevEnv successfully starts
+// new debugging process session
+DWORD WaitForRootConsoleProcess(DWORD nTimeout)
+{
+	if (pfnGetConsoleProcessList==NULL)
+	{
+		_ASSERTE(FALSE && "Attach to console app was requested, but required WinXP or higher!");
+		return 0;
+	}
+
+	_ASSERTE(gbCreatingHiddenConsole);
+	_ASSERTE(ghConWnd!=NULL);
+
+	DWORD nFoundPID = 0;
+	DWORD nStart = GetTickCount(), nDelta = 0;
+	DWORD nProcesses[20] = {}, nProcCount, i;
+
+	PROCESSENTRY32 pi = {};
+	GetProcessInfo(gnSelfPID, &pi);
+
+	while (!nFoundPID && (nDelta < nTimeout))
+	{
+		Sleep(50);
+		nProcCount = pfnGetConsoleProcessList(nProcesses, countof(nProcesses));
+
+		for (i = 0; i < nProcCount; i++)
+		{
+			DWORD nPID = nProcesses[i];
+			if (nPID && (nPID != gnSelfPID) && (nPID != pi.th32ParentProcessID))
+			{
+				nFoundPID = nPID;
+				break;
+			}
+		}
+
+		nDelta = (GetTickCount() - nStart);
+	}
+
+	if (!nFoundPID)
+	{
+		ShowWindow(ghConWnd, SW_SHOWNORMAL);
+		_ASSERTE(FALSE && "Was unable to find starting process");
+	}
+
+	return nFoundPID;
+}
+
 // Разбор параметров командной строки
 int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackgroundTab*/)
 {
@@ -4303,7 +4393,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 			else if (wcsncmp(szArg, L"/CONPID=", 8)==0)
 			{
-				_ASSERTE(FALSE && "Continue to alternative attach mode");
+				//_ASSERTE(FALSE && "Continue to alternative attach mode");
 				gbAlternativeAttach = TRUE;
 				gbRootIsCmdExe = FALSE;
 				pszStart = szArg.ms_Arg+8;
@@ -4314,6 +4404,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 
 			gpSrv->dwRootProcess = wcstoul(pszStart, &pszEnd, 10);
+
+			if ((gpSrv->dwRootProcess == 0) && gbCreatingHiddenConsole)
+			{
+				gpSrv->dwRootProcess = WaitForRootConsoleProcess(30000);
+			}
 
 			// --
 			//if (gpSrv->dwRootProcess)
@@ -4443,7 +4538,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				_printf("Attach to GUI was requested, but invalid PID specified:\n");
 				_wprintf(GetCommandLineW());
 				_printf("\n");
-				_ASSERTE(FALSE);
+				_ASSERTE(FALSE && "Attach to GUI was requested, but invalid PID specified");
 				return CERR_CARGUMENT;
 			}
 		}
@@ -4858,7 +4953,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	// Теоретически, в Студии не должно бы быть запуска ConEmuC.exe, но он может оказаться в "COMSPEC", так что проверим.
 	if (gbAttachMode && (gnRunMode == RM_SERVER) && (gnConEmuPID == 0))
 	{
-		_ASSERTE(!gbAlternativeAttach && "Alternative mode must be already processed!");
+		//-- ассерт не нужен вроде
+		//_ASSERTE(!gbAlternativeAttach && "Alternative mode must be already processed!");
 
 		BOOL lbIsWindowVisible = FALSE;
 		// Добавим проверку на telnet
@@ -7173,6 +7269,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	}
 
 	DEBUGSTRCMD(szDbg);
+	DEBUGSTARTSTOPBOX(szDbg);
 #endif
 
 	// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
@@ -8201,7 +8298,7 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 	BOOL lbRc;
 	MCHKHEAP;
 
-	switch(in.hdr.nCmd)
+	switch (in.hdr.nCmd)
 	{
 		//case CECMD_GETCONSOLEINFO:
 		//case CECMD_REQUESTCONSOLEINFO:

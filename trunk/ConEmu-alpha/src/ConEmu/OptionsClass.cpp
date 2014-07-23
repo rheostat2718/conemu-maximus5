@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShObjIdl_Part.h"
 #endif // __GNUC__
 
+#include "../common/Monitors.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuPlugin/FarDefaultMacros.h"
@@ -282,7 +283,7 @@ CSettings::CSettings()
 	// Go
 	isResetBasicSettings = false;
 	isFastSetupDisabled = false;
-	isDontCascade = false;
+	isDontCascade = false; // -nocascade or -dontcascade switch
 	ibDisableSaveSettingsOnExit = false;
 	isAdvLogging = 0;
 	m_ActivityLoggingType = glt_None; mn_ActivityCmdStartTick = 0;
@@ -1078,61 +1079,6 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	else
 	{
 		gpConEmu->SetWindowMode((ConEmuWindowMode)gpSet->_WindowMode);
-	}
-
-	if (gpSet->wndCascade && (ghWnd == NULL))
-	{
-		// Сдвиг при каскаде
-		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
-		// Координаты и размер виртуальной рабочей области
-		RECT rcScreen = MakeRect(800,600);
-		int nMonitors = GetSystemMetrics(SM_CMONITORS);
-
-		if (nMonitors > 1)
-		{
-			// Размер виртуального экрана по всем мониторам
-			rcScreen.left = GetSystemMetrics(SM_XVIRTUALSCREEN); // may be <0
-			rcScreen.top  = GetSystemMetrics(SM_YVIRTUALSCREEN);
-			rcScreen.right = rcScreen.left + GetSystemMetrics(SM_CXVIRTUALSCREEN);
-			rcScreen.bottom = rcScreen.top + GetSystemMetrics(SM_CYVIRTUALSCREEN);
-			TODO("Хорошо бы исключить из рассмотрения Taskbar...");
-		}
-		else
-		{
-			SystemParametersInfo(SPI_GETWORKAREA, 0, &rcScreen, 0);
-		}
-
-		HWND hPrev = isDontCascade ? NULL : FindWindow(VirtualConsoleClassMain, NULL);
-
-		while (hPrev)
-		{
-			/*if (Is Iconic(hPrev) || Is Zoomed(hPrev)) {
-				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
-				continue;
-			}*/
-			WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)}; // Workspace coordinates!!!
-
-			if (!GetWindowPlacement(hPrev, &wpl))
-			{
-				break;
-			}
-
-			// Screen coordinates!
-			RECT rcWnd; GetWindowRect(hPrev, &rcWnd);
-
-			if (wpl.showCmd == SW_HIDE || !IsWindowVisible(hPrev)
-			        || wpl.showCmd == SW_SHOWMINIMIZED || wpl.showCmd == SW_SHOWMAXIMIZED
-			        /* Max в режиме скрытия заголовка */
-			        || (wpl.rcNormalPosition.left<rcScreen.left || wpl.rcNormalPosition.top<rcScreen.top))
-			{
-				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
-				continue;
-			}
-
-			gpConEmu->wndX = rcWnd.left + nShift;
-			gpConEmu->wndY = rcWnd.top + nShift;
-			break; // нашли, сдвинулись, выходим
-		}
 	}
 
 	if (!gpConEmu->InCreateWindow())
@@ -2120,12 +2066,10 @@ LRESULT CSettings::OnInitDialog_Show(HWND hWnd2, bool abInitial)
 	// Quake style
 	checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hWnd2, cbQuakeAutoHide, (gpSet->isQuakeStyle == 2) ? BST_CHECKED : BST_UNCHECKED);
+	// Show/Hide/Slide timeout
 	SetDlgItemInt(hWnd2, tQuakeAnimation, gpSet->nQuakeAnimation, FALSE);
 
 	EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
-	EnableWindow(GetDlgItem(hWnd2, stQuakeAnimation), gpSet->isQuakeStyle);
-	EnableWindow(GetDlgItem(hWnd2, tQuakeAnimation), gpSet->isQuakeStyle);
-
 
 	// Скрытие рамки
 	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);

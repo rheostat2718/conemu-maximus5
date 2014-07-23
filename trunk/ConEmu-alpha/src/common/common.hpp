@@ -95,6 +95,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/issues/entry"
 #define CEREPORTCRASH  L"http://code.google.com/p/conemu-maximus5/issues/entry"
 #define CEWHATSNEW     L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New"
+#define CEMSBUGWIKI    L"http://code.google.com/p/conemu-maximus5/wiki/MicrosoftBugs"
+#define CEHOOKSWIKI    L"http://code.google.com/p/conemu-maximus5/wiki/ConEmuHk"
 #define CEDONATEPAGE   L"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3LV8XTRBK9K4E"
 #define CEFLATTRPAGE   L"http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub"
 
@@ -122,7 +124,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMUANSI_VAR_A  "ConEmuANSI"
 #define ENV_CONEMUANSI_VAR_W L"ConEmuANSI"
 #define ENV_CONEMUANSILOG_VAR_W L"ConEmuAnsiLog"
-#define ENV_CONEMUFAKEDT_VAR L"ConEmuFakeDT"
+#define ENV_CONEMUFAKEDT_VAR_A "ConEmuFakeDT"
+#define ENV_CONEMUFAKEDT_VAR_W L"ConEmuFakeDT"
 #define ENV_CONEMU_BUILD_W L"ConEmuBuild"
 #define ENV_CONEMU_CONFIG_W L"ConEmuConfig"
 #define ENV_CONEMU_WAITKEY L"ConEmuWaitKey"

@@ -296,12 +296,13 @@ CConEmuMain::CConEmuMain()
 		ms_ConEmuBuild, WIN3264TEST(32,64), RELEASEDEBUGTEST(L"",L"D"));
 
 	mp_Menu = new CConEmuMenu;
-	mp_TabBar = NULL; /*m_Macro = NULL;*/ mp_Tip = NULL;
+	mp_Tip = NULL;
 	mp_Status = new CStatus;
+	mp_TabBar = new CTabBarClass;
 	mp_DefTrm = new CDefaultTerminal;
 	mp_Inside = NULL;
 	mp_Find = new CEFindDlg;
-	mp_RunQueue = new CRunQueue();
+	mp_RunQueue = new CRunQueue;
 
 	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE;
 	mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = false; mn_ConEmuAliveEventErr = 0;
@@ -1300,7 +1301,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 
 BOOL CConEmuMain::Init()
 {
-	_ASSERTE(mp_TabBar == NULL);
+	_ASSERTE(mp_TabBar != NULL);
 
 	// Чтобы не блокировать папку запуска - CD
 	SetCurrentDirectory(ms_ConEmuExeDir);
@@ -1322,7 +1323,6 @@ BOOL CConEmuMain::Init()
 	LoadIcons();
 
 	mp_Tip = new CToolTip();
-	mp_TabBar = new CTabBarClass();
 	//m_Child = new CConEmuChild();
 	//m_Back = new CConEmuBack();
 	//m_Macro = new CConEmuMacro();
@@ -3134,6 +3134,10 @@ HRGN CConEmuMain::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 void CConEmuMain::Destroy()
 {
 	LogString(L"CConEmuMain::Destroy()");
+
+	// Ensure "RCon starting queue" is terminated
+	mp_RunQueue->Terminate();
+
 	CVConGroup::StopSignalAll();
 
 	if (gbInDisplayLastError)
@@ -3169,6 +3173,10 @@ CConEmuMain::~CConEmuMain()
 	_ASSERTE(ghWnd==NULL || !IsWindow(ghWnd));
 	MCHKHEAP;
 	//ghWnd = NULL;
+
+	// Ensure "RCon starting queue" is terminated
+	if (mp_RunQueue)
+		mp_RunQueue->Terminate();
 
 	SafeDelete(mp_DefTrm);
 
@@ -3741,6 +3749,68 @@ RECT CConEmuMain::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon/*=NULL*
 	}
 
 	return CalcRect(tWhat, rcMain, CER_MAIN, pVCon);
+}
+
+void CConEmuMain::CascadedPosFix()
+{
+	if (gpSet->wndCascade && (ghWnd == NULL) && (gpConEmu->WindowMode == wmNormal) && gpConEmu->IsSizePosFree(gpConEmu->WindowMode))
+	{
+		// Сдвиг при каскаде
+		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
+		// Monitor information
+		MONITORINFO mi;
+		// Prefered window size
+		int nDefWidth = 0, nDefHeight = 0;
+
+		HWND hPrev = gpSetCls->isDontCascade ? NULL : FindWindow(VirtualConsoleClassMain, NULL);
+
+		// Find first visible existing ConEmu window with normal state
+		while (hPrev)
+		{
+			/*if (Is Iconic(hPrev) || Is Zoomed(hPrev)) {
+				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
+				continue;
+			}*/
+			WINDOWPLACEMENT wpl = {sizeof(WINDOWPLACEMENT)}; // Workspace coordinates!!!
+
+			if (!GetWindowPlacement(hPrev, &wpl))
+			{
+				break;
+			}
+
+			// Screen coordinates!
+			RECT rcWnd = {}; GetWindowRect(hPrev, &rcWnd);
+			GetNearestMonitorInfo(&mi, NULL, &rcWnd);
+
+			if (wpl.showCmd == SW_HIDE || !IsWindowVisible(hPrev)
+			        || wpl.showCmd == SW_SHOWMINIMIZED || wpl.showCmd == SW_SHOWMAXIMIZED
+			        /* Max в режиме скрытия заголовка */
+			        || (wpl.rcNormalPosition.left<mi.rcWork.left || wpl.rcNormalPosition.top<mi.rcWork.top))
+			{
+				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
+				continue;
+			}
+
+			if (!nDefWidth || !nDefHeight)
+			{
+				RECT rcDef = gpConEmu->GetDefaultRect();
+				nDefWidth = rcDef.right - rcDef.left;
+				nDefHeight = rcDef.bottom - rcDef.top;
+			}
+
+			if (nDefWidth > 0 && nDefHeight > 0)
+			{
+				gpConEmu->wndX = min(rcWnd.left + nShift, mi.rcWork.right - nDefWidth);
+				gpConEmu->wndY = min(rcWnd.top + nShift, mi.rcWork.bottom - nDefHeight);
+			}
+			else
+			{
+				gpConEmu->wndX = rcWnd.left + nShift;
+				gpConEmu->wndY = rcWnd.top + nShift;
+			}
+			break; // нашли, сдвинулись, выходим
+		}
+	}
 }
 
 // Return true, when rect was changed
@@ -4510,7 +4580,7 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 
 	if (nAnimationMS == (DWORD)-1)
 	{
-		nAnimationMS = gpSet->isQuakeStyle ? gpSet->nQuakeAnimation : QUAKEANIMATION_DEF;
+		nAnimationMS = (((int)gpSet->nQuakeAnimation) >= 0) ? gpSet->nQuakeAnimation : QUAKEANIMATION_DEF;
 	}
 
 	BOOL lbRc = FALSE;
@@ -4531,7 +4601,7 @@ BOOL CConEmuMain::ShowWindow(int anCmdShow, DWORD nAnimationMS /*= (DWORD)-1*/)
 	// When Caption is visible - Windows animates window itself.
 	// Also, animation brakes transparency
 	DWORD nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
-	if (!gpSet->isQuakeStyle && gpSet->isCaptionHidden() && !(nStyleEx & WS_EX_LAYERED) )
+	if (nAnimationMS && !gpSet->isQuakeStyle && gpSet->isCaptionHidden() && !(nStyleEx & WS_EX_LAYERED) )
 	{
 		// Well, Caption is hidden, Windows does not animates our window.
 		if (anCmdShow == SW_HIDE)
@@ -4661,10 +4731,6 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	if (hWnd2)
 	{
 		EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
-		//EnableWindow(GetDlgItem(hWnd2, tHideCaptionAlwaysFrame), gpSet->isQuakeStyle); -- always enabled on "Appearance" page!
-		//EnableWindow(GetDlgItem(hWnd2, stHideCaptionAlwaysFrame), gpSet->isQuakeStyle);
-		EnableWindow(GetDlgItem(hWnd2, stQuakeAnimation), gpSet->isQuakeStyle);
-		EnableWindow(GetDlgItem(hWnd2, tQuakeAnimation), gpSet->isQuakeStyle);
 		gpSetCls->checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle!=0);
 		gpSetCls->checkDlgButton(hWnd2, cbQuakeAutoHide, gpSet->isQuakeStyle==2);
 
@@ -7288,14 +7354,6 @@ bool CConEmuMain::ConActivate(int nCon)
 	return CVConGroup::ConActivate(nCon);
 }
 
-// args должен быть выделен через "new"
-// по завершении - на него будет вызван "delete"
-void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
-{
-	_ASSERTE((pArgs->pszStartupDir == NULL) || (*pArgs->pszStartupDir != 0));
-	PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon+1, (LPARAM)pArgs);
-}
-
 bool CConEmuMain::CreateWnd(RConStartArgs *args)
 {
 	if (!args || !args->pszSpecialCmd || !*args->pszSpecialCmd)
@@ -7376,6 +7434,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 	return (bStart != FALSE);
 }
 
+// Also, called from mn_MsgCreateCon
 CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)
 {
 	_ASSERTE(args!=NULL);
@@ -7389,6 +7448,14 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, bool abAllowScripts
 	CVirtualConsole* pVCon = CVConGroup::CreateCon(args, abAllowScripts, abForceCurConsole);
 
 	return pVCon;
+}
+
+// args должен быть выделен через "new"
+// по завершении - на него будет вызван "delete"
+void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
+{
+	_ASSERTE((pArgs->pszStartupDir == NULL) || (*pArgs->pszStartupDir != 0));
+	PostMessage(ghWnd, mn_MsgCreateCon, mn_MsgCreateCon+1, (LPARAM)pArgs);
 }
 
 LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, bool* rpbSetActive, size_t cchNameMax, wchar_t* rsName/*[MAX_RENAME_TAB_LEN]*/)
@@ -11733,9 +11800,11 @@ LRESULT CConEmuMain::OnDestroy(HWND hWnd)
 	WARNING("Подозрение на зависание в некоторых случаях");
 	session.SetSessionNotification(false);
 
+	// Ensure "RCon starting queue" is terminated
+	mp_RunQueue->Terminate();
+
 	// Нужно проверить, вдруг окно закрылось без нашего ведома (InsideIntegration)
 	CVConGroup::OnDestroyConEmu();
-
 
 	if (mp_AttachDlg)
 	{
