@@ -351,8 +351,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	if (mb_NeedStartProcess)
 	{
 		// Push request to "startup queue"
-		mb_WaitingRootStartup = TRUE;
-		gpConEmu->mp_RunQueue->RequestRConStartup(this);
+		RequestStartup();
 	}
 
 	return true;
@@ -1918,8 +1917,12 @@ wrap:
 		}
 	}
 
-	// А это чтобы не осталось висеть окно ConEmu, раз всё уже закрыто
-	gpConEmu->OnRConStartedSuccess(NULL);
+	// Только если процесс был успешно запущен
+	if (pRCon->mb_StartResult)
+	{
+		// А это чтобы не осталось висеть окно ConEmu, раз всё уже закрыто
+		gpConEmu->OnRConStartedSuccess(NULL);
+	}
 
 	ShutdownGuiStep(L"StopSignal");
 
@@ -6461,6 +6464,16 @@ void CRealConsole::SetFarPID(DWORD nFarPID)
 	{
 		DEBUGSTRFARPID(szDbg);
 		tabs.RefreshFarPID((mn_ProgramStatus & CES_FARACTIVE) ? nFarPID : 0);
+
+		if ((GetActiveTabType() & fwt_TypeMask) == fwt_Panels)
+		{
+			CTab panels(__FILE__,__LINE__);
+			if ((tabs.m_Tabs.GetTabByIndex(0, panels)) && (panels->Type() == fwt_Panels))
+			{
+				panels->SetName(GetPanelTitle());
+			}
+		}
+
 		mp_VCon->Update(true);
 	}
 }
@@ -8160,6 +8173,21 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	return true;
 }
 
+void CRealConsole::RequestStartup(bool bForce)
+{
+	_ASSERTE(this);
+	// Created as detached?
+	if (bForce)
+	{
+		mb_NeedStartProcess = true;
+		mb_WasStartDetached = false;
+		m_Args.Detached = crb_Off;
+	}
+	// Push request to "startup queue"
+	mb_WaitingRootStartup = TRUE;
+	gpConEmu->mp_RunQueue->RequestRConStartup(this);
+}
+
 // И запустить ее заново
 BOOL CRealConsole::RecreateProcessStart()
 {
@@ -8210,11 +8238,8 @@ BOOL CRealConsole::RecreateProcessStart()
 		// Взведем флажочек, т.к. консоль как бы отключилась от нашего VCon
 		mb_WasStartDetached = TRUE;
 
-		{
-			// Push request to "startup queue"
-			mb_WaitingRootStartup = TRUE;
-			gpConEmu->mp_RunQueue->RequestRConStartup(this);
-		}
+		// Push request to "startup queue"
+		RequestStartup();
 
 		lbRc = StartMonitorThread();
 
@@ -9330,7 +9355,15 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 			// Нужно оставить там "new_console", иначе не отключается подтверждение закрытия например
 			wchar_t* pszCmdRedefined = bRootCmdRedefined ? lstrdup(args.pszSpecialCmd) : NULL;
 
+			// Mark as detached, because the new console will be started from active shell process,
+			// but not from ConEmu (yet, behavior planned to be changed)
 			args.Detached = crb_On;
+
+			// Reset "split" settings, the actual must be passed within asNewConsole switches
+			// and the will be processed during the following gpConEmu->CreateCon(&args) call
+			args.eSplit = RConStartArgs::eSplitNone;
+
+			// Create (detached) tab ready for attach
 			CVirtualConsole *pVCon = gpConEmu->CreateCon(&args);
 
 			if (pVCon)
@@ -9357,15 +9390,31 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 					_wcscpy_c(pIn->Duplicate.sCommand, cchCmdLen+1, pszCmdRedefined);
 
 				// Go
-				CESERVER_REQ* pOut = ExecuteHkCmd(p->ProcessID, pIn, ghWnd);
-				int nFRc = (pOut->DataSize() >= sizeof(DWORD)) ? (int)(pOut->dwData[0]) : -100;
+				int nFRc = -1;
+				CESERVER_REQ* pOut = NULL;
+				if (m_Args.InjectsDisable != crb_On)
+				{
+					pOut = ExecuteHkCmd(p->ProcessID, pIn, ghWnd);
+					nFRc = (pOut->DataSize() >= sizeof(DWORD)) ? (int)(pOut->dwData[0]) : -100;
+				}
+
+				// If ConEmuHk was not enabled in the console or due to another reason
+				// duplicate root was failed - just start new console with the same options
+				if ((nFRc != 0) && args.pszSpecialCmd && *args.pszSpecialCmd)
+				{
+					pRCon->RequestStartup(true);
+					nFRc = 0;
+				}
+
 				if (nFRc != 0)
 				{
 					if (!bSkipMsg)
 					{
-						_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Duplicate tab with root '%s' failed, code=%i?", p->Name, nFRc);
+						_wsprintf(szConfirm, SKIPLEN(countof(szConfirm)) L"Duplicate tab with root '%s' failed, code=%i", p->Name, nFRc);
 						DisplayLastError(szConfirm, -1);
 					}
+					// Do not leave 'hunging' tab if duplicating was failed
+					pRCon->CloseConsole(false, false, false);
 				}
 				else
 				{
@@ -11218,9 +11267,11 @@ void CRealConsole::OnTitleChanged()
 
 	CTab panels(__FILE__,__LINE__);
 	if (tabs.m_Tabs.GetTabByIndex(0, panels))
-	if (panels->Type() == fwt_Panels)
 	{
-		panels->SetName(GetPanelTitle());
+		if (panels->Type() == fwt_Panels)
+		{
+			panels->SetName(GetPanelTitle());
+		}
 	}
 
 	// заменил на GetProgress, т.к. он еще учитывает mn_PreWarningProgress

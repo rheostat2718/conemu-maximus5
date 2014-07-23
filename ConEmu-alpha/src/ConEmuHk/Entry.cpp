@@ -1168,6 +1168,14 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		{
 			TODO("Show error message?");
 		}
+		#if 0
+		else
+		{
+			wchar_t szText[80]; msprintf(szText, countof(szText), L"PID=%u, ConEmuHk, DefTerm enabled", GetCurrentProcessId());
+			wchar_t szPath[MAX_PATH]; GetModuleFileName(NULL, szPath, countof(szPath));
+			MessageBox(NULL, szPath, szText, MB_ICONINFORMATION|MB_SYSTEMMODAL);
+		}
+		#endif
 	}
 
 	//if (!gbSkipInjects)
@@ -1437,7 +1445,9 @@ void DllStop()
 		DLOGEND();
 	}
 
-	if (gbSelfIsRootConsoleProcess)
+	// Do not send CECMD_CMDSTARTSTOP(sst_AppStop) to server
+	// when that is 'DefTerm' process - avoid termination lagging
+	if (gbSelfIsRootConsoleProcess && !gpDefTerm)
 	{
 		// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
 		DLOG0("SendStopped",0);
@@ -1937,6 +1947,10 @@ WARNING("Попробовать SendStarted пыполнять не из DllMain
 
 void SendStarted()
 {
+	// When SendStarted is called in DefTerm mode (gbPrepareDefaultTerminal)
+	// for '*.vshost.exe' process, there is neither console nor server process yet
+	// So, server will not receive CECMD_CMDSTARTSTOP(sst_AppStart) message
+
 	if (gnServerPID == 0)
 	{
 		gbNonGuiMode = TRUE; // Не посылать ExecuteGuiCmd при выходе. Это не наша консоль
