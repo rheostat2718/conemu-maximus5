@@ -1,4 +1,4 @@
-﻿#Command line arguments
+﻿#summary Command line arguments
 
 There are several places where you may need to use command line arguments.
 Do not confuse them. The switch from one group will not be working in the another place!

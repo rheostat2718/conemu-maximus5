@@ -17,8 +17,9 @@
       * [RestartTab Restart tab]
       * [DefaultTerminal Default terminal]
       * [csudo sudo]
-      * [Command_Line Command line]
-      * [ConEmuC ConEmuC]
+      * [CommandLine Command line switches]
+        * [ConEmuArgs ConEmu.exe switches]
+        * [ConEmuC ConEmuC.exe switches]
       * [NewConsole -new_console switch]
       * [DosBox DOS applications]
     * Settings

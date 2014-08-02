@@ -18,8 +18,9 @@
       * [RestartTab Перезапуск таба]
       * [DefaultTerminal Терминал по умолчанию]
       * [csudo sudo]
-      * [Command_Line Аргументы ConEmu.exe]
-      * [ConEmuC ConEmuC]
+      * [CommandLine Аргументы командной строки]
+        * [ConEmuArgs Аргументы ConEmu.exe]
+        * [ConEmuC Аргументы ConEmuC.exe]
       * [NewConsole Ключ -new_console]
       * [DosBox DOS приложения (DosBox)]
     * Настройка
