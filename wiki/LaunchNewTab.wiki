@@ -1,5 +1,14 @@
 ﻿<font size="5">*Launching applications in !ConEmu*</font>
-<wiki:toc max_depth="3" /> 
+<wiki:toc max_depth="3" />
+
+==[ConEmuArgs Using ConEmu switches]
+When you run something from `Win+R` or shortcut from your Desktop,
+you may use `-cmd` or `-cmdlist` to run your application.
+Remember, `-cmd` or `-cmdlist` will be the last ConEmu's GUI interpreted switch.
+The rest of command line will be used to start your application.
+Read more in the [ConEmuArgs wiki]. Example:
+
+    ConEmu -reuse -dir "c:\projects" -cmd "set PATH=C:\MinGW\bin;%PATH%" & chcp 65001 & sh -l -i
 
 ==Create new console dialog==
 How to start application (tcc, powershell, far, putty) in !ConEmu tab?

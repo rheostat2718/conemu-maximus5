@@ -33,6 +33,11 @@ I’ve fallen in love with !ConEmu, after being introduced to it by a [http://ww
 *Justin Dearing*. Read [http://www.justaprogrammer.net/2012/11/03/my-conemu-tasks/ full article]
 
 ----
+If Console2 is the VW Golf to the stock Windows’ console emulator’s 1200cc VW Bug, then !ConEmu is the VW Phaeton to Console2′s VW Golf. It’s got a lot more features, it’s actively developed, it works well with Far Manager if you miss the Norton Commander days and it’s highly configurable.
+
+*Timo Geusch* Read [http://www.lonecpluspluscoder.com/2014/06/i-prefer-conemu-over-console2-and-so-should-you/ full article]
+
+----
 I found out about !ConEmu from Hanselman's post. !ConEmu is the best terminal application for Windows!
 
 *Ashwin*. Read more on [http://meta.stackoverflow.com/a/134414/187198 meta.stackoverflow.com]
