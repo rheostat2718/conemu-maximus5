@@ -1,7 +1,7 @@
 ﻿#labels Featured
 
-=Open Source Developer, ConEmu-Maximus5=
-With courtesy of Certum, ConEmu's binaries now are signed as ‘Open Source Developer, ConEmu-Maximus5’.
+=Open Source Developer, !ConEmu-Maximus5=
+With courtesy of Certum, !ConEmu's binaries now are signed as ‘Open Source Developer, !ConEmu-Maximus5’.
 
 ===Why to use certificate?===
   * You can check integrity of !ConEmu executable files.
