@@ -207,6 +207,12 @@
     <ClCompile Include="SearchCtrl.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ToolImg.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DpiAware.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -251,7 +257,7 @@
     <ClInclude Include="DwmHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\far3color.h">
+    <ClInclude Include="..\common\ConEmuColors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FrameHolder.h">
@@ -345,12 +351,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\UnicodeChars.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\UnicodeChars_gcc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\UnicodeChars_vc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Update.h">
@@ -462,6 +462,15 @@
     <ClInclude Include="..\common\DefTermBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ToolImg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DpiAware.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Circles.bmp">
@@ -499,49 +508,29 @@
     <None Include="..\..\Release\ConEmu\License.txt" />
     <None Include="..\..\Release\ConEmu\Settings-ConEmu.reg" />
     <None Include="..\..\Release\ConEmu\WhatsNew-ConEmu.txt" />
+    <None Include="ConEmu.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="CursorDragCopy.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="CursorDragLink.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="CursorDragMove.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Far.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="FAR2.ico">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmu.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="ConEmu.ico">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="CursorDragCopy.cur">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="CursorDragLink.cur">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="CursorDragMove.cur">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Far.ico">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="FAR2.ico">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="ConEmu.ico">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="CursorDragCopy.cur">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="CursorDragLink.cur">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="CursorDragMove.cur">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Far.ico">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="FAR2.ico">
-      <Filter>Resource Files</Filter>
-    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Copy24.bmp">

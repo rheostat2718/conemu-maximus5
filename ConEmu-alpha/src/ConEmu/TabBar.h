@@ -157,6 +157,7 @@ class CTabBarClass
 
 		void Activate(BOOL abPreSyncConsole=FALSE);
 		int  ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon);
+		void CheckRebarCreated();
 		int  CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
 		void Deactivate(BOOL abPreSyncConsole=FALSE);
 		bool GetActiveTabRect(RECT* rcTab);
@@ -177,13 +178,13 @@ class CTabBarClass
 		void OnShowButtonsChanged();
 		bool OnTimer(WPARAM wParam);
 		void OnWindowStateChanged();
+		void Recreate();
 		void RePaint();
 		void Reposition();
 		void Reset();
 		void Retrieve();
 		void SetRedraw(BOOL abEnableRedraw);
 		void UpdatePosition();
-		void UpdateTabFont();
 		void UpdateToolConsoles(bool abForcePos=false);
 
 		// Переключение табов

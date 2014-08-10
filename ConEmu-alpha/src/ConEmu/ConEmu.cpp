@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "ConEmuPipe.h"
 #include "DefaultTerm.h"
+#include "DpiAware.h"
 #include "DragDrop.h"
 #include "FindDlg.h"
 #include "GestureEngine.h"
@@ -105,6 +106,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRANIMATE(s) //DEBUGSTR(s)
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #define DEBUGSTRSESS(s) DEBUGSTR(s)
+#define DEBUGSTRDPI(s) DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -624,13 +626,13 @@ CConEmuMain::CConEmuMain()
 	if (IsDebuggerPresent())
 	{
 		wchar_t szDebuggers[32];
-		if (GetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS, szDebuggers, countof(szDebuggers)))
+		if (GetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS_W, szDebuggers, countof(szDebuggers)))
 		{
 			m_DbgInfo.bBlockChildrenDebuggers = (lstrcmp(szDebuggers, ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES) == 0);
 		}
 	}
 	// И сразу сбросить ее, чтобы не было мусора
-	SetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS, NULL);
+	SetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS_W, NULL);
 
 
 	// Добавить в окружение переменную с папкой к ConEmu.exe
@@ -755,7 +757,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgPostAltF9 = RegisterMessage("PostAltF9");
 	mn_MsgInitInactiveDC = RegisterMessage("InitInactiveDC");
 	mn_MsgUpdateProcDisplay = RegisterMessage("UpdateProcDisplay");
-	mn_MsgAutoSizeFont = RegisterMessage("AutoSizeFont");
+	mn_MsgFontSetSize = RegisterMessage("FontSetSize");
 	mn_MsgDisplayRConError = RegisterMessage("DisplayRConError");
 	mn_MsgMacroFontSetName = RegisterMessage("MacroFontSetName");
 	mn_MsgCreateViewWindow = RegisterMessage("CreateViewWindow");
@@ -893,6 +895,30 @@ LPCWSTR CConEmuMain::WorkDir(LPCWSTR asOverrideCurDir /*= NULL*/)
 	if (pszWorkDir && (pszWorkDir[0] == L':'))
 		pszWorkDir = L""; // Пути а-ля библиотеки - не поддерживаются при выполнении команд и приложений
 	return pszWorkDir;
+}
+
+bool CConEmuMain::ChangeWorkDir(LPCWSTR asTempCurDir)
+{
+	bool bChanged = false;
+	BOOL bApi = FALSE; DWORD nApiErr = 0;
+
+	if (asTempCurDir)
+	{
+		bApi = SetCurrentDirectoryW(asTempCurDir);
+		if (bApi)
+			bChanged = true;
+		else
+			nApiErr = GetLastError();
+	}
+	else
+	{
+		bApi = SetCurrentDirectoryW(ms_ConEmuExeDir);
+		nApiErr = bApi ? 0 : GetLastError();
+	}
+
+	UNREFERENCED_PARAMETER(bApi);
+	UNREFERENCED_PARAMETER(nApiErr);
+	return bChanged;
 }
 
 bool CConEmuMain::CheckRequiredFiles()
@@ -1304,7 +1330,7 @@ BOOL CConEmuMain::Init()
 	_ASSERTE(mp_TabBar != NULL);
 
 	// Чтобы не блокировать папку запуска - CD
-	SetCurrentDirectory(ms_ConEmuExeDir);
+	ChangeWorkDir(NULL);
 
 	// Только по настройке, а то дочерние процессы с тем же Affinity запускаются...
 	// На тормоза - не влияет. Но вроде бы на многопроцессорных из-за глюков в железе могут быть ошибки подсчета производительности, если этого не сделать
@@ -2248,7 +2274,7 @@ void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 	lstrcpy(pFont->sFontName, gpSetCls->FontFaceName());
 	pFont->nFontHeight = gpSetCls->FontHeight();
 	pFont->nFontWidth = gpSetCls->FontWidth();
-	pFont->nFontCellWidth = gpSet->FontSizeX3 ? gpSet->FontSizeX3 : gpSetCls->FontWidth();
+	pFont->nFontCellWidth = gpSetCls->FontCellWidth();
 	pFont->nFontQuality = gpSetCls->FontQuality();
 	pFont->nFontCharSet = gpSetCls->FontCharSet();
 	pFont->Bold = gpSetCls->FontBold();
@@ -2668,7 +2694,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.hGuiWnd = ghWnd;
 	m_GuiInfo.nGuiPID = GetCurrentProcessId();
 
-	m_GuiInfo.nLoggingType = (ghOpWnd && gpSetCls->mh_Tabs[gpSetCls->thi_Debug]) ? gpSetCls->m_ActivityLoggingType : glt_None;
+	m_GuiInfo.nLoggingType = gpSetCls->GetPage(gpSetCls->thi_Debug) ? gpSetCls->m_ActivityLoggingType : glt_None;
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0) ; // ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_UseTrueColor,(gpSet->isTrueColorer ? CECF_UseTrueColor : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessAnsi,(gpSet->isProcessAnsi ? CECF_ProcessAnsi : 0));
@@ -4727,7 +4753,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpConEmu->OnDesktopMode();
 	}
 
-	HWND hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Show] : NULL; // Страничка с настройками
+	HWND hWnd2 = gpSetCls->GetPage(CSettings::thi_Show); // Страничка с настройками
 	if (hWnd2)
 	{
 		EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
@@ -4740,7 +4766,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpSetCls->checkDlgButton(hWnd2, cbDesktopMode, gpSet->isDesktopMode);
 	}
 
-	hWnd2 = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_SizePos] : NULL; // Страничка с настройками
+	hWnd2 = gpSetCls->GetPage(CSettings::thi_SizePos); // Страничка с настройками
 	if (hWnd2)
 	{
 		gpSetCls->checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
@@ -4765,7 +4791,7 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	}
 
 
-	HWND hTabsPg = ghOpWnd ? gpSetCls->mh_Tabs[CSettings::thi_Show] : NULL; // Страничка с настройками
+	HWND hTabsPg = gpSetCls->GetPage(CSettings::thi_Show); // Страничка с настройками
 	if (hTabsPg)
 	{
 		gpSetCls->checkDlgButton(hTabsPg, cbHideCaptionAlways, gpSet->isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
@@ -4786,20 +4812,23 @@ bool CConEmuMain::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		mrc_StoredNormalRect = rcWnd;
 	}
 
-	gpConEmu->SetWindowMode(nNewWindowMode, TRUE);
+	if (ghWnd)
+		gpConEmu->SetWindowMode(nNewWindowMode, TRUE);
 
 	if (m_QuakePrevSize.bWaitReposition)
 		m_QuakePrevSize.bWaitReposition = false;
 
 	//if (hWnd2)
 	//	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
-	if (ghOpWnd && gpSetCls->mh_Tabs[CSettings::thi_Show])
-		SetDlgItemInt(gpSetCls->mh_Tabs[CSettings::thi_Show], tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
+	if (gpSetCls->GetPage(CSettings::thi_Show))
+		SetDlgItemInt(gpSetCls->GetPage(CSettings::thi_Show), tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 
 	// Save current rect, JIC
-	StoreIdealRect();
+	if (ghWnd)
+		StoreIdealRect();
 
-	apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
+	if (ghWnd)
+		apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
 
 	mb_InSetQuakeMode = false;
 	return true;
@@ -5239,6 +5268,15 @@ bool CConEmuMain::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	// прыжки и для других окон, например окна настроек
 	if (hJumpWnd == ghWnd)
 	{
+		if (gpSet->FontUseDpi && CDpiAware::IsPerMonitorDpi())
+		{
+			DpiValue dpi;
+			if (CDpiAware::QueryDpiForMonitor(hNext, &dpi))
+			{
+				OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &rcNewMain, false);
+			}
+		}
+
 		// Коррекция (заранее)
 		OnMoving(&rcNewMain);
 
@@ -5737,10 +5775,10 @@ bool CConEmuMain::SetWindowMode(ConEmuWindowMode inMode, BOOL abForce /*= FALSE*
 	//	VCon->RCon()->SyncGui2Window();
 	//}
 
-	//if (ghOpWnd && (gpSetCls->mh_Tabs[CSettings::thi_SizePos]))
+	//if (gpSetCls->GetPage(CSettings::thi_SizePos))
 	//{
 	//	bool canEditWindowSizes = (inMode == wmNormal);
-	//	HWND hSizePos = gpSetCls->mh_Tabs[CSettings::thi_SizePos];
+	//	HWND hSizePos = gpSetCls->GetPage(CSettings::thi_SizePos);
 	//	EnableWindow(GetDlgItem(hSizePos, tWndWidth), canEditWindowSizes);
 	//	EnableWindow(GetDlgItem(hSizePos, tWndHeight), canEditWindowSizes);
 	//}
@@ -7053,6 +7091,60 @@ LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	return 0; // Return value ignored
 }
 
+LRESULT CConEmuMain::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, bool bResizeWindow)
+{
+	wchar_t szInfo[100];
+	RECT rc = {}; if (prcSuggested) rc = *prcSuggested;
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"WM_DPICHANGED: dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)\r\n",
+		dpiX, dpiY, rc.left, rc.top, rc.right, rc.bottom, rc.right-rc.left, rc.bottom-rc.top);
+	DEBUGSTRDPI(szInfo);
+	LogString(szInfo, true, false);
+
+	gpSetCls->OnDpiChanged(dpiX, dpiY, prcSuggested);
+
+	RecreateControls(true/*bRecreateTabbar*/, true/*bRecreateStatus*/, bResizeWindow);
+
+	return 0;
+}
+
+void CConEmuMain::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, bool bResizeWindow, LPRECT prcSuggested /*= NULL*/)
+{
+	if (bRecreateTabbar && mp_TabBar)
+		mp_TabBar->Recreate();
+
+	if (bRecreateStatus && mp_Status)
+		mp_Status->UpdateStatusBar(true);
+
+	if (bResizeWindow)
+	{
+		if (IsSizePosFree())
+		{
+			RECT rcNew = GetDefaultRect();
+			// If Windows DWM sends new preferred RECT?
+			if (prcSuggested)
+			{
+				;
+			}
+			MoveWindow(ghWnd, rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top, TRUE);
+		}
+		else
+		{
+			gpConEmu->OnSize();
+			gpConEmu->InvalidateGaps();
+		}
+	}
+}
+
+LRESULT CConEmuMain::OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHeight)
+{
+	wchar_t szInfo[100];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"WM_DISPLAYCHANGED: bpp=%u, size={%u,%u}\r\n",
+		bpp, screenWidth, screenHeight);
+	DEBUGSTRDPI(szInfo);
+	LogString(szInfo, true, false);
+	return 0;
+}
+
 void CConEmuMain::OnSizePanels(COORD cr)
 {
 	INPUT_RECORD r;
@@ -7374,7 +7466,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 	size_t cchMaxLen = _tcslen(ms_ConEmuExe)
 		+ _tcslen(args->pszSpecialCmd)
 		+ (pszConfig ? (_tcslen(pszConfig) + 32) : 0)
-		+ 140; // на всякие флажки и -new_console
+		+ 160; // на всякие флажки и -new_console
 	if ((pszCmdLine = (wchar_t*)malloc(cchMaxLen*sizeof(*pszCmdLine))) == NULL)
 	{
 		_ASSERTE(pszCmdLine);
@@ -7391,6 +7483,8 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 			_wcscat_c(pszCmdLine, cchMaxLen, L"\" ");
 		}
 		_wcscat_c(pszCmdLine, cchMaxLen, L"/nosingle ");
+		if (gpSet->isQuakeStyle)
+			_wcscat_c(pszCmdLine, cchMaxLen, L"/noquake ");
 		_wcscat_c(pszCmdLine, cchMaxLen, L"/cmd ");
 		_wcscat_c(pszCmdLine, cchMaxLen, args->pszSpecialCmd);
 		if ((args->RunAsAdministrator == crb_On) || (args->RunAsRestricted == crb_On) || args->pszUserName)
@@ -8123,10 +8217,10 @@ void CConEmuMain::LoadIcons()
 //	return true;
 //}
 
-void CConEmuMain::OnCopyingState()
-{
-	TODO("CConEmuMain::OnCopyingState()");
-}
+//void CConEmuMain::OnCopyingState()
+//{
+//	TODO("CConEmuMain::OnCopyingState()");
+//}
 
 void CConEmuMain::PostDragCopy(BOOL abMove, BOOL abReceived/*=FALSE*/)
 {
@@ -8170,9 +8264,10 @@ void CConEmuMain::PostMacro(LPCWSTR asMacro)
 	//}
 }
 
-void CConEmuMain::PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/)
+void CConEmuMain::PostFontSetSize(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/)
 {
-	PostMessage(ghWnd, mn_MsgAutoSizeFont, (WPARAM)nRelative, (LPARAM)nValue);
+	// It will call `gpSetCls->MacroFontSetSize((int)wParam, (int)lParam)` in the main thread
+	PostMessage(ghWnd, mn_MsgFontSetSize, (WPARAM)nRelative, (LPARAM)nValue);
 }
 
 void CConEmuMain::PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted)
@@ -8969,8 +9064,20 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				wcscpy_c(pIn->NewCmd.szConEmu, ms_ConEmuExeDir);
 
 				lstrcpyW(pIn->NewCmd.szCommand, lpszCmd ? lpszCmd : L"");
-				DWORD dwPID = 0;
 
+				// Task? That may have "/dir" switch in task parameters
+				if (lpszCmd && (*lpszCmd == TaskBracketLeft))
+				{
+					RConStartArgs args;
+					wchar_t* pszDataW = LoadConsoleBatch(lpszCmd, &args.pszStartupDir, &args.pszIconFile);
+					SafeFree(pszDataW);
+					if (args.pszStartupDir && *args.pszStartupDir)
+					{
+						lstrcpyn(pIn->NewCmd.szCurDir, args.pszStartupDir, countof(pIn->NewCmd.szCurDir));
+					}
+				}
+
+				DWORD dwPID = 0;
 				if (GetWindowThreadProcessId(ConEmuHwnd, &dwPID))
 					AllowSetForegroundWindow(dwPID);
 
@@ -9226,7 +9333,7 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 		return;
 	}
 
-	HWND hInfo = gpSetCls->mh_Tabs[gpSetCls->thi_Info];
+	HWND hInfo = gpSetCls->GetPage(gpSetCls->thi_Info);
 
 	CVConGuard VCon;
 	wchar_t szNo[32], szFlags[255]; szNo[0] = szFlags[0] = 0;
@@ -9280,7 +9387,7 @@ void CConEmuMain::UpdateCursorInfo(const CONSOLE_SCREEN_BUFFER_INFO* psbi, COORD
 	else
 		mp_Status->OnCursorChanged(&crCursor, &cInfo);
 
-	if (!ghOpWnd || !gpSetCls->mh_Tabs[gpSetCls->thi_Info]) return;
+	if (!gpSetCls->GetPage(gpSetCls->thi_Info)) return;
 
 	if (!isMainThread())
 	{
@@ -9294,7 +9401,7 @@ void CConEmuMain::UpdateCursorInfo(const CONSOLE_SCREEN_BUFFER_INFO* psbi, COORD
 	_wsprintf(szCursor, SKIPLEN(countof(szCursor)) _T("%ix%i, %i %s"),
 		(int)crCursor.X, (int)crCursor.Y,
 		cInfo.dwSize, cInfo.bVisible ? L"vis" : L"hid");
-	SetDlgItemText(gpSetCls->mh_Tabs[gpSetCls->thi_Info], tCursorPos, szCursor);
+	SetDlgItemText(gpSetCls->GetPage(gpSetCls->thi_Info), tCursorPos, szCursor);
 }
 
 void CConEmuMain::UpdateSizes()
@@ -9302,7 +9409,7 @@ void CConEmuMain::UpdateSizes()
 	POINT ptCur = {}; GetCursorPos(&ptCur);
 	HWND hPoint = WindowFromPoint(ptCur);
 
-	HWND hInfo = gpSetCls->mh_Tabs[gpSetCls->thi_Info];
+	HWND hInfo = gpSetCls->GetPage(gpSetCls->thi_Info);
 
 	if (!ghOpWnd || !hInfo)
 	{
@@ -17324,7 +17431,7 @@ void CConEmuMain::OnDesktopMode()
 		{
 			gpSet->isDesktopMode = false;
 
-			HWND hExt = gpSetCls->mh_Tabs[gpSetCls->thi_Ext];
+			HWND hExt = gpSetCls->GetPage(gpSetCls->thi_Ext);
 
 			if (ghOpWnd && hExt)
 			{
@@ -18615,6 +18722,17 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 		} break;
 
+		case WM_DISPLAYCHANGE:
+		{
+			OnDisplayChanged(LOWORD(wParam), LOWORD(lParam), HIWORD(lParam));
+			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
+		} break;
+		case /*0x02E0*/ WM_DPICHANGED:
+		{
+			OnDpiChanged(LOWORD(wParam), HIWORD(wParam), (LPRECT)lParam, true);
+			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
+		} break;
+
 		case WM_SIZE:
 		{
 			#ifdef _DEBUG
@@ -19104,7 +19222,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				this->UpdateProcessDisplay(wParam!=0);
 				return 0;
 			}
-			else if (messg == this->mn_MsgAutoSizeFont)
+			else if (messg == this->mn_MsgFontSetSize)
 			{
 				gpSetCls->MacroFontSetSize((int)wParam, (int)lParam);
 				return 0;

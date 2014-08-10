@@ -1724,7 +1724,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		}
 	}
 
-	if (ghOpWnd && gpSetCls->mh_Tabs[gpSetCls->thi_Debug] && gpSetCls->m_ActivityLoggingType == glt_Input)
+	if (gpSetCls->GetPage(gpSetCls->thi_Debug) && gpSetCls->m_ActivityLoggingType == glt_Input)
 	{
 		//INPUT_RECORD *prCopy = (INPUT_RECORD*)calloc(sizeof(INPUT_RECORD),1);
 		CESERVER_REQ_PEEKREADINFO* pCopy = (CESERVER_REQ_PEEKREADINFO*)malloc(sizeof(CESERVER_REQ_PEEKREADINFO));
@@ -1735,7 +1735,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 			pCopy->cPeekRead = 'S';
 			pCopy->cUnicode = 'W';
 			pCopy->Buffer[0] = *piRec;
-			PostMessage(gpSetCls->mh_Tabs[gpSetCls->thi_Debug], DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
+			PostMessage(gpSetCls->GetPage(gpSetCls->thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
 		}
 	}
 
@@ -3713,7 +3713,7 @@ wrap:
 	mb_NeedStartProcess = FALSE;
 	SetEvent(mh_StartExecuted);
 	#ifdef _DEBUG
-	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL, NULL);
+	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL_W, NULL);
 	#endif
 	return lbRc;
 }
@@ -3818,7 +3818,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	#ifdef _DEBUG
 	wchar_t szMonitorID[20]; _wsprintf(szMonitorID, SKIPLEN(countof(szMonitorID)) L"%u", nAID);
-	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL, szMonitorID);
+	SetEnvironmentVariable(ENV_CONEMU_MONITOR_INTERNAL_W, szMonitorID);
 	#endif
 
 	if (bNeedConHostSearch)

@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include <commctrl.h>
 #include "header.h"
+#include "ConEmu.h"
 #include "IconList.h"
 #include "Options.h"
 
@@ -43,6 +44,7 @@ CIconList::CIconList()
 {
 	mh_TabIcons = NULL;
 	mn_AdminIcon = 0;
+	InitializeCriticalSection(&mcs);
 }
 
 CIconList::~CIconList()
@@ -58,6 +60,8 @@ CIconList::~CIconList()
 		SafeFree(m_Icons[i].pszIconDescr);
 	}
 	m_Icons.clear();
+
+	DeleteCriticalSection(&mcs);
 }
 
 bool CIconList::IsInitialized()
@@ -119,6 +123,10 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 	if (!asIconDescr || !*asIconDescr)
 		return GetTabIcon(bAdmin);
 
+	int iCreatedIcon = -1;
+
+	MSectionLockSimple CS; CS.Lock(&mcs, 30000);
+
 	for (INT_PTR i = 0; i < m_Icons.size(); i++)
 	{
 		const TabIconCache& icn = m_Icons[i];
@@ -127,9 +135,24 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 		if (lstrcmpi(icn.pszIconDescr, asIconDescr) != 0)
 			continue;
 		// Already was created!
-		return icn.nIconIdx;
+		iCreatedIcon = icn.nIconIdx;
+		goto wrap;
 	}
 
+	iCreatedIcon = CreateTabIconInt(asIconDescr, bAdmin, asWorkDir);
+
+	if (iCreatedIcon == -1)
+	{
+		// To avoid numerous CreateTabIconInt calls - just remember "No icon" for that asIconDescr
+		TabIconCache DummyIcon = {lstrdup(asIconDescr), bAdmin, -1};
+		m_Icons.push_back(DummyIcon);
+	}
+wrap:
+	return iCreatedIcon;
+}
+
+int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir)
+{
 	wchar_t* pszExpanded = ExpandEnvStr(asIconDescr);
 
 	// Need to be created!
@@ -139,11 +162,11 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 	LPCWSTR pszLoadFile = pszExpanded ? pszExpanded : asIconDescr;
 	LPCWSTR lpszExt = (wchar_t*)PointToExt(pszLoadFile);
 
-	wchar_t szCurDir[MAX_PATH*2] = L"";
-	if (asWorkDir && *asWorkDir && GetCurrentDirectory(countof(szCurDir), szCurDir) && *szCurDir)
+	bool bDirChanged = false;
+	if (asWorkDir && *asWorkDir)
 	{
 		// Executable (or icon) file may be not availbale by %PATH%, let "cd" to it...
-		SetCurrentDirectory(asWorkDir);
+		bDirChanged = gpConEmu->ChangeWorkDir(asWorkDir);
 	}
 
 	if (!lpszExt)
@@ -209,8 +232,10 @@ int CIconList::CreateTabIcon(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir
 	}
 
 wrap:
-	if (*szCurDir)
-		SetCurrentDirectory(szCurDir);
+	if (bDirChanged)
+	{
+		gpConEmu->ChangeWorkDir(NULL);
+	}
 	SafeFree(pszExpanded);
 	return iIconIdx;
 }

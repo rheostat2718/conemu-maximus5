@@ -9,8 +9,6 @@
 #define IDB_SHIELD                      102
 #define IDB_RIGHTCLICKING               103
 #define IDB_SCROLL                      104
-#define IDB_COPY4                       105
-#define IDB_COPY24                      106
 #define IDB_SHIELD16                    107
 #define IDC_COPY                        120
 #define IDC_LINK                        121
@@ -60,6 +58,7 @@
 #define IDD_ACTION                      222
 #define IDD_HOTKEY                      223
 #define IDI_SEARCH                      224
+#define IDD_SPG_BACK                    225
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -1020,15 +1019,17 @@
 #define cbDupConfirm                    2688
 #define cbConfirmDetach                 2689
 #define gbQuakeAnimation                2690
+#define cbFontMonitorDpi                2691
+#define cbFontAsDeviceUnits             2692
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        225
+#define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2691
+#define _APS_NEXT_CONTROL_VALUE         2693
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

@@ -797,6 +797,10 @@ struct Settings
 		DWORD FontSizeX2; // ширина для FixFarBorders (ширина создаваемого шрифта для отрисовки рамок, не путать со знакоместом)
 		//reg->Load(L"FontSizeX3", FontSizeX3);
 		DWORD FontSizeX3; // ширина знакоместа при моноширном режиме (не путать с FontSizeX2)
+		//reg->Load(L"FontUseDpi", FontUseDpi);
+		bool FontUseDpi;
+		//reg->Load(L"FontUseUnits", FontUseUnits);
+		bool FontUseUnits;
 		
 		
 		//reg->Load(L"HideCaption", isHideCaption);
@@ -1423,6 +1427,7 @@ struct Settings
 	public:
 		void LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* apStorage = NULL);
 		void InitSettings();
+		void InitVanilla();
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadPalettes(SettingsBase* reg);
 		void CreatePredefinedPalettes(int iAddUserCount);

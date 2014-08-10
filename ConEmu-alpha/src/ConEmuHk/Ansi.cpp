@@ -641,7 +641,7 @@ void CEAnsi::OnReadConsoleBefore(HANDLE hConOut, const CONSOLE_SCREEN_BUFFER_INF
 	// Succeesfull mark?
 	_ASSERTEX(((pObj->m_RowMarks.RowId[0] || pObj->m_RowMarks.RowId[1]) && (pObj->m_RowMarks.RowId[0] != pObj->m_RowMarks.RowId[1])) || (!csbi.dwCursorPosition.X && !csbi.dwCursorPosition.Y));
 }
-void CEAnsi::OnReadConsoleAfter(bool bFinal)
+void CEAnsi::OnReadConsoleAfter(bool bFinal, bool bNoLineFeed)
 {
 	CEAnsi* pObj = CEAnsi::Object();
 	if (!pObj)
@@ -667,7 +667,10 @@ void CEAnsi::OnReadConsoleAfter(bool bFinal)
 		{
 			if (pObj->m_RowMarks.SaveRow[i] == nMarkedRow)
 			{
-				_ASSERTEX((pObj->m_RowMarks.csbi.dwCursorPosition.Y < (pObj->m_RowMarks.csbi.dwSize.Y-1)) && "Nothing was changed? Strange, scrolling was expected");
+				_ASSERTEX(
+					((pObj->m_RowMarks.csbi.dwCursorPosition.Y < (pObj->m_RowMarks.csbi.dwSize.Y-1))
+						|| (bNoLineFeed && (pObj->m_RowMarks.csbi.dwCursorPosition.Y == (pObj->m_RowMarks.csbi.dwSize.Y-1))))
+					&& "Nothing was changed? Strange, scrolling was expected");
 				goto wrap;
 			}
 			// Well, we get scroll distance
@@ -2631,7 +2634,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 							|| (r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)
 							|| (r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE)))
 				{
-					SetEnvironmentVariable(ENV_CONEMU_WAITKEY,
+					SetEnvironmentVariable(ENV_CONEMU_WAITKEY_W,
 						(r.Event.KeyEvent.wVirtualKeyCode == VK_RETURN) ? L"RETURN" :
 						(r.Event.KeyEvent.wVirtualKeyCode == VK_SPACE)  ? L"SPACE" :
 						(r.Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE) ? L"ESC" :
@@ -2639,7 +2642,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 				}
 				else
 				{
-					SetEnvironmentVariable(ENV_CONEMU_WAITKEY, L"");
+					SetEnvironmentVariable(ENV_CONEMU_WAITKEY_W, L"");
 				}
 			}
 			else if (Code.ArgSZ[2] == L'6' && Code.ArgSZ[3] == L';')

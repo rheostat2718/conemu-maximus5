@@ -40,6 +40,8 @@ class CBackground;
 class CBackgroundInfo;
 struct DebugLogShellActivity;
 struct CEHelpPopup;
+class CDpiForDialog;
+struct DpiValue;
 
 enum SingleInstanceArgEnum
 {
@@ -47,6 +49,17 @@ enum SingleInstanceArgEnum
 	sgl_Enabled  = 1,
 	sgl_Disabled = 2,
 };
+
+typedef DWORD EvalSizeFlags;
+const EvalSizeFlags
+	// May be used in combination
+	esf_CanUseDpi    = 0x0010, // Take into account _dpiY
+	esf_CanUseZoom   = 0x0020, // Take into account mn_FontZoomValue
+	esf_CanUseUnits  = 0x0040, // Make the result negative IF gpSet->FontUseUnits is ON
+	// Must not be used togather
+	esf_Vertical     = 0x0001, // Used to get lfHeight
+	esf_Horizontal   = 0x0000  // Used to get lfWidth
+;
 
 class CSettings
 {
@@ -102,8 +115,9 @@ class CSettings
 
 		LPCWSTR FontFaceName();
 		LONG FontWidth();
+		LONG FontCellWidth();
 		LONG FontHeight();
-		LONG FontHeightPx(bool bCharHeight = false);
+		LONG FontHeightHtml();
 		LPCWSTR BorderFontFaceName();
 		LONG BorderFontWidth();
 		BYTE FontCharSet();
@@ -113,7 +127,11 @@ class CSettings
 		BYTE FontQuality();
 		HFONT CreateOtherFont(const wchar_t* asFontName);
 		void GetMainLogFont(LOGFONT& lf);
+		void EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth);
+		LONG EvalSize(LONG nSize, EvalSizeFlags Flags);
+		LONG EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontCharSet);
 	private:
+		LONG mn_FontZoomValue; // 100% == 10000 (FontZoom100)
 		LOGFONT LogFont, LogFont2;
 		LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
 		LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth; // реальные размеры шрифтов
@@ -122,9 +140,22 @@ class CSettings
 		LPOUTLINETEXTMETRIC m_otm[MAX_FONT_STYLES];
 		BOOL mb_Name1Ok, mb_Name2Ok;
 		void ResetFontWidth();
-		void SaveFontSizes(LOGFONT *pCreated, bool bAuto, bool bSendChanges);
+		LONG EvalCellWidth();
+		void SaveFontSizes(bool bAuto, bool bSendChanges);
 		LPOUTLINETEXTMETRIC LoadOutline(HDC hDC, HFONT hFont);
 		void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);
+		// When font size is used as character size (negative LF.lfHeight)
+		// we need to evaluate real font size... Only for vector fonts!
+		struct FontHeightInfo
+		{
+			// In
+			wchar_t lfFaceName[LF_FACESIZE];
+			int     lfHeight;
+			UINT    lfCharSet;
+			// Out
+			int     CellHeight;
+		};
+		MArray<FontHeightInfo> m_FontHeights;
 
 	private:
 		/* 'Default' command line (if nor Registry, nor /cmd specified) */
@@ -144,16 +175,16 @@ class CSettings
 		void    SetDefaultCmd(LPCWSTR asCmd);
 		/* OUR(!) startup info */
 		STARTUPINFOW ourSI;
-		
+
 	protected:
-		
+
 		BYTE isMonospaceSelected; // 0 - proportional, 1 - monospace, 2 - forcemonospace
 	public:
 		char isAllowDetach;
 
 		// Debugging - "c:\\temp\\ConEmuVCon-%i-%i.dat"
 		BYTE isAdvLogging;
-		
+
 		//
 		enum GuiLoggingType m_ActivityLoggingType;
 		DWORD mn_ActivityCmdStartTick;
@@ -175,6 +206,7 @@ class CSettings
 		#else
 		CBackgroundInfo* mp_BgInfo;
 		#endif
+		CDpiForDialog* mp_DpiAware;
 	public:
 		void SetBgImageDarker(u8 newValue, bool bUpdate);
 		#ifndef APPDISTINCTBACKGROUND
@@ -226,9 +258,14 @@ class CSettings
 			//
 			thi_Last
 		};
-		HWND mh_Tabs[thi_Last];
+		HWND GetPage(TabHwndIndex nPage);
+		TabHwndIndex GetPageId(HWND hPage);
+
+	private:
+		// mh_Tabs moved to the m_Pages
 		int  mn_LastActivedTab;
 
+	public:
 		//static void CenterDialog(HWND hWnd2);
 		void OnClose();
 		DWORD BalloonStyle();
@@ -280,6 +317,7 @@ class CSettings
 		void UnregisterShell(LPCWSTR asName);
 		void UnregisterShellInvalids();
 		bool DeleteRegKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName);
+		bool MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/);
 	public:
 		void UnregisterFonts();
 		BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
@@ -288,7 +326,7 @@ class CSettings
 		BOOL GetFontNameFromFile_BDF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		void UpdateConsoleMode(DWORD nMode);
 		bool AutoRecreateFont(int nFontW, int nFontH);
-		bool MacroFontSetSize(int nRelative/*0/1*/, int nValue/*1,2,...*/);
+		bool MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/);
 		void MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
 		bool CheckTheming();
 		void OnPanelViewAppeared(BOOL abAppear);
@@ -318,6 +356,7 @@ class CSettings
 		int UpdateDpi();
 	public:
 		int QueryDpi();
+		bool OnDpiChanged(int dpiX, int dpiY, LPRECT prcSuggested);
 	private:
 		static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh = false);
 	protected:
@@ -373,8 +412,8 @@ class CSettings
 		INT_PTR pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM wParam, LPARAM lParam);
 		INT_PTR pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		//LRESULT OnColorButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		//LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);		
-		//LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);				
+		//LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
+		//LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		bool OnEditChanged_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, Settings::AppSettings* pApp);
 		LRESULT OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
@@ -575,7 +614,7 @@ class CSettings
 			wchar_t szExtra[128];
 		};
 		void debugLogCommand(HWND hWnd2, LogCommandsData* apData);
-		
+
 		enum ConEmuSetupItemType
 		{
 			sit_Bool      = 1,
@@ -603,7 +642,7 @@ class CSettings
 			ConEmuSetupItemType nListType; // Тип данных в pListData
 			const void* pListData; // Для DDLB - можно задать список
 			size_t nListItems; // количество элементов в списке
-			
+
 			#ifdef _DEBUG
 			BOOL bFound; // для отладки корректности настройки
 			#endif
@@ -618,9 +657,20 @@ class CSettings
 			TabHwndIndex     PageIndex;    // mh_Tabs[...]
 			bool             Collapsed;
 			// Filled after creation
+			bool             DpiChanged;
 			HTREEITEM        hTI;
 			ConEmuSetupItem* pItems;
+			HWND             hPage;
+			CDpiForDialog*   pDpiAware;
 		};
 		ConEmuSetupPages *m_Pages;
+		int mn_PagesCount;
 		static void SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost = false);
+		void ClearPages();
+		HWND CreatePage(ConEmuSetupPages* p);
+		CDpiForDialog* mp_DpiDistinct2;
+		DpiValue* mp_CurDpi;
+		void ProcessDpiChange(ConEmuSetupPages* p);
+		TabHwndIndex GetPageId(HWND hPage, ConEmuSetupPages** pp);
+		int GetDialogDpi();
 };

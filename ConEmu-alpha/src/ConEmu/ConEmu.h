@@ -139,6 +139,7 @@ class CConEmuMain :
 		wchar_t ms_ConEmuWorkDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
 		void StoreWorkDir(LPCWSTR asNewCurDir = NULL);
 		LPCWSTR WorkDir(LPCWSTR asOverrideCurDir = NULL);
+		bool ChangeWorkDir(LPCWSTR asTempCurDir);
 		wchar_t ms_ComSpecInitial[MAX_PATH];
 		wchar_t *mps_IconPath;
 		void SetWindowIcon(LPCWSTR asNewIcon);
@@ -362,6 +363,14 @@ class CConEmuMain :
 
 			void SetSessionNotification(bool bSwitch);
 		} session;
+		struct DpiInfo
+		{
+			// Win 8.1: shcore.dll
+			enum Monitor_DPI_Type { MDT_Effective_DPI = 0, MDT_Angular_DPI = 1, MDT_Raw_DPI = 2, MDT_Default = MDT_Effective_DPI };
+			typedef HRESULT (WINAPI* GetDPIForMonitor_t)(/*_In_*/HMONITOR hmonitor, /*_In_*/Monitor_DPI_Type dpiType, /*_Out_*/UINT *dpiX, /*_Out_*/UINT *dpiY);
+			enum Process_DPI_Awareness { Process_DPI_Unaware = 0, Process_System_DPI_Aware = 1, Process_Per_Monitor_DPI_Aware = 2 };
+			typedef HRESULT (WINAPI* SetProcessDPIAwareness_t)(/*_In_*/Process_DPI_Awareness value);
+		} dpi;
 		bool isPiewUpdate;
 		bool gbPostUpdateWindowSize;
 		HWND hPictureView; bool bPicViewSlideShow; DWORD dwLastSlideShowTick; RECT mrc_WndPosOnPicView;
@@ -552,7 +561,7 @@ class CConEmuMain :
 		//UINT mn_MsgActivateCon; // = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 		UINT mn_MsgUpdateProcDisplay;
 		//UINT wmInputLangChange;
-		UINT mn_MsgAutoSizeFont;
+		UINT mn_MsgFontSetSize;
 		UINT mn_MsgDisplayRConError;
 		UINT mn_MsgMacroFontSetName;
 		UINT mn_MsgCreateViewWindow;
@@ -698,11 +707,11 @@ class CConEmuMain :
 		void LoadIcons();
 		void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
 		void InvalidateGaps();
-		void PostAutoSizeFont(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
 		void PostDragCopy(BOOL abMove, BOOL abReceived=FALSE);
 		void PostCreate(BOOL abReceived=FALSE);
 		void PostCreateCon(RConStartArgs *pArgs);
 		HWND PostCreateView(CConEmuChild* pChild);
+		void PostFontSetSize(int nRelative/*0/1*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,...*/);
 		void PostMacro(LPCWSTR asMacro);
 		void PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/, BOOL abPosted);
 		void PostDisplayRConError(CRealConsole* apRCon, wchar_t* pszErrMsg);
@@ -710,6 +719,7 @@ class CConEmuMain :
 		LRESULT SyncExecMacro(WPARAM wParam, LPARAM lParam);
 		bool PtDiffTest(POINT C, int aX, int aY, UINT D); //(((abs(C.x-LOWORD(lParam)))<D) && ((abs(C.y-HIWORD(lParam)))<D))
 		void RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs = crb_Undefined);
+		void RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, bool bResizeWindow, LPRECT prcSuggested = NULL);
 		int RecreateDlg(RConStartArgs* apArg);
 		bool ReportUpdateConfirmation();
 		void ReportUpdateError();
@@ -795,7 +805,6 @@ class CConEmuMain :
 		void OnBufferHeight();
 		void OnConsoleKey(WORD vk, LPARAM Mods);
 		void OnConsoleResize(BOOL abPosted=FALSE);
-		void OnCopyingState();
 		LRESULT OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate);
 		void OnDesktopMode();
 		LRESULT OnDestroy(HWND hWnd);
@@ -826,6 +835,8 @@ class CConEmuMain :
 		LRESULT OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnQueryEndSession(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		LRESULT OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		LRESULT OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, bool bResizeWindow);
+		LRESULT OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHeight);
 		void OnSizePanels(COORD cr);
 		LRESULT OnShellHook(WPARAM wParam, LPARAM lParam);
 		UINT_PTR SetKillTimer(bool bEnable, UINT nTimerID, UINT nTimerElapse);
