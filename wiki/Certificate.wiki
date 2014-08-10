@@ -1,10 +1,16 @@
 ﻿#labels Featured
+
+=Open Source Developer, ConEmu-Maximus5=
+With courtesy of Certum, ConEmu's binaries now are signed as ‘Open Source Developer, ConEmu-Maximus5’.
+
 ===Why to use certificate?===
   * You can check integrity of !ConEmu executable files.
   * Avoid Windows !SmartScreen prevention of unrecognized program from starting (Installer).
   * Vista and Windows7 ‘User account control’ confirmation will be more friendly.<br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/Certificate.Win8.En/Result.png" title="ConEmu. UAC confirmation">
   * Some antiviral programs ([http://www.kaspersky.com/ AVP] for example) automatically place signed programs to trusted zone.
+
+<wiki:comment>
 
 ===How to install certificate?===
 *Download [http://conemu-maximus5.googlecode.com/svn/files/Certificate/ConEmu.cer Certificate].*
@@ -62,3 +68,5 @@
 
 *Certificate is ready* <br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/Certificate.Win8.En/StepFin.png" title="ConEmu. Install certificate. Finish">
+
+</wiki:comment>

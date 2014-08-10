@@ -1,3 +1,6 @@
 ﻿Article is under construction
 
 Issue 887, Issue 1219, Issue 1292, Issue 823#22
+
+Powershell & bash both are shells. They do "read-evaluate-print" cycle, aka command execution.
+ConEmu is terminal where U can run shells.

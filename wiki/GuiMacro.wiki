@@ -271,6 +271,8 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        Type=2: set error state in progress
     Rename(<Type>,["<Title>"])
       - Rename tab (Type=0) or console title (Type=1)
+    SetDpi(<DPI>)
+      - Change effective dpi for ConEmu window: 96, 120, 144, 192
     SetOption("<Name>",<Value>[,<IsRelative>])
       - Name=one of allowed for changing ConEmu options
         IsRelative=1 to use relative instead of absolute for some options
