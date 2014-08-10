@@ -1,4 +1,4 @@
-
+п»ї
 // WM_DRAWITEM, SS_OWNERDRAW|SS_NOTIFY, Bmp & hBmp -> global vars
 // DPI resize.
 
@@ -35,9 +35,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "About.h"
 #include "AboutDlg.h"
 #include "ConEmu.h"
+#include "DpiAware.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "SearchCtrl.h"
+#include "ToolImg.h"
 #include "Update.h"
 #include "VirtualConsole.h"
 #include "VConChild.h"
@@ -49,6 +51,7 @@ namespace ConEmuAbout
 	bool mb_CommCtrlsInitialized = false;
 	HWND mh_AboutDlg = NULL;
 	DWORD nLastCrashReported = 0;
+	CDpiForDialog* mp_DpiAware;
 
 	INT_PTR WINAPI aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	void searchProc(HWND hDlg, HWND hSearch, bool bReentr);
@@ -59,8 +62,7 @@ namespace ConEmuAbout
 	struct BtnInfo
 	{
 		LPCWSTR ResId;
-		HBITMAP hBmp;
-		BITMAP bmp;
+		CToolImg* pImg;
 		LPWSTR pszUrl;
 		UINT nCtrlId;
 	} m_Btns[2] = {};
@@ -105,12 +107,32 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
 
+	if (mp_DpiAware && mp_DpiAware->ProcessMessages(hDlg, messg, wParam, lParam, lRc))
+	{
+		SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
+		return TRUE;
+	}
+
 	switch (messg)
 	{
 		case WM_INITDIALOG:
 		{
 			gpConEmu->OnOurDialogOpened();
 			mh_AboutDlg = hDlg;
+
+			DonateBtns_Add(hDlg, pIconCtrl, IDOK);
+
+			if (mp_DpiAware)
+			{
+				mp_DpiAware->Attach(hDlg, ghWnd);
+			}
+
+			RECT rect = {};
+			if (GetWindowRect(hDlg, &rect))
+			{
+				CDpiAware::GetCenteredRect(ghWnd, rect);
+				MoveWindow(hDlg, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, false);
+			}
 
 			if ((ghOpWnd && IsWindow(ghOpWnd)) || (WS_EX_TOPMOST & GetWindowLongPtr(ghWnd, GWL_EXSTYLE)))
 			{
@@ -135,8 +157,6 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			SetDlgItemText(hDlg, stConEmuAbout, pAboutTitle);
 			SetDlgItemText(hDlg, stConEmuUrl, gsHomePage);
-
-			DonateBtns_Add(hDlg, pIconCtrl, IDOK);
 
 			EditIconHint_Set(hDlg, GetDlgItem(hDlg, tAboutSearch), true, L"Search", false, UM_SEARCH, IDOK);
 			EditIconHint_Subclass(hDlg);
@@ -291,6 +311,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		case WM_CLOSE:
 			//if (ghWnd == NULL)
 			gpConEmu->OnOurDialogClosed();
+			if (mp_DpiAware)
+				mp_DpiAware->Detach();
 			EndDialog(hDlg, IDOK);
 			//else
 			//	DestroyWindow(hDlg);
@@ -452,13 +474,16 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 
 	{
 		DontEnable de;
+		if (!mp_DpiAware)
+			mp_DpiAware = new CDpiForDialog();
 		HWND hParent = (ghOpWnd && IsWindowVisible(ghOpWnd)) ? ghOpWnd : ghWnd;
 		// Modal dialog
 		INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), hParent, aboutProc, (LPARAM)asPageName);
 		bOk = (iRc != 0 && iRc != -1);
 
-		ZeroStruct(m_Btns);
 		mh_AboutDlg = NULL;
+		if (mp_DpiAware)
+			mp_DpiAware->Detach();
 
 		#ifdef _DEBUG
 		// Any problems with dialog resource?
@@ -535,8 +560,8 @@ void ConEmuAbout::OnInfo_Help()
 			// lstrcat(szHelpFile, L::/Intro.htm");
 			#define HH_HELP_CONTEXT 0x000F
 			#define HH_DISPLAY_TOC  0x0001
-			//fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_HELP_CONTEXT, contextID);
-			fHTMLHelpW(NULL /*чтобы окно не блокировалось*/, szHelpFile, HH_DISPLAY_TOC, 0);
+			//fHTMLHelpW(NULL /*С‡С‚РѕР±С‹ РѕРєРЅРѕ РЅРµ Р±Р»РѕРєРёСЂРѕРІР°Р»РѕСЃСЊ*/, szHelpFile, HH_HELP_CONTEXT, contextID);
+			fHTMLHelpW(NULL /*С‡С‚РѕР±С‹ РѕРєРЅРѕ РЅРµ Р±Р»РѕРєРёСЂРѕРІР°Р»РѕСЃСЊ*/, szHelpFile, HH_DISPLAY_TOC, 0);
 		}
 	}
 }
@@ -627,51 +652,44 @@ void ConEmuAbout::OnInfo_ThrowTrapException(bool bMainThread)
 
 void ConEmuAbout::LoadResources()
 {
-	struct ImgLoadInfo
+	for (size_t i = 0; i < countof(m_Btns); i++)
 	{
-		LPCWSTR ResId; UINT nCtrlId; int nWidth; int nHeight;
-	} Images[] = {
-		{L"DONATE", pLinkDonate, 74, 21},
-		{L"FLATTR", pLinkFlattr, 89, 18},
-	};
-	_ASSERTE(countof(m_Btns) == countof(Images));
-
-	for (size_t i = 0; i < countof(Images); i++)
-	{
-		if (m_Btns[i].hBmp)
+		if (m_Btns[i].pImg)
 			continue; // Already loaded
 
-		m_Btns[i].ResId = Images[i].ResId;
-		m_Btns[i].nCtrlId = Images[i].nCtrlId;
-		m_Btns[i].pszUrl = (Images[i].nCtrlId == pLinkDonate) ? gsDonatePage : gsFlattrPage;
-		m_Btns[i].hBmp = (HBITMAP)LoadImage(g_hInstance, Images[i].ResId, IMAGE_BITMAP, 0, 0, LR_LOADTRANSPARENT|LR_LOADMAP3DCOLORS);
-
-		if (m_Btns[i].hBmp == NULL)
+		switch (i)
 		{
-			#ifdef _DEBUG
+		case 0:
+			m_Btns[i].ResId = L"DONATE";
+			m_Btns[i].pImg = new CToolImg();
+			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateDonateButton(GetSysColor(COLOR_BTNFACE)))
+				SafeDelete(m_Btns[i].pImg);
+			m_Btns[i].nCtrlId = pLinkDonate;
+			m_Btns[i].pszUrl = gsDonatePage;
+			break;
+		case 1:
+			m_Btns[i].ResId = L"FLATTR";
+			m_Btns[i].pImg = new CToolImg();
+			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateFlattrButton(GetSysColor(COLOR_BTNFACE)))
+				SafeDelete(m_Btns[i].pImg);
+			m_Btns[i].nCtrlId = pLinkFlattr;
+			m_Btns[i].pszUrl = gsFlattrPage;
+			break;
+		}
+
+		#ifdef _DEBUG
+		if (m_Btns[i].pImg == NULL)
+		{
 			DWORD nErr = GetLastError();
 			DisplayLastError(L"Failed to load button image!", nErr);
-			#endif
-			m_Btns[i].bmp.bmWidth = Images[i].nWidth; m_Btns[i].bmp.bmHeight = Images[i].nHeight;
 		}
-		else
-		{
-			ZeroStruct(m_Btns[i].bmp);
-			if (!GetObject(m_Btns[i].hBmp, sizeof(m_Btns[i].bmp), &m_Btns[i].bmp) || m_Btns[i].bmp.bmWidth <= 0 || m_Btns[i].bmp.bmHeight <= 0)
-			{
-				#ifdef _DEBUG
-				DWORD nErr = GetLastError();
-				DisplayLastError(L"GetObject() on button image failed!", nErr);
-				#endif
-				m_Btns[i].bmp.bmWidth = Images[i].nWidth; m_Btns[i].bmp.bmHeight = Images[i].nHeight;
-			}
-		}
+		#endif
 	}
 }
 
 void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 {
-	if (!m_Btns[0].hBmp)
+	if (!m_Btns[0].pImg)
 		LoadResources();
 
 	RECT rcLeft = {}, rcTop = {};
@@ -690,13 +708,18 @@ void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 
 	for (size_t i = 0; i < countof(m_Btns); i++)
 	{
-		if (!m_Btns[i].hBmp)
+		if (!m_Btns[i].pImg)
 			continue; // Image was failed
 
-		TODO("Вертикальное центрирование по объекту AlignVCenterId");
+		TODO("Р’РµСЂС‚РёРєР°Р»СЊРЅРѕРµ С†РµРЅС‚СЂРёСЂРѕРІР°РЅРёРµ РїРѕ РѕР±СЉРµРєС‚Сѓ AlignVCenterId");
 
-		int nDispW = m_Btns[i].bmp.bmWidth * nDisplayDpi / 96;
-		int nDispH = m_Btns[i].bmp.bmHeight * nDisplayDpi / 96;
+		int nDispW = 0, nDispH = 0;
+		if (!m_Btns[i].pImg->GetSizePerDpi(nDisplayDpi, nDispW, nDispH))
+		{
+			_ASSERTE(FALSE && "Image not available for dpi?");
+			continue; // Image was failed?
+		}
+		_ASSERTE(nDispW>0 && nDispH>0);
 		int nY = rcTop.top + ((rcTop.bottom - rcTop.top - nDispH + 1) / 2);
 
 		hCtrl = CreateWindow(L"STATIC", m_Btns[i].ResId,
@@ -757,19 +780,10 @@ bool ConEmuAbout::DonateBtns_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 		case pLinkDonate:
 		case pLinkFlattr:
 			iBtnIdx = (LOWORD(wParam) == pLinkDonate)?0:1;
-			if (m_Btns[iBtnIdx].hBmp)
+			if (m_Btns[iBtnIdx].pImg)
 			{
-				bool bRc = false;
 				DRAWITEMSTRUCT* p = (DRAWITEMSTRUCT*)lParam;
-				HDC hdcComp = CreateCompatibleDC(p->hDC);
-				if (hdcComp)
-				{
-					HBITMAP hOld = (HBITMAP)SelectObject(hdcComp, m_Btns[iBtnIdx].hBmp);
-					bRc = (StretchBlt(p->hDC, p->rcItem.left, p->rcItem.top, p->rcItem.right-p->rcItem.left, p->rcItem.bottom-p->rcItem.top,
-						hdcComp, 0, 0, m_Btns[iBtnIdx].bmp.bmWidth, m_Btns[iBtnIdx].bmp.bmHeight, SRCCOPY) != 0);
-					SelectObject(hdcComp, hOld);
-					DeleteDC(hdcComp);
-				}
+				bool bRc = m_Btns[iBtnIdx].pImg->PaintButton(-1, p->hDC, p->rcItem.left, p->rcItem.top, p->rcItem.right-p->rcItem.left, p->rcItem.bottom-p->rcItem.top);
 				if (bRc)
 				{
 					lResult = TRUE;

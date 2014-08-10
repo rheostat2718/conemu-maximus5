@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+class CToolImg;
+
 class CTabPanelWin : public CTabPanelBase
 {
 private:
@@ -37,6 +39,9 @@ private:
 	int  mn_ThemeHeightDiff;
 	int  mn_TabHeight;
 
+private:
+	CToolImg* mp_ToolImg;
+
 public:
 	CTabPanelWin(CTabBarClass* ap_Owner);
 	virtual ~CTabPanelWin();
@@ -44,6 +49,7 @@ public:
 public:
 	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) override;
 	virtual void CreateRebar() override;
+	virtual void DestroyRebar() override;
 	virtual void DeleteItemInt(int I) override;
 	virtual bool IsCreated() override;
 	virtual bool IsTabbarCreated() override;

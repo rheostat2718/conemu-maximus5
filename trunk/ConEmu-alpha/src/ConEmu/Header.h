@@ -46,6 +46,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include <crtdbg.h>
 //#endif
 
+#undef SetCurrentDirectory
+#define SetCurrentDirectory "gpConEmu->ChangeWorkDir() must be used!"
+
 #include "../common/Memory.h"
 #include "../common/MAssert.h"
 
@@ -343,6 +346,7 @@ struct SettingsStorage
 #define IsWindowsVista (gOSVer.dwMajorVersion >= 6)
 #define IsWindows7 ((gOSVer.dwMajorVersion > 6) || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion > 0))
 #define IsWindows8 ((gOSVer.dwMajorVersion > 6) || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion > 1))
+#define IsWindows8_1 ((gOSVer.dwMajorVersion > 6) || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion > 2))
 
 #define SafeRelease(p) if ((p)!=NULL) { (p)->Release(); (p)=NULL; }
 
@@ -536,7 +540,7 @@ enum ToolbarCommandIdx
 	TID_MINIMIZE,
 	TID_MAXIMIZE,
 	TID_APPCLOSE,
-	TID_COPYING,
+	//TID_COPYING,
 	TID_SYSMENU,
 	TID_MINIMIZE_SEP = 110,
 };

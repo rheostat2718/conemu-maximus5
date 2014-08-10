@@ -455,19 +455,7 @@ bool CTabBarClass::IsTabsShown()
 
 void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 {
-	if (!mp_Rebar->IsCreated())
-	{
-		if (!m_TabIcons.IsInitialized())
-		{
-			m_TabIcons.Initialize();
-		}
-		// Создать
-		mp_Rebar->CreateRebar();
-		// Узнать высоту созданного
-		_tabHeight = mp_Rebar->QueryTabbarHeight();
-		// Передернуть
-		OnCaptionHidden();
-	}
+	CheckRebarCreated();
 
 	_active = true;
 	if (abPreSyncConsole && (gpConEmu->WindowMode == wmNormal))
@@ -477,6 +465,51 @@ void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	}
 	gpConEmu->OnTabbarActivated(true);
 	UpdatePosition();
+}
+
+void CTabBarClass::Recreate()
+{
+	bool bWasVisible = IsTabsShown();
+
+	if (mp_Rebar)
+	{
+		mp_Rebar->DestroyRebar();
+	}
+
+	if (bWasVisible)
+	{
+		CheckRebarCreated();
+		Update();
+		_active = true;
+	}
+}
+
+void CTabBarClass::CheckRebarCreated()
+{
+	if (!mp_Rebar)
+	{
+		_ASSERTE(mp_Rebar!=NULL);
+		return;
+	}
+
+	if (mp_Rebar->IsCreated())
+	{
+		return;
+	}
+
+	if (!m_TabIcons.IsInitialized())
+	{
+		m_TabIcons.Initialize();
+	}
+
+	// Создать
+	mp_Rebar->CreateRebar();
+
+	// Узнать высоту созданного
+	_tabHeight = mp_Rebar->QueryTabbarHeight();
+
+	// Передернуть
+	OnCaptionHidden();
 }
 
 void CTabBarClass::Deactivate(BOOL abPreSyncConsole/*=FALSE*/)
@@ -1065,10 +1098,10 @@ bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 		{
 			lstrcpyn(pDisp->pszText, _T("Close ALL consoles"), pDisp->cchTextMax);
 		}
-		else if (pDisp->iItem == TID_COPYING)
-		{
-			lstrcpyn(pDisp->pszText, _T("Show copying queue"), pDisp->cchTextMax);
-		}
+		//else if (pDisp->iItem == TID_COPYING)
+		//{
+		//	lstrcpyn(pDisp->pszText, _T("Show copying queue"), pDisp->cchTextMax);
+		//}
 		else if (pDisp->iItem == TID_SYSMENU)
 		{
 			lstrcpyn(pDisp->pszText, _T("Show system menu (RClick for Settings)"), pDisp->cchTextMax);
@@ -1196,10 +1229,10 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	{
 		gpConEmu->PostScClose();
 	}
-	else if (wParam == TID_COPYING)
-	{
-		gpConEmu->OnCopyingState();
-	}
+	//else if (wParam == TID_COPYING)
+	//{
+	//	gpConEmu->OnCopyingState();
+	//}
 	else if (wParam == TID_SYSMENU)
 	{
 		RECT rcBtnRect = {0};
@@ -2020,11 +2053,6 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 		*ppVCon = pVCon;
 
 	return nTab;
-}
-
-void CTabBarClass::UpdateTabFont()
-{
-	mp_Rebar->UpdateTabFontInt();
 }
 
 // Прямоугольник в клиентских координатах ghWnd!

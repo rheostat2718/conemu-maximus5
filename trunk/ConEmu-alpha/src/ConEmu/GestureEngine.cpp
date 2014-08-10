@@ -504,7 +504,7 @@ void CGestures::ProcessZoom(HWND hWnd, const double dZoomFactor, const LONG lZx,
 			else if (nDelta > 8)
 				nDelta = 8;
 
-			gpConEmu->PostAutoSizeFont(TRUE, nDelta);
+			gpConEmu->PostFontSetSize(1, nDelta);
 		}
 		else if (dZoomFactor < 0.99)
 		{
@@ -514,7 +514,7 @@ void CGestures::ProcessZoom(HWND hWnd, const double dZoomFactor, const LONG lZx,
 			else if (nDelta > 8)
 				nDelta = 8;
 
-			gpConEmu->PostAutoSizeFont(TRUE, -nDelta);
+			gpConEmu->PostFontSetSize(1, -nDelta);
 		}
 	}
 	return;
@@ -531,9 +531,9 @@ bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 		CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 		if (pRCon)
 		{
-			TODO("Если можно будет задавать разный шрифт для разных консолей - заменить gpSet->FontSizeY");
+			TODO("Если можно будет задавать разный шрифт для разных консолей - заменить gpSet->FontHeight()");
 			// Соотнести Pan с высотой шрифта
-			int dy = ((ldy < 0) ? -ldy : ldy) / gpSet->FontSizeY;
+			int dy = ((ldy < 0) ? -ldy : ldy) / gpSetCls->FontHeight();
 			if (dy > 0)
 			{
 				short Delta = ((ldy < 0) ? -120 : 120) * dy;

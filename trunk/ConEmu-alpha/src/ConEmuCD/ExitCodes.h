@@ -58,3 +58,74 @@ const CERR_EXIT_CODES
 	;
 
 #define CERR_LASTEXITCODE (CERR_FIRSTEXITCODE+100)
+
+// ServerInit | DoInjectRemote -> InjectRemote -> PrepareHookModule | [InfiltrateDll -> CreateRemoteThread]
+typedef int CINFILTRATE_EXIT_CODES;
+const CINFILTRATE_EXIT_CODES
+	CIR_GeneralError = -1,
+	// InfiltrateDll codes
+	CIR_WrongBitness = -100,
+	CIR_TooLongHookPath = -101,
+	CIR_VirtualAllocEx = -102,
+	CIR_WriteProcessMemory = -103,
+	CIR_LoadKernel = -104,
+	CIR_NoKernelExport = -105,
+	CIR_VirtualAllocEx2 = -106,
+	CIR_WriteProcessMemory2 = -107,
+	CIR_CreateRemoteThread = -108,
+	CIR_ReadProcessMemory = -109,
+	CIR_InInjectedCodeError = -100,
+	CIR_CheckKernelExportAddr = -111,
+	CIR_InfiltrateGeneral = -150,
+	//
+	CIR_GetModuleFileName = -200,
+	// Different bitness, running matching ConEmuC[64]
+	CIR_OpenProcess = -201,
+	CIR_CreateProcess = -202,
+	CIR_WrapperResult = -203,
+	//
+	CIR_ConEmuHkNotFound = -250,
+	// Prepare hook module (copy proper ConEmuHk[64] to %TEMP%)
+	CIR_SHGetFolderPath = -251,
+	CIR_TooLongTempPath = -252,
+	CIR_CreateTempDirectory = -253,
+	CIR_CopyHooksFile = -254,
+	// Waiting thread result?
+	CIR_DefTermWaitingFailed = -300,
+	// Succeeded
+	CIR_AlreadyInjected = 1,
+	CIR_OK = 0
+	;
+
+// ConsoleMain2 | DoInjectHooks | OnCreateProcessFinished -> InjectHooks
+typedef int CINJECTHK_EXIT_CODES;
+const CINJECTHK_EXIT_CODES
+	CIH_GeneralError = -1,
+	//
+	CIH_GetModuleFileName = -501,
+	CIH_CreateProcess = -502,
+	CIH_GetLoadLibraryAddress = -503,
+	CIH_WrapperGeneral = -504,
+	CIH_WrapperFailed = -505,
+	CIH_ProcessWasTerminated = -506,
+	CIH_WrongHandleBitness = -509,
+	CIH_KernelNotLoaded = -510,
+	CIH_OsVerFailed = -511,
+	CIH_NtdllNotLoaded = -512,
+	CIH_GetLdrHandleAddress = -514,
+	//
+	CIH_AsmBadCodePointer = -601,
+	CIH_AsmMemBadSize = -602,
+	CIH_AsmVirtualAllocEx = -703,
+	CIH_AsmGetThreadContext = -710,
+	CIH_AsmWriteProcessMemory = -730,
+	CIH_AsmFlushInstructionCode = -731,
+	CIH_AsmSetThreadContext = -732,
+	CIH_AsmBitnessNot64 = -801,
+	CIH_AsmBitmessNot32 = -802,
+	CIH_AsmBadDllPathName = -803,
+	CIH_AsmBadProcShift = -814,
+	CIH_AsmGeneralError = -1000,
+	//
+	CIH_OK = 0
+	;

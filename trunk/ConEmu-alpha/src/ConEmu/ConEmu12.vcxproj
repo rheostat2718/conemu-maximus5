@@ -408,6 +408,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">
     <Midl>
@@ -437,6 +440,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -465,6 +471,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Midl>
@@ -499,6 +508,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">
     <ClCompile>
@@ -526,6 +538,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
     <Midl>
@@ -555,6 +570,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">
     <ClCompile>
@@ -644,6 +662,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">
     <Midl>
@@ -673,6 +694,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">
     <ClCompile>
@@ -699,6 +723,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">
     <Midl>
@@ -728,6 +755,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_PDB|Win32'">
     <ClCompile>
@@ -756,6 +786,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_PDB|x64'">
     <Midl>
@@ -790,6 +823,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">
     <ClCompile>
@@ -816,6 +852,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">
     <Midl>
@@ -845,6 +884,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">
     <ClCompile>
@@ -871,7 +913,7 @@
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
     <PostBuildEvent>
-      <Command />
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
     </PostBuildEvent>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -905,6 +947,9 @@
     <Manifest>
       <AdditionalManifestFiles>conemu.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PostBuildEvent>
+      <Command>if exist "$(SolutionDir)sign3.bat" call "$(SolutionDir)sign3.bat" "$(TargetPath)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\common\CmdLine.cpp" />
@@ -932,6 +977,7 @@
     <ClCompile Include="ConfirmDlg.cpp" />
     <ClCompile Include="CustomFonts.cpp" />
     <ClCompile Include="DefaultTerm.cpp" />
+    <ClCompile Include="DpiAware.cpp" />
     <ClCompile Include="DragDrop.cpp" />
     <ClCompile Include="DragDropData.cpp" />
     <ClCompile Include="DwmHelper.cpp" />
@@ -964,6 +1010,7 @@
     <ClCompile Include="TabID.cpp" />
     <ClCompile Include="TaskBar.cpp" />
     <ClCompile Include="TaskBarGhost.cpp" />
+    <ClCompile Include="ToolImg.cpp" />
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="Update.cpp" />
     <ClCompile Include="UpdateSet.cpp" />
@@ -976,12 +1023,12 @@
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
+    <ClInclude Include="..\common\ConEmuColors.h" />
     <ClInclude Include="..\common\ConsoleAnnotation.h" />
     <ClInclude Include="..\common\defines.h" />
     <ClInclude Include="..\common\DefTermBase.h" />
     <ClInclude Include="..\common\Dump.h" />
-    <ClInclude Include="..\common\execute.hpp" />
-    <ClInclude Include="..\common\far3color.h" />
+    <ClInclude Include="..\common\execute.h" />
     <ClInclude Include="..\common\MAssert.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\Monitors.h" />
@@ -993,11 +1040,10 @@
     <ClInclude Include="..\common\RgnDetect.h" />
     <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\common\UnicodeChars.h" />
-    <ClInclude Include="..\common\UnicodeChars_gcc.h" />
-    <ClInclude Include="..\common\UnicodeChars_vc.h" />
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
     <ClInclude Include="..\ConEmuCD\ConsoleHelp.h" />
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="..\ConEmuCD\GuiHooks.h" />
     <ClInclude Include="About.h" />
     <ClInclude Include="AboutDlg.h" />
@@ -1011,6 +1057,7 @@
     <ClInclude Include="ConfirmDlg.h" />
     <ClInclude Include="CustomFonts.h" />
     <ClInclude Include="DefaultTerm.h" />
+    <ClInclude Include="DpiAware.h" />
     <ClInclude Include="DragDrop.h" />
     <ClInclude Include="DragDropData.h" />
     <ClInclude Include="DwmHelper.h" />
@@ -1050,6 +1097,7 @@
     <ClInclude Include="TabID.h" />
     <ClInclude Include="TaskBar.h" />
     <ClInclude Include="TaskBarGhost.h" />
+    <ClInclude Include="ToolImg.h" />
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="Update.h" />
     <ClInclude Include="UpdateSet.h" />

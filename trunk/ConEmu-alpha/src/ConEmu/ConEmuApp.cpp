@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AboutDlg.h"
 #include "Options.h"
 #include "ConEmu.h"
+#include "DpiAware.h"
 #ifdef _DEBUG
 #include "Macro.h"
 #endif
@@ -2810,6 +2811,7 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 						pszTemp = pszBatch;
 					}
 
+					szTmp.Empty();
 					if (NextArg(&pszTemp, szTmp) == 0)
 						pszIcon = szTmp;
 					break;
@@ -3151,7 +3153,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 							{
 								if (!bNoSuccMsg)
 								{
-									MessageBox(ghOpWnd, L"Taskbar jump list was updated successfully", gpConEmu->GetDefaultTitle(), MB_ICONINFORMATION);
+									MsgBox(L"Taskbar jump list was updated successfully", MB_ICONINFORMATION, gpConEmu->GetDefaultTitle(), ghOpWnd, true);
 								}
 
 								bSucceeded = true;
@@ -3534,7 +3536,7 @@ void RaiseTestException()
 void ResetEnvironmentVariables()
 {
 	SetEnvironmentVariable(ENV_CONEMUFAKEDT_VAR_W, NULL);
-	SetEnvironmentVariable(ENV_CONEMU_HOOKS, NULL);
+	SetEnvironmentVariable(ENV_CONEMU_HOOKS_W, NULL);
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -3559,6 +3561,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HeapInitialize();
 	RemoveOldComSpecC();
 	AssertMsgBox = MsgBox;
+
+	// On Vista and higher ensure our process will be
+	// marked as fully dpi-aware, regardless of mainfest
+	if (gnOsVer >= 0x600)
+	{
+		CDpiAware::setProcessDPIAwareness();
+	}
 
 	/* *** DEBUG PURPOSES */
 	gpStartEnv = LoadStartupEnv();
@@ -3704,6 +3713,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool SaveCfgFilePrm = false; TCHAR* SaveCfgFile = NULL;
 	bool UpdateSrcSetPrm = false; TCHAR* UpdateSrcSet = NULL;
 	bool AnsiLogPathPrm = false; TCHAR* AnsiLogPath = NULL;
+	bool QuakePrm = false; BYTE QuakeMode = 0;
 	bool SetUpDefaultTerminal = false;
 	bool ExitAfterActionPrm = false;
 #if 0
@@ -4238,6 +4248,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				{
 					gpSetCls->SingleInstanceArg = sgl_Disabled;
 				}
+				else if (!klstricmp(curCommand, _T("/quake"))
+					|| !klstricmp(curCommand, _T("/quakeauto"))
+					|| !klstricmp(curCommand, _T("/noquake")))
+				{
+					QuakePrm = true;
+					if (!klstricmp(curCommand, _T("/quake")))
+						QuakeMode = 1;
+					else if (!klstricmp(curCommand, _T("/quakeauto")))
+						QuakeMode = 2;
+					else
+						QuakeMode = 0;
+				}
 				else if (!klstricmp(curCommand, _T("/showhide")) || !klstricmp(curCommand, _T("/showhideTSA")))
 				{
 					gpSetCls->SingleInstanceArg = sgl_Enabled;
@@ -4438,6 +4460,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// force this config as "new"
 		DEBUGSTRSTARTUP(L"Clear config was requested");
 		gpSet->IsConfigNew = true;
+		gpSet->InitVanilla();
 	}
 	else
 	{
@@ -4770,6 +4793,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	    SizePrm ? SizeVal : -1,
 	    ClearTypePrm ? ClearTypeVal : -1
 	);
+
+	// Quake/NoQuake?
+	if (QuakePrm)
+	{
+		gpConEmu->SetQuakeMode(QuakeMode);
+	}
 
 	if (gpSet->wndCascade)
 	{

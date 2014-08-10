@@ -94,6 +94,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_SPLITTER_SIZE 32
 
+// That is positive value for LF.lfHeight
+#define DEF_FONTSIZEY_P   16
+#define DEF_TABFONTY_P    16
+#define DEF_STATUSFONTY_P 14
+// That is positive value for LF.lfHeight
+#define DEF_FONTSIZEY_U   14
+#define DEF_TABFONTY_U    13
+#define DEF_STATUSFONTY_U 12
+
 
 struct CONEMUDEFCOLORS
 {
@@ -155,7 +164,7 @@ const CONEMUDEFCOLORS DefColors[] =
 	{
 		L"<Solarized (John Doe)>", {
 			0x00362b00, 0x00423607, 0x00756e58, 0x00837b65, 0x002f32dc, 0x00c4716c, 0x00164bcb, 0x00d5e8ee,
-			0x00a1a193, 0x00d28b26, 0x00009985, 0x0098a12a, 0x00969483, 0x008236d3, 0x000089b5, 0x00e3f6fd		
+			0x00a1a193, 0x00d28b26, 0x00009985, 0x0098a12a, 0x00969483, 0x008236d3, 0x000089b5, 0x00e3f6fd
 		}
 	},
 	{
@@ -227,7 +236,7 @@ const CONEMUDEFCOLORS DefColors[] =
 	{
 		L"<Ubuntu>", { // Need to set up backround "picture" with colorfill #300A24
 			0x0036342e, 0x00a46534, 0x00069a4e, 0x009a9806, 0x000000cc, 0x007b5075, 0x0000a0c4, 0x00cfd7d3,
-			0x00535755, 0x00cf9f72, 0x0034e28a, 0x00e2e234, 0x002929ef, 0x00a87fad, 0x004fe9fc, 0x00eceeee			
+			0x00535755, 0x00cf9f72, 0x0034e28a, 0x00e2e234, 0x002929ef, 0x00a87fad, 0x004fe9fc, 0x00eceeee
 		}, {15, 0, 0, 0}, {true, 0x00240A30}
 	},
 	{
@@ -287,7 +296,7 @@ Settings::Settings()
 	ResetSettings();
 
 	// Умолчания устанавливаются в CSettings::CSettings
-	//-- // Теперь установим умолчания настроек	
+	//-- // Теперь установим умолчания настроек
 	//-- InitSettings();
 }
 
@@ -352,7 +361,7 @@ void Settings::InitSettings()
 	if (gpConEmu) gpConEmu->LogString(L"Settings::InitSettings()");
 	MCHKHEAP
 
-	// Освободить память, т.к. функция может быть вызвана из окна интерфейса настроек	
+	// Освободить память, т.к. функция может быть вызвана из окна интерфейса настроек
 	ReleasePointers();
 
 	// Сброс переменных
@@ -419,51 +428,40 @@ void Settings::InitSettings()
 
 	bool bIsDbcs = (GetSystemMetrics(SM_DBCSENABLED) != 0);
 
-	//WARNING("InitSettings() может вызываться из интерфейса настройки, не промахнуться с хэндлами");
-	//// Шрифты
-	//memset(m_Fonts, 0, sizeof(m_Fonts));
-	////TODO: OLD - на переделку
-	//memset(&LogFont, 0, sizeof(LogFont));
-	//memset(&LogFont2, 0, sizeof(LogFont2));
-	/*LogFont.lfHeight = mn_FontHeight =*/
-	FontSizeY = 16 * gpSetCls->_dpiY / 96;
+	// Font initialization (all fields must be already zeroed)
+	_ASSERTE(!FontSizeY && !FontSizeX && !FontSizeX2 && !FontSizeX3 && !FontUseDpi && !FontUseUnits);
+	// Let take into account monitor dpi
+	FontUseDpi = true;
+	// Font height in pixels
+	FontSizeY = DEF_FONTSIZEY_P; // dpi must not be embedded into font height!
 	//-- Issue 577: Для иероглифов - сделаем "пошире", а то глифы в консоль не влезут...
 	//-- пошире не будем. DBCS консоль хитрая, на каждый иероглиф отводится 2 ячейки
 	//-- "не влезть" может только если выполнить "chcp 65001", что врядли, а у если надо - руками пусть ставят
 	FontSizeX3 = 0; // bIsDbcs ? 15 : 0;
-	//LogFont.lfWidth = mn_FontWidth = FontSizeX = mn_BorderFontWidth = 0;
-	//FontSizeX2 = 0; FontSizeX3 = 0;
-	//LogFont.lfEscapement = LogFont.lfOrientation = 0;
-	/*LogFont.lfWeight = FW_NORMAL;*/ isBold = false;
-	/*LogFont.lfItalic = LogFont.lfUnderline = LogFont.lfStrikeOut = FALSE;*/ isItalic = false;
-	/*LogFont.lfCharSet*/ mn_LoadFontCharSet = DEFAULT_CHARSET;
-	//LogFont.lfOutPrecision = OUT_TT_PRECIS;
-	//LogFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-	/*LogFont.lfQuality =*/
+	// Bold/Italic
+	isBold = false;
+	isItalic = false;
+	// Charset. That may be very important for raster fonts.
+	mn_LoadFontCharSet = DEFAULT_CHARSET;
+	// Antialias style, the defaults
 	BOOL bClearType = FALSE; if (SystemParametersInfo(SPI_GETCLEARTYPE, 0, &bClearType, 0) && bClearType)
 		mn_AntiAlias = CLEARTYPE_NATURAL_QUALITY;
 	else
 		mn_AntiAlias = ANTIALIASED_QUALITY;
-	//LogFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+	// Some resets?
 	inFont[0] = inFont2[0] = 0;
-	//wcscpy_c(inFont, gsLucidaConsole);
-	//wcscpy_c(inFont2, gsLucidaConsole);
-	//mb_Name1Ok = FALSE; mb_Name2Ok = FALSE;
+
 	isTryToCenter = false;
 	nCenterConsolePad = 0;
 	isAlwaysShowScrollbar = 2;
 	nScrollBarAppearDelay = 100;
 	nScrollBarDisappearDelay = 1000;
-	//isTabFrame = true;
-	//isForceMonospace = false; isProportional = false;
 
 	//Issue 577: Для иероглифов - по умолчанию отключим моноширность
 	isMonospace = bIsDbcs ? 0 : 1;
 
 	mb_MinToTray = false;
 	mb_AlwaysShowTrayIcon = false;
-	//memset(&rcTabMargins, 0, sizeof(rcTabMargins));
-	//isFontAutoSize = false; mn_AutoFontWidth = mn_AutoFontHeight = -1;
 
 	ConsoleFont.lfHeight = 5;
 	ConsoleFont.lfWidth = 3;
@@ -692,7 +690,7 @@ void Settings::InitSettings()
 	nStatusBarLight = RGB(255,255,255);
 	nStatusBarDark = RGB(160,160,160);
 	wcscpy_c(sStatusFontFace, gsDefMUIFont); nStatusFontCharSet = ANSI_CHARSET;
-	nStatusFontHeight = 14 * gpSetCls->_dpiY / 96;
+	nStatusFontHeight = DEF_STATUSFONTY_P; // dpi must not be embedded into font height!
 	//nHideStatusColumns = ces_CursorInfo;
 	_ASSERTE(countof(isStatusColumnHidden)>csi_Last);
 	memset(isStatusColumnHidden, 0, sizeof(isStatusColumnHidden));
@@ -733,7 +731,7 @@ void Settings::InitSettings()
 	#endif
 
 	wcscpy_c(sTabFontFace, gsDefMUIFont); nTabFontCharSet = ANSI_CHARSET;
-	nTabFontHeight = 16 * gpSetCls->_dpiY / 96;
+	nTabFontHeight = DEF_TABFONTY_P; // dpi must not be embedded into font height!
 	sTabCloseMacro = sSaveAllMacro = NULL;
 	nToolbarAddSpace = 0;
 	// Show only shield (szAdminTitleSuffix is ignored if ats_Shield)
@@ -790,6 +788,24 @@ void Settings::InitSettings()
 	/* *** AutoUpdate *** */
 	_ASSERTE(UpdSet.szUpdateVerLocation==NULL); // Уже должен был быть вызван ReleasePointers
 	UpdSet.ResetToDefaults();
+}
+
+// Здесь можно включить настройки, которые должны включаться только для новых конфигураций!
+void Settings::InitVanilla()
+{
+	if (!IsConfigNew)
+	{
+		_ASSERTE(IsConfigNew == true);
+		return;
+	}
+
+	// For new users, let use ‘standard’ font heights? Meaning of display units and character height
+	FontUseUnits = true;
+	// dpi must not be embedded into font height!
+	// To avoid fatal conflicts with old versions - we are storing only positive values
+	FontSizeY = DEF_FONTSIZEY_U;
+	nStatusFontHeight = DEF_STATUSFONTY_U;
+	nTabFontHeight = DEF_TABFONTY_U;
 }
 
 void Settings::ResetSavedOnExit()
@@ -1286,7 +1302,7 @@ bool Settings::LoadCmdTask(SettingsBase* reg, CommandTasks* &pTask, int iIndex)
 					if ((k+1) < iCmdCount)
 						lstrcat(psz, L"\r\n\r\n"); // для визуальности редактирования
 
-					psz += lstrlen(psz);	
+					psz += lstrlen(psz);
 				}
 			}
 		}
@@ -2309,7 +2325,8 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 	if (*rbNeedCreateVanilla)
 	{
 		IsConfigNew = true;
-		TODO("Здесь можно включить настройки, которые должны включаться только для новых конфигураций!");
+		// Здесь можно включить настройки, которые должны включаться только для новых конфигураций!
+		InitVanilla();
 	}
 	else
 	{
@@ -2459,6 +2476,8 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"FontAutoSize", isFontAutoSize);
 		reg->Load(L"FontSize", FontSizeY);
 		reg->Load(L"FontSizeX", FontSizeX);
+		reg->Load(L"FontUseDpi", FontUseDpi);
+		reg->Load(L"FontUseUnits", FontUseUnits);
 		reg->Load(L"FontSizeX3", FontSizeX3);
 		reg->Load(L"FontSizeX2", FontSizeX2);
 		reg->Load(L"FontCharSet", mn_LoadFontCharSet); mb_CharSetWasSet = FALSE;
@@ -2605,41 +2624,41 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		//mszCharRanges[0] = 0;
 
 		TODO("Это вообще нужно будет расширить, определяя произвольное количество групп шрифтов");
-		// max 100 ranges x 10 chars + a little ;)		
-		wchar_t szCharRanges[1024] = {};		
-		if (!reg->Load(L"FixFarBordersRanges", szCharRanges, countof(szCharRanges)))		
+		// max 100 ranges x 10 chars + a little ;)
+		wchar_t szCharRanges[1024] = {};
+		if (!reg->Load(L"FixFarBordersRanges", szCharRanges, countof(szCharRanges)))
 		{
 			wcscpy_c(szCharRanges, L"2013-25C4"); // default
 		}
-		//{		
-		//	int n = 0, nMax = countof(icFixFarBorderRanges);		
-		//	wchar_t *pszRange = mszCharRanges, *pszNext = NULL;		
-		//	wchar_t cBegin, cEnd;		
-		//		
-		//	while(*pszRange && n < nMax)		
-		//	{		
-		//		cBegin = (wchar_t)wcstol(pszRange, &pszNext, 16);		
-		//		
-		//		if (!cBegin || cBegin == 0xFFFF || *pszNext != L'-') break;		
-		//		
-		//		pszRange = pszNext + 1;		
-		//		cEnd = (wchar_t)wcstol(pszRange, &pszNext, 16);		
-		//		
-		//		if (!cEnd || cEnd == 0xFFFF) break;		
-		//		
-		//		icFixFarBorderRanges[n].bUsed = true;		
-		//		icFixFarBorderRanges[n].cBegin = cBegin;		
-		//		icFixFarBorderRanges[n].cEnd = cEnd;		
-		//		n ++;		
-		//		
-		//		if (*pszNext != L';') break;		
-		//		
-		//		pszRange = pszNext + 1;		
-		//	}		
-		//		
-		//	for(; n < nMax; n++)		
-		//		icFixFarBorderRanges[n].bUsed = false;		
-		//}		
+		//{
+		//	int n = 0, nMax = countof(icFixFarBorderRanges);
+		//	wchar_t *pszRange = mszCharRanges, *pszNext = NULL;
+		//	wchar_t cBegin, cEnd;
+		//
+		//	while(*pszRange && n < nMax)
+		//	{
+		//		cBegin = (wchar_t)wcstol(pszRange, &pszNext, 16);
+		//
+		//		if (!cBegin || cBegin == 0xFFFF || *pszNext != L'-') break;
+		//
+		//		pszRange = pszNext + 1;
+		//		cEnd = (wchar_t)wcstol(pszRange, &pszNext, 16);
+		//
+		//		if (!cEnd || cEnd == 0xFFFF) break;
+		//
+		//		icFixFarBorderRanges[n].bUsed = true;
+		//		icFixFarBorderRanges[n].cBegin = cBegin;
+		//		icFixFarBorderRanges[n].cEnd = cEnd;
+		//		n ++;
+		//
+		//		if (*pszNext != L';') break;
+		//
+		//		pszRange = pszNext + 1;
+		//	}
+		//
+		//	for(; n < nMax; n++)
+		//		icFixFarBorderRanges[n].bUsed = false;
+		//}
 		ParseCharRanges(szCharRanges, mpc_FixFarBorderValues);
 
 		reg->Load(L"ExtendUCharMap", isExtendUCharMap);
@@ -2704,7 +2723,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"AlphaValue", nTransparent); MinMax(nTransparent, MIN_ALPHA_VALUE, 255);
 		reg->Load(L"AlphaValueSeparate", isTransparentSeparate);
 		if (!reg->Load(L"AlphaValueInactive", nTransparentInactive))
-		{	
+		{
 			nTransparentInactive = nTransparent;
 		}
 		else
@@ -2743,7 +2762,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 
 		reg->Load(L"KeyBarRClick", isKeyBarRClick);
 
-		reg->Load(L"DebugSteps", isDebugSteps);				
+		reg->Load(L"DebugSteps", isDebugSteps);
 
 		mb_StatusSettingsWasChanged = false;
 		reg->Load(L"StatusBar.Show", isStatusBarShow);
@@ -2956,7 +2975,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 	//		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration (%s) %s", pszDef, pszConfig, szType);
 	//	else
 	//		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration %s", pszDef, szType);
-	//	
+	//
 	//	CheckOptionsFast(szTitle, lbNeedCreateVanilla);
 	//}
 	//
@@ -3440,10 +3459,12 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"FontAutoSize", isFontAutoSize);
 		reg->Save(L"FontSize", FontSizeY);
 		reg->Save(L"FontSizeX", FontSizeX);
+		reg->Save(L"FontUseDpi", FontUseDpi);
+		reg->Save(L"FontUseUnits", FontUseUnits);
 		reg->Save(L"FontSizeX2", FontSizeX2);
 		reg->Save(L"FontSizeX3", FontSizeX3);
 		reg->Save(L"FontCharSet", mn_LoadFontCharSet);
-		if (ghOpWnd != NULL)			
+		if (ghOpWnd != NULL)
 			mb_CharSetWasSet = FALSE;
 		reg->Save(L"Anti-aliasing", mn_AntiAlias);
 		reg->Save(L"FontBold", isBold);
@@ -3715,11 +3736,15 @@ int Settings::StatusBarFontHeight()
 
 int Settings::StatusBarHeight()
 {
-	int iHeight = StatusBarFontHeight();
+	int lfHeight = gpSetCls->EvalSize(StatusBarFontHeight(), esf_Vertical|esf_CanUseDpi|esf_CanUseUnits);
+	int iHeight = gpSetCls->EvalFontHeight(sStatusFontFace, lfHeight, nStatusFontCharSet);
+	_ASSERTE(iHeight > 0);
+
 	if (isStatusBarFlags & csf_NoVerticalPad)
 		iHeight += (isStatusBarFlags & csf_HorzDelim) ? 1 : 0;
 	else
 		iHeight += (isStatusBarFlags & csf_HorzDelim) ? 2 : 1;
+
 	return iHeight;
 }
 
@@ -4184,7 +4209,7 @@ void Settings::CheckConsoleSettings()
 		if (gOSVer.dwMajorVersion >= 6)
 		{
 			wchar_t szWarning[512];
-			_wsprintf(szWarning, SKIPLEN(countof(szWarning)) 
+			_wsprintf(szWarning, SKIPLEN(countof(szWarning))
 				L"Warning!\n"
 				L"Dangerous values detected in yours registry\n\n"
 				L"Please check [HKEY_CURRENT_USER\\Console] and [HKEY_CURRENT_USER\\Console\\ConEmu] keys\n\n"
@@ -4368,9 +4393,9 @@ void Settings::SetMinToTray(bool bMinToTray)
 {
 	mb_MinToTray = bMinToTray;
 
-	if (ghOpWnd && gpSetCls->mh_Tabs[CSettings::thi_Taskbar])
+	if (ghOpWnd && gpSetCls->GetPage(CSettings::thi_Taskbar))
 	{
-		gpSetCls->checkDlgButton(gpSetCls->mh_Tabs[CSettings::thi_Taskbar], cbMinToTray, mb_MinToTray);
+		gpSetCls->checkDlgButton(gpSetCls->GetPage(CSettings::thi_Taskbar), cbMinToTray, mb_MinToTray);
 	}
 }
 
@@ -4430,7 +4455,7 @@ int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)
 		wchar_t* pch = Apps[i]->AppNamesLwr;
 		if (!pch || !*pch)
 		{
-			_ASSERTE((pch && *pch) || (ghOpWnd && IsWindowVisible(gpSetCls->mh_Tabs[CSettings::thi_Apps])));
+			_ASSERTE((pch && *pch) || (ghOpWnd && IsWindowVisible(gpSetCls->GetPage(CSettings::thi_Apps))));
 			continue;
 		}
 
