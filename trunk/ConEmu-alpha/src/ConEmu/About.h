@@ -301,6 +301,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"     Type=2: set error state in progress\r\n" \
 	L"Rename(<Type>,[\"<Title>\"])\r\n" \
 	L"  - Rename tab (Type=0) or console title (Type=1)\r\n" \
+	L"Scroll(<Type>,<Direction>,<Count=1>)\r\n" \
+	L"  - Do buffer scrolling actions\r\n" \
+	L"     Type: 0; Value: ‘-1’=Up, ‘+1’=Down\r\n" \
+	L"     Type: 1; Value: ‘-1’=PgUp, ‘+1’=PgDown\r\n" \
+	L"     Type: 2; Value: ‘-1’=HalfPgUp, ‘+1’=HalfPgDown\r\n" \
+	L"     Type: 3; Value: ‘-1’=Top, ‘+1’=Bottom\r\n" \
+	L"     Type: 4; No arguments; Go to cursor line\r\n" \
+	L"Select(<Type>,<DX>,<DY>,<HE>)\r\n" \
+	L"  - Used internally for text selection\r\n" \
+	L"     Type: 0 - Text, 1 - Block\r\n" \
+	L"     DX: select text horizontally: -1/+1\r\n" \
+	L"     DY: select text vertically: -1/+1\r\n" \
+	L"     HE: to-home(-1)/to-end(+1) with text selection\r\n" \
 	L"SetDpi(<DPI>)\r\n" \
 	L"  - Change effective dpi for ConEmu window: 96, 120, 144, 192\r\n" \
 	L"SetOption(\"<Name>\",<Value>[,<IsRelative>])\r\n" \
