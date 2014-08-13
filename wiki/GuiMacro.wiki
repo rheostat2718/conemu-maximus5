@@ -270,24 +270,37 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        Type=1: set progress value to <Value> (0-100)
        Type=2: set error state in progress
     Rename(<Type>,["<Title>"])
-      - Rename tab (Type=0) or console title (Type=1)
+     - Rename tab (Type=0) or console title (Type=1)
+    Scroll(<Type>,<Direction>,<Count=1>)
+     - Do buffer scrolling actions
+       Type: 0; Value: ‘-1’=Up, ‘+1’=Down
+       Type: 1; Value: ‘-1’=PgUp, ‘+1’=PgDown
+       Type: 2; Value: ‘-1’=HalfPgUp, ‘+1’=HalfPgDown
+       Type: 3; Value: ‘-1’=Top, ‘+1’=Bottom
+       Type: 4; No arguments; Go to cursor line
+    Select(<Type>,<DX>,<DY>,<HE>)
+     - Used internally for text selection
+       Type: 0 - Text, 1 - Block
+       DX: select text horizontally: -1/+1
+       DY: select text vertically: -1/+1
+       HE: to-home(-1)/to-end(+1) with text selection
     SetDpi(<DPI>)
-      - Change effective dpi for ConEmu window: 96, 120, 144, 192
+     - Change effective dpi for ConEmu window: 96, 120, 144, 192
     SetOption("<Name>",<Value>[,<IsRelative>])
-      - Name=one of allowed for changing ConEmu options
-        IsRelative=1 to use relative instead of absolute for some options
-        "AlphaValue": set transparency level of active window
-          Value: 40 .. 255 (255==Opaque)
-        "AlphaValueInactive": set transparency level of inactive window
-          Value: 0 .. 255 (255==Opaque)
-        "AlphaValueSeparate": enable separate active/inactive transparency level
-          Value: 0(disable) .. 1(enable)
-        "AlwaysOnTop": place ConEmu window above all non-topmost windows
-          Value: 2 - toggle, 1 - enable, 0 - disable
-        "bgImageDarker": darkening of background image
-          Value: 0 .. 255
-        "QuakeAutoHide": auto hide on focus lose, Quake mode
-          Value: 2 - switch auto-hide, 1 - enable, 0 - disable
+     - Name=one of allowed for changing ConEmu options
+       IsRelative=1 to use relative instead of absolute for some options
+       "AlphaValue": set transparency level of active window
+         Value: 40 .. 255 (255==Opaque)
+       "AlphaValueInactive": set transparency level of inactive window
+         Value: 0 .. 255 (255==Opaque)
+       "AlphaValueSeparate": enable separate active/inactive transparency level
+         Value: 0(disable) .. 1(enable)
+       "AlwaysOnTop": place ConEmu window above all non-topmost windows
+         Value: 2 - toggle, 1 - enable, 0 - disable
+       "bgImageDarker": darkening of background image
+         Value: 0 .. 255
+       "QuakeAutoHide": auto hide on focus lose, Quake mode
+         Value: 2 - switch auto-hide, 1 - enable, 0 - disable
     Settings([<PageResourceId>])
      - Show ‘Settings’ dialog with specified page activated (optionally)
          PageResourceId: integer DialogID from ‘resource.h’
