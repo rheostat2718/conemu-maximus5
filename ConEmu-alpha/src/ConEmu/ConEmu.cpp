@@ -7466,6 +7466,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 	size_t cchMaxLen = _tcslen(ms_ConEmuExe)
 		+ _tcslen(args->pszSpecialCmd)
 		+ (pszConfig ? (_tcslen(pszConfig) + 32) : 0)
+		+ (args->pszAddGuiArg ? _tcslen(args->pszAddGuiArg) : 0);
 		+ 160; // на всякие флажки и -new_console
 	if ((pszCmdLine = (wchar_t*)malloc(cchMaxLen*sizeof(*pszCmdLine))) == NULL)
 	{
@@ -7485,6 +7486,8 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 		_wcscat_c(pszCmdLine, cchMaxLen, L"/nosingle ");
 		if (gpSet->isQuakeStyle)
 			_wcscat_c(pszCmdLine, cchMaxLen, L"/noquake ");
+		if (args->pszAddGuiArg)
+			_wcscat_c(pszCmdLine, cchMaxLen, args->pszAddGuiArg);
 		_wcscat_c(pszCmdLine, cchMaxLen, L"/cmd ");
 		_wcscat_c(pszCmdLine, cchMaxLen, args->pszSpecialCmd);
 		if ((args->RunAsAdministrator == crb_On) || (args->RunAsRestricted == crb_On) || args->pszUserName)
@@ -9074,7 +9077,7 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				if (lpszCmd && (*lpszCmd == TaskBracketLeft))
 				{
 					RConStartArgs args;
-					wchar_t* pszDataW = LoadConsoleBatch(lpszCmd, &args.pszStartupDir, &args.pszIconFile);
+					wchar_t* pszDataW = LoadConsoleBatch(lpszCmd, &args);
 					SafeFree(pszDataW);
 					if (args.pszStartupDir && *args.pszStartupDir)
 					{
@@ -11232,7 +11235,7 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	return 0;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/, wchar_t** ppszIcon /*= NULL*/)
+wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgs* pArgs /*= NULL*/)
 {
 	wchar_t* pszDataW = NULL;
 
@@ -11244,7 +11247,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, wchar_t** ppszStartupDi
 	else if ((*asSource == TaskBracketLeft) || (lstrcmp(asSource, AutoStartTaskName) == 0))
 	{
 		// Имя задачи
-		pszDataW = LoadConsoleBatch_Task(asSource, ppszStartupDir, ppszIcon);
+		pszDataW = LoadConsoleBatch_Task(asSource, pArgs);
 	}
 	else if (*asSource == DropLnkPrefix)
 	{
@@ -11442,7 +11445,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 	return pszDataW;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStartupDir /*= NULL*/, wchar_t** ppszIcon /*= NULL*/)
+wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pArgs /*= NULL*/)
 {
 	wchar_t* pszDataW = NULL;
 
@@ -11452,7 +11455,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 		wchar_t* psz = wcschr(szName, TaskBracketRight);
 		if (psz) psz[1] = 0;
 
-		const Settings::CommandTasks* pGrp = NULL;
+		const CommandTasks* pGrp = NULL;
 		if (lstrcmp(asSource, AutoStartTaskName) == 0)
 		{
 			pGrp = gpSet->CmdTaskGet(-1);
@@ -11470,23 +11473,20 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, wchar_t** ppszStar
 		if (pGrp)
 		{
 			pszDataW = lstrdup(pGrp->pszCommands);
-			if (ppszStartupDir && !*ppszStartupDir && pGrp->pszGuiArgs)
+			if (pGrp->pszGuiArgs)
 			{
-				wchar_t* pszIcon = NULL;
-				pGrp->ParseGuiArgs(ppszStartupDir, &pszIcon);
+				RConStartArgs parsedArgs;
+				pGrp->ParseGuiArgs(&parsedArgs);
 
-				if (pszIcon)
+				if (lstrempty(pArgs->pszStartupDir) && lstrnempty(parsedArgs.pszStartupDir))
+					ExchangePtr(pArgs->pszStartupDir, parsedArgs.pszStartupDir);
+				if (lstrempty(pArgs->pszIconFile) && lstrnempty(parsedArgs.pszIconFile))
+					ExchangePtr(pArgs->pszIconFile, parsedArgs.pszIconFile);
+
+				if (lstrnempty(pArgs->pszIconFile))
 				{
 					// Функция сама проверит - можно или нет менять иконку приложения
-					SetWindowIcon(pszIcon);
-					// Если просили - вернуть путь к иконке
-					if (ppszIcon && !*ppszIcon)
-					{
-						SafeFree(*ppszIcon);
-						*ppszIcon = pszIcon;
-						pszIcon = NULL;
-					}
-					SafeFree(pszIcon);
+					SetWindowIcon(pArgs->pszIconFile);
 				}
 			}
 		}
@@ -11730,7 +11730,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			{
 				RConStartArgs args;
 				// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
-				wchar_t* pszDataW = LoadConsoleBatch(pszCmd, &args.pszStartupDir, &args.pszIconFile);
+				wchar_t* pszDataW = LoadConsoleBatch(pszCmd, &args);
 				if (!pszDataW)
 				{
 					Destroy();
@@ -18836,6 +18836,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;
 		case WM_ACTIVATEAPP:
+			if (wParam && mp_Menu->GetInScMinimize())
+			{
+				// Sometimes, during Quake window minimize (generally by clicking on the taskbar button)
+				// OS send WM_ACTIVATEAPP(TRUE) from internals of DefWindowProc(WM_SYSCOMMAND,SC_MINIMIZE).
+				// We need to treat that message as 'Lose focus'
+				LogString(L"Event 'Application activating' received during ScMinimize! Forcing to 'Application deactivating'");
+				wParam = FALSE; lParam = 0;
+			}
 			LogString(wParam ? L"Application activating" : L"Application deactivating");
 			// просто так фокус в дочернее окно ставить нельзя
 			// если переключать фокус в дочернее приложение по любому чиху
