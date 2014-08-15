@@ -182,6 +182,7 @@ BOOL    gbCreatingHiddenConsole = FALSE; // Используется для "т�
 BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
+wchar_t* gpszRootExe = NULL; // may be set with '/ROOTEXE' switch if used with '/TRMPID'. full path to root exe
 wchar_t* gpszForcedTitle = NULL;
 LPCWSTR gpszCheck4NeedCmd = NULL; // Для отладки
 wchar_t gszComSpec[MAX_PATH+1] = {0};
@@ -3947,6 +3948,18 @@ void UpdateConsoleTitle()
 	LPCWSTR  pszSetTitle = NULL, pszCopy;
 	LPCWSTR  pszReq = gpszForcedTitle ? gpszForcedTitle : gpszRunCmd;
 
+	if (!pszReq || !*pszReq)
+	{
+		// Не должны сюда попадать - сброс заголовка не допустим
+		#ifdef _DEBUG
+		if (gbAttachMode == am_None)
+		{
+			_ASSERTE(pszReq && *pszReq);
+		}
+		#endif
+		return;
+	}
+
 	pszBuffer = ParseConEmuSubst(pszReq);
 	if (pszBuffer)
 		pszReq = pszBuffer;
@@ -4369,6 +4382,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		{
 			gbCreatingHiddenConsole = TRUE;
 			//_ASSERTE(FALSE && "Continue to create con");
+		}
+		else if (wcscmp(szArg, L"/ROOTEXE")==0)
+		{
+			if (0 == NextArg(&lsCmdLine, szArg))
+				gpszRootExe = lstrmerge(L"\"", szArg, L"\"");
 		}
 		else if (wcsncmp(szArg, L"/PID=", 5)==0 || wcsncmp(szArg, L"/TRMPID=", 8)==0
 			|| wcsncmp(szArg, L"/FARPID=", 8)==0 || wcsncmp(szArg, L"/CONPID=", 8)==0)
