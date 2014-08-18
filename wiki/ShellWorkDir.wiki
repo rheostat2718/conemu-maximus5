@@ -12,23 +12,23 @@ That is the ‘Startup directory’.
 When you work with shell and do some CD's or run your scripts,
 its ‘Current directory’ may be (and will) changed. But directory
 is changed inside your [TerminalVsShell Shell] but not inside terminal.
-ConEmu does not handle your shell commands when your execute them.
-Moreover, some shells (PowerShell, bash, etc.) doesn't even call
-Window API function ‘SetCurrentDirectory’, they handle their
+!ConEmu does not handle your shell commands when your execute them.
+Moreover, some shells (!PowerShell, bash, etc.) doesn't even call
+Window API function ‘!SetCurrentDirectory’, they handle their
 working directories internally.
 
-However, since ConEmu's build 140818 you get full support of ‘Current directory’ (*CD*).
+However, since !ConEmu's build 140818 you get full support of ‘Current directory’ (*CD*).
 
   * Automatic detection of *CD* in `cmd.exe` or `tcc.exe`;
-  * Ability to inform ConEmu GUI about shell *CD* using [AnsiEscapeCodes ANSI] or [ConEmuC ConEmuC];
+  * Ability to inform !ConEmu GUI about shell *CD* using [AnsiEscapeCodes ANSI] or [ConEmuC ConEmuC];
   * Display *CD* in the tab title using [SettingsTabBar tab templates];
   * Reuse *CD* in the [RestartTab Restart] and [LaunchNewTab Create new console] dialogs;
-  * At last you may use `%ConEmuCurDir%` variable in the [GuiMacro Shell] macro function.
+  * At last you may use `%CD%` variable with [GuiMacro#List_of_functions Shell] macro function in the `Dir` parameter.
 
 =What you shall do to get *CD* support=
 
 ==cmd and tcc==
-Just enable ‘[ConEmuHk Inject ConEmuHk]’ feature. ConEmu will maintain *CD* for you automatically.
+Just enable ‘[ConEmuHk Inject ConEmuHk]’ feature. !ConEmu will maintain *CD* for you automatically.
 
 ==bash and other cygwin shells==
 You need to tell bash to run `"ConEmuC -StoreCWD"` command each time its prompt executed.
