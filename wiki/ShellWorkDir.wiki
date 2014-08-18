@@ -1,0 +1,57 @@
+﻿#summary Current vs Startup directory
+
+<wiki:toc max_depth="3" /> 
+
+=About directories=
+
+When you run new console the shell is starting in the directory you specified.
+That is the ‘Startup directory’.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuCreate.png" title="ConEmu confirmation of new console creation" alt="ConEmu new console">
+
+When you work with shell and do some CD's or run your scripts,
+its ‘Current directory’ may be (and will) changed. But directory
+is changed inside your [TerminalVsShell Shell] but not inside terminal.
+ConEmu does not handle your shell commands when your execute them.
+Moreover, some shells (PowerShell, bash, etc.) doesn't even call
+Window API function ‘SetCurrentDirectory’, they handle their
+working directories internally.
+
+However, since ConEmu's build 140818 you get full support of ‘Current directory’ (*CD*).
+
+  * Automatic detection of *CD* in `cmd.exe` or `tcc.exe`;
+  * Ability to inform ConEmu GUI about shell *CD* using [AnsiEscapeCodes ANSI] or [ConEmuC ConEmuC];
+  * Display *CD* in the tab title using [SettingsTabBar tab templates];
+  * Reuse *CD* in the [RestartTab Restart] and [LaunchNewTab Create new console] dialogs;
+  * At last you may use `%ConEmuCurDir%` variable in the [GuiMacro Shell] macro function.
+
+=What you shall do to get *CD* support=
+
+==cmd and tcc==
+Just enable ‘[ConEmuHk Inject ConEmuHk]’ feature. ConEmu will maintain *CD* for you automatically.
+
+==bash and other cygwin shells==
+You need to tell bash to run `"ConEmuC -StoreCWD"` command each time its prompt executed.
+For example, add to your `.bashrc`
+{{{
+PROMPT_COMMAND='ConEmuC -StoreCWD'
+}}}
+
+==PowerShell==
+You need to modify your profile to override prompt function. Just run in your PowerShell prompt:
+{{{
+notepad $Profile
+}}}
+And change prompt as in the following example:
+{{{
+function prompt {
+  # Just prettify the prompt
+  Write-Host -NoNewline -ForegroundColor Cyan "PS "
+  $dir = $(get-location).ProviderPath
+  Write-Host -NoNewline -ForegroundColor Yellow $dir
+  # You may use ANSI or direct ConEmuC call
+  # Write-Host -NoNewline (([char]27) + "]9;9;`"" + $dir + "`"" + ([char]27) + "\")
+  & ConEmuC -StoreCWD "$dir"
+  return ">"
+}
+}}}

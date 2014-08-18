@@ -218,6 +218,7 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
      - Change font height in the ConEmu window
        Relative==0: N - required font height in points
        Relative==1: N (+-1, +-2) - increase/decrease font height
+       Relative==2: N (per cents) - alias for Zoom(N)
        returns - "OK", or "InvalidArg"
     HighlightMouse(0)
      - Switch highlight under mouse cursor (off/row/col/row+col/...)
@@ -361,6 +362,8 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        "NOR", "MAX", "FS" (fullscreen), "MIN", "TSA"
        "TLEFT", "TRIGHT" (tile to left/right), "THEIGHT",
        "MPREV", "MNEXT" (move ConEmu to prev/next monitor)
+    Zoom(N)
+     - Set zoom value, 100 - original font size
 }}}
 
 ==Examples==
