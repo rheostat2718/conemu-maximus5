@@ -23,7 +23,7 @@ However, since !ConEmu's build 140818 you get full support of ‘Current directo
   * Ability to inform !ConEmu GUI about shell *CD* using [AnsiEscapeCodes ANSI] or [ConEmuC ConEmuC];
   * Display *CD* in the tab title using [SettingsTabBar tab templates];
   * Reuse *CD* in the [RestartTab Restart] and [LaunchNewTab Create new console] dialogs;
-  * At last you may use *`%CD%`* variable with [GuiMacro#List_of_functions Shell] macro function in the `Dir` parameter.
+  * At last you may use "*%CD%*" variable with [GuiMacro#List_of_functions Shell] macro function in the `Dir` parameter.
 
 =What you shall do to get *CD* support=
 
