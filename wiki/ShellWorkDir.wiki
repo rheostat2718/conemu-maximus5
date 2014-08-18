@@ -37,7 +37,7 @@ For example, add to your `.bashrc`
 PROMPT_COMMAND='ConEmuC -StoreCWD'
 }}}
 
-==PowerShell==
+==!PowerShell==
 You need to modify your profile to override prompt function. Just run in your PowerShell prompt:
 {{{
 notepad $Profile
