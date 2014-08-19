@@ -125,8 +125,10 @@ struct CEStartupEnv
 	LPCWSTR pszWorkDir;
 	LPCWSTR pszPathEnv;
 	size_t  cchPathLen;
-	UINT    bIsWine; // Информационно!
-	UINT    bIsWinPE; // Информационно!
+	BOOL    bIsRemote; // SM_REMOTESESSION - Informational
+	UINT    nPixels;   // BITSPIXEL - Informational
+	UINT    bIsWine;   // Informational
+	UINT    bIsWinPE;  // Informational
 	BOOL    bIsReactOS;
 	BOOL    bIsDbcs;
 	UINT    nAnsiCP, nOEMCP;
