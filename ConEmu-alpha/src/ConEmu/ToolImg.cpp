@@ -111,11 +111,28 @@ bool CToolImg::Create(int nBtnWidth, int nBtnHeight, int nMaxCount, COLORREF clr
 
 bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground)
 {
+	_ASSERTE(mh_BmpDc == NULL);
+
+	int nBPP = -1;
 	bool bComp = (gnOsVer < 0x600);
+	if (!bComp)
+	{
+		mh_BmpDc = CreateCompatibleDC(NULL);
+		nBPP = GetDeviceCaps(mh_BmpDc, BITSPIXEL);
+		if (nBPP < 32)
+		{
+			bComp = true;
+			DeleteDC(mh_BmpDc);
+			mh_BmpDc = NULL;
+		}
+	}
+
 	HDC hScreen = bComp ? GetDC(NULL) : NULL;
 
 	// Create memory DC
-	mh_BmpDc = CreateCompatibleDC(hScreen);
+	if (!mh_BmpDc)
+		mh_BmpDc = CreateCompatibleDC(hScreen);
+
 	if (!mh_BmpDc)
 	{
 		_ASSERTE(mh_BmpDc!=NULL);
@@ -130,7 +147,7 @@ bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground
 	}
 
 	if (hScreen)
-			ReleaseDC(NULL, hScreen);
+		ReleaseDC(NULL, hScreen);
 
 	if (!mh_Bmp)
 	{
@@ -206,7 +223,7 @@ bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns,
 	if (!CreateField(nFieldWidth, nFieldHeight, clrBackground))
 		return false;
 
-	COLORMAP colorMap = {0xC0C0C0, clrBackground/*GetSysColor(COLOR_BTNFACE)*/};
+	//COLORMAP colorMap = {0xC0C0C0, clrBackground/*GetSysColor(COLOR_BTNFACE)*/};
 
 	bool bRc = true;
 
@@ -272,7 +289,7 @@ bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, Butto
 	if (!CreateField(nFieldWidth, nFieldHeight, clrBackground))
 		return false;
 
-	COLORMAP colorMap = {0xC0C0C0, clrBackground/*GetSysColor(COLOR_BTNFACE)*/};
+	//COLORMAP colorMap = {0xC0C0C0, clrBackground/*GetSysColor(COLOR_BTNFACE)*/};
 
 	bool bRc = true;
 
