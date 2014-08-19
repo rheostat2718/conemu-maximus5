@@ -650,14 +650,14 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 	}
 
 	// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
-    if (p)
-    {
-    	// Поэтому проверяем, совпадает ли требование "нажатости"
-    	if (p->OnKeyUp == bKeyDown)
-    		p = ConEmuSkipHotKey;
-    }
+	if (p)
+	{
+		// Поэтому проверяем, совпадает ли требование "нажатости"
+		if (p->OnKeyUp == bKeyDown)
+			p = ConEmuSkipHotKey;
+	}
 
-    return p;
+	return p;
 }
 
 bool CSettings::HasSingleWinHotkey()
@@ -673,8 +673,8 @@ bool CSettings::HasSingleWinHotkey()
 		if (ConEmuHotKey::GetModifier(VkMod, 1) == VK_LWIN)
 		{
 			// Win+<другой модификатор> вроде винда в приложение таки присылает?
-        	if (ConEmuHotKey::GetModifier(VkMod, 2) == 0)
-        		return true; // А вот если больше модификаторов нет...
+			if (ConEmuHotKey::GetModifier(VkMod, 2) == 0)
+				return true; // А вот если больше модификаторов нет...
 		}
 	}
 	return false;
@@ -1296,6 +1296,12 @@ LONG CSettings::EvalCellWidth()
 	return (LONG)gpSet->FontSizeX3;
 }
 
+// в процентах (false) или mn_FontZoomValue (true)
+LONG CSettings::GetZoom(bool bRaw /*= false*/)
+{
+	return bRaw ? mn_FontZoomValue : MulDiv(mn_FontZoomValue, 100, FontZoom100);
+}
+
 
 void CSettings::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, int anQuality/*=-1*/)
 {
@@ -1518,7 +1524,7 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 			if (szRasterSizes[j].cy < szRasterSizes[k].cy)
 				k = j;
 			else if (szRasterSizes[j].cy == szRasterSizes[k].cy
-			        && szRasterSizes[j].cx < szRasterSizes[k].cx)
+					&& szRasterSizes[j].cx < szRasterSizes[k].cx)
 				k = j;
 		}
 
@@ -1569,7 +1575,7 @@ DWORD CSettings::EnumFontsThread(LPVOID apArg)
 void CSettings::SearchForControls()
 {
 	HWND hSearchEdit = GetDlgItem(ghOpWnd, tOptionSearch);
-	wchar_t* pszPart = GetDlgItemText(hSearchEdit, 0);
+	wchar_t* pszPart = GetDlgItemTextPtr(hSearchEdit, 0);
 	if (!pszPart || !*pszPart)
 	{
 		SafeFree(pszPart);
@@ -2016,14 +2022,11 @@ LRESULT CSettings::OnInitDialog()
 		TreeView_SelectItem(GetDlgItem(ghOpWnd, tvSetupCategories), gpSetCls->m_Pages[0].hTI);
 
 		HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
-		//RECT rcClient; GetWindowRect(hPlace, &rcClient);
-		//MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 		ShowWindow(hPlace, SW_HIDE);
 
 		mb_IgnoreSelPage = false;
 
 		CreatePage(&(m_Pages[0]));
-		//MoveWindow(m_Pages[0].hPage, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 
 		apiShowWindow(m_Pages[0].hPage, SW_SHOW);
 	}
@@ -2033,7 +2036,7 @@ LRESULT CSettings::OnInitDialog()
 		if (GetWindowRect(ghOpWnd, &rect))
 		{
 			CDpiAware::GetCenteredRect(ghWnd, rect);
-			MoveWindow(ghOpWnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, false);
+			MoveWindowRect(ghOpWnd, rect);
 		}
 	}
 	return 0;
@@ -2908,9 +2911,9 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbExtendUCharMap, gpSet->isExtendUCharMap);
 
 	checkDlgButton(hWnd2, cbDragL, (gpSet->isDragEnabled & DRAG_L_ALLOWED) ? BST_CHECKED : BST_UNCHECKED);
-    checkDlgButton(hWnd2, cbDragR, (gpSet->isDragEnabled & DRAG_R_ALLOWED) ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbDragR, (gpSet->isDragEnabled & DRAG_R_ALLOWED) ? BST_CHECKED : BST_UNCHECKED);
 
-    _ASSERTE(gpSet->isDropEnabled==0 || gpSet->isDropEnabled==1 || gpSet->isDropEnabled==2);
+	_ASSERTE(gpSet->isDropEnabled==0 || gpSet->isDropEnabled==1 || gpSet->isDropEnabled==2);
 	checkDlgButton(hWnd2, cbDropEnabled, gpSet->isDropEnabled);
 
 	checkDlgButton(hWnd2, cbDnDCopy, gpSet->isDefCopy);
@@ -3493,16 +3496,18 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, bool abInitial)
 
 	// Создать колонки
 	{
-		LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+		LVCOLUMN col = {
+			LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+			gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 		wchar_t szTitle[64]; col.pszText = szTitle;
 
 		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 
 		wcscpy_c(szTitle, L"Type");			ListView_InsertColumn(hList, klc_Type, &col);
-		col.cx = 120;
+		col.cx = gpSetCls->EvalSize(120, esf_Horizontal|esf_CanUseDpi);
 		wcscpy_c(szTitle, L"Hotkey");		ListView_InsertColumn(hList, klc_Hotkey, &col);
-		col.cx = 300;
+		col.cx = gpSetCls->EvalSize(300, esf_Horizontal|esf_CanUseDpi);
 		wcscpy_c(szTitle, L"Description");	ListView_InsertColumn(hList, klc_Desc, &col);
 	}
 
@@ -4077,9 +4082,9 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 			//pageOpProc_Integr(hWnd2, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
 
 			// Возвращает NULL, если строка пустая
-			wchar_t* pszCurInside = GetDlgItemText(hWnd2, cbInsideName);
+			wchar_t* pszCurInside = GetDlgItemTextPtr(hWnd2, cbInsideName);
 			_ASSERTE((pszCurInside==NULL) || (*pszCurInside!=0));
-			wchar_t* pszCurHere   = GetDlgItemText(hWnd2, cbHereName);
+			wchar_t* pszCurHere   = GetDlgItemTextPtr(hWnd2, cbHereName);
 			_ASSERTE((pszCurHere==NULL) || (*pszCurHere!=0));
 
 			wchar_t szIcon[MAX_PATH+32];
@@ -4161,7 +4166,7 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 					if (gpConEmu->mp_Inside)
 					{
 						SafeFree(gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir);
-                        gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir = GetDlgItemText(hWnd2, tInsideSyncDir);
+						gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir = GetDlgItemTextPtr(hWnd2, tInsideSyncDir);
 					}
 					break;
 				}
@@ -4288,9 +4293,9 @@ INT_PTR CSettings::pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPAR
 				break;
 
 			// Возвращает NULL, если строка пустая
-			wchar_t* pszCurInside = GetDlgItemText(hWnd2, cbInsideName);
+			wchar_t* pszCurInside = GetDlgItemTextPtr(hWnd2, cbInsideName);
 			_ASSERTE((pszCurInside==NULL) || (*pszCurInside!=0));
-			wchar_t* pszCurHere   = GetDlgItemText(hWnd2, cbHereName);
+			wchar_t* pszCurHere   = GetDlgItemTextPtr(hWnd2, cbHereName);
 			_ASSERTE((pszCurHere==NULL) || (*pszCurHere!=0));
 
 			bool lbOldSkip = bSkipCbSel; bSkipCbSel = true;
@@ -4900,7 +4905,9 @@ LRESULT CSettings::OnInitDialog_Debug(HWND hWnd2)
 	ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 	ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 
-	LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+	LVCOLUMN col = {
+		LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+		gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 	wchar_t szTitle[4]; col.pszText = szTitle;
 	wcscpy_c(szTitle, L" ");		ListView_InsertColumn(hList, 0, &col);
 
@@ -5045,11 +5052,11 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					//GetDlgItemText(hWnd2, tWndHeight, temp, countof(temp)); newH = klatoi(temp);
 					BOOL lbOk;
 
-					psSize = GetDlgItemText(hWnd2, tWndWidth);
+					psSize = GetDlgItemTextPtr(hWnd2, tWndWidth);
 					if (!psSize || !newW.SetFromString(true, psSize))
 						newW.Raw = gpConEmu->WndWidth.Raw;
 					SafeFree(psSize);
-					psSize = GetDlgItemText(hWnd2, tWndHeight);
+					psSize = GetDlgItemTextPtr(hWnd2, tWndHeight);
 					if (!psSize || !newH.SetFromString(false, psSize))
 						newH.Raw = gpConEmu->WndHeight.Raw;
 					SafeFree(psSize);
@@ -5387,8 +5394,8 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		case cbHideCaption:
 			gpSet->isHideCaption = IsChecked(hWnd2, cbHideCaption);
-            if (!gpSet->isQuakeStyle && gpConEmu->isZoomed())
-            {
+			if (!gpSet->isQuakeStyle && gpConEmu->isZoomed())
+			{
 				gpConEmu->OnHideCaption();
 				apiSetForegroundWindow(ghOpWnd);
 			}
@@ -5827,7 +5834,7 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			if (bSuffix && !*gpSet->szAdminTitleSuffix)
 			{
 				wcscpy_c(gpSet->szAdminTitleSuffix, DefaultAdminTitleSuffix);
-                SetDlgItemText(hWnd2, tAdminSuffix, gpSet->szAdminTitleSuffix);
+				SetDlgItemText(hWnd2, tAdminSuffix, gpSet->szAdminTitleSuffix);
 			}
 			gpConEmu->mp_TabBar->Update(TRUE);
 			break;
@@ -6081,29 +6088,31 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 				if (gpSetCls->m_ActivityLoggingType == glt_Processes)
 				{
-					LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+					LVCOLUMN col = {
+						LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+						gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 					wchar_t szTitle[64]; col.pszText = szTitle;
 
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 
 					wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, lpc_Time, &col);
-					col.cx = 55; col.fmt = LVCFMT_RIGHT;
+					col.cx = gpSetCls->EvalSize(55, esf_Horizontal|esf_CanUseDpi); col.fmt = LVCFMT_RIGHT;
 					wcscpy_c(szTitle, L"PPID");		ListView_InsertColumn(hList, lpc_PPID, &col);
-					col.cx = 60; col.fmt = LVCFMT_LEFT;
+					col.cx = gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi); col.fmt = LVCFMT_LEFT;
 					wcscpy_c(szTitle, L"Func");		ListView_InsertColumn(hList, lpc_Func, &col);
-					col.cx = 50;
+					col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Oper");		ListView_InsertColumn(hList, lpc_Oper, &col);
-					col.cx = 40;
+					col.cx = gpSetCls->EvalSize(40, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Bits");		ListView_InsertColumn(hList, lpc_Bits, &col);
 					wcscpy_c(szTitle, L"Syst");		ListView_InsertColumn(hList, lpc_System, &col);
-					col.cx = 120;
+					col.cx = gpSetCls->EvalSize(120, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"App");		ListView_InsertColumn(hList, lpc_App, &col);
 					wcscpy_c(szTitle, L"Params");	ListView_InsertColumn(hList, lpc_Params, &col);
 					//wcscpy_c(szTitle, L"CurDir");	ListView_InsertColumn(hList, 7, &col);
-					col.cx = 120;
+					col.cx = gpSetCls->EvalSize(120, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Flags");	ListView_InsertColumn(hList, lpc_Flags, &col);
-					col.cx = 80;
+					col.cx = gpSetCls->EvalSize(80, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"StdIn");	ListView_InsertColumn(hList, lpc_StdIn, &col);
 					wcscpy_c(szTitle, L"StdOut");	ListView_InsertColumn(hList, lpc_StdOut, &col);
 					wcscpy_c(szTitle, L"StdErr");	ListView_InsertColumn(hList, lpc_StdErr, &col);
@@ -6111,18 +6120,20 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				}
 				else if (gpSetCls->m_ActivityLoggingType == glt_Input)
 				{
-					LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+					LVCOLUMN col = {
+						LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+						gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 					wchar_t szTitle[64]; col.pszText = szTitle;
 
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 
 					wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, lic_Time, &col);
-					col.cx = 50;
+					col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Type");		ListView_InsertColumn(hList, lic_Type, &col);
-					col.cx = 50;
+					col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"##");		ListView_InsertColumn(hList, lic_Dup, &col);
-					col.cx = 300;
+					col.cx = gpSetCls->EvalSize(300, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Event");	ListView_InsertColumn(hList, lic_Event, &col);
 
 				}
@@ -6130,42 +6141,48 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				{
 					mn_ActivityCmdStartTick = timeGetTime();
 
-					LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+					LVCOLUMN col = {
+						LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+						gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 					wchar_t szTitle[64]; col.pszText = szTitle;
 
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 
-					col.cx = 50;
+					col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"In/Out");	ListView_InsertColumn(hList, lcc_InOut, &col);
-					col.cx = 70;
+					col.cx = gpSetCls->EvalSize(70, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, lcc_Time, &col);
-					col.cx = 60;
+					col.cx = gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Duration");	ListView_InsertColumn(hList, lcc_Duration, &col);
-					col.cx = 50;
+					col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Cmd");		ListView_InsertColumn(hList, lcc_Command, &col);
 					wcscpy_c(szTitle, L"Size");		ListView_InsertColumn(hList, lcc_Size, &col);
 					wcscpy_c(szTitle, L"PID");		ListView_InsertColumn(hList, lcc_PID, &col);
-					col.cx = 300;
+					col.cx = gpSetCls->EvalSize(300, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Pipe");		ListView_InsertColumn(hList, lcc_Pipe, &col);
 					wcscpy_c(szTitle, L"Extra");	ListView_InsertColumn(hList, lcc_Extra, &col);
 
 				}
 				else if (gpSetCls->m_ActivityLoggingType == glt_Ansi)
 				{
-					LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+					LVCOLUMN col = {
+						LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+						gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 					wchar_t szTitle[64]; col.pszText = szTitle;
 
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 					ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
 
 					wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, lac_Time, &col);
-					col.cx = 500;
+					col.cx = gpSetCls->EvalSize(500, esf_Horizontal|esf_CanUseDpi);
 					wcscpy_c(szTitle, L"Event");	ListView_InsertColumn(hList, lac_Sequence, &col);
 				}
 				else
 				{
-					LVCOLUMN col ={LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT, 60};
+					LVCOLUMN col = {
+						LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
+						gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
 					wchar_t szTitle[4]; col.pszText = szTitle;
 					wcscpy_c(szTitle, L" ");		ListView_InsertColumn(hList, 0, &col);
 					//ListView_InsertColumn(hDetails, 0, &col);
@@ -6853,10 +6870,10 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 			if (!gpSet->CmdTaskGet(iCount))
 				gpSet->CmdTaskSet(iCount, L"", L"", L"");
 
-        	OnInitDialog_Tasks(hWnd2, false);
+			OnInitDialog_Tasks(hWnd2, false);
 
-        	SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iCount, 0);
-        	OnComboBox(hWnd2, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
+			SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iCount, 0);
+			OnComboBox(hWnd2, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
 		} // cbCmdTasksAdd
 		break;
 
@@ -6867,8 +6884,8 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 				break;
 
 			const CommandTasks* p = gpSet->CmdTaskGet(iCur);
-            if (!p)
-            	break;
+			if (!p)
+				break;
 
 			bool bIsStartup = false;
 			if (gpSet->psStartTasksName && p->pszName && (lstrcmpi(gpSet->psStartTasksName, p->pszName) == 0))
@@ -6886,19 +6903,19 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 			int nBtn = MsgBox(pszMsg, MB_YESNO|(bIsStartup ? MB_ICONEXCLAMATION : MB_ICONQUESTION), NULL, ghOpWnd);
 			SafeFree(pszMsg);
 
-            if (nBtn != IDYES)
-            	break;
+			if (nBtn != IDYES)
+				break;
 
-        	gpSet->CmdTaskSet(iCur, NULL, NULL, NULL);
+			gpSet->CmdTaskSet(iCur, NULL, NULL, NULL);
 
 			if (bIsStartup && gpSet->psStartTasksName)
 				*gpSet->psStartTasksName = 0;
 
-        	OnInitDialog_Tasks(hWnd2, false);
+			OnInitDialog_Tasks(hWnd2, false);
 
-        	int iCount = (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCOUNT, 0,0);
-        	SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
-        	OnComboBox(hWnd2, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
+			int iCount = (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCOUNT, 0,0);
+			SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
+			OnComboBox(hWnd2, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
 
 		} // cbCmdTasksDel
 		break;
@@ -6914,21 +6931,21 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 			{
 				if (!iCur)
 					break;
-            	iChg = iCur - 1;
-        	}
-        	else
-        	{
-        		iChg = iCur + 1;
-        		if (iChg >= (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCOUNT, 0,0))
-        			break;
-        	}
+				iChg = iCur - 1;
+			}
+			else
+			{
+				iChg = iCur + 1;
+				if (iChg >= (int)SendDlgItemMessage(hWnd2, lbCmdTasks, LB_GETCOUNT, 0,0))
+					break;
+			}
 
-        	if (!gpSet->CmdTaskXch(iCur, iChg))
-        		break;
+			if (!gpSet->CmdTaskXch(iCur, iChg))
+				break;
 
-        	OnInitDialog_Tasks(hWnd2, false);
+			OnInitDialog_Tasks(hWnd2, false);
 
-        	SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iChg, 0);
+			SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iChg, 0);
 		} // cbCmdTasksUp, cbCmdTasksDown
 		break;
 
@@ -6968,7 +6985,7 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 				else
 				{
 					//SendDlgItemMessage(hWnd2, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszName);
-					wchar_t* pszFull = GetDlgItemText(hWnd2, tCmdGroupCommands);
+					wchar_t* pszFull = GetDlgItemTextPtr(hWnd2, tCmdGroupCommands);
 					if (!pszFull || !*pszFull)
 					{
 						SafeFree(pszFull);
@@ -7305,7 +7322,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tWndY:
 		if (IsChecked(hWnd2, rNormal) == BST_CHECKED)
 		{
-			wchar_t *pVal = GetDlgItemText(hWnd2, TB);
+			wchar_t *pVal = GetDlgItemTextPtr(hWnd2, TB);
 			BOOL bValid = (pVal && isDigit(*pVal));
 			EnableWindow(GetDlgItem(hWnd2, cbApplyPos), bValid);
 			SafeFree(pVal);
@@ -7316,7 +7333,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		if (IsChecked(hWnd2, rNormal) == BST_CHECKED)
 		{
 			CESize sz = {0};
-			wchar_t *pVal = GetDlgItemText(hWnd2, TB);
+			wchar_t *pVal = GetDlgItemTextPtr(hWnd2, TB);
 			BOOL bValid = (pVal && sz.SetFromString(false, pVal));
 			EnableWindow(GetDlgItem(hWnd2, cbApplyPos), bValid);
 			SafeFree(pVal);
@@ -7444,7 +7461,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 	case tTabSkipWords:
 	{
-		gpSet->pszTabSkipWords = GetDlgItemText(hWnd2, TB);
+		gpSet->pszTabSkipWords = GetDlgItemTextPtr(hWnd2, TB);
 		gpConEmu->mp_TabBar->Update(TRUE);
 		break;
 	}
@@ -7576,9 +7593,9 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				gpSet->CmdTaskSet(iCur, pszName, pszGuiArgs, pszCmds);
 
 				mb_IgnoreCmdGroupList = true;
-        		OnInitDialog_Tasks(hWnd2, false);
-        		SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iCur, 0);
-        		mb_IgnoreCmdGroupList = false;
+				OnInitDialog_Tasks(hWnd2, false);
+				SendDlgItemMessage(hWnd2, lbCmdTasks, LB_SETCURSEL, iCur, 0);
+				mb_IgnoreCmdGroupList = false;
 			}
 
 			SafeFree(pszName);
@@ -7589,7 +7606,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 	case tDefaultTerminal:
 		{
-			wchar_t* pszApps = GetDlgItemText(hWnd2, tDefaultTerminal);
+			wchar_t* pszApps = GetDlgItemTextPtr(hWnd2, tDefaultTerminal);
 			if (!pszApps || !*pszApps)
 			{
 				SafeFree(pszApps);
@@ -7604,7 +7621,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tAnsiLogPath:
 		{
 			SafeFree(gpSet->pszAnsiLog);
-			gpSet->pszAnsiLog = GetDlgItemText(hWnd2, tAnsiLogPath);
+			gpSet->pszAnsiLog = GetDlgItemTextPtr(hWnd2, tAnsiLogPath);
 		}
 		break;
 
@@ -7683,7 +7700,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tCTSIntelligentExceptions:
 		if (HIWORD(wParam) == EN_CHANGE)
 		{
-			wchar_t* pszApps = GetDlgItemText(hWnd2, tCTSIntelligentExceptions);
+			wchar_t* pszApps = GetDlgItemTextPtr(hWnd2, tCTSIntelligentExceptions);
 			gpSet->SetIntelligentExceptions(pszApps);
 			SafeFree(pszApps);
 		}
@@ -8720,11 +8737,7 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 					if (m_Pages[i].hPage == NULL)
 					{
 						SetCursor(LoadCursor(NULL,IDC_WAIT));
-						//HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
-						//RECT rcClient; GetWindowRect(hPlace, &rcClient);
-						//MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 						CreatePage(&(m_Pages[i]));
-						//MoveWindow(m_Pages[i].hPage, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
 					}
 					else
 					{
@@ -9021,28 +9034,6 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 	PatchMsgBoxIcon(hWnd2, messg, wParam, lParam);
 
-	if (gpSetCls->mp_DpiAware && gpSetCls->mp_DpiAware->ProcessMessages(hWnd2, messg, wParam, lParam, lRc))
-	{
-		// Store active dpi
-		gpSetCls->mp_CurDpi->OnDpiChanged(wParam);
-
-		// Refresh the visible page and mark 'to be changed' others
-		for (ConEmuSetupPages* p = gpSetCls->m_Pages; p->PageID; p++)
-		{
-			if (p->hPage)
-			{
-				p->DpiChanged = true;
-				if (IsWindowVisible(p->hPage))
-				{
-					gpSetCls->ProcessDpiChange(p);
-				}
-			}
-		}
-
-		SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, lRc);
-		return TRUE;
-	}
-
 	switch (messg)
 	{
 		case WM_INITDIALOG:
@@ -9221,10 +9212,8 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 
 			if (gpSetCls->mh_CtlColorBrush) { DeleteObject(gpSetCls->mh_CtlColorBrush); gpSetCls->mh_CtlColorBrush = NULL; }
 
-			//EndDialog(hWnd2, TRUE);
 			ghOpWnd = NULL;
-			//gpSetCls->hMain = gpSetCls->hExt = gpSetCls->hFar = gpSetCls->hKeys = gpSetCls->hTabs = gpSetCls->hColors = NULL;
-			//gpSetCls->hCmdTasks = gpSetCls->hViews = gpSetCls->hInfo = gpSetCls->hDebug = gpSetCls->hUpdate = gpSetCls->hSelection = NULL;
+			// mp_DpiAware and others are cleared in gpSetCls->ClearPages()
 			gpSetCls->ClearPages();
 			gpSetCls->mp_ActiveHotKey = NULL;
 			gbLastColorsOk = FALSE;
@@ -9276,7 +9265,26 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			return TRUE;
 
 		default:
-			return 0;
+			if (gpSetCls->mp_DpiAware && gpSetCls->mp_DpiAware->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
+			{
+				// Store active dpi
+				gpSetCls->mp_CurDpi->OnDpiChanged(wParam);
+
+				// Refresh the visible page and mark 'to be changed' others
+				for (ConEmuSetupPages* p = gpSetCls->m_Pages; p->PageID; p++)
+				{
+					if (p->hPage)
+					{
+						p->DpiChanged = true;
+						if (IsWindowVisible(p->hPage))
+						{
+							gpSetCls->ProcessDpiChange(p);
+						}
+					}
+				}
+
+				return TRUE;
+			}
 	}
 
 	return 0;
@@ -9350,14 +9358,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 	ConEmuSetupPages* pPage = NULL;
 	TabHwndIndex pgId = gpSetCls->GetPageId(hWnd2, &pPage);
 
-	if (pPage && pPage->pDpiAware)
+	if (pPage && pPage->pDpiAware && pPage->pDpiAware->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
 	{
-		INT_PTR lRc = 0;
-		if (pPage->pDpiAware->ProcessMessages(hWnd2, messg, wParam, lParam, lRc))
-		{
-			SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, lRc);
-			return TRUE;
-		}
+		return TRUE;
 	}
 
 	if ((messg == WM_INITDIALOG) || (messg == gpSetCls->mn_ActivateTabMsg))
@@ -9381,7 +9384,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 			if (p->pDpiAware)
 				p->pDpiAware->Attach(hWnd2, ghOpWnd);
-			MoveWindow(hWnd2, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, 0);
+			MoveWindowRect(hWnd2, rcClient);
 		}
 		else
 		{
@@ -9732,16 +9735,6 @@ INT_PTR CSettings::pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, L
 {
 	static int nLastScrollPos = 0;
 
-	if (gpSetCls->mp_DpiDistinct2)
-	{
-		INT_PTR lRc = 0;
-		if (gpSetCls->mp_DpiDistinct2->ProcessMessages(hWnd2, messg, wParam, lParam, lRc))
-		{
-			SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, lRc);
-			return TRUE;
-		}
-	}
-
 	switch (messg)
 	{
 	case WM_INITDIALOG:
@@ -9825,6 +9818,12 @@ INT_PTR CSettings::pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, L
 			}
 		}
 		return FALSE;
+
+	default:
+		if (gpSetCls->mp_DpiDistinct2 && gpSetCls->mp_DpiDistinct2->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
+		{
+			return TRUE;
+		}
 	}
 
 	HWND hParent = GetParent(hWnd2);
@@ -9897,7 +9896,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			si.nPage = rcChild.bottom - rcChild.top;
 			SetScrollInfo(hChild, SB_VERT, &si, FALSE);
 
-			MoveWindow(hChild, rcPos.left, rcPos.top, rcPos.right-rcPos.left, rcPos.bottom-rcPos.top, FALSE);
+			MoveWindowRect(hChild, rcPos);
 
 			ShowWindow(hHolder, SW_HIDE);
 			ShowWindow(hChild, SW_SHOW);
@@ -10135,13 +10134,13 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 
 						bool lbOld = bSkipSelChange; bSkipSelChange = true;
 
-        				OnInitDialog_Apps(hWnd2, false);
+						OnInitDialog_Apps(hWnd2, false);
 
-        				SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, iCount, 0);
+						SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, iCount, 0);
 
 						bSkipSelChange = lbOld;
 
-        				pageOpProc_Apps(hWnd2, hChild, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
+						pageOpProc_Apps(hWnd2, hChild, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
 					} // cbAppDistinctAdd
 					break;
 
@@ -10153,21 +10152,21 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 
 						const Settings::AppSettings* p = gpSet->GetAppSettingsPtr(iCur);
 						if (!p)
-            				break;
+							break;
 
 						if (MsgBox(L"Delete application?", MB_YESNO|MB_ICONQUESTION, p->AppNames, ghOpWnd) != IDYES)
-            				break;
+							break;
 
-        				gpSet->AppSettingsDelete(iCur);
+						gpSet->AppSettingsDelete(iCur);
 
 						bool lbOld = bSkipSelChange; bSkipSelChange = true;
 
-        				OnInitDialog_Apps(hWnd2, false);
+						OnInitDialog_Apps(hWnd2, false);
 
-        				int iCount = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0);
+						int iCount = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0);
 						bSkipSelChange = lbOld;
-        				SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
-        				pageOpProc_Apps(hWnd2, hChild, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
+						SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
+						pageOpProc_Apps(hWnd2, hChild, WM_COMMAND, MAKELONG(lbAppDistinct,LBN_SELCHANGE), 0);
 
 					} // cbAppDistinctDel
 					break;
@@ -10183,25 +10182,25 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 						{
 							if (!iCur)
 								break;
-            				iChg = iCur - 1;
-        				}
-        				else
-        				{
-        					iChg = iCur + 1;
-        					if (iChg >= (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0))
-        						break;
-        				}
+							iChg = iCur - 1;
+						}
+						else
+						{
+							iChg = iCur + 1;
+							if (iChg >= (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0))
+								break;
+						}
 
-        				if (!gpSet->AppSettingsXch(iCur, iChg))
-        					break;
+						if (!gpSet->AppSettingsXch(iCur, iChg))
+							break;
 
 						bool lbOld = bSkipSelChange; bSkipSelChange = true;
 
-        				OnInitDialog_Apps(hWnd2, false);
+						OnInitDialog_Apps(hWnd2, false);
 
 						bSkipSelChange = lbOld;
 
-        				SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, iChg, 0);
+						SendDlgItemMessage(hWnd2, lbAppDistinct, LB_SETCURSEL, iChg, 0);
 					} // cbAppDistinctUp, cbAppDistinctDown
 					break;
 
@@ -10498,7 +10497,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 								}
 							}
 						} // tBgImage
-                    	break;
+						break;
 					}
 				}
 			} // if (HIWORD(wParam) == EN_CHANGE)
@@ -11846,11 +11845,12 @@ void CSettings::SaveFontSizes(bool bAuto, bool bSendChanges)
 	gpConEmu->OnPanelViewSettingsChanged(bSendChanges);
 }
 
-bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/)
+bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/)
 {
 	bool bChanged = false;
 	int nCurHeight = EvalSize(gpSet->FontSizeY, esf_Vertical|esf_CanUseZoom);
 	int nNeedHeight = nCurHeight;
+	int nNewZoomValue = mn_FontZoomValue;
 
 	// The current defaults
 	LF = LogFont;
@@ -11885,6 +11885,20 @@ bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValu
 		// Decrease/increate font height
 		nNeedHeight += nValue;
 		break;
+
+	case 2:
+	case 3:
+		// Zoom value
+		nNewZoomValue = (nRelative == 2) ? MulDiv(nValue, FontZoom100, 100) : nValue;
+		if (nNewZoomValue < 10)
+		{
+			_ASSERTE(nNewZoomValue >= 10);
+			gpConEmu->LogString(L"-- Skipped! Zoom value is too small");
+			return false;
+		}
+		// Force font recreation, even if zoom value is the same
+		bChanged = true;
+		goto wrap;
 	}
 
 	if ((gpSet->FontSizeY <= 0) || (nNeedHeight <= 0))
@@ -11895,7 +11909,7 @@ bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValu
 	}
 
 	// Eval new zoom value
-	int nNewZoomValue = MulDiv(nNeedHeight, FontZoom100, gpSet->FontSizeY);
+	nNewZoomValue = MulDiv(nNeedHeight, FontZoom100, gpSet->FontSizeY);
 	// If relative, let easy return to 100%
 	if (nRelative == 1)
 	{
@@ -11905,6 +11919,8 @@ bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValu
 			bChanged = true;
 		}
 	}
+
+wrap:
 	// And set the Zoom value
 	mn_FontZoomValue = nNewZoomValue;
 
@@ -11928,7 +11944,7 @@ bool CSettings::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1*/, int nValu
 // Вызов из GUI-макросов - увеличить/уменьшить шрифт, без изменения размера (в пикселях) окна
 // Функция НЕ меняет высоту шрифта настройки и изменения не будут сохранены в xml/reg
 // Здесь меняется только значение "зума"
-bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/)
+bool CSettings::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/)
 {
 	wchar_t szLog[128];
 	if (isAdvLogging)
@@ -11956,9 +11972,18 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/
 			return false;
 		}
 	}
+	else if ((nRelative == 2) || (nRelative == 3))
+	{
+		// Zoom value
+		if (nValue < 1)
+		{
+			gpConEmu->LogString(L"-- Skipped! Zoom value is too small");
+			return false;
+		}
+	}
 	else
 	{
-		_ASSERTE(nRelative == 0 || nRelative == 1);
+		_ASSERTE(FALSE && "Invalie nRelative value");
 		gpConEmu->LogString(L"-- Skipped! Unsupported nRelative value");
 		return false;
 	}
@@ -11969,7 +11994,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/
 
 	for (int nRetry = 0; nRetry < 10; nRetry++)
 	{
-		if (!MacroFontSetSizeInt(LF, nRelative/*0/1*/, nValue/*+-1,+-2,...*/))
+		if (!MacroFontSetSizeInt(LF, nRelative/*0/1/2*/, nValue/*+-1,+-2,... | 100%*/))
 		{
 			break;
 		}
@@ -11988,7 +12013,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/
 		// или хотели поставить абсолютный размер
 		// или был масштаб НЕ 100%, а стал 100% (гарантированный возврат к оригиналу)
 		if (hf.IsSet()
-			&& ((nRelative == 0)
+			&& ((nRelative != 1)
 				|| (LF.lfHeight != LogFont.lfHeight)
 				|| (!bWasNotZoom100 && (mn_FontZoomValue == FontZoom100))))
 		{
@@ -12023,6 +12048,9 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/
 				}
 			}
 
+			if (gpConEmu->mp_Status)
+				gpConEmu->mp_Status->UpdateStatusBar(true);
+
 			_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Succeeded! New font {'%s',%i,%i} was created", LF.lfFaceName, LF.lfHeight, LF.lfWidth, LF.lfHeight, LF.lfWidth);
 			gpConEmu->LogString(szLog);
 
@@ -12031,7 +12059,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/
 
 		hf.Delete();
 
-		if (nRelative == 0)
+		if (nRelative != 1)
 		{
 			_ASSERTE(FALSE && "Font creation failed?");
 			gpConEmu->LogString(L"-- Failed? (nRelative==0)?");
@@ -12039,14 +12067,7 @@ bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/
 		}
 
 		// Если пытаются изменить относительный размер, а шрифт не создался - попробовать следующий размер
-		if (nRelative == 1)
-		{
-			nValue += (nValue > 0) ? 1 : -1;
-		}
-		else
-		{
-			_ASSERTE(nRelative == 1);
-		}
+		nValue += (nValue > 0) ? 1 : -1;
 	}
 
 	_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Failed! New font {'%s',%i,%i} was not created", LF.lfFaceName, LF.lfHeight, LF.lfWidth, LF.lfHeight, LF.lfWidth);
@@ -12317,7 +12338,7 @@ void CSettings::RecreateBorderFont(const LOGFONT *inFont)
 // -- смена шрифта из фара (через Gui Macro "FontSetName")
 // void CSettings::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/)
 // -- смена _размера_ шрифта из фара (через Gui Macro "FontSetSize")
-// bool CSettings::MacroFontSetSize(int nRelative/*0/1*/, int nValue/*+-1,+-2,...*/)
+// bool CSettings::MacroFontSetSize(int nRelative/*0/1/2*/, int nValue/*+-1,+-2,... | 100%*/)
 // -- пересоздание шрифта по изменению контрола окна настроек
 // void CSettings::RecreateFont(WORD wFromID)
 // -- подгонка шрифта под размер окна GUI (если включен флажок "Auto")
@@ -15203,11 +15224,11 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 				DWORD cchName = countof(szName), cbData = sizeof(szValue)-2, dwType;
 				while (!RegEnumValue(hk, dwIndex++, szName, &cchName, NULL, &dwType, (LPBYTE)szValue, &cbData))
 				{
-            		if ((dwType == REG_DWORD) && *szName && *szValue)
-            		{
-            			SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM)szValue);
-            			bLoaded = true;
-            		}
+					if ((dwType == REG_DWORD) && *szName && *szValue)
+					{
+						SendDlgItemMessage(ahDlg, tConsoleFontFace, CB_ADDSTRING, 0, (LPARAM)szValue);
+						bLoaded = true;
+					}
 
 					// Next
 					cchName = countof(szName); cbData = sizeof(szValue);
@@ -15680,7 +15701,7 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 
 		if (!iter->bAlreadyInSystem &&
 		        lstrcmpi(iter->szFontName, lplf->lfFaceName) == 0)
-        {
+		{
 			return TRUE;
 		}
 	}

@@ -222,15 +222,15 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 
 	bool lbCanUseHelper = false;
 	HRESULT hr = 0;
-	
+
 	#ifdef USE_DROP_HELPER
 	if (!IsDragImageOsSupported())
 	{
 		return false;
 	}
 
-    //if (mp_TargetHelper && !abSelfDrag)
-    //	lbCanUseHelper = true;
+	//if (mp_TargetHelper && !abSelfDrag)
+	//	lbCanUseHelper = true;
 
 	//HRESULT hr = S_FALSE;
 
@@ -256,10 +256,10 @@ bool CDragDropData::UseTargetHelper(bool abSelfDrag)
 		else
 			lbCanUseHelper = true;
 	}
-    #endif
+	#endif
 
-    UNREFERENCED_PARAMETER(hr);
-    return lbCanUseHelper;
+	UNREFERENCED_PARAMETER(hr);
+	return lbCanUseHelper;
 }
 
 // Это ТОЛЬКО при "своем" драге
@@ -276,7 +276,7 @@ bool CDragDropData::UseSourceHelper()
 
 	bool lbCanUseHelper = false;
 	HRESULT hr = 0;
-	
+
 	#ifdef USE_DROP_HELPER
 	if (!IsDragImageOsSupported())
 	{
@@ -299,10 +299,10 @@ bool CDragDropData::UseSourceHelper()
 		mb_SourceHelperFailed = true;
 	else
 		lbCanUseHelper = true;
-    #endif
+	#endif
 
-    UNREFERENCED_PARAMETER(hr);
-    return lbCanUseHelper;
+	UNREFERENCED_PARAMETER(hr);
+	return lbCanUseHelper;
 #endif
 }
 
@@ -467,7 +467,7 @@ BOOL CDragDropData::AddFmt_SHELLIDLIST(wchar_t* pszDraggedPath, UINT nFilesCount
 	file_PIDLs->aoffset[0] = nCurSize;
 	memmove((((LPBYTE)file_PIDLs)+nCurSize), &m_DesktopID, nParentSize);
 	nCurSize += nParentSize;
-	
+
 	SAFETRY //__try
 	{
 		// Сначала нужно получить Interface для Desktop
@@ -839,7 +839,7 @@ wrap:
 }
 
 template <class T> LPITEMIDLIST PidlGetNextItem(
-    T pidl
+	T pidl
 )
 {
 	if (pidl)
@@ -850,7 +850,7 @@ template <class T> LPITEMIDLIST PidlGetNextItem(
 		return NULL;
 };
 template <class T> void PidlDump(
-    T pidl, HANDLE hDumpFile = NULL
+	T pidl, HANDLE hDumpFile = NULL
 )
 {
 	LPITEMIDLIST p = (LPITEMIDLIST)(pidl);
@@ -2363,8 +2363,8 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 
 				#if defined(PERSIST_OVL) && !defined(USE_ALPHA_OVL)
 				MyRgbQuad *pRGB = (MyRgbQuad*)pDst;
-                int nMaxY = (bih.biHeight > 0) ? bih.biHeight : -bih.biHeight;
-                int nMaxX = bih.biWidth;
+				int nMaxY = (bih.biHeight > 0) ? bih.biHeight : -bih.biHeight;
+				int nMaxX = bih.biWidth;
 				for (int y = 0; y < nMaxY; y++)
 				{
 					for (int x = 0; x < nMaxX; x++)
@@ -2467,7 +2467,7 @@ BOOL CDragDropData::CreateDragImageWindow()
 	}
 
 	//int nCount = mp_Bits->nWidth * mp_Bits->nHeight;
-	
+
 	_ASSERTE(mh_Overlapped==NULL);
 	int nWidth = MAX_OVERLAY_WIDTH, nHeight = MAX_OVERLAY_HEIGHT;
 	UNREFERENCED_PARAMETER(nWidth); UNREFERENCED_PARAMETER(nHeight);
@@ -2479,7 +2479,7 @@ BOOL CDragDropData::CreateDragImageWindow()
 	//#undef DRAGBITSTITLE
 	//#define DRAGBITSTITLE gpConEmu->ms_ConEmuExe
 	//#endif
-	
+
 	// |WS_BORDER|WS_SYSMENU - создает проводник. попробуем?
 	//2009-08-20 [+] WS_EX_NOACTIVATE
 #if defined(USE_CHILD_OVL)
@@ -2777,7 +2777,7 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 			{
 				;
 			}
-			
+
 			if (dwEffect == DROPEFFECT_NONE)
 			{
 				desc.type = DROPIMAGE_NONE;
@@ -2948,7 +2948,7 @@ LRESULT CDragDropData::DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			IDropSource *pDropSource = (IDropSource*)lParam;
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 			// Чтобы движения мышки "могли" обработаться
-			MoveWindow(hWnd, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
+			MoveWindowRect(hWnd, rcWnd);
 			pds->bInDrag = TRUE;
 			pds->pDrag->mb_DragStarting = TRUE;
 			wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop.Thread(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, (DWORD)pds->pDrag->mp_DataObject, (DWORD)pDropSource); //-V205

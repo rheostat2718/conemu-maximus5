@@ -124,7 +124,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TIMER_QUAKE_AUTOHIDE_ID 9
 #define TIMER_QUAKE_AUTOHIDE_ELAPSE 100
 #define TIMER_FAILED_TABBAR_ID 10 // FAILED_TABBAR_TIMERID
-#define TIMER_FAILED_TABBAR_ELAPSE 3000 // FAILED_TABBAR_TIMEOUT 
+#define TIMER_FAILED_TABBAR_ELAPSE 3000 // FAILED_TABBAR_TIMEOUT
 #define TIMER_ACTIVATESPLIT_ID 11
 #define TIMER_ACTIVATESPLIT_ELAPSE 500
 
@@ -229,6 +229,7 @@ void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true)
 extern BOOL gbInDisplayLastError;
 int DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0, DWORD dwMsgFlags = 0, LPCWSTR asTitle = NULL, HWND hParent = NULL);
 RECT CenterInParent(RECT rcDlg, HWND hParent);
+BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint = FALSE);
 
 void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 void LogFocusInfo(LPCWSTR asInfo, int Level=1);
@@ -260,7 +261,7 @@ BOOL /*__forceinline*/ CoordInRect(const COORD& c, const RECT& r);
 
 BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2);
 
-wchar_t* GetDlgItemText(HWND hDlg, WORD nID);
+wchar_t* GetDlgItemTextPtr(HWND hDlg, WORD nID);
 size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*, bool bEscapes = false*/);
 BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes = false*/);
 bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
@@ -395,7 +396,7 @@ typedef BOOL (WINAPI* GetLayeredWindowAttributes_t)(HWND hwnd, COLORREF *pcrKey,
 #endif
 
 #ifndef DISABLE_MAX_PRIVILEGE
-#define DISABLE_MAX_PRIVILEGE   0x1 
+#define DISABLE_MAX_PRIVILEGE   0x1
 #endif
 
 

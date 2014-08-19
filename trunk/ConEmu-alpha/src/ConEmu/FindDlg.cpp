@@ -47,6 +47,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
 
+CEFindDlg::CEFindDlg()
+{
+	mh_FindDlg = NULL;
+	mp_DpiAware = NULL;
+}
+
 void CEFindDlg::FindTextDialog()
 {
 	if (mh_FindDlg && IsWindow(mh_FindDlg))
@@ -66,7 +72,11 @@ void CEFindDlg::FindTextDialog()
 	}
 
 	gpConEmu->SkipOneAppsRelease(true);
-	
+
+	if (!mp_DpiAware)
+			mp_DpiAware = new CDpiForDialog();
+
+	// (CreateDialog)
 	mh_FindDlg = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_FIND), ghWnd, findTextProc, 0/*Param*/);
 	if (!mh_FindDlg)
 	{
@@ -108,7 +118,12 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 
 			SendMessage(hWnd2, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hWnd2, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
-			
+
+			if (gpConEmu->mp_Find->mp_DpiAware)
+			{
+				gpConEmu->mp_Find->mp_DpiAware->Attach(hWnd2, ghWnd);
+			}
+
 			#if 0
 			//if (IsDebuggerPresent())
 			if (!gpSet->isAlwaysOnTop)
@@ -223,10 +238,15 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 			gpSet->SaveFindOptions();
 			gpConEmu->SkipOneAppsRelease(false);
 			gpConEmu->DoEndFindText();
+			if (gpConEmu->mp_Find->mp_DpiAware)
+				gpConEmu->mp_Find->mp_DpiAware->Detach();
 			break;
 
 		default:
-			return 0;
+			if (gpConEmu->mp_Find->mp_DpiAware && gpConEmu->mp_Find->mp_DpiAware->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
+			{
+				return TRUE;
+			}
 	}
 
 	return 0;

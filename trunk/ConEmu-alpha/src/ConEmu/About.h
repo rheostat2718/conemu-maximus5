@@ -242,6 +242,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"  - Change font height in the ConEmu window\r\n" \
 	L"     Relative==0: N - required font height in points\r\n" \
 	L"     Relative==1: N (+-1, +-2) - increase/decrease font height\r\n" \
+	L"     Relative==2: N (per cents) - alias for Zoom(N)\r\n" \
 	L"     returns - \"OK\", or \"InvalidArg\"\r\n" \
 	L"HighlightMouse(<What>[,<Act>])\r\n" \
 	L"  - change highlighting int the ACTIVE console only\r\n" \
@@ -389,6 +390,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"WindowMode([\"<Mode>\"])\r\n" \
 	L"  - Returns or set current window mode\r\n" \
 	L"     \"NOR\", \"MAX\", \"FS\" (fullscreen), \"MIN\", \"TSA\",\r\n" \
-    L"     \"TLEFT\", \"TRIGHT\" (tile to left/right), \"THEIGHT\",\r\n" \
-    L"     \"MPREV\", \"MNEXT\" (move ConEmu to prev/next monitor)\r\n" \
+	L"     \"TLEFT\", \"TRIGHT\" (tile to left/right), \"THEIGHT\",\r\n" \
+	L"     \"MPREV\", \"MNEXT\" (move ConEmu to prev/next monitor)\r\n" \
+	L"Zoom(N)\r\n" \
+	L"  - Set zoom value, 100 - original font size\r\n" \
 	L""

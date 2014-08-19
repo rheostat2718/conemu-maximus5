@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 class CProcessData;
+class CDpiForDialog;
 
 enum AttachProcessType
 {
@@ -49,6 +50,7 @@ class CAttachDlg
 {
 protected:
 	HWND  mh_Dlg, mh_List;
+	CDpiForDialog* mp_DpiAware;
 	// Параметры аттача
 	int   mn_AttachType; // 1 - console, 2 - GUI
 	DWORD mn_AttachPID;  // PID процесса, к которому цепляемся
@@ -69,7 +71,7 @@ public:
 	void AttachDlg();
 	HWND GetHWND();
 	void Close();
-	
+
 	static BOOL CALLBACK AttachDlgEnumWin(HWND hFind, LPARAM lParam);
 	static INT_PTR CALLBACK AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 };
