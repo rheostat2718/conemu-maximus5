@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+class CDpiForDialog;
+
 class CRecreateDlg
 {
 protected:
@@ -40,12 +42,26 @@ protected:
 	wchar_t* mpsz_CurCmd;
 	wchar_t* mpsz_SysCmd;
 	wchar_t* mpsz_DefDir;
+	// Work dirs
+	CmdArg ms_RConStartDir;
+	CmdArg ms_RConCurDir;
+	// dpi support
+	CDpiForDialog* mp_DpiAware;
 	// Buffer
 	wchar_t ms_CurUser[MAX_PATH*2+1];
 protected:
 	void InitVars();
 	void FreeVars();
 	void AddCommandList(LPCWSTR asCommand, INT_PTR iAfter = -1);
+	void AddDirectoryList(LPCWSTR asDirectory, INT_PTR iAfter = -1);
+protected:
+	INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnCtlColorStatic(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnFillCmdList(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnUserControls(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnSysCommand(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	INT_PTR OnEditSetFocus(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 public:
 	CRecreateDlg();
 	~CRecreateDlg();
@@ -53,7 +69,7 @@ public:
 	int RecreateDlg(RConStartArgs* apArgs);
 	HWND GetHWND();
 	void Close();
-	
+
 	static INT_PTR CALLBACK RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
 };

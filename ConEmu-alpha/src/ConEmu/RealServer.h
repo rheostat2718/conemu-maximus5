@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@ public:
 	void Stop(bool abDeinitialize=false);
 protected:
 	CRealConsole* mp_RCon;
-	
+
 	//static DWORD WINAPI RConServerThread(LPVOID lpvParam);
 	//HANDLE mh_RConServerThreads[MAX_SERVER_THREADS], mh_ActiveRConServerThread;
 	//DWORD  mn_RConServerThreadsId[MAX_SERVER_THREADS];

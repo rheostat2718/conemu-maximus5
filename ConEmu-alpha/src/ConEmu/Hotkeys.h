@@ -61,7 +61,7 @@ struct ConEmuHotKey
 	// >0 StringTable resource ID
 	// <0 TaskIdx, 1-based
 	int DescrLangID;
-	
+
 	// 0 - hotkey, 1 - modifier (для драга, например), 2 - system hotkey (настройка nMultiHotkeyModifier)
 	ConEmuHotKeyType HkType;
 
@@ -69,10 +69,10 @@ struct ConEmuHotKey
 	bool   (*Enabled)();
 
 	wchar_t Name[64];
-	
+
 	DWORD VkMod;
 
-    bool (WINAPI *fkey)(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-обработали, false-пропустить в консоль
+	bool (WINAPI *fkey)(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-обработали, false-пропустить в консоль
 	bool OnKeyUp; // Некоторые комбинации нужно обрабатывать "на отпускание" (показ диалогов, меню, ...)
 
 	wchar_t* GuiMacro;
@@ -129,6 +129,8 @@ struct ConEmuHotKey
 	static int AllocateHotkeys(ConEmuHotKey** ppHotKeys);
 };
 
+class CDpiForDialog;
+
 // IDD_HOTKEY { hkHotKeySelect, lbHotKeyList, lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3 }
 class CHotKeyDialog
 {
@@ -136,6 +138,7 @@ private:
 	HWND mh_Dlg;
 	HWND mh_Parent;
 	ConEmuHotKey m_HK;
+	CDpiForDialog* mp_DpiAware;
 public:
 	static bool EditHotKey(HWND hParent, DWORD& VkMod);
 	DWORD GetVkMod();

@@ -222,6 +222,7 @@ struct DebugLogShellActivity
 class CVirtualConsole;
 class CRgnDetect;
 class CRealBuffer;
+class CDpiForDialog;
 
 enum RealBufferType
 {
@@ -304,8 +305,8 @@ class CRealConsole
 		{
 			cso_Default             = 0x0000,
 			cso_ResetOnConsoleReady = 0x0001,
-            cso_DontUpdate          = 0x0002, // Не нужно обновлять статусную строку сразу
-            cso_Critical            = 0x0004,
+			cso_DontUpdate          = 0x0002, // Не нужно обновлять статусную строку сразу
+			cso_Critical            = 0x0004,
 		};
 		LPCWSTR GetConStatus();
 		void SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ Options = cso_Default);
@@ -505,6 +506,7 @@ class CRealConsole
 		//	etr_FileAndLine = 2,
 		//};
 		//ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
+		CDpiForDialog* mp_RenameDpiAware;
 		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		BOOL IsConsoleDataChanged();
@@ -707,6 +709,9 @@ class CRealConsole
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
 		CmdArg ms_DefTitle;
+		CmdArg ms_CurWorkDir;
+		CRITICAL_SECTION mcs_CurWorkDir;
+		void StoreCurWorkDir(LPCWSTR asNewCurDir);
 		//wchar_t ms_ProfilePathTemp[MAX_PATH+1]; -- commented code
 		bool mb_WasStartDetached;
 		wchar_t ms_RootProcessName[MAX_PATH];

@@ -77,6 +77,7 @@ const wchar_t szTypeGui[] = L"GUI";
 CAttachDlg::CAttachDlg()
 	: mh_Dlg(NULL)
 	, mh_List(NULL)
+	, mp_DpiAware(NULL)
 	, mn_AttachType(0)
 	, mn_AttachPID(0)
 	, mh_AttachHWND(NULL)
@@ -116,26 +117,14 @@ void CAttachDlg::AttachDlg()
 		apiSetForegroundWindow(mh_Dlg);
 		return;
 	}
-	
+
+	if (!mp_DpiAware)
+			mp_DpiAware = new CDpiForDialog();
+
 	bool bPrev = gpConEmu->SetSkipOnFocus(true);
+	// (CreateDialog)
 	mh_Dlg = CreateDialogParam(g_hInstance, MAKEINTRESOURCE(IDD_ATTACHDLG), NULL, AttachDlgProc, (LPARAM)this);
 	gpConEmu->SetSkipOnFocus(bPrev);
-
-	//DWORD_PTR nAttachParm[3] = {};
-	//int nRc = DialogBoxParam(nAttachParm);
-	//switch (nRc)
-	//{
-	//case IDC_NEWCONSOLE:
-	//	Recreate(FALSE, gpSet->isMultiNewConfirm);
-	//	break;
-	//case IDOK:
-	//	// [0] Type: 1 - console, 2 - GUI
-	//	// [1] PID
-	//	// [2] HWND (для GUI)
-	//	_ASSERTE((nAttachParm[0] == 1 || nAttachParm[0] == 2) && (nAttachParm[1]) && (nAttachParm[2] || nAttachParm[0] == 1));
-	//	TODO("Ну и сам аттач, собственно");
-	//	break;
-	//}
 }
 
 void CAttachDlg::Close()
@@ -146,7 +135,7 @@ void CAttachDlg::Close()
 			DestroyWindow(mh_Dlg);
 		mh_Dlg = NULL;
 	}
-	
+
 	if (mp_ProcessData)
 	{
 		_ASSERTE(mp_ProcessData==NULL);
@@ -387,7 +376,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 					}
 					CloseHandle(h);
 				}
-				
+
 				#ifdef _WIN64
 				if (!lbExeFound)
 				{
@@ -419,7 +408,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 
 			ListView_SetItemText(hList, nItem, alc_Title, szTitle);
 			ListView_SetItemText(hList, nItem, alc_Class, szClass);
-			
+
 			_wsprintf(szHwnd, SKIPLEN(countof(szHwnd)) L"0x%08X", (DWORD)(((DWORD_PTR)hFind) & (DWORD)-1));
 			ListView_SetItemText(hList, nItem, alc_HWND, szHwnd);
 
@@ -445,7 +434,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 	{
 		pDlg = (CAttachDlg*)GetWindowLongPtr(hDlg, DWLP_USER);
 	}
-	
+
 	if (!pDlg)
 	{
 		//_ASSERTE(pDlg!=NULL);
@@ -461,6 +450,11 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		{
 			gpConEmu->OnOurDialogOpened();
 
+			if (pDlg->mp_DpiAware)
+			{
+				pDlg->mp_DpiAware->Attach(hDlg, ghWnd);
+			}
+
 			// Если ConEmu - AlwaysOnTop, то и диалогу нужно выставит этот флаг
 			if (GetWindowLongPtr(ghWnd, GWL_EXSTYLE) & WS_EX_TOPMOST)
 				SetWindowPos(hDlg, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
@@ -468,7 +462,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
 			SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
-			
+
 			// В Windows 2000 отсуствует процедура AttachConsole необходимая для этого режима
 			EnableWindow(GetDlgItem(hDlg, IDC_ATTACH_ALT), (gnOsVer >= 0x501));
 
@@ -480,20 +474,20 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
 				ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
-				
-				col.cx = pDlg->mb_IsWin64 ? 75 : 60;
+
+				col.cx = gpSetCls->EvalSize(pDlg->mb_IsWin64 ? 75 : 60, esf_Horizontal|esf_CanUseDpi);
 				wcscpy_c(szTitle, L"PID");			ListView_InsertColumn(hList, alc_PID, &col);
-				col.cx = 45; col.fmt = LVCFMT_CENTER;
+				col.cx = gpSetCls->EvalSize(45, esf_Horizontal|esf_CanUseDpi); col.fmt = LVCFMT_CENTER;
 				wcscpy_c(szTitle, L"Type");			ListView_InsertColumn(hList, alc_Type, &col);
-				col.cx = 200; col.fmt = LVCFMT_LEFT;
+				col.cx = gpSetCls->EvalSize(200, esf_Horizontal|esf_CanUseDpi); col.fmt = LVCFMT_LEFT;
 				wcscpy_c(szTitle, L"Title");		ListView_InsertColumn(hList, alc_Title, &col);
-				col.cx = 120;
+				col.cx = gpSetCls->EvalSize(120, esf_Horizontal|esf_CanUseDpi);
 				wcscpy_c(szTitle, L"Image name");	ListView_InsertColumn(hList, alc_File, &col);
-				col.cx = 200;
+				col.cx = gpSetCls->EvalSize(200, esf_Horizontal|esf_CanUseDpi);
 				wcscpy_c(szTitle, L"Image path");	ListView_InsertColumn(hList, alc_Path, &col);
-				col.cx = 90;
+				col.cx = gpSetCls->EvalSize(90, esf_Horizontal|esf_CanUseDpi);
 				wcscpy_c(szTitle, L"HWND");			ListView_InsertColumn(hList, alc_HWND, &col);
-				col.cx = 200;
+				col.cx = gpSetCls->EvalSize(200, esf_Horizontal|esf_CanUseDpi);
 				wcscpy_c(szTitle, L"Class");		ListView_InsertColumn(hList, alc_Class, &col);
 			}
 
@@ -520,7 +514,7 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			RECT rcCenter = CenterInParent(rect, ghWnd);
 			MoveWindow(hDlg, rcCenter.left, rcCenter.top,
 			           rect.right - rect.left, rect.bottom - rect.top, false);
-			
+
 			ShowWindow(hDlg, SW_SHOWNORMAL);
 
 			SetFocus(hList);
@@ -601,8 +595,10 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 			pDlg->Close();
 			break;
 		case WM_DESTROY:
+			if (pDlg->mp_DpiAware)
+				pDlg->mp_DpiAware->Detach();
 			break;
-		
+
 		case WM_COMMAND:
 			if (HIWORD(wParam) == BN_CLICKED)
 			{
@@ -637,7 +633,10 @@ INT_PTR CAttachDlg::AttachDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 			break;
 		default:
-			return 0;
+			if (pDlg && pDlg->mp_DpiAware && pDlg->mp_DpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
+			{
+				return TRUE;
+			}
 	}
 
 	return 0;
@@ -826,7 +825,7 @@ DWORD CAttachDlg::StartAttachThread(AttachParm* lpParam)
 	}
 
 	bool lbRc = true;
-	
+
 	for (AttachParm* p = lpParam; p->hAttachWnd; p++)
 	{
 		if (!StartAttach(p->hAttachWnd, p->nPID, p->nBits, p->nType, p->bAlternativeMode))

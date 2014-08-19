@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bool CHotKeyDialog::EditHotKey(HWND hParent, DWORD& VkMod)
 {
 	CHotKeyDialog Dlg(hParent, VkMod);
-	// Модальный
+	// Modal dialog (CreateDialog)
 	INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_HOTKEY), hParent, hkDlgProc, (LPARAM)&Dlg);
 	bool bOk = (iRc == IDOK);
 	if (bOk)
@@ -52,14 +52,17 @@ CHotKeyDialog::CHotKeyDialog(HWND hParent, DWORD aVkMod)
 {
 	mh_Dlg = NULL;
 	mh_Parent = hParent;
-	
+
 	ZeroStruct(m_HK);
 	m_HK.HkType = chk_User;
 	m_HK.VkMod = aVkMod;
+
+	mp_DpiAware = new CDpiForDialog();
 }
 
 CHotKeyDialog::~CHotKeyDialog()
 {
+	SafeDelete(mp_DpiAware);
 }
 
 DWORD CHotKeyDialog::GetVkMod()
@@ -114,6 +117,11 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 		{
 			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
+			if (pDlg->mp_DpiAware)
+			{
+				pDlg->mp_DpiAware->Attach(hDlg, ghWnd);
+			}
 
 			// Ensure, it will be "on screen"
 			RECT rect; GetWindowRect(hDlg, &rect);
@@ -181,7 +189,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 							CSettings::GetListBoxHotKey(GetDlgItem(hDlg, lbHotKeyList), CSettings::eHkKeysHot, vk);
 
 							CSettings::SetHotkeyField(GetDlgItem(hDlg, hkHotKeySelect), vk);
-							
+
 							DWORD nMod = (CEHOTKEY_MODMASK & pDlg->m_HK.VkMod);
 							if (nMod == 0)
 							{
@@ -228,6 +236,12 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 
 			break;
 		} // WM_COMMAND
+
+		default:
+		if (pDlg->mp_DpiAware && pDlg->mp_DpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
+		{
+			return TRUE;
+		}
 	}
 
 	return FALSE;
@@ -583,11 +597,11 @@ DWORD ConEmuHotKey::SetModifier(DWORD VkMod, BYTE Mod, bool Xor/*=true*/)
 	//	AllMod = (GetModifier(VkMod, 1)<<8) | (GetModifier(VkMod, 2)<<16);
 	//	Processed = true;
 	//}
-	
+
 	if (!Processed)
 	{
 		DWORD AddMod = 0;
-		
+
 		if (!GetModifier(VkMod, 1))
 			AddMod = (((DWORD)Mod) << 8);
 		else if (!GetModifier(VkMod, 2))
@@ -683,7 +697,7 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 	szFull[0] = 0;
 
 	DWORD lVkMod = 0;
-	
+
 	switch (HkType)
 	{
 	case chk_Global:
@@ -734,12 +748,12 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 			}
 		}
 	}
-	
+
 	if (HkType != chk_Modifier2)
 	{
 		szName[0] = 0;
 		GetVkKeyName(GetHotkey(lVkMod), szName);
-		
+
 		if (szName[0])
 		{
 			if (szFull[0])
@@ -980,7 +994,7 @@ bool ConEmuHotKey::UseCTSShiftArrow()
 	CVConGuard VCon;
 	if (gpConEmu->GetActiveVCon(&VCon) < 0)
 		return false;
-	
+
 	CRealConsole* pRCon = VCon->RCon();
 	if (!pRCon || pRCon->isFar() || pRCon->isSelectionPresent())
 		return false;
@@ -1128,6 +1142,7 @@ int ConEmuHotKey::AllocateHotkeys(ConEmuHotKey** ppHotKeys)
 		{vkPicViewFaster,  chk_User,  NULL,    L"Key.PicViewFaster",     MakeHotKey(0xbb/* =+ */), CConEmuCtrl::key_PicViewSlideshow}, // Slideshow in PicView2
 		{vkFontLarger,     chk_User,  NULL,    L"FontLargerKey",         MakeHotKey(VK_WHEEL_UP,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,2)")},
 		{vkFontSmaller,    chk_User,  NULL,    L"FontSmallerKey",        MakeHotKey(VK_WHEEL_DOWN,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"FontSetSize(1,-2)")},
+		{vkFontOriginal,   chk_User,  NULL,    L"FontOriginalKey",       MakeHotKey(VK_MBUTTON,VK_CONTROL), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Zoom(100)")},
 		{vkPasteFilePath,  chk_User,  NULL,    L"PasteFileKey",          MakeHotKey('F',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Paste(4)")},
 		{vkPasteDirectory, chk_User,  NULL,    L"PastePathKey",          MakeHotKey('D',VK_CONTROL,VK_SHIFT), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Paste(5)")},
 		{vkPasteCygwin,    chk_User,  NULL,    L"PasteCygwinKey",        MakeHotKey(VK_INSERT,VK_APPS), CConEmuCtrl::key_GuiMacro, false, lstrdup(L"Paste(8)")},

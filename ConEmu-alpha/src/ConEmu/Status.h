@@ -59,6 +59,8 @@ enum CEStatusItems
 	csi_WindowStyleEx,
 	csi_HwndFore,
 	csi_HwndFocus,
+	csi_Zoom,
+	csi_DPI,
 
 	csi_ActiveBuffer,
 	csi_ConsolePos,
@@ -150,6 +152,7 @@ private:
 	void ShowStatusSetupMenu();
 	void ShowVConMenu(POINT pt);
 	void ShowTransparencyMenu(POINT pt);
+	void ShowZoomMenu(POINT pt);
 
 	bool  mb_DataChanged; // данные изменились, нужна отрисовка
 	//bool  mb_Invalidated;
@@ -165,7 +168,9 @@ private:
 	bool IsKeyboardChanged();
 
 	DWORD mn_Style, mn_ExStyle;
+	LONG mn_Zoom, mn_Dpi;
 	HWND mh_Fore, mh_Focus;
+	DWORD mn_ForePID, mn_FocusPID;
 	wchar_t ms_ForeInfo[1024], ms_FocusInfo[1024];
 	bool IsWindowChanged();
 
@@ -173,6 +178,7 @@ private:
 	bool IsTimeChanged();
 
 	bool ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly);
+	bool ProcessZoomMenuId(WORD nCmd);
 
 	bool isSettingsOpened(UINT nOpenPageID = 0);
 
@@ -210,4 +216,20 @@ public:
 
 	bool GetStatusBarClientRect(RECT* rc);
 	bool GetStatusBarItemRect(CEStatusItems nID, RECT* rc);
+
+public:
+	typedef int (*StatusMenuOptionsChecked)(int nValue, int* pnNextValue);
+	struct StatusMenuOptions
+	{
+		WORD nMenuID;
+		LPCWSTR sText;
+		int nValue;
+		StatusMenuOptionsChecked pfnChecked;
+	};
+	static int Transparent_IsMenuChecked(int nValue, int* pnNextValue);
+	static int Zoom_IsMenuChecked(int nValue, int* pnNextValue);
+protected:
+	HMENU CreateStatusMenu(StatusMenuOptions* pItems, size_t nCount);
+	StatusMenuOptions* GetStatusMenuItem(WORD nMenuID, StatusMenuOptions* pItems, size_t nCount);
+	int ShowStatusBarMenu(POINT pt, HMENU hPopup, CEStatusItems csi);
 };

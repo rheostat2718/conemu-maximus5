@@ -144,6 +144,13 @@ static StatusColInfo gStatusCols[] =
 						L"Active console buffer",
 						L"PRI/ALT/SEL/FND/DMP: Active console buffer"},
 
+	{csi_Zoom,			L"StatusBar.Hide.Zoom",
+						L"Current zoom value",
+						L"Ctrl+WheelUp/WheelDown change main font zoom"},
+	{csi_DPI,			L"StatusBar.Hide.Dpi",
+						L"Current DPI value",
+						L"Show DPI for monitor with main window"},
+
 	{csi_ConsolePos,	L"StatusBar.Hide.CPos",
 						L"Console visible rectangle",
 						L"(Left, Top)-(Right,Bottom): Console visible rect, 0-based"},
@@ -205,21 +212,30 @@ static StatusColInfo gStatusCols[] =
 						L"Click and drag size grip to resize ConEmu window"},
 };
 
-static struct StatusTranspOptions {
-	WORD nMenuID;
-	LPCWSTR sText;
-	int nValue;
-} gTranspOpt[] = {
-	{1, L"Transparent, 40%", 40},
-	{2, L"Transparent, 50%", 50},
-	{3, L"Transparent, 60%", 60},
-	{4, L"Transparent, 70%", 70},
-	{5, L"Transparent, 80%", 80},
-	{6, L"Transparent, 90%", 90},
+
+static CStatus::StatusMenuOptions gTranspOpt[] = {
+	{1, L"Transparent, 40%",       40, CStatus::Transparent_IsMenuChecked},
+	{2, L"Transparent, 50%",       50, CStatus::Transparent_IsMenuChecked},
+	{3, L"Transparent, 60%",       60, CStatus::Transparent_IsMenuChecked},
+	{4, L"Transparent, 70%",       70, CStatus::Transparent_IsMenuChecked},
+	{5, L"Transparent, 80%",       80, CStatus::Transparent_IsMenuChecked},
+	{6, L"Transparent, 90%",       90, CStatus::Transparent_IsMenuChecked},
 	{0},
-	{7, L"UserScreen transparency", 1},
-	{8, L"ColorKey transparency",   2},
-	{9, L"Opaque, 100%",     100},
+	{7, L"UserScreen transparency", 1, CStatus::Transparent_IsMenuChecked},
+	{8, L"ColorKey transparency",   2, CStatus::Transparent_IsMenuChecked},
+	{9, L"Opaque, 100%",          100, CStatus::Transparent_IsMenuChecked},
+};
+
+static CStatus::StatusMenuOptions gZoomOpt[] = {
+	{1, L"Zoom 300%", 300, CStatus::Zoom_IsMenuChecked},
+	{2, L"Zoom 250%", 250, CStatus::Zoom_IsMenuChecked},
+	{3, L"Zoom 200%", 200, CStatus::Zoom_IsMenuChecked},
+	{4, L"Zoom 175%", 175, CStatus::Zoom_IsMenuChecked},
+	{5, L"Zoom 150%", 150, CStatus::Zoom_IsMenuChecked},
+	{6, L"Zoom 125%", 125, CStatus::Zoom_IsMenuChecked},
+	{7, L"Zoom 100%", 100, CStatus::Zoom_IsMenuChecked},
+	{8, L"Zoom 75%",   75, CStatus::Zoom_IsMenuChecked},
+	{9, L"Zoom 50%",   50, CStatus::Zoom_IsMenuChecked},
 };
 
 
@@ -236,7 +252,9 @@ CStatus::CStatus()
 	mb_InSetupMenu = false;
 
 	mn_Style = mn_ExStyle = 0;
+	mn_Zoom = mn_Dpi = 0;
 	mh_Fore = mh_Focus = NULL;
+	mn_ForePID = mn_FocusPID = 0;
 	ms_ForeInfo[0] = ms_FocusInfo[0] = 0;
 
 	mb_Caps = mb_Num = mb_Scroll = false;
@@ -608,14 +626,23 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
 				break;
 
+			case csi_Zoom:
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%i%%", gpSetCls->GetZoom());
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"200%");
+				break;
+			case csi_DPI:
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%i", gpSetCls->QueryDpi());
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"999");
+				break;
+
 			case csi_HwndFore:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", (DWORD)mh_Fore);
-				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"x%08X[%u]", (DWORD)mh_Fore, mn_ForePID);
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"xFFFFFFFF[99999]");
 				m_Values[nID].sHelp = ms_ForeInfo;
 				break;
 			case csi_HwndFocus:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", (DWORD)mh_Focus);
-				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"x%08X[%u]", (DWORD)mh_Focus, mn_FocusPID);
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"xFFFFFFFF[99999]");
 				m_Values[nID].sHelp = ms_FocusInfo;
 				break;
 
@@ -1229,6 +1256,10 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 					if (uMsg == WM_LBUTTONDOWN)
 						ShowTransparencyMenu(MakePoint(rcClient.right, rcClient.top));
 					break;
+				case csi_Zoom:
+					if (uMsg == WM_LBUTTONDOWN)
+						ShowZoomMenu(MakePoint(rcClient.right, rcClient.top));
+					break;
 				case csi_SyncInside:
 					if (gpConEmu->mp_Inside)
 					{
@@ -1815,6 +1846,8 @@ bool CStatus::IsWindowChanged()
 {
 	if (gpSet->isStatusColumnHidden[csi_WindowStyle]
 		&& gpSet->isStatusColumnHidden[csi_WindowStyleEx]
+		&& gpSet->isStatusColumnHidden[csi_Zoom]
+		&& gpSet->isStatusColumnHidden[csi_DPI]
 		&& gpSet->isStatusColumnHidden[csi_HwndFore]
 		&& gpSet->isStatusColumnHidden[csi_HwndFocus])
 	{
@@ -1825,6 +1858,7 @@ bool CStatus::IsWindowChanged()
 
 	bool bChanged = false;
 	DWORD n; HWND h;
+	LONG l;
 
 	if (!gpSet->isStatusColumnHidden[csi_WindowStyle])
 	{
@@ -1844,13 +1878,31 @@ bool CStatus::IsWindowChanged()
 		}
 	}
 
+	if (!gpSet->isStatusColumnHidden[csi_Zoom])
+	{
+		l = gpSetCls->GetZoom();
+		if (l != mn_Zoom)
+		{
+			mn_Zoom = l; bChanged = true;
+		}
+	}
+
+	if (!gpSet->isStatusColumnHidden[csi_DPI])
+	{
+		l = gpSetCls->QueryDpi();
+		if (l != mn_Dpi)
+		{
+			mn_Dpi = l; bChanged = true;
+		}
+	}
+
 	if (!gpSet->isStatusColumnHidden[csi_HwndFore])
 	{
 		h = getForegroundWindow();
 		if (h != mh_Fore)
 		{
 			mh_Fore = h; bChanged = true;
-			::getWindowInfo(h, ms_ForeInfo);
+			::getWindowInfo(h, ms_ForeInfo, true, &mn_ForePID);
 		}
 	}
 
@@ -1860,7 +1912,7 @@ bool CStatus::IsWindowChanged()
 		if (h != mh_Focus)
 		{
 			mh_Focus = h; bChanged = true;
-			::getWindowInfo(h, ms_FocusInfo);
+			::getWindowInfo(h, ms_FocusInfo, true, &mn_FocusPID);
 		}
 	}
 
@@ -1905,6 +1957,9 @@ void CStatus::ProcessMenuHighlight(HMENU hMenu, WORD nID, WORD nFlags)
 					gpConEmu->OnTransparent();
 			}
 			break;
+		case csi_Zoom:
+			ProcessZoomMenuId(nID);
+			break;
 		default:
 			;
 	}
@@ -1926,39 +1981,33 @@ bool CStatus::ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly)
 {
 	bool bSelected = false;
 
-	if (nCmd >= 1)
+	StatusMenuOptions* p;
+	if ((p = GetStatusMenuItem(nCmd, gTranspOpt, countof(gTranspOpt))) != NULL)
 	{
-		for (size_t i = 0; i < countof(gTranspOpt); i++)
+		// Change TEMPORARILY, without saving settings
+		if (p->nValue >= 40)
 		{
-			if (gTranspOpt[i].nMenuID == nCmd)
+			if ((p->nValue < 100) || !abAlphaOnly)
 			{
-				// Change TEMPORARILY, without saving settings
-				if (gTranspOpt[i].nValue >= 40)
-				{
-					if ((gTranspOpt[i].nValue < 100) || !abAlphaOnly)
-					{
-						gpSet->nTransparent = min(255,((gTranspOpt[i].nValue*255/100)+1));
-						bSelected = true;
-					}
-				}
-				else if (!abAlphaOnly)
-				{
-					switch (gTranspOpt[i].nValue)
-					{
-						case 1:
-							gpSet->isUserScreenTransparent = !gpSet->isUserScreenTransparent;
-							gpConEmu->OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
-							gpConEmu->UpdateWindowRgn();
-							// Отразить изменения в статусе
-							OnTransparency();
-							break;
-						case 2:
-							gpSet->isColorKeyTransparent = !gpSet->isColorKeyTransparent;
-							bSelected = true;
-							break;
-					}
-				}
-				break;
+				gpSet->nTransparent = min(255,((p->nValue*255/100)+1));
+				bSelected = true;
+			}
+		}
+		else if (!abAlphaOnly)
+		{
+			switch (p->nValue)
+			{
+				case 1:
+					gpSet->isUserScreenTransparent = !gpSet->isUserScreenTransparent;
+					gpConEmu->OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
+					gpConEmu->UpdateWindowRgn();
+					// Отразить изменения в статусе
+					OnTransparency();
+					break;
+				case 2:
+					gpSet->isColorKeyTransparent = !gpSet->isColorKeyTransparent;
+					bSelected = true;
+					break;
 			}
 		}
 	}
@@ -1970,6 +2019,17 @@ bool CStatus::ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly)
 	}
 
 	return bSelected;
+}
+
+bool CStatus::ProcessZoomMenuId(WORD nCmd)
+{
+	StatusMenuOptions* p;
+	if ((p = GetStatusMenuItem(nCmd, gZoomOpt, countof(gZoomOpt))) != NULL)
+	{
+		gpSetCls->MacroFontSetSize(2, p->nValue);
+		return true;
+	}
+	return false;
 }
 
 bool CStatus::isSettingsOpened(UINT nOpenPageID)
@@ -1991,72 +2051,17 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 		return;
 
 	mb_InPopupMenu = true;
-	HMENU hPopup = CreatePopupMenu();
+	HMENU hPopup = CreateStatusMenu(gTranspOpt, countof(gTranspOpt));
 
 	// меню было расчитано на min=40
 	_ASSERTE(MIN_ALPHA_VALUE==40);
-
-	int nCurrent = -1;
-
-	for (size_t i = 0; i < countof(gTranspOpt); i++)
-	{
-		bool bChecked = false;
-		if (!gTranspOpt[i].nMenuID)
-		{
-			AppendMenu(hPopup, MF_SEPARATOR, 0, L"");
-		}
-		else
-		{
-			if (gTranspOpt[i].nValue == 1)
-				bChecked = gpSet->isUserScreenTransparent;
-			else if (gTranspOpt[i].nValue == 2)
-				bChecked = gpSet->isColorKeyTransparent;
-			else
-			{
-				if (gTranspOpt[i].nValue == 100)
-				{
-					if (gpSet->nTransparent == 255)
-						nCurrent = i;
-				}
-				else
-				{
-					_ASSERTE((i+1) < countof(gTranspOpt));
-					UINT nVal = gTranspOpt[i].nValue * 255 / 100;
-					UINT nNextVal = ((gTranspOpt[i+1].nValue<10)?255:(gTranspOpt[i+1].nValue * 255 / 100));
-					if ((nVal <= gpSet->nTransparent) && (gpSet->nTransparent < nNextVal))
-					{
-						nCurrent = gTranspOpt[i].nMenuID;
-					}
-				}
-			}
-
-			AppendMenu(hPopup, MF_STRING|(bChecked ? MF_CHECKED : MF_UNCHECKED), gTranspOpt[i].nMenuID, gTranspOpt[i].sText);
-		}
-	}
-
-	if (nCurrent != -1)
-	{
-		MENUITEMINFO mi = {sizeof(mi), MIIM_STATE|MIIM_ID};
-		mi.wID = nCurrent;
-		GetMenuItemInfo(hPopup, nCurrent, FALSE, &mi);
-		mi.fState |= MF_DEFAULT;
-		SetMenuItemInfo(hPopup, nCurrent, FALSE, &mi);
-	}
 
 	u8 nPrevAlpha = gpSet->nTransparent;
 	//bool bPrevUserScreen = gpSet->isUserScreenTransparent; -- он идет через WindowRgn, а не Transparency
 	bool bPrevColorKey = gpSet->isColorKeyTransparent;
 
 	_ASSERTE(m_ClickedItemDesc == csi_Transparency);
-	m_ClickedItemDesc = csi_Transparency;
-
-	RECT rcExcl;
-	if (!GetStatusBarItemRect(csi_Transparency, &rcExcl))
-		rcExcl = MakeRect(pt.x-1, pt.y-1, pt.x+1, pt.y+1);
-	else
-		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcExcl, 2);
-
-	int nCmd = gpConEmu->mp_Menu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_RIGHTALIGN|TPM_RETURNCMD, pt.x, pt.y, ghWnd, &rcExcl);
+	int nCmd = ShowStatusBarMenu(pt, hPopup, csi_Transparency);
 
 	bool bSelected = ProcessTransparentMenuId(nCmd, false);
 
@@ -2085,6 +2090,33 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 
 	// Отразить изменения в статусе
 	OnTransparency();
+}
+
+void CStatus::ShowZoomMenu(POINT pt)
+{
+	mb_InPopupMenu = true;
+	HMENU hPopup = CreateStatusMenu(gZoomOpt, countof(gZoomOpt));
+
+	_ASSERTE(m_ClickedItemDesc == csi_Zoom);
+	int nPrevZoom = gpSetCls->GetZoom(true);
+	int nCmd = ShowStatusBarMenu(pt, hPopup, csi_Zoom);
+
+	bool bSelected = ProcessZoomMenuId(nCmd);
+
+	if (!bSelected)
+	{
+		if (nPrevZoom != gpSetCls->GetZoom(true))
+		{
+			gpSetCls->MacroFontSetSize(3, nPrevZoom);
+		}
+	}
+
+	// Done
+	DestroyMenu(hPopup);
+	mb_InPopupMenu = false;
+
+	// Отразить изменения в статусе
+	IsWindowChanged();
 }
 
 // Прямоугольник в клиентских координатах ghWnd!
@@ -2125,4 +2157,119 @@ bool CStatus::GetStatusBarItemRect(CEStatusItems nID, RECT* rc)
 		GetStatusBarClientRect(rc);
 
 	return false;
+}
+
+HMENU CStatus::CreateStatusMenu(StatusMenuOptions* pItems, size_t nCount)
+{
+	HMENU hPopup = CreatePopupMenu();
+
+	// меню было расчитано на min=40
+	_ASSERTE(MIN_ALPHA_VALUE==40);
+
+	int nCurrent = -1;
+
+	for (size_t i = 0; i < nCount; i++)
+	{
+		int iChecked = 0;
+		if (!pItems[i].nMenuID)
+		{
+			AppendMenu(hPopup, MF_SEPARATOR, 0, L"");
+		}
+		else
+		{
+			if (pItems[i].pfnChecked)
+			{
+				iChecked = pItems[i].pfnChecked(pItems[i].nValue, ((i+1) < nCount) ? &pItems[i+1].nValue : NULL);
+				if (iChecked == 1)
+					nCurrent = pItems[i].nMenuID;
+			}
+
+			AppendMenu(hPopup, MF_STRING|(iChecked ? MF_CHECKED : MF_UNCHECKED), pItems[i].nMenuID, pItems[i].sText);
+		}
+	}
+
+	if (nCurrent != -1)
+	{
+		MENUITEMINFO mi = {sizeof(mi), MIIM_STATE|MIIM_ID};
+		mi.wID = nCurrent;
+		GetMenuItemInfo(hPopup, nCurrent, FALSE, &mi);
+		mi.fState |= MF_DEFAULT;
+		SetMenuItemInfo(hPopup, nCurrent, FALSE, &mi);
+	}
+
+	return hPopup;
+}
+
+CStatus::StatusMenuOptions* CStatus::GetStatusMenuItem(WORD nMenuID, StatusMenuOptions* pItems, size_t nCount)
+{
+	if (!nMenuID)
+		return NULL;
+
+	CStatus::StatusMenuOptions* p = NULL;
+
+	for (size_t i = 0; i < nCount; i++)
+	{
+		if (pItems[i].nMenuID == nMenuID)
+		{
+			p = (pItems+i);
+			break;
+		}
+	}
+
+	return p;
+}
+
+int CStatus::Transparent_IsMenuChecked(int nValue, int* pnNextValue)
+{
+	if (nValue == 1)
+	{
+		return gpSet->isUserScreenTransparent ? 2 : 0;
+	}
+	else if (nValue == 2)
+	{
+		return gpSet->isColorKeyTransparent ? 2 : 0;
+	}
+	else if (nValue == 100)
+	{
+		return (gpSet->nTransparent == 255);
+	}
+	else if (pnNextValue)
+	{
+		UINT nVal = nValue * 255 / 100;
+		UINT nNextVal = ((*pnNextValue < 10) ? 255 : (*pnNextValue * 255 / 100));
+		return ((nVal <= gpSet->nTransparent) && (gpSet->nTransparent < nNextVal));
+	}
+	else
+	{
+		_ASSERTE(pnNextValue!=NULL);
+	}
+
+	return false;
+}
+
+int CStatus::Zoom_IsMenuChecked(int nValue, int* pnNextValue)
+{
+	int nZoom = gpSetCls->GetZoom();
+	int iChecked = 0;
+	if (nValue == nZoom)
+		iChecked = true;
+	else if (pnNextValue)
+		iChecked = (nValue < nZoom && nZoom < *pnNextValue);
+	else
+		iChecked = (nValue > nZoom);
+	return iChecked;
+}
+
+int CStatus::ShowStatusBarMenu(POINT pt, HMENU hPopup, CEStatusItems csi)
+{
+	m_ClickedItemDesc = csi;
+
+	RECT rcExcl;
+	if (!GetStatusBarItemRect(csi, &rcExcl))
+		rcExcl = MakeRect(pt.x-1, pt.y-1, pt.x+1, pt.y+1);
+	else
+		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcExcl, 2);
+
+	int nCmd = gpConEmu->mp_Menu->trackPopupMenu(tmp_StatusBarCols, hPopup, TPM_BOTTOMALIGN|TPM_RIGHTALIGN|TPM_RETURNCMD, pt.x, pt.y, ghWnd, &rcExcl);
+	return nCmd;
 }

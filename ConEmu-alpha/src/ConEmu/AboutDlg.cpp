@@ -107,12 +107,6 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 	PatchMsgBoxIcon(hDlg, messg, wParam, lParam);
 
-	if (mp_DpiAware && mp_DpiAware->ProcessMessages(hDlg, messg, wParam, lParam, lRc))
-	{
-		SetWindowLongPtr(hDlg, DWLP_MSGRESULT, lRc);
-		return TRUE;
-	}
-
 	switch (messg)
 	{
 		case WM_INITDIALOG:
@@ -131,7 +125,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			if (GetWindowRect(hDlg, &rect))
 			{
 				CDpiAware::GetCenteredRect(ghWnd, rect);
-				MoveWindow(hDlg, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, false);
+				MoveWindowRect(hDlg, rect);
 			}
 
 			if ((ghOpWnd && IsWindow(ghOpWnd)) || (WS_EX_TOPMOST & GetWindowLongPtr(ghWnd, GWL_EXSTYLE)))
@@ -161,7 +155,7 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			EditIconHint_Set(hDlg, GetDlgItem(hDlg, tAboutSearch), true, L"Search", false, UM_SEARCH, IDOK);
 			EditIconHint_Subclass(hDlg);
 
-			wchar_t* pszLabel = GetDlgItemText(hDlg, stConEmuVersion);
+			wchar_t* pszLabel = GetDlgItemTextPtr(hDlg, stConEmuVersion);
 			if (pszLabel)
 			{
 				wchar_t* pszSet = NULL;
@@ -323,7 +317,10 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 			break;
 
 		default:
-			return FALSE;
+			if (mp_DpiAware && mp_DpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
+			{
+				return TRUE;
+			}
 	}
 
 	return FALSE;
@@ -332,8 +329,8 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 void ConEmuAbout::searchProc(HWND hDlg, HWND hSearch, bool bReentr)
 {
 	HWND hEdit = GetDlgItem(hDlg, tAboutText);
-	wchar_t* pszPart = GetDlgItemText(hSearch, 0);
-	wchar_t* pszText = GetDlgItemText(hEdit, 0);
+	wchar_t* pszPart = GetDlgItemTextPtr(hSearch, 0);
+	wchar_t* pszText = GetDlgItemTextPtr(hEdit, 0);
 	bool bRetry = false;
 
 	if (pszPart && *pszPart && pszText && *pszText)
@@ -477,7 +474,7 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 		if (!mp_DpiAware)
 			mp_DpiAware = new CDpiForDialog();
 		HWND hParent = (ghOpWnd && IsWindowVisible(ghOpWnd)) ? ghOpWnd : ghWnd;
-		// Modal dialog
+		// Modal dialog (CreateDialog)
 		INT_PTR iRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_ABOUT), hParent, aboutProc, (LPARAM)asPageName);
 		bOk = (iRc != 0 && iRc != -1);
 
@@ -700,10 +697,13 @@ void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 	MapWindowPoints(NULL, hDlg, (LPPOINT)&rcLeft, 2);
 	hCtrl = GetDlgItem(hDlg, AlignVCenterId);
 	GetWindowRect(hCtrl, &rcTop);
+	int nPreferHeight = rcTop.bottom - rcTop.top;
 	MapWindowPoints(NULL, hDlg, (LPPOINT)&rcTop, 2);
 
+	#ifdef _DEBUG
 	DpiValue dpi;
 	CDpiAware::QueryDpiForWindow(hDlg, &dpi);
+	#endif
 
 	int X = rcLeft.left;
 
@@ -715,7 +715,7 @@ void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 		TODO("Вертикальное центрирование по объекту AlignVCenterId");
 
 		int nDispW = 0, nDispH = 0;
-		if (!m_Btns[i].pImg->GetSizePerDpi(dpi.Ydpi, nDispW, nDispH))
+		if (!m_Btns[i].pImg->GetSizeForHeight(nPreferHeight, nDispW, nDispH))
 		{
 			_ASSERTE(FALSE && "Image not available for dpi?");
 			continue; // Image was failed?
@@ -733,7 +733,8 @@ void ConEmuAbout::DonateBtns_Add(HWND hDlg, int AlignLeftId, int AlignVCenterId)
 			DisplayLastError(L"Failed to create image button control");
 		#endif
 
-		X += nDispW + (10 * dpi.Ydpi / 96);
+		//X += nDispW + (10 * dpi.Ydpi / 96);
+		X += nDispW + (nDispH / 3);
 	}
 
 	RegisterTip(hDlg);
