@@ -45,6 +45,7 @@ Usually, this file is located near to the _ConEmuC.exe_.
 =Settings dialog=
 You may open settings dialog in several ways
   * Choosing «Settings...» menu item in !ConEmu [SystemMenu system menu], which can be opened
+    * by right-clicking on the ‘Menu’ icon on the toolbar
     * by right-clicking on the window title
     * by left-clicking on the icon in the !ConEmu title bar
     * by pressing Win+Alt+Space on the keyboard
