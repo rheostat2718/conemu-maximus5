@@ -1,0 +1,9 @@
+﻿Unlike SystemMenu the tab menu contains items related to the current tab/pane/split only.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuTabMenu.png" title="ConEmu tab menu" alt="ConEmu tab menu">
+
+You may pop up tab menu in several ways:
+
+  * by right mouse clicking on the tab;
+  * by holding *Shift* key and right clicking on the console contents;
+  * by pressing Apps+Space.

@@ -67,6 +67,7 @@
       * [Tabs Закладки (табы)]
       * [SplitScreen Splits (panes)]
       * [SystemMenu Системное меню]
+      * [SystemMenu Меню таба]
       * [KeyboardShortcuts Клавиатура]
       * [GlobalHotKeys Глобальные клавиши]
       * [UsingMouse Мышь]

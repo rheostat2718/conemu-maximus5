@@ -66,6 +66,7 @@
       * [Tabs Tabs]
       * [SplitScreen Splits (panes)]
       * [SystemMenu System menu]
+      * [TabMenu Tab menu]
       * [KeyboardShortcuts Keyboard shortcuts]
       * [GlobalHotKeys Global hotkeys]
       * [UsingMouse Using mouse]
