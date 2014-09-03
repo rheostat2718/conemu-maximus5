@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DpiAware.h"
 #include "Options.h"
 #include "CustomFonts.h"
+#include "HotkeyList.h"
 
 class CBackground;
 class CBackgroundInfo;
@@ -232,6 +233,7 @@ class CSettings
 			thi_Main = 0,     // "Main"
 			thi_SizePos,      //   "Size & Pos"
 			thi_Show,         //   "Appearance"
+			thi_Backgr,       //   "Background"
 			thi_Confirm,      //   "Confirmations"
 			thi_Taskbar,      //   "Task bar"
 			thi_Update,       //   "Update"
@@ -371,6 +373,7 @@ class CSettings
 		LRESULT OnInitDialog();
 		// OnInitDialogPage_t: IDD_SPG_MAIN, и т.д.
 		LRESULT OnInitDialog_Main(HWND hWnd2);
+		LRESULT OnInitDialog_Background(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Show(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Confirm(HWND hWnd2, bool abInitial);
@@ -441,7 +444,7 @@ class CSettings
 		bool SetColorById(WORD nID, COLORREF color);
 		void ColorSetEdit(HWND hWnd2, WORD c);
 		bool ColorEditDialog(HWND hWnd2, WORD c);
-		void FillBgImageColors();
+		void FillBgImageColors(HWND hWnd2);
 		HBRUSH mh_CtlColorBrush;
 		INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
 		COLORREF acrCustClr[16]; // array of custom colors, используется в ChooseColor(...)
@@ -547,15 +550,14 @@ class CSettings
 		DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0) { return ConEmuHotKey::MakeHotKey(Vk, vkMod1, vkMod2, vkMod3); };
 		//#define MAKEMODIFIER2(vk1,vk2) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)
 		//#define MAKEMODIFIER3(vk1,vk2,vk3) ((DWORD)vk1&0xFF)|(((DWORD)vk2&0xFF)<<8)|(((DWORD)vk3&0xFF)<<16)
-		ConEmuHotKey *mp_HotKeys;
-		int mn_HotKeys; // Число "явных" хоткеев, после которых виртуально идут хоткеи тасков
+		ConEmuHotKeyList m_HotKeys; // : public MArray<ConEmuHotKey>
 		ConEmuHotKey *mp_ActiveHotKey;
 		void SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod);
 		friend struct Settings;
 	public:
 		const ConEmuHotKey* GetHotKeyPtr(int idx);
-		const ConEmuHotKey* GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealConsole* pRCon);
-		bool HasSingleWinHotkey();
+		const ConEmuHotKey* GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon);
+		//bool HasSingleWinHotkey();
 		void UpdateWinHookSettings(HMODULE hLLKeyHookDll);
 	public:
 		bool isDialogMessage(MSG &Msg);

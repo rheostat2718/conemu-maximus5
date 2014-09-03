@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCtrl.h"
 #include "DefaultTerm.h"
 #include "DpiAware.h"
+#include "HotkeyDlg.h"
 #include "Inside.h"
 #include "LoadImg.h"
 #include "Options.h"
@@ -425,8 +426,6 @@ CSettings::CSettings()
 
 	mp_HelpPopup = new CEHelpPopup;
 
-	mp_HotKeys = NULL;
-	mn_HotKeys = 0;
 	mp_ActiveHotKey = NULL;
 
 	// Горячие клавиши
@@ -478,17 +477,11 @@ bool CSettings::OnDpiChanged(int dpiX, int dpiY, LPRECT prcSuggested)
 
 void CSettings::ReleaseHotkeys()
 {
-	if (mp_HotKeys)
+	for (int i = m_HotKeys.size() - 1; i >= 0; i--)
 	{
-		for (int i = 0; i < mn_HotKeys; i++)
-		{
-			SafeFree(mp_HotKeys[i].GuiMacro);
-		}
-		free(mp_HotKeys);
+		SafeFree(m_HotKeys[i].GuiMacro);
 	}
-
-	mp_HotKeys = NULL;
-	mn_HotKeys = 0;
+	m_HotKeys.clear();
 }
 
 void CSettings::InitVars_Hotkeys()
@@ -496,7 +489,7 @@ void CSettings::InitVars_Hotkeys()
 	ReleaseHotkeys();
 
 	// Горячие клавиши (умолчания)
-	mn_HotKeys = ConEmuHotKey::AllocateHotkeys(&mp_HotKeys);
+	m_HotKeys.AllocateHotkeys();
 
 	mp_ActiveHotKey = NULL;
 }
@@ -511,7 +504,7 @@ void CSettings::SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod)
 	}
 
 	// Usually, this is equal to "mp_ActiveHotKey->VkMod = VkMod"
-	pHK->VkMod = VkMod;
+	pHK->SetVkMod(VkMod);
 
 	// Global? Need to re-register?
 	if (pHK->HkType == chk_Local)
@@ -524,18 +517,19 @@ const ConEmuHotKey* CSettings::GetHotKeyPtr(int idx)
 {
 	const ConEmuHotKey* pHK = NULL;
 
-	if (idx >= 0 && this && mp_HotKeys)
+	if (idx >= 0 && this)
 	{
-		if (idx < mn_HotKeys)
+		if (idx < m_HotKeys.size())
 		{
-			pHK = (mp_HotKeys+idx);
+			pHK = &(m_HotKeys[idx]);
 		}
 		else
 		{
-			const CommandTasks* pCmd = gpSet->CmdTaskGet(idx - mn_HotKeys);
+			int iHotkeys = m_HotKeys.size();
+			const CommandTasks* pCmd = gpSet->CmdTaskGet(idx - iHotkeys);
 			if (pCmd)
 			{
-				_ASSERTE(pCmd->HotKey.HkType==chk_Task && pCmd->HotKey.GetTaskIndex()==(idx-mn_HotKeys));
+				_ASSERTE(pCmd->HotKey.HkType==chk_Task && pCmd->HotKey.GetTaskIndex()==(idx-iHotkeys));
 				pHK = &pCmd->HotKey;
 			}
 		}
@@ -545,21 +539,23 @@ const ConEmuHotKey* CSettings::GetHotKeyPtr(int idx)
 }
 
 // pRCon may be NULL
-const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealConsole* pRCon)
+const ConEmuHotKey* CSettings::GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon)
 {
-	DWORD vk = ConEmuHotKey::GetHotkey(VkMod);
 	// На сами модификаторы - действий не вешается
-	if (vk == VK_LWIN || vk == VK_RWIN /*|| vk == VK_APPS*/
-		|| vk == VK_SHIFT || vk == VK_LSHIFT || vk == VK_RSHIFT
-		|| vk == VK_CONTROL || vk == VK_LCONTROL || vk == VK_RCONTROL
-		|| vk == VK_MENU || vk == VK_LMENU || vk == VK_RMENU)
+	switch (VkState.Vk)
 	{
+	case VK_LWIN: case VK_RWIN:
+	case VK_APPS: // "Apps" too, it is not supposed to be a "key" (in our hotkey list)
+	case VK_SHIFT: case VK_LSHIFT: case VK_RSHIFT:
+	case VK_CONTROL: case VK_LCONTROL: case VK_RCONTROL:
+	case VK_MENU: case VK_LMENU: case VK_RMENU:
+		return NULL;
+	case 0:
+		_ASSERTE(VkState.Vk!=0);
 		return NULL;
 	}
 
 	const ConEmuHotKey* p = NULL;
-
-	DWORD nState = (VkMod & cvk_ALLMASK);
 
 	// Теперь бежим по mp_HotKeys и сравниваем требуемые модификаторы
 	for (int i = 0;; i++)
@@ -571,72 +567,26 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 		if (pi->HkType == chk_Modifier)
 			continue;
 
-		DWORD TestVkMod = pi->VkMod;
-		if (ConEmuHotKey::GetHotkey(TestVkMod) != vk)
-			continue; // Не совпадает сама кнопка
-
-		DWORD TestMask = cvk_DISTINCT;
-		DWORD TestValue = 0;
-
-		for (int k = 1; k <= 3; k++)
-		{
-			switch (ConEmuHotKey::GetModifier(TestVkMod, k))
-			{
-			case 0:
-				break; // нету
-			case VK_LWIN: case VK_RWIN: // RWin быть не должно по идее
-				TestValue |= cvk_Win; break;
-			case VK_APPS:
-				TestValue |= cvk_Apps; break;
-
-			case VK_LCONTROL:
-				TestValue |= cvk_LCtrl; break;
-			case VK_RCONTROL:
-				TestValue |= cvk_RCtrl; break;
-			case VK_CONTROL:
-				TestValue |= cvk_Ctrl;
-				TestValue &= ~(cvk_LCtrl|cvk_RCtrl);
-				TestMask |= cvk_Ctrl;
-				TestMask &= ~(cvk_LCtrl|cvk_RCtrl);
-				break;
-
-			case VK_LMENU:
-				TestValue |= cvk_LAlt; break;
-			case VK_RMENU:
-				TestValue |= cvk_RAlt; break;
-			case VK_MENU:
-				TestValue |= cvk_Alt;
-				TestValue &= ~(cvk_LAlt|cvk_RAlt);
-				TestMask |= cvk_Alt;
-				TestMask &= ~(cvk_LAlt|cvk_RAlt);
-				break;
-
-			case VK_LSHIFT:
-				TestValue |= cvk_LShift; break;
-			case VK_RSHIFT:
-				TestValue |= cvk_RShift; break;
-			case VK_SHIFT:
-				TestValue |= cvk_Shift;
-				TestValue &= ~(cvk_LShift|cvk_RShift);
-				TestMask |= cvk_Shift;
-				TestMask &= ~(cvk_LShift|cvk_RShift);
-				break;
-
-			#ifdef _DEBUG
-			default:
-				// Неизвестный!
-				_ASSERTE(ConEmuHotKey::GetModifier(TestVkMod, k)==0);
-			#endif
-			}
-		}
-
-		if ((nState & TestMask) != TestValue)
+		// Hotkey was not set in settings?
+		if (!pi->Key.Vk)
 			continue;
 
+		// May be disabled by settings or context?
+		if (pi->Enabled)
+		{
+			if (!pi->Enabled())
+				continue;
+		}
+
+		// Do compare (chord keys are planned)
+		if (!pi->Key.IsEqual(VkState))
+			continue;
+
+		// The function
 		if (pi->fkey)
 		{
 			// Допускается ли этот хоткей в текущем контексте?
-			if (pi->fkey(VkMod, true, pi, pRCon))
+			if (pi->fkey(VkState, true, pi, pRCon))
 			{
 				p = pi;
 				break; // Нашли
@@ -660,6 +610,7 @@ const ConEmuHotKey* CSettings::GetHotKeyInfo(DWORD VkMod, bool bKeyDown, CRealCo
 	return p;
 }
 
+#if 0
 bool CSettings::HasSingleWinHotkey()
 {
 	for (int i = 0;; i++)
@@ -669,16 +620,13 @@ bool CSettings::HasSingleWinHotkey()
 			break;
 		if (pHK->HkType == chk_Modifier)
 			continue;
-		DWORD VkMod = pHK->VkMod;
-		if (ConEmuHotKey::GetModifier(VkMod, 1) == VK_LWIN)
-		{
-			// Win+<другой модификатор> вроде винда в приложение таки присылает?
-			if (ConEmuHotKey::GetModifier(VkMod, 2) == 0)
-				return true; // А вот если больше модификаторов нет...
-		}
+		// Win+<другой модификатор> вроде винда в приложение таки присылает?
+		if ((pHK->Key.Mod & cvk_ALLMASK) == cvk_Win)
+			return true; // А вот если больше модификаторов нет...
 	}
 	return false;
 }
+#endif
 
 void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 {
@@ -726,7 +674,7 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 			if ((pHK->HkType == chk_Modifier) || (pHK->HkType == chk_Global) || (pHK->HkType == chk_Local))
 				continue;
 
-			DWORD VkMod = pHK->VkMod;
+			DWORD VkMod = pHK->GetVkMod();
 
 			if (!ConEmuHotKey::HasModifier(VkMod, VK_LWIN))
 				continue;
@@ -785,6 +733,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_MAIN,        0, L"Main",           thi_Main       /* OnInitDialog_Main */},
 		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos    /* OnInitDialog_WndPosSize */},
 		{IDD_SPG_SHOW,        1, L"Appearance",     thi_Show       /* OnInitDialog_Show */},
+		{IDD_SPG_BACK,        1, L"Background",     thi_Backgr     /* OnInitDialog_Background */},
 		{IDD_SPG_TABS,        1, L"Tabs",           thi_Tabs       /* OnInitDialog_Tabs */},
 		{IDD_SPG_CONFIRM,     1, L"Confirm",        thi_Confirm    /* OnInitDialog_Confirm */},
 		{IDD_SPG_TASKBAR,     1, L"Task bar",       thi_Taskbar    /* OnInitDialog_Taskbar */},
@@ -1024,6 +973,10 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	gpSet->ResetFadeColors();
 	gpSet->GetColors(-1, TRUE);
 
+
+	// Назначить корректные флаги для кнопок Win+Number и Win+Arrow
+	m_HotKeys.UpdateNumberModifier();
+	m_HotKeys.UpdateArrowModifier();
 
 
 	// Проверить необходимость установки хуков
@@ -2042,7 +1995,7 @@ LRESULT CSettings::OnInitDialog()
 	return 0;
 }
 
-void CSettings::FillBgImageColors()
+void CSettings::FillBgImageColors(HWND hWnd2)
 {
 	TCHAR tmp[255];
 	DWORD nTest = gpSet->nBgImageColors;
@@ -2070,7 +2023,7 @@ void CSettings::FillBgImageColors()
 	}
 
 	*pszTemp = 0;
-	SetDlgItemText(GetPage(thi_Main), tBgImageColors, tmp);
+	SetDlgItemText(hWnd2, tBgImageColors, tmp);
 }
 
 LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
@@ -2148,47 +2101,37 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 
 	FillListBoxCharSet(hWnd2, tFontCharset, LogFont.lfCharSet);
 
-	//{
-	//	_ASSERTE(countof(SettingsNS::nCharSets) == countof(SettingsNS::szCharSets));
-	//	u8 num = 4; //-V112
-	//	for (size_t i = 0; i < countof(SettingsNS::nCharSets); i++)
-	//	{
-	//		SendDlgItemMessageA(hWnd2, tFontCharset, CB_ADDSTRING, 0, (LPARAM) ChSets[i]);
-	//		if (chSetsNums[i] == LogFont.lfCharSet) num = i;
-	//	}
-	//	SendDlgItemMessage(hWnd2, tFontCharset, CB_SETCURSEL, num, 0);
-	//}
-
 	MCHKHEAP
+
+	checkRadioButton(hWnd2, rNoneAA, rCTAA,
+		(LogFont.lfQuality == CLEARTYPE_NATURAL_QUALITY) ? rCTAA :
+		(LogFont.lfQuality == ANTIALIASED_QUALITY) ? rStandardAA : rNoneAA);
+
+	// 3d state - force center symbols in cells
+	checkDlgButton(hWnd2, cbMonospace, BST(gpSet->isMonospace));
+
+	checkDlgButton(hWnd2, cbBold, (LogFont.lfWeight == FW_BOLD) ? BST_CHECKED : BST_UNCHECKED);
+
+	checkDlgButton(hWnd2, cbItalic, LogFont.lfItalic ? BST_CHECKED : BST_UNCHECKED);
+
+	checkDlgButton(hWnd2, cbFixFarBorders, BST(gpSet->isFixFarBorders));
+
+	checkDlgButton(hWnd2, cbFontMonitorDpi, gpSet->FontUseDpi ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbFontAsDeviceUnits, gpSet->FontUseUnits ? BST_CHECKED : BST_UNCHECKED);
+
+	mn_LastChangingFontCtrlId = 0;
+	return 0;
+}
+
+LRESULT CSettings::OnInitDialog_Background(HWND hWnd2, bool abInitial)
+{
+	TCHAR tmp[255];
+
 	SetDlgItemText(hWnd2, tBgImage, gpSet->sBgImage);
 	//checkDlgButton(hWnd2, rBgSimple, BST_CHECKED);
 
 	checkDlgButton(hWnd2, rbBgReplaceIndexes, BST_CHECKED);
-	FillBgImageColors();
-
-	TCHAR tmp[255];
-	//DWORD nTest = gpSet->nBgImageColors;
-	//wchar_t *pszTemp = tmp; tmp[0] = 0;
-
-	//for(int idx = 0; nTest && idx < 16; idx++)
-	//{
-	//	if (nTest & 1)
-	//	{
-	//		if (pszTemp != tmp)
-	//		{
-	//			*pszTemp++ = L' ';
-	//			*pszTemp = 0;
-	//		}
-
-	//		_wsprintf(pszTemp, SKIPLEN(countof(tmp)-(pszTemp-tmp)) L"#%i", idx);
-	//		pszTemp += _tcslen(pszTemp);
-	//	}
-
-	//	nTest = nTest >> 1;
-	//}
-
-	//*pszTemp = 0;
-	//SetDlgItemText(hWnd2, tBgImageColors, tmp);
+	FillBgImageColors(hWnd2);
 
 	checkDlgButton(hWnd2, cbBgImage, BST(gpSet->isShowBgImage));
 
@@ -2207,24 +2150,6 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2)
 	WORD nImgCtrls[] = {tBgImage, bBgImage};
 	EnableDlgItems(hWnd2, nImgCtrls, countof(nImgCtrls), gpSet->isShowBgImage);
 
-	checkRadioButton(hWnd2, rNoneAA, rCTAA,
-		(LogFont.lfQuality == CLEARTYPE_NATURAL_QUALITY) ? rCTAA :
-		(LogFont.lfQuality == ANTIALIASED_QUALITY) ? rStandardAA : rNoneAA);
-
-
-	// 3d state - force center symbols in cells
-	checkDlgButton(hWnd2, cbMonospace, BST(gpSet->isMonospace));
-
-	checkDlgButton(hWnd2, cbBold, (LogFont.lfWeight == FW_BOLD) ? BST_CHECKED : BST_UNCHECKED);
-
-	checkDlgButton(hWnd2, cbItalic, LogFont.lfItalic ? BST_CHECKED : BST_UNCHECKED);
-
-	checkDlgButton(hWnd2, cbFixFarBorders, BST(gpSet->isFixFarBorders));
-
-	checkDlgButton(hWnd2, cbFontMonitorDpi, gpSet->FontUseDpi ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hWnd2, cbFontAsDeviceUnits, gpSet->FontUseUnits ? BST_CHECKED : BST_UNCHECKED);
-
-	mn_LastChangingFontCtrlId = 0;
 	return 0;
 }
 
@@ -3078,7 +3003,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 
 				if (bHideEmpties)
 				{
-					if ((ppHK->VkMod == 0) || (ppHK->VkMod == CEHOTKEY_NOMOD))
+					if (ppHK->Key.IsEmpty())
 						continue;
 				}
 
@@ -3211,34 +3136,34 @@ LRESULT CSettings::OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				case chk_Local:
 				case chk_Task:
 					pszLabel = L"Choose hotkey:";
-					VkMod = pk->VkMod;
+					VkMod = pk->GetVkMod();
 					bHotKeyEnabled = bKeyListEnabled = bModifiersEnabled = TRUE;
 					break;
 				case chk_Macro:
 					pszLabel = L"Choose hotkey:";
-					VkMod = pk->VkMod;
+					VkMod = pk->GetVkMod();
 					bHotKeyEnabled = bKeyListEnabled = bModifiersEnabled = bMacroEnabled = TRUE;
 					break;
 				case chk_Modifier:
 					pszLabel = L"Choose modifier:";
-					VkMod = pk->VkMod;
+					VkMod = pk->GetVkMod();
 					bKeyListEnabled = TRUE;
 					break;
 				case chk_Modifier2:
 					pszLabel = L"Choose modifier:";
-					VkMod = pk->VkMod;
+					VkMod = pk->GetVkMod();
 					bModifiersEnabled = TRUE;
 					break;
 				case chk_NumHost:
 				case chk_ArrHost:
 					pszLabel = L"Choose modifiers:";
-					_ASSERTE(pk->VkMod);
-					VkMod = pk->VkMod;
+					VkMod = pk->GetVkMod();
+					_ASSERTE(VkMod);
 					bModifiersEnabled = TRUE;
 					break;
 				case chk_System:
 					pszLabel = L"Predefined:";
-					VkMod = pk->VkMod;
+					VkMod = pk->GetVkMod();
 					bHotKeyEnabled = bKeyListEnabled = bModifiersEnabled = 2;
 					break;
 				default:
@@ -3479,9 +3404,10 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, bool abInitial)
 
 	checkRadioButton(hWnd2, rbHotkeysAll, rbHotkeysMacros, rbHotkeysAll);
 
-	for (int i = 0; i < mn_HotKeys; i++)
+	for (INT_PTR i = m_HotKeys.size() - 1; i >= 0; i--)
 	{
-		mp_HotKeys[i].cchGuiMacroMax = mp_HotKeys[i].GuiMacro ? (wcslen(mp_HotKeys[i].GuiMacro)+1) : 0;
+		ConEmuHotKey* p = &(m_HotKeys[i]);
+		p->cchGuiMacroMax = p->GuiMacro ? (wcslen(p->GuiMacro)+1) : 0;
 	}
 
 	HWND hList = GetDlgItem(hWnd2, lbConEmuHotKeys);
@@ -3687,7 +3613,7 @@ void CSettings::ChangeCurrentPalette(const Settings::ColorPalette* pPal, bool bC
 		return;
 	}
 
-	if (!gpConEmu->isMainThread())
+	if (!isMainThread())
 	{
 		gpConEmu->PostChangeCurPalette(pPal->pszName, bChangeDropDown, false);
 		return;
@@ -5344,15 +5270,10 @@ LRESULT CSettings::OnButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 			} // cbBgImage
 			break;
-#if 0
-		case rBgUpLeft:
-		case rBgStretch:
-		case rBgTile:
-			gpSet->bgOperation = (char)(CB - rBgUpLeft);
-			gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
-			gpConEmu->Update(true);
+		case rbBgReplaceIndexes:
+		case rbBgReplaceTransparent:
+			//TODO: ...
 			break;
-#endif
 		case cbBgAllowPlugin:
 			gpSet->isBgPluginAllowed = IsChecked(hWnd2, cbBgAllowPlugin);
 			NeedBackgroundUpdate();
@@ -6958,12 +6879,12 @@ LRESULT CSettings::OnButtonClicked_Tasks(HWND hWnd2, WPARAM wParam, LPARAM lPara
 			if (!pCmd)
 				break;
 
-			DWORD VkMod = pCmd->HotKey.VkMod;
+			DWORD VkMod = pCmd->HotKey.GetVkMod();
 			if (CHotKeyDialog::EditHotKey(ghOpWnd, VkMod))
 			{
 				gpSet->CmdTaskSetVkMod(iCur, VkMod);
 				wchar_t szKey[128] = L"";
-				SetDlgItemText(hWnd2, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.VkMod, szKey));
+				SetDlgItemText(hWnd2, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.GetVkMod(), szKey));
 			}
 		} // cbCmdGroupKey
 		break;
@@ -7448,7 +7369,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 		if (mp_ActiveHotKey && mp_ActiveHotKey->CanChangeVK())
 		{
-			DWORD nCurMods = (CEHOTKEY_MODMASK & mp_ActiveHotKey->VkMod);
+			DWORD nCurMods = (CEHOTKEY_MODMASK & mp_ActiveHotKey->GetVkMod());
 			if (!nCurMods)
 				nCurMods = CEHOTKEY_NOMOD;
 
@@ -7978,6 +7899,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		GetListBoxByte(hWnd2,lbBgPlacement,SettingsNS::BgOper,bg);
 		gpSet->bgOperation = bg;
 		gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
+		NeedBackgroundUpdate();
 		gpConEmu->Update(true);
 		break;
 	}
@@ -8052,7 +7974,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				SetHotkeyField(GetDlgItem(hWnd2, hkHotKeySelect), vk);
 				//SendDlgItemMessage(hWnd2, hkHotKeySelect, HKM_SETHOTKEY, vk|(vk==VK_DELETE ? (HOTKEYF_EXT<<8) : 0), 0);
 
-				DWORD nMod = (CEHOTKEY_MODMASK & mp_ActiveHotKey->VkMod);
+				DWORD nMod = (CEHOTKEY_MODMASK & mp_ActiveHotKey->GetVkMod());
 				if (nMod == 0)
 				{
 					// Если модификатора вообще не было - ставим Win
@@ -8132,6 +8054,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				// Для этой группы - модификаторы назначаются "чохом"
 				_ASSERTE((nModifers & 0xFF) == 0); // тут данные в старших трех байтах
 				gpSet->nHostkeyNumberModifier = (nModifers >> 8); // а тут в младших трех
+				m_HotKeys.UpdateNumberModifier();
 			}
 			else if (mp_ActiveHotKey->HkType == chk_ArrHost)
 			{
@@ -8140,12 +8063,13 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				// Для этой группы - модификаторы назначаются "чохом"
 				_ASSERTE((nModifers & 0xFF) == 0); // тут данные в старших трех байтах
 				gpSet->nHostkeyArrowModifier = (nModifers >> 8); // а тут в младших трех
+				m_HotKeys.UpdateArrowModifier();
 			}
 			else //if (mp_ActiveHotKey->VkMod)
 			{
 				if (!nModifers)
 					nModifers = CEHOTKEY_NOMOD;
-				SetHotkeyVkMod(mp_ActiveHotKey, (cvk_VK_MASK & mp_ActiveHotKey->VkMod) | nModifers);
+				SetHotkeyVkMod(mp_ActiveHotKey, (cvk_VK_MASK & mp_ActiveHotKey->GetVkMod()) | nModifers);
 			}
 		}
 
@@ -8291,7 +8215,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			SafeFree(pszNoBrk);
 
 			wchar_t szKey[128] = L"";
-			SetDlgItemText(hWnd2, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.VkMod, szKey));
+			SetDlgItemText(hWnd2, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.GetVkMod(), szKey));
 
 			SetDlgItemText(hWnd2, tCmdGroupGuiArg, pCmd->pszGuiArgs ? pCmd->pszGuiArgs : L"");
 			SetDlgItemText(hWnd2, tCmdGroupCommands, pCmd->pszCommands ? pCmd->pszCommands : L"");
@@ -9405,6 +9329,9 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			bSkipSelChange = lbOld;
 			}
 			break;
+		case IDD_SPG_BACK:
+			gpSetCls->OnInitDialog_Background(hWnd2, bInitial);
+			break;
 		case IDD_SPG_SHOW:
 			gpSetCls->OnInitDialog_Show(hWnd2, bInitial);
 			break;
@@ -9602,7 +9529,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			} // WM_CTLCOLORSTATIC
 		case WM_HSCROLL:
 			{
-				if ((pgId == thi_Main) && (HWND)lParam == GetDlgItem(hWnd2, slDarker))
+				if ((pgId == thi_Backgr) && (HWND)lParam == GetDlgItem(hWnd2, slDarker))
 				{
 					int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
 
@@ -10966,7 +10893,7 @@ void CSettings::debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTick,
 		return;
 
 	pData->bInput = abInput;
-	pData->bMainThread = (abInput == FALSE) && gpConEmu->isMainThread();
+	pData->bMainThread = (abInput == FALSE) && isMainThread();
 	pData->nTick = anTick - mn_ActivityCmdStartTick;
 	pData->nDur = anDur;
 	pData->nCmd = pInfo->hdr.nCmd;
@@ -11404,7 +11331,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 {
 	if (nID == gbPerformance)  //groupbox ctrl id
 	{
-		if (!gpConEmu->isMainThread())
+		if (!isMainThread())
 			return;
 
 		if (ghOpWnd)
@@ -14813,14 +14740,14 @@ void CSettings::SetBgImageDarker(u8 newValue, bool bUpdate)
 	{
 		gpSet->bgImageDarker = newValue;
 
-		HWND hMainPg = GetPage(thi_Main);
-		if (hMainPg)
+		HWND hBgPg = GetPage(thi_Backgr);
+		if (hBgPg)
 		{
-			SendDlgItemMessage(hMainPg, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
+			SendDlgItemMessage(hBgPg, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
 
 			TCHAR tmp[10];
 			_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%u", (UINT)gpSet->bgImageDarker);
-			SetDlgItemText(hMainPg, tDarker, tmp);
+			SetDlgItemText(hBgPg, tDarker, tmp);
 		}
 
 		if (bUpdate)
@@ -14853,7 +14780,7 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 	mp_BgInfo = pNew;
 	lRes = (mp_BgInfo != NULL);
 #else
-	//_ASSERTE(gpConEmu->isMainThread());
+	//_ASSERTE(isMainThread());
 	if (!inPath || _tcslen(inPath)>=MAX_PATH)
 	{
 		if (abShowErrors)
@@ -14862,7 +14789,7 @@ bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
 		return false;
 	}
 
-	_ASSERTE(gpConEmu->isMainThread());
+	_ASSERTE(isMainThread());
 	BY_HANDLE_FILE_INFORMATION inf = {0};
 	BITMAPFILEHEADER* pBkImgData = NULL;
 

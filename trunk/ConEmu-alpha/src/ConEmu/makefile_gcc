@@ -22,6 +22,7 @@ SRCS = \
 		ConEmuApp.cpp      \
 		ConEmuCtrl.cpp     \
 		ConEmuPipe.cpp     \
+		ConEmuSize.cpp     \
 		ConfirmDlg.cpp     \
 		CustomFonts.cpp    \
 		DefaultTerm.cpp    \
@@ -33,11 +34,15 @@ SRCS = \
 		FrameHolder.cpp    \
 		GestureEngine.cpp  \
 		GuiServer.cpp      \
+		HotkeyChord.cpp    \
+		HotkeyDlg.cpp      \
+		HotkeyList.cpp     \
 		Hotkeys.cpp        \
 		IconList.cpp       \
 		Inside.cpp         \
 		LoadImg.cpp        \
 		Macro.cpp          \
+		Match.cpp          \
 		Menu.cpp           \
 		Options.cpp        \
 		OptionsClass.cpp   \

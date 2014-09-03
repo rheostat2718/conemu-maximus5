@@ -39,6 +39,7 @@ $(INTDIR)\ConEmuApp.obj \
 $(INTDIR)\ConEmuCheck.obj \
 $(INTDIR)\ConEmuCtrl.obj \
 $(INTDIR)\ConEmuPipe.obj \
+$(INTDIR)\ConEmuSize.obj \
 $(INTDIR)\ConfirmDlg.obj \
 $(INTDIR)\CustomFonts.obj \
 $(INTDIR)\DefaultTerm.obj \
@@ -51,12 +52,16 @@ $(INTDIR)\FindDlg.obj \
 $(INTDIR)\FrameHolder.obj \
 $(INTDIR)\GestureEngine.obj \
 $(INTDIR)\GuiServer.obj \
+$(INTDIR)\HotkeyChord.obj \
+$(INTDIR)\HotkeyDlg.obj \
+$(INTDIR)\HotkeyList.obj \
 $(INTDIR)\Hotkeys.obj \
 $(INTDIR)\IconList.obj \
 $(INTDIR)\Inside.obj \
 $(INTDIR)\LoadImg.obj \
 $(INTDIR)\Macro.obj \
 $(INTDIR)\MAssert.obj \
+$(INTDIR)\Match.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\Menu.obj \
 $(INTDIR)\Monitors.obj \
@@ -275,6 +280,8 @@ $(INTDIR)\ConEmuCtrl.obj: ConEmuCtrl.cpp ConEmuCtrl.h FindDlg.h
 
 $(INTDIR)\ConEmuPipe.obj: ConEmuPipe.cpp
 
+$(INTDIR)\ConEmuSize.obj: ConEmuSize.cpp ConEmuSize.h
+
 $(INTDIR)\ConfirmDlg.obj: ConfirmDlg.cpp ConfirmDlg.h
 
 $(INTDIR)\CustomFonts.obj: CustomFonts.cpp CustomFonts.h
@@ -299,6 +306,12 @@ $(INTDIR)\GestureEngine.obj: GestureEngine.cpp GestureEngine.h
 
 $(INTDIR)\GuiServer.obj: GuiServer.cpp GuiServer.h ConEmu.h RealConsole.h VirtualConsole.h
 
+$(INTDIR)\HotkeyChord.obj: HotkeyChord.cpp HotkeyChord.h
+
+$(INTDIR)\HotkeyDlg.obj: HotkeyDlg.cpp HotkeyDlg.h HotkeyList.h
+
+$(INTDIR)\HotkeyList.obj: HotkeyList.cpp HotkeyDlg.h HotkeyList.h
+
 $(INTDIR)\Hotkeys.obj: Hotkeys.cpp Hotkeys.h
 
 $(INTDIR)\IconList.obj: IconList.cpp IconList.h
@@ -310,6 +323,8 @@ $(INTDIR)\LoadImg.obj: LoadImg.cpp LoadImg.h
 $(INTDIR)\Macro.obj: Macro.cpp Macro.h
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
+
+$(INTDIR)\Match.obj: Match.cpp Match.h
 
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
 
