@@ -176,6 +176,8 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
 {{{
     About(["<Page>"])
       - Show ‘About’ dialog with page activated, e.g. ‘About("-new_console")’
+    Attach([<PID>[,<Alternative>]])
+      - Attach console or ChildGui by PID
     Break([<Event>[,<ProcessGroupId>]])
       - Event==0: Generates a CTRL+C signal
         Event==1: Generates a CTRL+BREAK signal

@@ -132,6 +132,16 @@ ConEmuC [switches] [/U | /A] /C <command line, passed to %COMSPEC%>
     /LOG[N]      - create (debug) log file, N is number from 0 to 3
 }}}
 
+*Show errorlevel of `<command>`*
+{{{
+ConEmuC /Result /C <command>
+}}}
+
+*Return errorlevel = `<number>`*
+{{{
+ConEmuC /ErrorLevel <number>
+}}}
+
 ===-new_console and -cur_console switches===
 When you run application from !ConEmu console, you may use *[NewConsole -new_console]* or *[NewConsole -cur_console]* switches.
 
