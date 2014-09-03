@@ -249,9 +249,9 @@ enum StartDebugType
 	sdt_DebugProcessTree,
 };
 
-enum ExpandTextRangeType;
 struct ConEmuHotKey;
 
+#include "HotkeyChord.h"
 #include "RealServer.h"
 #include "TabID.h"
 
@@ -262,6 +262,7 @@ class CRealConsole
 #endif
 	protected:
 		CVirtualConsole* mp_VCon; // соответствующая виртуальная консоль
+		CConEmuMain*     mp_ConEmu;
 
 	public:
 
@@ -337,7 +338,7 @@ class CRealConsole
 		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui, LPCWSTR pszExeName);
 		static bool CanCutChildFrame(LPCWSTR pszExeName);
 
-		CRealConsole();
+		CRealConsole(CVirtualConsole* pVCon, CConEmuMain* pOwner);
 		bool Construct(CVirtualConsole* apVCon, RConStartArgs *args);
 		~CRealConsole();
 
@@ -412,7 +413,7 @@ class CRealConsole
 	public:
 		//BOOL FlushInputQueue(DWORD nTimeout = 500);
 		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg);
-		const ConEmuHotKey* ProcessSelectionHotKey(DWORD VkState, bool bKeyDown, const wchar_t *pszChars);
+		const ConEmuHotKey* ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars);
 		void ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false, bool abFromTouch = false);
@@ -499,13 +500,7 @@ class CRealConsole
 		bool PreCreate(RConStartArgs *args);
 
 		BOOL GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData);
-		//enum ExpandTextRangeType
-		//{
-		//	etr_None = 0,
-		//	etr_Word = 1,
-		//	etr_FileAndLine = 2,
-		//};
-		//ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, wchar_t* pszText = NULL, size_t cchTextMax = 0);
+
 		CDpiForDialog* mp_RenameDpiAware;
 		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
@@ -775,7 +770,7 @@ class CRealConsole
 			int  nActiveIndex;
 			int  nActiveFarWindow;
 			void StoreActiveTab(int anActiveIndex, const CTabID* apActiveTab);
-			void RefreshFarPID(DWORD nNewPID);
+			bool RefreshFarPID(DWORD nNewPID);
 		} tabs;
 		void CheckPanelTitle();
 		//

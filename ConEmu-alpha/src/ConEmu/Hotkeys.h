@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "HotkeyChord.h"
+
 // Forward
 struct ConEmuHotKey;
 class CHotKeyDialog;
@@ -55,6 +57,10 @@ enum ConEmuHotKeyType
 	chk_Task,      // Task hotkey
 };
 
+// Check if enabled in current context
+typedef bool (*HotkeyEnabled_t)();
+// true-обработали, false-пропустить в консоль
+typedef bool (WINAPI *HotkeyFKey_t)(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-обработали, false-пропустить в консоль
 
 struct ConEmuHotKey
 {
@@ -66,13 +72,15 @@ struct ConEmuHotKey
 	ConEmuHotKeyType HkType;
 
 	// May be NULL
-	bool   (*Enabled)();
+	HotkeyEnabled_t Enabled;
 
 	wchar_t Name[64];
 
-	DWORD VkMod;
+	ConEmuChord Key;
+	DWORD GetVkMod() const;
+	void  SetVkMod(DWORD VkMod);
 
-	bool (WINAPI *fkey)(DWORD VkMod, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-обработали, false-пропустить в консоль
+	HotkeyFKey_t fkey; // true-обработали, false-пропустить в консоль
 	bool OnKeyUp; // Некоторые комбинации нужно обрабатывать "на отпускание" (показ диалогов, меню, ...)
 
 	wchar_t* GuiMacro;
@@ -88,6 +96,8 @@ struct ConEmuHotKey
 	bool IsTaskHotKey() const;
 	int GetTaskIndex() const; // 0-based
 	void SetTaskIndex(int iTaskIdx); // 0-based
+	void SetHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
+	bool Equal(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
 
 	LPCWSTR GetDescription(wchar_t* pszDescr, int cchMaxLen, bool bAddMacroIndex = false) const;
 
@@ -97,6 +107,10 @@ struct ConEmuHotKey
 	// Вернуть имя модификатора (типа "Apps+Space")
 	LPCWSTR GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone = true) const;
 	static LPCWSTR GetHotkeyName(DWORD aVkMod, wchar_t (&szFull)[128], bool bShowNone = true);
+
+	#ifdef _DEBUG
+	static void HotkeyNameUnitTests();
+	#endif
 
 	// nHostMod в младших 3-х байтах может содержать VK (модификаторы).
 	// Функция проверяет, чтобы они не дублировались
@@ -123,30 +137,7 @@ struct ConEmuHotKey
 	static bool UseCTSShiftArrow(); // { return gpSet->isUseWinArrows; }; // { return (OverrideClipboard || !AppNames) ? isCTSShiftArrowStart : gpSet->AppStd.isCTSShiftArrowStart; };
 	static bool UseCtrlTab();
 	static bool InSelection();
-	static bool DontHookJumps(const ConEmuHotKey* pHK);
-
-	// *** Default and all possible ConEmu hotkeys ***
-	static int AllocateHotkeys(ConEmuHotKey** ppHotKeys);
-};
-
-class CDpiForDialog;
-
-// IDD_HOTKEY { hkHotKeySelect, lbHotKeyList, lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3 }
-class CHotKeyDialog
-{
-private:
-	HWND mh_Dlg;
-	HWND mh_Parent;
-	ConEmuHotKey m_HK;
-	CDpiForDialog* mp_DpiAware;
-public:
-	static bool EditHotKey(HWND hParent, DWORD& VkMod);
-	DWORD GetVkMod();
-public:
-	static DWORD dlgGetHotkey(HWND hDlg, UINT iEditCtrl = hkHotKeySelect, UINT iListCtrl = lbHotKeyList);
-public:
-	CHotKeyDialog(HWND hParent, DWORD aVkMod);
-	~CHotKeyDialog();
-
-	static INT_PTR CALLBACK hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
+	static bool UseDndLKey();
+	static bool UseDndRKey();
+	//static bool DontHookJumps(const ConEmuHotKey* pHK);
 };

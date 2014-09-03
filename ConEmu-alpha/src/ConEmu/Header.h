@@ -486,13 +486,24 @@ LPCWSTR GetWindowModeName(ConEmuWindowMode wm);
 
 enum ExpandTextRangeType
 {
-	etr_None = 0,
 	// Used for DblClick word selection, for example
-	etr_Word = 1,
-	// Highlight and goto compiler errors
-	etr_FileAndLine = 2,
+	etr_Word  = 0x0001,
 	// Internet/intranet URL's
-	etr_Url = 3,
+	etr_Url   = 0x0002,
+	// Highlight and goto compiler errors
+	etr_File  = 0x0004,
+	etr_Row   = 0x1000,
+	etr_Col   = 0x2000,
+	etr_FileRow = (etr_File|etr_Row),
+	etr_FileRowCol = (etr_File|etr_Row|etr_Col),
+	// IP v4 or v6
+	etr_IP    = 0x0008,
+	// PID
+	etr_PID   = 0x0010,
+	// Find somth suitable for clicking
+	etr_AnyClickable = (etr_Url|etr_File),
+	// Nothing was found
+	etr_None = 0
 };
 
 // Подсветка URL's и строк-ошибок-компиляторов
@@ -779,6 +790,9 @@ void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark);
 
 // One message cycle step
 bool ProcessMessage(MSG& Msg);
+
+// All window/gdi related code must be run in main thread
+bool isMainThread();
 
 // Predefined user messages
 #define UM_RELOAD_HERE_LIST (WM_APP+31)

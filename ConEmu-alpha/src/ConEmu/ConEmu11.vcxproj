@@ -914,6 +914,7 @@
     <ClCompile Include="ConEmuApp.cpp" />
     <ClCompile Include="ConEmuCtrl.cpp" />
     <ClCompile Include="ConEmuPipe.cpp" />
+    <ClCompile Include="ConEmuSize.cpp" />
     <ClCompile Include="ConfirmDlg.cpp" />
     <ClCompile Include="CustomFonts.cpp" />
     <ClCompile Include="DefaultTerm.cpp" />
@@ -925,11 +926,15 @@
     <ClCompile Include="FrameHolder.cpp" />
     <ClCompile Include="GestureEngine.cpp" />
     <ClCompile Include="GuiServer.cpp" />
+    <ClCompile Include="HotkeyChord.cpp" />
+    <ClCompile Include="HotkeyDlg.cpp" />
+    <ClCompile Include="HotkeyList.cpp" />
     <ClCompile Include="Hotkeys.cpp" />
     <ClCompile Include="IconList.cpp" />
     <ClCompile Include="Inside.cpp" />
     <ClCompile Include="LoadImg.cpp" />
     <ClCompile Include="Macro.cpp" />
+    <ClCompile Include="Match.cpp" />
     <ClCompile Include="Menu.cpp" />
     <ClCompile Include="Options.cpp" />
     <ClCompile Include="OptionsClass.cpp" />
@@ -996,6 +1001,7 @@
     <ClInclude Include="ConEmuApp.h" />
     <ClInclude Include="ConEmuCtrl.h" />
     <ClInclude Include="ConEmuPipe.h" />
+    <ClInclude Include="ConEmuSize.h" />
     <ClInclude Include="ConfirmDlg.h" />
     <ClInclude Include="CustomFonts.h" />
     <ClInclude Include="DefaultTerm.h" />
@@ -1009,6 +1015,9 @@
     <ClInclude Include="globals.h" />
     <ClInclude Include="GuiServer.h" />
     <ClInclude Include="Header.h" />
+    <ClInclude Include="HotkeyChord.h" />
+    <ClInclude Include="HotkeyDlg.h" />
+    <ClInclude Include="HotkeyList.h" />
     <ClInclude Include="Hotkeys.h" />
     <ClInclude Include="HtmlCopy.h" />
     <ClInclude Include="IconList.h" />
@@ -1016,6 +1025,7 @@
     <ClInclude Include="kl_parts.h" />
     <ClInclude Include="LoadImg.h" />
     <ClInclude Include="Macro.h" />
+    <ClInclude Include="Match.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="MenuIds.h" />
     <ClInclude Include="Options.h" />

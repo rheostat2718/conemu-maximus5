@@ -54,6 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DpiAware.h"
 #ifdef _DEBUG
 #include "Macro.h"
+#include "Match.h"
 #endif
 #include "Inside.h"
 #include "TaskBar.h"
@@ -122,7 +123,7 @@ LONG DontEnable::gnDontEnableCount = 0;
 //bool bLocked; // Proceed only main thread
 DontEnable::DontEnable(bool abLock /*= true*/)
 {
-	bLocked = abLock && gpConEmu->isMainThread();
+	bLocked = abLock && isMainThread();
 	if (bLocked)
 	{
 		_ASSERTE(gnDontEnable>=0);
@@ -1969,7 +1970,7 @@ HWND ghLastForegroundWindow = NULL;
 HWND getForegroundWindow()
 {
 	HWND h = NULL;
-	if (!ghWnd || gpConEmu->isMainThread())
+	if (!ghWnd || isMainThread())
 	{
 		ghLastForegroundWindow = h = ::GetForegroundWindow();
 	}
@@ -2212,9 +2213,9 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahPare
 
 void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS ExceptionInfo /*= NULL*/)
 {
-#ifdef _DEBUG
-//	_ASSERTE(FALSE);
-#endif
+	#ifdef _DEBUG
+	//_ASSERTE(FALSE);
+	#endif
 
 	static bool bInAssert = false;
 
@@ -2227,6 +2228,10 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 	size_t   cchMax = (szText ? _tcslen(szText) : 0) + (szFile ? _tcslen(szFile) : 0) + 300;
 	wchar_t* pszFull = (cchMax <= countof(szAssertInfo)) ? szAssertInfo : (wchar_t*)malloc(cchMax*sizeof(*pszFull));
 	wchar_t* pszDumpMessage = NULL;
+
+	#ifdef _DEBUG
+	MyAssertDumpToFile(szFile, nLine, szText);
+	#endif
 
 	LPCWSTR  pszTitle = gpConEmu ? gpConEmu->GetDefaultTitle() : NULL;
 	if (!pszTitle || !*pszTitle) pszTitle = L"?ConEmu?";
@@ -2507,6 +2512,13 @@ bool ProcessMessage(MSG& Msg)
 
 wrap:
 	return bRc;
+}
+
+static DWORD gn_MainThreadId;
+bool isMainThread()
+{
+	DWORD dwTID = GetCurrentThreadId();
+	return (dwTID == gn_MainThreadId);
 }
 
 /* С командной строкой (GetCommandLineW) у нас засада */
@@ -3485,6 +3497,9 @@ void DebugUnitTests()
 	DebugFileExistTests();
 	ConEmuMacro::UnitTests();
 	DebugStrUnitTest();
+	CMatch::UnitTests();
+	ConEmuChord::ChordUnitTests();
+	ConEmuHotKey::HotkeyNameUnitTests();
 }
 #endif
 
@@ -3566,6 +3581,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HeapInitialize();
 	RemoveOldComSpecC();
 	AssertMsgBox = MsgBox;
+	gn_MainThreadId = GetCurrentThreadId();
 
 	// On Vista and higher ensure our process will be
 	// marked as fully dpi-aware, regardless of mainfest
