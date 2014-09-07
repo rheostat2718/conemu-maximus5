@@ -3470,6 +3470,7 @@ void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso /*= true*/)
 	if (!*pOpt->Comspec64)
 		GetComspecFromEnvVar(pOpt->Comspec64, countof(pOpt->Comspec64), csb_x64);
 }
+#endif
 
 wchar_t* GetEnvVar(LPCWSTR VarName)
 {
@@ -3487,10 +3488,10 @@ wchar_t* GetEnvVar(LPCWSTR VarName)
 		nErr = GetLastError();
 		if (nErr == ERROR_ENVVAR_NOT_FOUND)
 			return NULL;
-		return lstrdup(L"");
+		return (wchar_t*)calloc(3,sizeof(wchar_t));
 	}
 
-	cchMax = nRc+1;
+	cchMax = nRc+2;
 	wchar_t* pszVal = (wchar_t*)calloc(cchMax,sizeof(*pszVal));
 	if (!pszVal)
 	{
@@ -3508,6 +3509,7 @@ wchar_t* GetEnvVar(LPCWSTR VarName)
 	return pszVal;
 }
 
+#ifndef CONEMU_MINIMAL
 void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 {
 	if (!pOpt)
