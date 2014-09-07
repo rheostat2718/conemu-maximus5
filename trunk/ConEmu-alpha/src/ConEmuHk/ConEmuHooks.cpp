@@ -1775,8 +1775,8 @@ HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir
 
 	if (!bForce)
 	{
-		DWORD nCheckSybsystem1 = 0, nCheckBits1 = 0, nFileAttrs1 = 0;
-		if (!FindImageSubsystem(pszFile, nCheckSybsystem1, nCheckBits1, nFileAttrs1))
+		DWORD nCheckSybsystem1 = 0, nCheckBits1 = 0;
+		if (!FindImageSubsystem(pszFile, nCheckSybsystem1, nCheckBits1))
 		{
 			hr = (HRESULT)-1;
 			goto wrap;
@@ -4695,10 +4695,19 @@ void PreReadConsoleInput(bool abUnicode, bool abPeek)
 
 		if (ghConEmuWndDC)
 		{
-			CmdArg szDir;
-			if (GetDirectory(szDir) > 0)
+			if (gFarMode.cbSize
+				&& gFarMode.OnCurDirChanged
+				&& !IsBadCodePtr((FARPROC)gFarMode.OnCurDirChanged))
 			{
-				SendCurrentDirectory(ghConWnd, szDir);
+				gFarMode.OnCurDirChanged();
+			}
+			else
+			{
+				CmdArg szDir;
+				if (GetDirectory(szDir) > 0)
+				{
+					SendCurrentDirectory(ghConWnd, szDir);
+				}
 			}
 		}
 	}

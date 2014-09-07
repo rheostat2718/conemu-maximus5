@@ -1466,6 +1466,9 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		return FALSE;
 	}
 
+	if (pIn->hdr.bAsync)
+		pRSrv->mp_RConServer->BreakConnection(pInst);
+
 	DWORD dwTimeStart = timeGetTime();
 
 	int nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);
@@ -1553,7 +1556,7 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		pOut = pRSrv->cmdPortableStarted(pInst, pIn, nDataSize);
 		break;
 	case CECMD_STORECURDIR:
-		pRSrv->mp_RCon->StoreCurWorkDir((wchar_t*)pIn->wData);
+		pRSrv->mp_RCon->StoreCurWorkDir(&pIn->CurDir);
 		pOut = (CESERVER_REQ*)INVALID_HANDLE_VALUE;
 		break;
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)

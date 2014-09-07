@@ -148,6 +148,7 @@ BOOL gbForceSendTabs = FALSE;
 int  gnCurrentWindowType = 0; // WTYPE_PANELS / WTYPE_VIEWER / WTYPE_EDITOR
 BOOL gbIgnoreUpdateTabs = FALSE; // выставляется на время CMD_SETWINDOW
 BOOL gbRequestUpdateTabs = FALSE; // выставляется при получении события FOCUS/KILLFOCUS
+CurPanelDirs gPanelDirs = {};
 BOOL gbClosingModalViewerEditor = FALSE; // выставляется при закрытии модального редактора/вьювера
 MOUSE_EVENT_RECORD gLastMouseReadEvent = {{0,0}};
 BOOL gbUngetDummyMouseEvent = FALSE;
@@ -593,15 +594,18 @@ void OnMainThreadActivated()
 		gbNeedPostEditCheck = FALSE;
 	}
 
+	// To avoid spare API calls
+	int iMacroActive = 0;
+
 	if (!gbRequestUpdateTabs && gbNeedPostTabSend)
 	{
-		if (!IsMacroActive())
+		if (!isMacroActive(iMacroActive))
 		{
 			gbRequestUpdateTabs = TRUE; gbNeedPostTabSend = FALSE;
 		}
 	}
 
-	if (gbRequestUpdateTabs && !IsMacroActive())
+	if (gbRequestUpdateTabs && !isMacroActive(iMacroActive))
 	{
 		gbRequestUpdateTabs = gbNeedPostTabSend = FALSE;
 		UpdateConEmuTabs(true);
@@ -611,6 +615,12 @@ void OnMainThreadActivated()
 			gbClosingModalViewerEditor = FALSE;
 			gbRequestUpdateTabs = TRUE;
 		}
+	}
+
+	// Retrieve current panel CD's
+	if ((gnCurrentWindowType == WTYPE_PANELS) && !isMacroActive(iMacroActive))
+	{
+		UpdatePanelDirs();
 	}
 
 	// !!! Это только чисто в OnConsolePeekReadInput, т.к. FAR Api тут не используется
@@ -1648,6 +1658,8 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			gpLocalSecurity = LocalSecurity();
 			csTabs = new MSection();
 			csData = new MSection();
+			gPanelDirs.ActiveDir = new CmdArg();
+			gPanelDirs.PassiveDir = new CmdArg();
 			PlugServerInit();
 			//HWND hConWnd = GetConEmuHWND(2);
 			// Текущая нить не обязана быть главной! Поэтому ищем первую нить процесса!
@@ -4353,6 +4365,39 @@ bool UpdateConEmuTabsW(int anEvent, bool losingFocus, bool editorSave, void* Par
 	return lbCh;
 }
 
+VOID WINAPI OnCurDirChanged()
+{
+	if ((gnCurrentWindowType == WTYPE_PANELS) && (IS_SYNCHRO_ALLOWED))
+	{
+		// Требуется дернуть Synchro, чтобы корректно активироваться
+		if (!gbInputSynchroPending)
+		{
+			gbInputSynchroPending = true;
+			ExecuteSynchro();
+		}
+	}
+}
+
+void UpdatePanelDirs()
+{
+	bool bChanged = false;
+
+	if (gFarVersion.dwVerMajor==1)
+		bChanged = UpdatePanelDirsA();
+	else if (gFarVersion.dwBuild>=FAR_Y2_VER)
+		bChanged = FUNC_Y2(UpdatePanelDirsW)();
+	else if (gFarVersion.dwBuild>=FAR_Y1_VER)
+		bChanged = FUNC_Y1(UpdatePanelDirsW)();
+	else
+		bChanged = FUNC_X(UpdatePanelDirsW)();
+
+	if (bChanged)
+	{
+		// Send to GUI
+		SendCurrentDirectory(FarHwnd, gPanelDirs.ActiveDir->ms_Arg, gPanelDirs.PassiveDir->ms_Arg);
+	}
+}
+
 bool UpdateConEmuTabs(bool abSendChanges)
 {
 	extern bool UpdateConEmuTabsA(int anEvent, bool losingFocus, bool editorSave, void *Param);
@@ -6261,6 +6306,15 @@ BOOL StartDebugger()
 	return lbRc;
 }
 
+
+bool isMacroActive(int& iMacroActive)
+{
+	if (!iMacroActive)
+	{
+		iMacroActive = IsMacroActive() ? 1 : 2;
+	}
+	return (iMacroActive == 1);
+}
 
 BOOL IsMacroActive()
 {

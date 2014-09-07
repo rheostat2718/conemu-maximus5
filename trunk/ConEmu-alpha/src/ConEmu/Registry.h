@@ -155,6 +155,7 @@ struct SettingsXML : public SettingsBase
 		IXMLDOMNode* mp_Key;
 		bool mb_Modified; // Save was called at least once (data may be was not changed)
 		bool mb_DataChanged; // Data was changed
+		void SetDataChanged();
 		int mi_Level;
 		bool mb_Empty;
 		bool mb_KeyEmpty;
@@ -183,6 +184,10 @@ struct SettingsXML : public SettingsBase
 		IXMLDOMNode* FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, const wchar_t* asName, bool abAllowCreate);
 		bool SetAttr(IXMLDOMNode* apNode, const wchar_t* asName, const wchar_t* asValue);
 		bool SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, const wchar_t* asName, const wchar_t* asValue);
+
+		bool SetMultiLine(IXMLDOMNode* apNode, const wchar_t* asValue, long nAllLen);
+		void ClearChildrenTail(IXMLDOMNode* apNode, IXMLDOMNode* apFirstClear);
+
 		BSTR GetAttr(IXMLDOMNode* apNode, const wchar_t* asName);
 		BSTR GetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, const wchar_t* asName);
 

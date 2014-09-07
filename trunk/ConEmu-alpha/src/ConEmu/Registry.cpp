@@ -769,6 +769,11 @@ wrap:
 	return lbRc;
 }
 
+void SettingsXML::SetDataChanged()
+{
+	mb_DataChanged = true;
+}
+
 void SettingsXML::TouchKey(IXMLDOMNode* apKey)
 {
 	SYSTEMTIME st; wchar_t szTime[32];
@@ -896,6 +901,7 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 	IXMLDOMNode *pValue = NULL;
 	IXMLDOMAttribute *pIXMLDOMAttribute = NULL;
 	BSTR bsText = NULL;
+	BSTR bsCurValue = NULL;
 	bsText = ::SysAllocString(asName);
 	hr = apAttrs->getNamedItem(bsText, &pValue);
 
@@ -923,13 +929,12 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 			hr = apAttrs->setNamedItem(pIXMLDOMAttribute, &pValue); //-V519
 			_ASSERTE(hr == S_OK);
 			lbRc = SUCCEEDED(hr);
-			mb_DataChanged = true;
+			SetDataChanged();
 		}
 	}
 	else if (SUCCEEDED(hr) && pValue)
 	{
 		// Для проверки mb_DataChanged
-		BSTR bsCurValue = NULL;
 		hr = pValue->get_text(&bsCurValue);
 		if (SUCCEEDED(hr) && bsCurValue && bsValue
 			&& (wcscmp(bsValue, bsCurValue) == 0))
@@ -943,12 +948,13 @@ bool SettingsXML::SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, con
 			hr = pValue->put_text(bsValue);
 			_ASSERTE(hr == S_OK);
 			lbRc = SUCCEEDED(hr);
-			mb_DataChanged = true;
+			SetDataChanged();
 		}
 	}
 
 	::SysFreeString(bsText); bsText = NULL;
 	::SysFreeString(bsValue); bsValue = NULL;
+	if (bsCurValue) { ::SysFreeString(bsCurValue); bsCurValue = NULL; }
 
 	if (pValue) { pValue->Release(); pValue = NULL; }
 
@@ -1014,7 +1020,10 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 	IXMLDOMNode *pIXMLDOMNode = NULL;
 	IXMLDOMNode *pName = NULL;
 	BSTR bsText = NULL;
+	BSTR bsCheck = NULL;
+	DOMNodeType nodeTypeCheck = NODE_INVALID;
 	BOOL lbEmpty = TRUE;
+	int iLastIndent = 1;
 
 	// Получить все дочерние элементы нужного типа
 	if (apFrom == NULL)
@@ -1099,6 +1108,31 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 
 	if (!pChild && abAllowCreate)
 	{
+		if (asType[0] == L'k')
+		{
+			hr = apFrom->get_lastChild(&pChild);
+			if (SUCCEEDED(hr))
+			{
+				hr = pChild->get_nodeType(&nodeTypeCheck);
+				if (SUCCEEDED(hr) && (nodeTypeCheck == NODE_TEXT))
+				{
+					hr = pChild->get_text(&bsCheck);
+					if (SUCCEEDED(hr) && bsCheck)
+					{
+						iLastIndent = 0;
+						LPCWSTR pszTabs = bsCheck;
+						while (*pszTabs)
+						{
+							if (*(pszTabs++) == L'\t')
+								iLastIndent++;
+						}
+						::SysFreeString(bsCheck); bsCheck = NULL;
+					}
+				}
+			}
+			SafeRelease(pChild);
+		}
+
 		VARIANT vtType; vtType.vt = VT_I4;
 		vtType.lVal = NODE_ELEMENT;
 		bsText = ::SysAllocString(asType);
@@ -1120,7 +1154,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 				{
 					//if (mb_KeyEmpty)
 					//AppendIndent(apFrom, lbEmpty ? (mi_Level-1) : mi_Level);
-					AppendIndent(apFrom, (mi_Level-1));
+					AppendIndent(apFrom, (mi_Level-iLastIndent));
 				}
 				else if (mb_KeyEmpty)
 				{
@@ -1502,6 +1536,139 @@ void SettingsXML::Delete(const wchar_t *regName)
 	Save(regName, NULL, REG_MULTI_SZ, 0);
 }
 
+bool SettingsXML::SetMultiLine(IXMLDOMNode* apNode, const wchar_t* asValue, long nAllLen)
+{
+	bool bRc = false;
+	HRESULT hr;
+	VARIANT_BOOL bHasChild = VARIANT_FALSE;
+	DOMNodeType  nodeType = NODE_INVALID;
+	BSTR bsNodeType = ::SysAllocString(L"line");
+	VARIANT vtType; vtType.vt = VT_I4; vtType.lVal = NODE_ELEMENT;
+	IXMLDOMNode* pNode = NULL;
+	IXMLDOMNode* pNodeRmv = NULL;
+	long nLen = 0;
+	const wchar_t* psz = asValue;
+	bool bNewNodeCreate = false;
+	int iAddIndent = 1;
+	bool bAddFirstNewLine = false;
+
+	hr = apNode->get_firstChild(&pNode);
+	if (pNode == NULL)
+	{
+		bAddFirstNewLine = true;
+		iAddIndent = mi_Level + 1;
+	}
+
+	// Обновляем существующие
+	while ((psz && *psz && nAllLen > 0) && (SUCCEEDED(hr) && pNode))
+	{
+		hr = pNode->get_nodeType(&nodeType);
+
+		if (SUCCEEDED(hr) && (nodeType == NODE_ELEMENT))
+		{
+			if (!SetAttr(pNode, L"data", psz))
+				goto wrap;
+
+			nLen = _tcslen(psz)+1;
+			psz += nLen;
+			nAllLen -= nLen;
+		}
+
+		hr = pNode->get_nextSibling(&pNode);
+	}
+
+	// Добавляем что осталось
+	while (psz && *psz && nAllLen > 0)
+	{
+		hr = mp_File->createNode(vtType, bsNodeType, L"", &pNode);
+
+		if (FAILED(hr) || !pNode)
+			goto wrap;
+
+		if (!SetAttr(pNode, L"data", psz))
+			goto wrap;
+
+		if (bAddFirstNewLine)
+		{
+			AppendNewLine(apNode);
+			bAddFirstNewLine = false;
+		}
+		AppendIndent(apNode, iAddIndent);
+
+		hr = apNode->appendChild(pNode, &pNodeRmv);
+
+		AppendNewLine(apNode);
+		bNewNodeCreate = true;
+		iAddIndent = mi_Level + 1;
+
+		SafeRelease(pNode);
+		SafeRelease(pNodeRmv);
+
+		if (FAILED(hr))
+			goto wrap;
+
+		nLen = _tcslen(psz)+1;
+		psz += nLen;
+		nAllLen -= nLen;
+	}
+
+	// Очистить хвост (если элементов стало меньше)
+	if (pNode)
+		ClearChildrenTail(apNode, pNode);
+
+	if (bNewNodeCreate)
+		AppendIndent(apNode, mi_Level);
+
+	bRc = true;
+wrap:
+	_ASSERTE(nAllLen <= 1);
+	return bRc;
+}
+
+void SettingsXML::ClearChildrenTail(IXMLDOMNode* apNode, IXMLDOMNode* apFirstClear)
+{
+	HRESULT hr;
+	IXMLDOMNode* pNext = NULL;
+	IXMLDOMNode *pNodeRmv = NULL;
+
+	#ifdef _DEBUG
+	DOMNodeType  nodeType = NODE_INVALID;
+	BSTR bsDebug = NULL;
+	if (pNext)
+	{
+		pNext->get_nodeType(&nodeType);
+		pNext->get_xml(&bsDebug);
+	}
+	if (bsDebug) ::SysFreeString(bsDebug); bsDebug = NULL;
+	#endif
+
+	while (((hr = apFirstClear->get_nextSibling(&pNext)) == S_OK) && pNext)
+	{
+		#ifdef _DEBUG
+		if (pNext)
+		{
+			pNext->get_nodeType(&nodeType);
+			pNext->get_xml(&bsDebug);
+		}
+		if (bsDebug) ::SysFreeString(bsDebug); bsDebug = NULL;
+		#endif
+
+		hr = apNode->removeChild(pNext, &pNodeRmv);
+		if (SUCCEEDED(hr))
+			SetDataChanged();
+
+		SafeRelease(pNodeRmv);
+		SafeRelease(pNext);
+	}
+
+	hr = apNode->removeChild(apFirstClear, &pNodeRmv);
+	if (SUCCEEDED(hr))
+		SetDataChanged();
+
+	SafeRelease(pNodeRmv);
+	SafeRelease(apFirstClear);
+}
+
 //void SettingsXML::Save(const wchar_t *regName, const wchar_t *value)
 //{
 //	if (!value) value = L"";  // сюда мог придти и NULL
@@ -1660,82 +1827,20 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 	}
 	else     // Тут нужно формировать список элементов <list>
 	{
-		VARIANT_BOOL bHasChild = VARIANT_FALSE;
-		DOMNodeType  nodeType = NODE_INVALID;
 		// Если ранее был параметр "data" - удалить его из списка атрибутов
 		hr = pAttrs->getNamedItem(L"data", &pNode);
-
-		WARNING("Переделать. Это вызовет перезапись элементов, хотя их можно просто обновить");
-
 		if (SUCCEEDED(hr) && pNode)
 		{
 			hr = pChild->removeChild(pNode, &pNodeRmv);
 			pNode->Release(); pNode = NULL;
-			mb_DataChanged = true;
+			SetDataChanged();
 
 			if (pNodeRmv) { pNodeRmv->Release(); pNodeRmv = NULL; }
 		}
 
-		//TODO: может оставить перевод строки?
-		// Сначала почистим
-		#ifdef _DEBUG
-		hr = pChild->get_nodeType(&nodeType);
-		#endif
-
-		hr = pChild->hasChildNodes(&bHasChild);
-
-		if (bHasChild)
-		{
-			while ((hr = pChild->get_firstChild(&pNode)) == S_OK && pNode)
-			{
-				hr = pNode->get_nodeType(&nodeType);
-
-				#ifdef _DEBUG
-				BSTR bsDebug = NULL;
-				pNode->get_text(&bsDebug);
-				if (bsDebug) ::SysFreeString(bsDebug); bsDebug = NULL;
-				#endif
-
-				hr = pChild->removeChild(pNode, &pNodeRmv);
-				mb_DataChanged = true;
-
-				if (pNodeRmv) { pNodeRmv->Release(); pNodeRmv = NULL; }
-
-				pNode->Release(); pNode = NULL;
-			}
-		}
-
-		// Теперь - добавляем список
-		wchar_t* psz = (wchar_t*)value;
-		BSTR bsNodeType = ::SysAllocString(L"line");
-		VARIANT vtType; vtType.vt = VT_I4; vtType.lVal = NODE_ELEMENT;
 		long nAllLen = nSize/2; // длина в wchar_t
-		long nLen = 0;
-
-		while (psz && *psz && nAllLen > 0)
-		{
-			hr = mp_File->createNode(vtType, bsNodeType, L"", &pNode);
-
-			if (FAILED(hr) || !pNode)
-				break;
-
-			if (!SetAttr(pNode, L"data", psz))
-				break;
-
-			hr = pChild->appendChild(pNode, &pNodeRmv);
-			pNode->Release(); pNode = NULL;
-
-			if (pNodeRmv) { pNodeRmv->Release(); pNodeRmv = NULL; }
-
-			if (FAILED(hr))
-				break;
-
-			nLen = _tcslen(psz)+1;
-			psz += nLen;
-			nAllLen -= nLen;
-		}
-
-		_ASSERTE(nAllLen <= 1);
+		wchar_t* psz = (wchar_t*)value;
+		SetMultiLine(pChild, psz, nAllLen);
 	}
 
 	mb_Modified = true;
