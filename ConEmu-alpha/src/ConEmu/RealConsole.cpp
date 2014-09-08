@@ -42,6 +42,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/ConEmuPipeMode.h"
 #include "../common/Execute.h"
+#include "../common/MFileLog.h"
+#include "../common/MSectionSimple.h"
+#include "../common/MWow64Disable.h"
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
 #include "ConEmu.h"
@@ -12837,14 +12840,42 @@ LPCWSTR CRealConsole::GetConsoleCurDir(CmdArg& szDir)
 		return NULL;
 	}
 
-	MSectionLockSimple CS; CS.Lock(&mcs_CurWorkDir);
-	if (!ms_CurWorkDir.IsEmpty())
+	// Issue 1703: Пока с актуальностью папки проблема, лучше перезапросить плагин, без вызовов API, просто вернуть текущие
+	DWORD nFarPID = GetFarPID(true);
+	if (nFarPID != NULL)
 	{
-		szDir.Set(ms_CurWorkDir);
-		goto wrap;
-	}
-	CS.Unlock();
+		CConEmuPipe pipe(nFarPID, 500);
 
+		if (pipe.Init(_T("CRealConsole::GetConsoleCurDir"), TRUE))
+		{
+			if (!pipe.Execute(CECMD_STORECURDIR))
+			{
+				LogString("pipe.Execute(CECMD_STORECURDIR) failed");
+			}
+			else
+			{
+				DWORD nDataSize = 0;
+				CESERVER_REQ_STORECURDIR* pCurDir = (CESERVER_REQ_STORECURDIR*)pipe.GetPtr(&nDataSize);
+				if (pCurDir && (nDataSize > sizeof(*pCurDir)) && (pCurDir->iActiveCch > 1))
+				{
+					szDir.Set(pCurDir->szDir);
+					goto wrap;
+				}
+			}
+		}
+	}
+
+	// If it is not a Far with plugin - try to take the ms_CurWorkDir
+	{
+		MSectionLockSimple CS; CS.Lock(&mcs_CurWorkDir);
+		if (!ms_CurWorkDir.IsEmpty())
+		{
+			szDir.Set(ms_CurWorkDir);
+			goto wrap;
+		}
+	}
+
+	// Last chance - startup dir of the console
 	szDir.Set(mp_ConEmu->WorkDir(m_Args.pszStartupDir));
 wrap:
 	return szDir.IsEmpty() ? NULL : (LPCWSTR)szDir;

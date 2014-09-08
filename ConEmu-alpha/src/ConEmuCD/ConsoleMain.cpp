@@ -74,6 +74,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuHk/Injects.h"
 #include "../common/MArray.h"
 #include "../common/MMap.h"
+#include "../common/MWow64Disable.h"
+#include "../common/MSectionSimple.h"
 #include "../common/RConStartArgs.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConsoleMixAttr.h"
@@ -86,8 +88,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Downloader.h"
 #include "UnicodeTest.h"
 
-#define FULL_STARTUP_ENV
-#include "../common/StartupEnv.h"
+#include "../common/StartupEnvEx.h"
 
 #ifndef __GNUC__
 #pragma comment(lib, "shlwapi.lib")
@@ -325,7 +326,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			HeapInitialize();
 
 			/* *** DEBUG PURPOSES */
-			gpStartEnv = LoadStartupEnv();
+			gpStartEnv = LoadStartupEnvEx::Create();
 			/* *** DEBUG PURPOSES */
 
 			// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес

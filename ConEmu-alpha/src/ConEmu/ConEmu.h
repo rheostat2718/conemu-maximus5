@@ -56,25 +56,25 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //typedef HRESULT(WINAPI* FDwmIsCompositionEnabled)(BOOL *pfEnabled);
 
-class CConEmuChild;
-class CConEmuBack;
-class CTabBarClass;
-class CConEmuMacro;
 class CAttachDlg;
-class CRecreateDlg;
-class CToolTip;
-class CGestures;
-class CVConGuard;
-class CVConGroup;
-class CStatus;
-enum ConEmuWindowMode;
-class CDefaultTerminal;
-class CConEmuMenu;
+class CConEmuBack;
+class CConEmuChild;
 class CConEmuInside;
+class CConEmuMacro;
+class CConEmuMenu;
+class CDefaultTerminal;
+class CGestures;
+class CRecreateDlg;
 class CRunQueue;
+class CStatus;
+class CTabBarClass;
+class CToolTip;
+class CVConGroup;
+class CVConGuard;
+class MFileLog;
+enum ConEmuWindowMode;
 struct CEFindDlg;
 union CESize;
-
 
 struct MsgSrvStartedArg
 {
@@ -97,6 +97,7 @@ struct MsgSrvStartedArg
 #include "ConEmuSize.h"
 #include "../common/MArray.h"
 #include "../common/MMap.h"
+#include "../common/MFileMapping.h"
 
 // IME support (WinXP or later)
 typedef BOOL (WINAPI* ImmSetCompositionFontW_t)(HIMC hIMC, LPLOGFONT lplf);
@@ -138,7 +139,8 @@ class CConEmuMain
 		wchar_t ms_ConEmuExe[MAX_PATH+1];       // полный путь к ConEmu.exe (GUI)
 		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
 		wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
-		wchar_t ms_ConEmuWorkDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
+		wchar_t ms_ConEmuWorkDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
+		bool mb_ConEmuWorkDirArg;               // Was started as "ConEmu /Dir C:\abc ..." this must override "/dir" switch in task parameter
 		void StoreWorkDir(LPCWSTR asNewCurDir = NULL);
 		LPCWSTR WorkDir(LPCWSTR asOverrideCurDir = NULL);
 		bool ChangeWorkDir(LPCWSTR asTempCurDir);
