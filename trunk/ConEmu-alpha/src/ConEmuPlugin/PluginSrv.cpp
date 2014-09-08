@@ -52,7 +52,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "../common/WinObjects.h"
 #include "../common/TerminalMode.h"
-#include "..\ConEmu\version.h"
+#include "../common/MSection.h"
+#include "../ConEmu/version.h"
 #include "PluginHeader.h"
 #include "PluginBackground.h"
 #include <Tlhelp32.h>
@@ -742,6 +743,14 @@ BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		{
 			lbRc = TRUE;
 			ppReply->dwData[0] = nDataSize;
+		}
+	}
+	else if (pIn->hdr.nCmd == CECMD_STORECURDIR)
+	{
+		if (AllocateSendCurrentDirectory(ppReply, pcbMaxReplySize, gPanelDirs.ActiveDir->ms_Arg, gPanelDirs.PassiveDir->ms_Arg))
+		{
+			lbRc = TRUE;
+			pcbReplySize = ppReply->hdr.cbSize;
 		}
 	}
 	else
