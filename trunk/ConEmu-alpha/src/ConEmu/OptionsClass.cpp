@@ -281,6 +281,7 @@ CSettings::CSettings()
 	gpSetCls = this;
 	gpSet = &m_Settings;
 
+	ZeroStruct(_dpi);
 	GetOverallDpi();
 
 	// Go
@@ -441,16 +442,9 @@ CSettings::CSettings()
 
 int CSettings::GetOverallDpi()
 {
-	HDC hdc = GetDC(NULL);
-	if (hdc)
-	{
-		_dpi.SetDpi(GetDeviceCaps(hdc, LOGPIXELSX), GetDeviceCaps(hdc, LOGPIXELSY));
-		ReleaseDC(NULL, hdc);
-		if (_dpi.Ydpi < 96)
-			_dpi.Ydpi = 96;
-		if (_dpi.Xdpi < 96)
-			_dpi.Xdpi = 96;
-	}
+	// Must be called during initialization only
+	CDpiAware::QueryDpiForMonitor(NULL, &_dpi);
+	_ASSERTE(_dpi.Xdpi >= 96 && _dpi.Ydpi >= 96);
 	return _dpi.Ydpi;
 }
 
@@ -8216,7 +8210,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			SafeFree(pszNoBrk);
 
 			wchar_t szKey[128] = L"";
-			SetDlgItemText(hWnd2, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.GetVkMod(), szKey));
+			SetDlgItemText(hWnd2, tCmdGroupKey, pCmd->HotKey.GetHotkeyName(szKey));
 
 			SetDlgItemText(hWnd2, tCmdGroupGuiArg, pCmd->pszGuiArgs ? pCmd->pszGuiArgs : L"");
 			SetDlgItemText(hWnd2, tCmdGroupCommands, pCmd->pszCommands ? pCmd->pszCommands : L"");
@@ -8739,21 +8733,13 @@ wrap:
 	return;
 }
 
-void CSettings::OnClose()
+void CSettings::OnSettingsClosed()
 {
-	//ApplyStartupOptions();
-
-	//if (gpSet->isTabs==1)
-	//	gpConEmu->ForceShowTabs(TRUE);
-	//else if (gpSet->isTabs==0)
-	//	gpConEmu->ForceShowTabs(FALSE);
-	////else
-	//
-	//gpConEmu->mp_TabBar->Update();
-	//gpConEmu->UpdateWindowRgn();
+	if (!ghOpWnd)
+		return;
 
 	gpConEmu->OnPanelViewSettingsChanged();
-	//gpConEmu->UpdateGuiInfoMapping();
+
 	gpConEmu->RegisterMinRestore(gpSet->IsHotkey(vkMinimizeRestore) || gpSet->IsHotkey(vkMinimizeRestor2));
 
 	if (gpSet->m_isKeyboardHooks == 1)
@@ -8761,7 +8747,40 @@ void CSettings::OnClose()
 	else if (gpSet->m_isKeyboardHooks == 2)
 		gpConEmu->UnRegisterHooks();
 
+	UnregisterTabs();
+
+	if (hwndTip)
+	{
+		DestroyWindow(hwndTip);
+		hwndTip = NULL;
+	}
+
+	if (hwndBalloon)
+	{
+		DestroyWindow(hwndBalloon);
+		hwndBalloon = NULL;
+	}
+
+	if (mh_CtlColorBrush)
+	{
+		DeleteObject(mh_CtlColorBrush);
+		mh_CtlColorBrush = NULL;
+	}
+
+	// mp_DpiAware and others are cleared in ClearPages()
+	ClearPages();
+	mp_ActiveHotKey = NULL;
+	gbLastColorsOk = FALSE;
+
+	if (m_ActivityLoggingType != glt_None)
+	{
+		m_ActivityLoggingType = glt_None;
+		gpConEmu->OnGlobalSettingsChanged();
+	}
+
 	gpConEmu->OnOurDialogClosed();
+
+	ghOpWnd = NULL;
 }
 
 void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /*= NULL*/)
@@ -9131,24 +9150,13 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		} break;
 		case WM_CLOSE:
 		{
-			gpSetCls->OnClose();
+			gpSetCls->OnSettingsClosed();
 			DestroyWindow(hWnd2);
 		} break;
 		case WM_DESTROY:
-			gpSetCls->UnregisterTabs();
-
-			if (gpSetCls->hwndTip) {DestroyWindow(gpSetCls->hwndTip); gpSetCls->hwndTip = NULL;}
-
-			if (gpSetCls->hwndBalloon) {DestroyWindow(gpSetCls->hwndBalloon); gpSetCls->hwndBalloon = NULL;}
-
-			if (gpSetCls->mh_CtlColorBrush) { DeleteObject(gpSetCls->mh_CtlColorBrush); gpSetCls->mh_CtlColorBrush = NULL; }
-
-			ghOpWnd = NULL;
-			// mp_DpiAware and others are cleared in gpSetCls->ClearPages()
-			gpSetCls->ClearPages();
-			gpSetCls->mp_ActiveHotKey = NULL;
-			gbLastColorsOk = FALSE;
-			break;
+		{
+			gpSetCls->OnSettingsClosed();
+		} break;
 		case WM_HOTKEY:
 
 			if (wParam == 0x101)

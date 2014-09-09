@@ -37,8 +37,10 @@ class CRealConsole;
 
 class CConEmuChild
 {
+	private:
+		CVirtualConsole* mp_VCon;
 	public:
-		CConEmuChild();
+		CConEmuChild(CVirtualConsole* pOwner);
 	protected:
 		virtual ~CConEmuChild();
 		LRESULT OnSize(WPARAM wParam, LPARAM lParam);
@@ -81,6 +83,8 @@ class CConEmuChild
 		void PostDetach(bool bSendCloseConsole /*= false*/);
 
 		void PostRestoreChildFocus();
+		void RestoreChildFocusPending(bool abSetPending);
+		bool mb_RestoreChildFocusPending;
 
 #ifdef _DEBUG
 	public:
