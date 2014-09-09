@@ -755,6 +755,7 @@ CConEmuMain::CConEmuMain()
 	mn_MsgReqChangeCurPalette = RegisterMessage("ChangeCurrentPalette");
 	mn_MsgMacroExecSync = RegisterMessage("MacroExecSync");
 	mn_MsgActivateVCon = RegisterMessage("ActivateVCon");
+	mn_MsgPostScClose = RegisterMessage("ScClose");
 }
 
 bool CConEmuMain::isMingwMode()
@@ -6368,6 +6369,13 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 //	return lbProceed;
 //}
 
+void CConEmuMain::PostScClose()
+{
+	// Post mn_MsgPostScClose instead of WM_SYSCOMMAND(SC_CLOSE) to ensure that it is our message
+	// and it will not be skipped by CConEmuMain::isSkipNcMessage
+	PostMessage(ghWnd, mn_MsgPostScClose, 0, 0);
+}
+
 // returns true if gpConEmu->Destroy() was called
 bool CConEmuMain::OnScClose()
 {
@@ -6860,7 +6868,10 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 		CheckActiveLayoutName();
 
-		//session.SetSessionNotification(true);
+		if (gpSetCls->isAdvLogging)
+		{
+			session.SetSessionNotification(true);
+		}
 
 		if (gpSet->isHideCaptionAlways())
 		{
@@ -7451,6 +7462,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	LPCWSTR pszMsgName = L"Unknown";
 	HWND hNewFocus = NULL;
 	HWND hForeground = NULL;
+	bool bSkipQuakeActivation = false;
 
 	if (messg == WM_SETFOCUS)
 	{
@@ -7605,6 +7617,22 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 			if (mn_IgnoreQuakeActivation <= 0)
 			{
+				bSkipQuakeActivation = true;
+			}
+			else if (IsWindowVisible(ghWnd))
+			{
+				// Если в активном табе сидит ChildGui (popup, а-ля notepad) то
+				// при попытке активации любого нашего диалога (Settings, NewCon, подтверждения закрытия)
+				// начинается зоопарк с активацией/выезжанием окна
+				CVConGuard VCon;
+				if ((GetActiveVCon(&VCon) >= 0) && (VCon->GuiWnd()))
+				{
+					bSkipQuakeActivation = true;
+				}
+			}
+
+			if (!bSkipQuakeActivation)
+			{
 				DoMinimizeRestore(sih_Show);
 			}
 		}
@@ -7660,8 +7688,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			// сброс, однократная проверка для "Hide on focus lose"
 			mn_ForceTimerCheckLoseFocus = 0;
 		}
-		#if 0
-		else if (!lbSetFocus || mb_LastConEmuFocusState)
+		else if (lbSetFocus == mb_LastConEmuFocusState)
 		{
 			// Logging
 			bool bNeedLog = RELEASEDEBUGTEST((gpSetCls->isAdvLogging>=2),true);
@@ -7677,10 +7704,8 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			return 0;
 		}
 
-		// Сюда мы доходим, если произошла какая-то ошибка, и ConEmu не получил
-		// информации о том, что его окно было активировано. Нужно уведомить сервер.
-		_ASSERTE(lbSetFocus || lnForceTimerCheckLoseFocus);
-		#endif
+		// Сюда мы доходим, если по каким-то причинам (ChildGui?) ConEmu не получил
+		// информации о том, что его окно было [де]активировано. Нужно уведомить сервер.
 	}
 
 
@@ -7787,6 +7812,11 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			FixSingleModifier(0, pVCon->RCon());
 		mp_TabBar->SwitchRollback();
 		UnRegisterHotKeys();
+		// Если работает ChildGui - значит был хак с активностью рамки ConEmu
+		if (pVCon && pVCon->GuiWnd())
+		{
+			SetFrameActiveState(false);
+		}
 	}
 	else if (!mb_HotKeyRegistered)
 	{
@@ -12892,6 +12922,10 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		{
 			pVCon->RCon()->GuiWndFocusStore();
 		}
+		else if (pVCon->mb_RestoreChildFocusPending && bForeground)
+		{
+			pVCon->RCon()->GuiWndFocusRestore();
+		}
 	}
 
 	if (mh_ConEmuAliveEvent && !mb_ConEmuAliveOwned)
@@ -14457,6 +14491,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 						lActivateRc = (LRESULT)pVCon;
 				}
 				return lActivateRc;
+			}
+			else if (messg == this->mn_MsgPostScClose)
+			{
+				this->OnScClose();
+				return 0;
 			}
 
 			//else if (messg == this->mn_MsgCmdStarted || messg == this->mn_MsgCmdStopped) {

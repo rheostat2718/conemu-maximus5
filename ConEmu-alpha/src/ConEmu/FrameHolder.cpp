@@ -83,11 +83,6 @@ void CFrameHolder::InitFrameHolder()
 	RecalculateFrameSizes();
 }
 
-void CFrameHolder::PostScClose()
-{
-	PostMessage(ghWnd, WM_SYSCOMMAND, SC_CLOSE, 0);
-}
-
 // returns false if message not handled
 bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult)
 {
@@ -1590,4 +1585,9 @@ void CFrameHolder::GetIconShift(POINT& IconShift)
 			IconShift.y = 1; //(gpSet->ilDragHeight ? 1 : 1);
 		}
 	}
+}
+
+void CFrameHolder::SetFrameActiveState(bool bActive)
+{
+	SendMessage(ghWnd, WM_NCACTIVATE, bActive, 0);
 }

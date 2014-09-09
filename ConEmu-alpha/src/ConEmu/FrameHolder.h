@@ -50,7 +50,6 @@ public:
 	virtual ~CFrameHolder();
 	void InitFrameHolder();
 	// returns false if message not handled
-	void PostScClose();
 	bool ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lResult);
 	bool SetDontPreserveClient(bool abSwitch);
 	bool SetAllowPreserveClient(bool abSwitch);
@@ -80,6 +79,7 @@ protected:
 	void RedrawUnlock();
 public:
 	void RedrawFrame();
+	void SetFrameActiveState(bool bActive);
 private:
 	//OSVERSIONINFO m_OSVer;
 #if 0
