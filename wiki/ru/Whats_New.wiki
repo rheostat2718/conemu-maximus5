@@ -7,6 +7,32 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 140909==
+  * Verbose tab activation error information.
+  * Wrong hotkey was *displayed* on Tasks page.
+  * Debug log was not disabled on Settings window closing.
+  * ConEmu frame was not set to inactive state with ChildGui in the active tab.
+  * Log current session state changes (`/log` switch, Issue 1689 related).
+  * Wrong dpi value may be used in some cases (dialog sizes, etc.)
+  * If ChildGui was in focus, cross clicking was not closed all !ConEmu tabs but only active ChildGui.
+  * Return focus to ChildGui on ‘Create new console’ dialog cancelling and tab switching.
+  * Do not do quake-flicker on Settings dialog opening.
+
+
+==Build 140908==
+  * Issue 1690: Give more weight to "`/dir`" `ConEmu.exe` switch than the same from Task parameter.
+  * Issue 1703: Force CD refresh before starting hyperlink (editor).
+  * Spare "`cmd.exe`" was appeared in the process root in some cases.
+
+
+==Build 140905==
+  * Issue 1684: Long startup of documents from network drives.
+  * Issue 1703: Prepare FarPlugin to send both panel CD's to GUI.
+  * When exporting settings suggest default for `ConEmu.xml` folder.
+  * Fix indents when creating new xml file.
+  * Do not update modified (timestamp) if xml was not really changed during config save.
+
+
 ==Build 140903==
   * Move Background image settings to separate page.
   * In some rare cases background was not drawn.
