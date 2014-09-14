@@ -302,6 +302,8 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
          Value: 2 - toggle, 1 - enable, 0 - disable
        "bgImageDarker": darkening of background image
          Value: 0 .. 255
+       "FarGotoEditorPath": path to the highlight/error editor
+         Value: path to the executable with arguments (Issue 1704)
        "QuakeAutoHide": auto hide on focus lose, Quake mode
          Value: 2 - switch auto-hide, 1 - enable, 0 - disable
     Settings([<PageResourceId>])
