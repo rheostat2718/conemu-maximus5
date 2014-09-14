@@ -31,6 +31,15 @@ Searching for some old (exact) ConEmu build? All builds are available here:
 </wiki:comment>
 
 ==Far Manager related==
+New plugins adopted to newest Far 3.0 are located now on GitHub
+
+  * [https://github.com/Maximus5/FarPlugins/releases New plugins for Far 3.0]
+
+Far3bis sources and binaries
+
+  * [https://github.com/Maximus5/Far3bis Far3bis on GitHub]
+  * [https://sourceforge.net/projects/conemu/files/FarManager/Far3bis/ Far3bis downloads]
+
 I have not updated yet some plugins released for Far Manager (2.0 and 3.0.2790).
 Due to breaking changes in Far API (Lua related) old plugins will not be working
 in the current builds of Far 3.x. But if you need them, you may download them here:
