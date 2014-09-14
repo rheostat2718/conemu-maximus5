@@ -346,7 +346,7 @@ void CopySrvMapFromGuiMap();
 void UpdateConsoleMapHeader();
 void InitAnsiLog(const ConEmuAnsiLog& AnsiLog);
 int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2);
-BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd);
+void ReloadGuiSettings(ConEmuGuiMapping* apFromCmd);
 void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR *pMap);
 
 int CreateColorerHeader(bool bForceRecreate = false);
@@ -500,10 +500,12 @@ struct SrvInfo
 	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *pConsoleMap;
 	DWORD guiSettingsChangeNum;
 	DWORD nLastConsoleActiveTick;
+	HWND hGuiInfoMapWnd;
+	MFileMapping<ConEmuGuiMapping>* pGuiInfoMap;
 	ConEmuGuiMapping guiSettings;
 	CESERVER_REQ_CONINFO_FULL *pConsole;
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
-	CRITICAL_SECTION csReadConsoleInfo;
+	MSectionSimple csReadConsoleInfo;
 	FGetConsoleDisplayMode pfnWasFullscreenMode;
 	// Input
 	HANDLE hInputThread;
@@ -518,7 +520,7 @@ struct SrvInfo
 	InQueue InputQueue;
 	// TrueColorer buffer
 	//HANDLE hColorerMapping;
-	CRITICAL_SECTION csColorerMappingCreate;
+	MSectionSimple csColorerMappingCreate;
 	MFileMapping<const AnnotationHeader>* pColorerMapping; // поддержка Colorer TrueMod
 	AnnotationHeader ColorerHdr; // для сравнения индексов
 	//
@@ -589,14 +591,14 @@ struct SrvInfo
 
 	void InitFields()
 	{
-		InitializeCriticalSection(&csColorerMappingCreate);
-		InitializeCriticalSection(&csReadConsoleInfo);
+		csColorerMappingCreate.Init();
+		csReadConsoleInfo.Init();
 		AltServers.Init();
 	};
 	void FinalizeFields()
 	{
-		DeleteCriticalSection(&csColorerMappingCreate);
-		DeleteCriticalSection(&csReadConsoleInfo);
+		csColorerMappingCreate.Close();
+		csReadConsoleInfo.Close();
 	};
 };
 

@@ -128,7 +128,7 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 
 	ZeroStruct(dump);
 
-	InitializeCriticalSection(&m_TrueMode.csLock);
+	m_TrueMode.pcsLock = new MSectionSimple(true);
 	m_TrueMode.mp_Cmp = NULL;
 	m_TrueMode.nCmpMax = 0;
 
@@ -150,7 +150,7 @@ CRealBuffer::~CRealBuffer()
 
 	dump.Close();
 
-	DeleteCriticalSection(&m_TrueMode.csLock);
+	SafeDelete(m_TrueMode.pcsLock);
 	SafeFree(m_TrueMode.mp_Cmp);
 
 	SafeDelete(mp_Match);
@@ -2049,6 +2049,7 @@ BOOL CRealBuffer::IsTrueColorerBufferChanged()
 	AnnotationHeader aHdr;
 	int nCmp = 0;
 	int nCurMax;
+	MSectionLockSimple CS;
 
 	if (!gpSet->isTrueColorer || !mp_RCon->mp_TrueColorerData)
 		goto wrap;
@@ -2066,7 +2067,7 @@ BOOL CRealBuffer::IsTrueColorerBufferChanged()
 		goto wrap;
 
 	// Compare data
-	EnterCriticalSection(&m_TrueMode.csLock);
+	CS.Lock(m_TrueMode.pcsLock);
 	{
 		size_t cbCurSize = nCurMax*sizeof(*m_TrueMode.mp_Cmp);
 
@@ -2087,7 +2088,7 @@ BOOL CRealBuffer::IsTrueColorerBufferChanged()
 			memcpy(m_TrueMode.mp_Cmp, mp_RCon->mp_TrueColorerData, cbCurSize);
 		}
 	}
-	LeaveCriticalSection(&m_TrueMode.csLock);
+	CS.Unlock();
 
 
 	if (nCmp != 0)
@@ -2805,6 +2806,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 								wchar_t szMacro[96];
 								if (mp_RCon->m_FarInfo.FarVer.dwVerMajor == 1)
 									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i:%i\" Enter $end", cmd.nLine, cmd.nColon);
+								else if (mp_RCon->m_FarInfo.FarVer.IsFarLua())
+									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@if Area.Editor then Keys(\"AltF8\") print(\"%i:%i\") Keys(\"Enter\") end", cmd.nLine, cmd.nColon);
 								else
 									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 print(\"%i:%i\") Enter $end", cmd.nLine, cmd.nColon);
 								_ASSERTE(pVCon!=NULL);

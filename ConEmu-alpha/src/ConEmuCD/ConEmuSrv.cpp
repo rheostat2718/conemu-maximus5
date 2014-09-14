@@ -157,64 +157,105 @@ void ServerInitFont()
 	}
 }
 
-BOOL LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
+bool LoadGuiSettings(ConEmuGuiMapping& GuiMapping)
 {
-	LogFunction(L"LoadGuiSettings");
-
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
+	bool lbNeedReload = false;
+	bool lbNeedCopy = false;
+	DWORD dwGuiThreadId, dwGuiProcessId;
 	HWND hGuiWnd = ghConEmuWnd ? ghConEmuWnd : gpSrv->hGuiWnd;
+	const ConEmuGuiMapping* pInfo = NULL;
 
-	if (hGuiWnd && IsWindow(hGuiWnd))
+	if (!hGuiWnd || !IsWindow(hGuiWnd))
 	{
-		DWORD dwGuiThreadId, dwGuiProcessId;
-		MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
-		dwGuiThreadId = GetWindowThreadProcessId(hGuiWnd, &dwGuiProcessId);
+		LogFunction(L"LoadGuiSettings(Invalid window)");
+		goto wrap;
+	}
 
+	if (!gpSrv->pGuiInfoMap || (gpSrv->hGuiInfoMapWnd != hGuiWnd))
+	{
+		lbNeedReload = true;
+	}
+
+	if (lbNeedReload)
+	{
+		LogFunction(L"LoadGuiSettings(Opening)");
+
+		dwGuiThreadId = GetWindowThreadProcessId(hGuiWnd, &dwGuiProcessId);
 		if (!dwGuiThreadId)
 		{
 			_ASSERTE(dwGuiProcessId);
+			goto wrap;
 		}
-		else
-		{
-			GuiInfoMapping.InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
-			const ConEmuGuiMapping* pInfo = GuiInfoMapping.Open();
 
-			if (pInfo
-				&& pInfo->cbSize == sizeof(ConEmuGuiMapping)
-				&& pInfo->nProtocolVersion == CESERVER_REQ_VER)
-			{
-				memmove(&GuiMapping, pInfo, pInfo->cbSize);
-				_ASSERTE(GuiMapping.ComSpec.ConEmuExeDir[0]!=0 && GuiMapping.ComSpec.ConEmuBaseDir[0]!=0);
-				lbRc = TRUE;
-			}
+		if (!gpSrv->pGuiInfoMap)
+			gpSrv->pGuiInfoMap = new MFileMapping<ConEmuGuiMapping>;
+		else
+			gpSrv->pGuiInfoMap->CloseMap();
+
+		gpSrv->pGuiInfoMap->InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
+		pInfo = gpSrv->pGuiInfoMap->Open();
+
+		if (pInfo)
+		{
+			gpSrv->hGuiInfoMapWnd = hGuiWnd;
 		}
 	}
+	else
+	{
+		pInfo = gpSrv->pGuiInfoMap->Ptr();
+	}
+
+	if (!pInfo
+		|| (pInfo->cbSize != sizeof(ConEmuGuiMapping))
+		|| (pInfo->nProtocolVersion != CESERVER_REQ_VER))
+	{
+		LogFunction(L"LoadGuiSettings(Failed, size or ver)");
+		goto wrap;
+	}
+
+	lbNeedCopy = lbNeedReload
+		|| (gpSrv->guiSettingsChangeNum != pInfo->nChangeNum)
+		|| (GuiMapping.bGuiActive != pInfo->bGuiActive)
+		;
+
+	if (lbNeedCopy)
+	{
+		LogFunction(L"LoadGuiSettings(Changed)");
+		memmove(&GuiMapping, pInfo, pInfo->cbSize);
+		_ASSERTE(GuiMapping.ComSpec.ConEmuExeDir[0]!=0 && GuiMapping.ComSpec.ConEmuBaseDir[0]!=0);
+		lbRc = true;
+	}
+
+wrap:
 	return lbRc;
 }
 
-BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
+void ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 {
-	LogFunction(L"ReloadGuiSettings");
+	bool lbChanged = false;
 
-	BOOL lbRc = FALSE;
 	if (apFromCmd)
 	{
+		LogFunction(L"ReloadGuiSettings(apFromCmd)");
 		DWORD cbSize = min(sizeof(gpSrv->guiSettings), apFromCmd->cbSize);
 		memmove(&gpSrv->guiSettings, apFromCmd, cbSize);
 		_ASSERTE(cbSize == apFromCmd->cbSize);
 		gpSrv->guiSettings.cbSize = cbSize;
-		lbRc = TRUE;
+		lbChanged = true;
 	}
 	else
 	{
 		gpSrv->guiSettings.cbSize = sizeof(ConEmuGuiMapping);
-		lbRc = LoadGuiSettings(gpSrv->guiSettings)
+		lbChanged = LoadGuiSettings(gpSrv->guiSettings)
 			&& ((gpSrv->guiSettingsChangeNum != gpSrv->guiSettings.nChangeNum)
 				|| (gpSrv->pConsole && gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0] == 0));
 	}
 
-	if (lbRc)
+	if (lbChanged)
 	{
+		LogFunction(L"ReloadGuiSettings(Apply)");
+
 		gpSrv->guiSettingsChangeNum = gpSrv->guiSettings.nChangeNum;
 
 		gbLogProcess = (gpSrv->guiSettings.nLoggingType == glt_Processes);
@@ -239,12 +280,7 @@ BOOL ReloadGuiSettings(ConEmuGuiMapping* apFromCmd)
 
 			UpdateConsoleMapHeader();
 		}
-		else
-		{
-			lbRc = FALSE;
-		}
 	}
-	return lbRc;
 }
 
 // AutoAttach делать нельзя, когда ConEmu запускает процесс обновления
@@ -1518,9 +1554,9 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	//if (gpSrv->psChars) { free(gpSrv->psChars); gpSrv->psChars = NULL; }
 	//if (gpSrv->pnAttrs) { free(gpSrv->pnAttrs); gpSrv->pnAttrs = NULL; }
 	//if (gpSrv->ptrLineCmp) { free(gpSrv->ptrLineCmp); gpSrv->ptrLineCmp = NULL; }
-	//DeleteCriticalSection(&gpSrv->csConBuf);
-	//DeleteCriticalSection(&gpSrv->csChar);
-	//DeleteCriticalSection(&gpSrv->csChangeSize);
+	//Delete Critical Section(&gpSrv->csConBuf);
+	//Delete Critical Section(&gpSrv->csChar);
+	//Delete Critical Section(&gpSrv->csChangeSize);
 	SafeCloseHandle(gpSrv->hAllowInputEvent);
 	SafeCloseHandle(gpSrv->hRootProcess);
 	SafeCloseHandle(gpSrv->hRootThread);
@@ -2946,6 +2982,9 @@ int CreateMapHeader()
 		goto wrap;
 	}
 
+	if (!gpSrv->pGuiInfoMap)
+		gpSrv->pGuiInfoMap = new MFileMapping<ConEmuGuiMapping>;
+
 	gpSrv->pConsoleMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
 
 	if (!gpSrv->pConsoleMap)
@@ -3190,7 +3229,8 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	const AnnotationHeader* pHdr = NULL;
 	int nHdrSize;
 
-	EnterCriticalSection(&gpSrv->csColorerMappingCreate);
+	MSectionLockSimple CS;
+	CS.Lock(&gpSrv->csColorerMappingCreate);
 
 	// По идее, не должно быть пересоздания TrueColor мэппинга, разве что при Detach/Attach
 	_ASSERTE((gpSrv->pColorerMapping == NULL) || (gbAttachMode == am_Simple));
@@ -3300,7 +3340,7 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	//}
 
 wrap:
-	LeaveCriticalSection(&gpSrv->csColorerMappingCreate);
+	CS.Unlock();
 	return iRc;
 }
 
@@ -3325,6 +3365,12 @@ void CloseMapHeader()
 	{
 		free(gpSrv->pConsoleDataCopy);
 		gpSrv->pConsoleDataCopy = NULL;
+	}
+
+	if (gpSrv->pConsoleMap)
+	{
+		free(gpSrv->pConsoleMap);
+		gpSrv->pConsoleMap = NULL;
 	}
 }
 
@@ -4486,7 +4532,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			if (gpLogSize)
 			{
 				char szInfo[128];
-				_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: RefreshThread: Sleep changed, speed(%s)", bNewFellInSleep ? "high" : "low");
+				_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: RefreshThread: Sleep changed, speed(%s)",
+					(!bNewActive || bNewFellInSleep) ? "low" : "high");
 				LogString(szInfo);
 			}
 		}
