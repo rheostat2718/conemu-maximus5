@@ -231,7 +231,6 @@ bool CShellProc::GetLinkProperties(LPCWSTR asLnkFile, CmdArg& rsExe, CmdArg& rsA
 	IShellLinkW*  pShellLink = NULL;
 	HRESULT hr;
 	DWORD nLnkSize;
-	wchar_t szPath[MAX_PATH+1];
 	static bool bCoInitialized = false;
 
 	if (!FileExists(asLnkFile, &nLnkSize))
@@ -260,7 +259,7 @@ bool CShellProc::GetLinkProperties(LPCWSTR asLnkFile, CmdArg& rsExe, CmdArg& rsA
 		goto wrap;
 
 	hr = pShellLink->GetPath(rsExe.GetBuffer(MAX_PATH), MAX_PATH, NULL, 0);
-	if (FAILED(hr) || !*szPath)
+	if (FAILED(hr) || rsExe.IsEmpty())
 		goto wrap;
 
 	hr = pShellLink->GetWorkingDirectory(rsWorkDir.GetBuffer(MAX_PATH+1), MAX_PATH+1);
@@ -905,7 +904,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, BOOL abNewConsole
 				LPCWSTR pszExt = PointToExt(ms_ExeTmp);
 				if (pszExt && (lstrcmpi(pszExt, L".exe") == 0 || lstrcmpi(pszExt, L".com") == 0))
 				{
-					DWORD nCheckSybsystem = 0, nCheckBits = 0, nFileAttrs;
+					DWORD nCheckSybsystem = 0, nCheckBits = 0;
 					if (FindImageSubsystem(ms_ExeTmp, nCheckSybsystem, nCheckBits))
 					{
 						if (nCheckSybsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE && nCheckBits == 16)

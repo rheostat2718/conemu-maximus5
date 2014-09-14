@@ -59,7 +59,7 @@ static bool gb_CreatingActive = false, gb_SkipSyncSize = false;
 static UINT gn_CreateGroupStartVConIdx = 0;
 static bool gb_InCreateGroup = false;
 
-static CRITICAL_SECTION gcs_VGroups;
+static MSectionSimple* gpcs_VGroups = NULL;
 static CVConGroup* gp_VGroups[MAX_CONSOLE_COUNT*2] = {}; // на каждое разбиение добавляется +Parent
 
 //CVirtualConsole* CVConGroup::mp_GrpVCon[MAX_CONSOLE_COUNT] = {};
@@ -142,12 +142,12 @@ CVConGroup* CGroupGuard::VGroup()
 
 void CVConGroup::Initialize()
 {
-	InitializeCriticalSection(&gcs_VGroups);
+	gpcs_VGroups = new MSectionSimple(true);
 }
 
 void CVConGroup::Deinitialize()
 {
-	DeleteCriticalSection(&gcs_VGroups);
+	SafeDelete(gpcs_VGroups);
 }
 
 
@@ -319,7 +319,7 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 	mp_ActiveGroupVConPtr = NULL;
 
 
-	MSectionLockSimple lockGroups; lockGroups.Lock(&gcs_VGroups);
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 
 	bool bAdded = false;
 	for (size_t i = 0; i < countof(gp_VGroups); i++)
@@ -356,7 +356,7 @@ void CVConGroup::RemoveGroup()
 	_ASSERTE(mp_Grp1==NULL && mp_Grp2==NULL);
 
 
-	MSectionLockSimple lockGroups; lockGroups.Lock(&gcs_VGroups);
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 
 	if (mp_Parent)
 	{
@@ -3655,6 +3655,23 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 
 	if (args->pszSpecialCmd)
 	{
+		// Issue 1711: May be that is smth like?
+		// ""C:\Windows\...\powershell.exe" -noprofile -new_console:t:"PoSh":d:"C:\Users""
+		// Start/End quotes need to be removed
+		CmdArg szExe; BOOL bNeedCutQuot = FALSE;
+		bool bNeedCmd = IsNeedCmd(FALSE, args->pszSpecialCmd, szExe, NULL, &bNeedCutQuot);
+		if (!bNeedCmd && bNeedCutQuot)
+		{
+			int nLen = lstrlen(args->pszSpecialCmd);
+			_ASSERTE(nLen > 4);
+			// Cut first quote
+			_ASSERTE(args->pszSpecialCmd[0] == L'"' && args->pszSpecialCmd[1] == L'"');
+			wmemmove(args->pszSpecialCmd, args->pszSpecialCmd+1, nLen);
+			// And trim one end quote
+			_ASSERTE(args->pszSpecialCmd[nLen-2] == L'"' && args->pszSpecialCmd[nLen-1] == 0);
+			args->pszSpecialCmd[nLen-2] = 0;
+		}
+		// Process "-new_console" switches
 		args->ProcessNewConArg(abForceCurConsole);
 	}
 
@@ -4148,7 +4165,7 @@ void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
 
 void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync)
 {
-	MSectionLockSimple lockGroups; lockGroups.Lock(&gcs_VGroups);
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	CVConGuard VCon(mp_Item);
 
 	// Некорректно. Нужно прокрутку просто вводить. А игнорировать установку размера окна нельзя.
@@ -4241,7 +4258,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 // В принципе, эту функцию можно было бы и в CConEmu оставить, но для общности путь здесь будет
 void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN or CER_MAINCLIENT*/, COORD size, bool bSetRedraw /*= false*/)
 {
-	MSectionLockSimple lockGroups; lockGroups.Lock(&gcs_VGroups);
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	CVConGuard VCon(gp_VActive);
 	CVConGroup* pRoot = GetRootOfVCon(VCon.VCon());
 
