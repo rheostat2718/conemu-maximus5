@@ -1,5 +1,4 @@
 ﻿#labels Featured
-
 You can show your appreciation and support future development by donating.
 Donate (!PayPal) button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
@@ -8,7 +7,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 ==Build 140914==
-  * Wrong macro was sended to Far 3 (Lua) on hyperlink click if file was already opened.
+  * Wrong macro was sent to Far 3 (Lua) on hyperlink click if file was already opened.
   * Fix drop files to Far command line. Add menu items to press ‘Enter’ after goto/edit/view.
   * Fix wrong ‘sleep/speed’ written to the log.
   * Avoid numerous writing of equal lines to log (console size).
