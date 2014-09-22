@@ -24,6 +24,7 @@ SRCS = \
 		Attach.cpp         \
 		Background.cpp     \
 		BaseDragDrops.cpp  \
+		CmdHistory.cpp     \
 		CmdTasks.cpp       \
 		ConEmu.cpp         \
 		ConEmuApp.cpp      \
@@ -63,6 +64,10 @@ SRCS = \
 		RunQueue.cpp       \
 		ScreenDump.cpp     \
 		SearchCtrl.cpp     \
+		SetDlgButtons.cpp  \
+		SetDlgColors.cpp   \
+		SetDlgFonts.cpp    \
+		SetDlgLists.cpp    \
 		Status.cpp         \
 		TabBar.cpp         \
 		TabCtrlBase.cpp    \

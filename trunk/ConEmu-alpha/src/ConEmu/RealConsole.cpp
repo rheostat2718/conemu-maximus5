@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Inside.h"
 #include "Macro.h"
 #include "Menu.h"
+#include "OptionsClass.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
 #include "RunQueue.h"
@@ -1595,7 +1596,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 
 			if (wParam || lParam)
 			{
-				PostConsoleMessage(m_ChildGui.hGuiWnd, msg, wParam, lParam);
+				lbRc = PostConsoleMessage(m_ChildGui.hGuiWnd, msg, wParam, lParam);
 			}
 		}
 
@@ -1622,9 +1623,9 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 
 	if (piRec->EventType == MOUSE_EVENT)
 	{
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		static DWORD nLastBtnState;
-#endif
+		#endif
 		//WARNING!!! Тут проблема следующая.
 		// Фаровский AltIns требует получения MOUSE_MOVE в той же координате, где прошел клик.
 		//  Иначе граббинг начинается не с "кликнутой" а со следующей позиции.
@@ -1665,9 +1666,9 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
 		m_LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
 		m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
-#ifdef _DEBUG
+		#ifdef _DEBUG
 		nLastBtnState = piRec->Event.MouseEvent.dwButtonState;
-#endif
+		#endif
 		//#ifdef _DEBUG
 		//wchar_t szDbg[60];
 		//swprintf_c(szDbg, L"ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
@@ -1676,7 +1677,19 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 	}
 	else if (piRec->EventType == KEY_EVENT)
 	{
-#if 0
+		// github#19: don't post Enter/Space KeyUp events to the console input buffer
+		if (!piRec->Event.KeyEvent.bKeyDown && (piRec->Event.KeyEvent.uChar.UnicodeChar <= L' ')
+			&& !isFar())
+		{
+			switch (piRec->Event.KeyEvent.wVirtualKeyCode)
+			{
+			case VK_RETURN:
+			case VK_SPACE:
+				return false;
+			}
+		}
+
+		#if 0
 		if (piRec->Event.KeyEvent.uChar.UnicodeChar == 3/*'^C'*/
 			&& (piRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS)
 			&& ((piRec->Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
@@ -1695,7 +1708,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 			}
 
 			goto wrap;
-#if 0
+			#if 0
 			if (piRec->Event.KeyEvent.bKeyDown)
 			{
 				bool bGenerated = false;
@@ -1729,9 +1742,9 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 				lbRc = true;
 				goto wrap;
 			}
-#endif
+			#endif
 		}
-#endif
+		#endif
 
 		if (!piRec->Event.KeyEvent.wRepeatCount)
 		{
@@ -1781,7 +1794,6 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		}
 	}
 
-//wrap:
 	return lbRc;
 }
 
@@ -2630,7 +2642,8 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 					//mp_VCon->Redraw();
 					//#endif
 
-					mp_VCon->Invalidate();
+					if (mp_VCon->GetView())
+						mp_VCon->Invalidate();
 					mn_LastInvalidateTick = GetTickCount();
 				}
 			}

@@ -45,6 +45,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define MIN_CON_HEIGHT 7
 #define MIN_CON_WIDTH 4
 #define MIN_CON_HEIGHT 2
+#define DEF_CON_WIDTH RELEASEDEBUGTEST(80,110)
+#define DEF_CON_HEIGHT RELEASEDEBUGTEST(25,35)
 #define GUI_ATTACH_TIMEOUT 5000
 
 #define CONSOLE_PROCESSES_MAX 20
@@ -942,9 +944,16 @@ struct FarVersion
 	};
 	DWORD dwBuild;
 
+	// Macro language changed to Lua
 	bool IsFarLua() const
 	{
 		return ((dwVerMajor > 3) || ((dwVerMajor == 3) && (dwBuild >= 2851)));
+	};
+
+	// Userscreen is now 'Desktop' window with index '0'
+	bool IsDesktop() const
+	{
+		return ((dwVerMajor > 3) || ((dwVerMajor == 3) && (dwBuild >= 4039)));
 	};
 };
 

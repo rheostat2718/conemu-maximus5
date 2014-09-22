@@ -620,7 +620,9 @@ void OnMainThreadActivated()
 	}
 
 	// Retrieve current panel CD's
-	if ((gnCurrentWindowType == WTYPE_PANELS) && !isMacroActive(iMacroActive))
+	// Remove (gnCurrentWindowType == WTYPE_PANELS) restriction,
+	// panel paths may be changed even from editor
+	if (!isMacroActive(iMacroActive))
 	{
 		UpdatePanelDirs();
 	}
@@ -2925,6 +2927,8 @@ BOOL ProcessCommand(DWORD nCmd, BOOL bReqMainThread, LPVOID pCommandData, CESERV
 					_wcscpy_c(pszMacro, cchMax, L"@^$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 \"");
 				else if (!gFarVersion.IsFarLua())
 					_wcscpy_c(pszMacro, cchMax, L"@^$if(Viewer || Editor) F12 0 $end $if(Shell) ShiftF4 print(\"");
+				else if (gFarVersion.IsDesktop()) // '0' is 'Desktop' now
+					_wcscpy_c(pszMacro, cchMax, L"@^if Area.Viewer or Area.Editor then Keys(\"F12 1\") end if Area.Shell then Keys(\"ShiftF4\") print(\"");
 				else
 					_wcscpy_c(pszMacro, cchMax, L"@^if Area.Viewer or Area.Editor then Keys(\"F12 0\") end if Area.Shell then Keys(\"ShiftF4\") print(\"");
 				wchar_t* pDst = pszMacro + lstrlen(pszMacro);

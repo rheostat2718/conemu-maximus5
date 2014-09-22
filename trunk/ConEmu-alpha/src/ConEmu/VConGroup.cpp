@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfirmDlg.h"
 #include "Inside.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "RealConsole.h"
 #include "RunQueue.h"
 #include "Status.h"
@@ -800,7 +801,8 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 	int nMinCells = (m_SplitType == RConStartArgs::eSplitVert) ? MIN_CON_HEIGHT : MIN_CON_WIDTH;
 
 	// Нашли? Корректируем mn_SplitPercent10
-	if (mp_Grp1 && mp_Grp1->mp_Item && mp_Grp2 && mp_Grp2->mp_Item && (nCellSize > 0))
+	// mp_Item может быть NULL если этот mp_Grp в свою очередь разбит
+	if (mp_Grp1 && mp_Grp2 && (nCellSize > 0))
 	{
 		RECT rcCon1 = {0}, rcCon2 = {0}, rcSplitter = {0};
 		CalcSplitRect(mrc_Full, rcCon1, rcCon2, rcSplitter);
@@ -4043,16 +4045,12 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				int nH = (rc.bottom - rc.top) / gpSetCls->FontHeight();
 				rc.left = 0; rc.top = 0; rc.right = nW; rc.bottom = nH;
 
-				//2010-01-19
+				//2010-01-19 - Sort of Windows95 'Auto' option in the font size list box
 				if (gpSet->isFontAutoSize)
 				{
-					//if (gpConEmu->wndWidth && rc.right > (LONG)gpConEmu->wndWidth)
-					//	rc.right = gpConEmu->wndWidth;
-
-					//if (gpConEmu->wndHeight && rc.bottom > (LONG)gpConEmu->wndHeight)
-					//	rc.bottom = gpConEmu->wndHeight;
-
-					TODO("Проверить, нужно ли это?");
+					// При масштабировании шрифта под размер окна (в пикселях)
+					// требуется зафиксировать размер консоли (в символах)
+					// Эта ветка гарантирует, что размер не превысит заданный в настройках
 
 					SIZE curSize = gpConEmu->GetDefaultSize(true);
 
@@ -4572,11 +4570,9 @@ bool CVConGroup::PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*
 	if (!rcCon.right || !rcCon.bottom)
 	{
 		Assert(rcCon.right && rcCon.bottom);
-		//rcCon.right = gpConEmu->wndWidth;
-		//rcCon.bottom = gpConEmu->wndHeight;
-		SIZE szCon = gpConEmu->GetDefaultSize(true);
-		rcCon.right = szCon.cx;
-		rcCon.bottom = szCon.cy;
+		// Исключительная ситуация, сюда попадать мы не должны
+		rcCon.right = DEF_CON_WIDTH;
+		rcCon.bottom = DEF_CON_HEIGHT;
 	}
 
 	COORD size = {rcCon.right, rcCon.bottom};
