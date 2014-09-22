@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Macro.h"
 #include "Match.h"
 #include "Menu.h"
+#include "OptionsClass.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
 #include "Status.h"
@@ -1306,21 +1307,8 @@ BOOL CRealBuffer::PreInit()
 	HEAPVAL;
 	RECT rcCon;
 
-	// "!(gpConEmu->isZoomed() || gpConEmu->isFullScreen())" дает не то...
-
-	// Если настроенно-развернутое окно запускается минимизированным
-	// то брать нужно "максимизированные" размеры, а не wndWidth/wndHeight
-	if (gpConEmu->isWindowNormal() && gpConEmu->isIconic())
-	{
-		// Сюда попадаем только при wmNormal&Minimized
-		//rcCon = MakeRect(gpConEmu->wndWidth, gpConEmu->wndHeight);
-		SIZE sz = gpConEmu->GetDefaultSize(true);
-		rcCon = MakeRect(sz.cx, sz.cy);
-	}
-	else
-	{
-		rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, mp_RCon->mp_VCon);
-	}
+	// Even if our window was minimized, CalcRect will use proper sizes (mrc_StoredNormalRect for example)
+	rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, mp_RCon->mp_VCon);
 
 	_ASSERTE(rcCon.right!=0 && rcCon.bottom!=0);
 
@@ -2982,7 +2970,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 
 								// Prepared, можно звать плагин
 								VCon->RCon()->PostCommand(CMD_OPENEDITORLINE, sizeof(cmd), &cmd);
-								gpConEmu->Activate(VCon.VCon());
+								if (gpConEmu->isActive(VCon.VCon(), false))
+									gpConEmu->Activate(VCon.VCon());
 							}
 						}
 					}
@@ -3292,7 +3281,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	// При правом клике на KeyBar'е - показать PopupMenu с вариантами модификаторов F-клавиш
 	TODO("Пока только для Far Manager?");
 	if ((m_Type == rbt_Primary) && (gpSet->isKeyBarRClick)
-		&& ((messg == WM_RBUTTONDOWN && (crMouse.Y == (GetTextHeight() - 1)) && mp_RCon->isFarKeyBarShown())
+		&& ((messg == WM_RBUTTONDOWN && (crMouse.Y == (GetBufferHeight() - 1)) && mp_RCon->isFarKeyBarShown())
 			|| ((messg == WM_MOUSEMOVE || messg == WM_RBUTTONUP) && con.bRClick4KeyBar)))
 	{
 		if (messg == WM_RBUTTONDOWN)
@@ -3300,7 +3289,8 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			MSectionLock csData;
 			wchar_t* pChar = NULL;
 			int nLen = 0;
-			if (GetConsoleLine(crMouse.Y, &pChar, &nLen, &csData) && (*pChar == L'1'))
+			COORD lcrScr = BufferToScreen(crMouse);
+			if (GetConsoleLine(lcrScr.Y, &pChar, &nLen, &csData) && (*pChar == L'1'))
 			{
 				// Т.к. ширина баров переменная, ищем
 				int x, k, px = 0, vk = 0;
@@ -3313,7 +3303,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 						if ((((int)pChar[x] - L'0') == k) && (pChar[x-1] == L' ')
 							&& (pChar[x+1] < L'0' || pChar[x+1] > L'9'))
 						{
-							if ((crMouse.X <= (x - 1)) && (crMouse.X >= px))
+							if ((lcrScr.X <= (x - 1)) && (lcrScr.X >= px))
 							{
 								vk = VK_F1 + (k - 2);
 								break;
@@ -3327,7 +3317,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 						if ((pChar[x] == L'1') && (((int)pChar[x+1] - L'0') == (k-10)) && (pChar[x-1] == L' ')
 							&& (pChar[x+2] < L'0' || pChar[x+2] > L'9'))
 						{
-							if ((crMouse.X <= (x - 1)) && (crMouse.X >= px))
+							if ((lcrScr.X <= (x - 1)) && (lcrScr.X >= px))
 							{
 								px++;
 								vk = VK_F1 + (k - 2);
@@ -3348,8 +3338,8 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 				if (vk)
 				{
 					con.bRClick4KeyBar = TRUE;
-					con.crRClick4KeyBar = crMouse;
-					con.ptRClick4KeyBar = mp_RCon->mp_VCon->ConsoleToClient((vk==VK_F1)?(px+1):(px+2), crMouse.Y);
+					con.crRClick4KeyBar = lcrScr;
+					con.ptRClick4KeyBar = mp_RCon->mp_VCon->ConsoleToClient((vk==VK_F1)?(px+1):(px+2), lcrScr.Y);
 					ClientToScreen(mp_RCon->GetView(), &con.ptRClick4KeyBar);
 					con.nRClickVK = vk;
 					return true;

@@ -33,10 +33,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ShlObj.h>
 #pragma warning(default: 4091)
 #include "ConEmu.h"
-#include "Recreate.h"
-#include "VirtualConsole.h"
-#include "VConGroup.h"
+#include "DpiAware.h"
+#include "OptionsClass.h"
 #include "RealConsole.h"
+#include "Recreate.h"
+#include "VConGroup.h"
+#include "VirtualConsole.h"
 
 CRecreateDlg::CRecreateDlg()
 	: mh_Dlg(NULL)
@@ -415,16 +417,11 @@ INT_PTR CRecreateDlg::OnFillCmdList(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 	// Может быть позван после очистки истории из меню, тогда нет смысла и дергаться
 	if (wParam)
 	{
-		LPCWSTR pszHistory = gpSet->HistoryGet();
-
-		if (pszHistory)
+		int index = 0;
+		LPCWSTR pszHistory;
+		while ((pszHistory = gpSet->HistoryGet(index++)) != NULL)
 		{
-			while (*pszHistory)
-			{
-				AddCommandList(pszHistory);
-
-				pszHistory += _tcslen(pszHistory)+1;
-			}
+			AddCommandList(pszHistory);
 		}
 	}
 
