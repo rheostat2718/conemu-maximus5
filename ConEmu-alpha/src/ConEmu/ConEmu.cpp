@@ -471,6 +471,7 @@ CConEmuMain::CConEmuMain()
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = ms_ConEmuWorkDir[0] = 0;
 	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
 	ms_ConEmuXml[0] = ms_ConEmuIni[0] = ms_ConEmuChm[0] = 0;
+	mb_ForceUseRegistry = false;
 
 	wchar_t *pszSlash = NULL;
 
@@ -1108,8 +1109,18 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/)
 	return true;
 }
 
+void CConEmuMain::SetForceUseRegistry()
+{
+	mb_ForceUseRegistry = true;
+}
+
 LPWSTR CConEmuMain::ConEmuXml()
 {
+	if (mb_ForceUseRegistry)
+	{
+		return L"";
+	}
+
 	if (ms_ConEmuXml[0])
 	{
 		if (FileExists(ms_ConEmuXml))
@@ -1121,8 +1132,11 @@ LPWSTR CConEmuMain::ConEmuXml()
 	// Ищем файл портабельных настроек (возвращаем первый найденный, приоритет...)
 	LPWSTR pszSearchXml[] = {
 		ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"),
+		ExpandEnvStr(L"%ConEmuDir%\\.ConEmu.xml"),
 		ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"),
+		ExpandEnvStr(L"%ConEmuBaseDir%\\.ConEmu.xml"),
 		ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"),
+		ExpandEnvStr(L"%APPDATA%\\.ConEmu.xml"),
 		NULL
 	};
 
@@ -4887,6 +4901,10 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 		if (nFarStatus&CES_WASPROGRESS) wcscat_c(szFlags, L"%%Progress ");
 		//CheckDlgButton(hInfo, cbsProgress, ((nFarStatus&CES_WASPROGRESS) /*|| VCon->RCon()->GetProgress(NULL)>=0*/) ? BST_CHECKED : BST_UNCHECKED);
 		if (nFarStatus&CES_OPER_ERROR) wcscat_c(szFlags, L"%%Error ");
+		//CodePage
+		_wsprintf(szNo, SKIPLEN(countof(szNo)) L"CP:%u:%u ", VCon->RCon()->GetConsoleCP(), VCon->RCon()->GetConsoleOutputCP());
+		wcscat_c(szFlags, szNo);
+
 		//CheckDlgButton(hInfo, cbsProgressError, (nFarStatus&CES_OPER_ERROR) ? BST_CHECKED : BST_UNCHECKED);
 		_wsprintf(szNo, SKIPLEN(countof(szNo)) L"%i/%i", VCon->RCon()->GetFarPID(), VCon->RCon()->GetFarPID(TRUE));
 	}
