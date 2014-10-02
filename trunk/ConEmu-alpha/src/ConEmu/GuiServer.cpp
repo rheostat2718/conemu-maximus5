@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "VConGroup.h"
+#include "VConRelease.h"
 #include "VirtualConsole.h"
 
 #ifdef USEPIPELOG
@@ -381,6 +382,8 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		{
 			MCHKHEAP;
 
+			// SRVSTART не приходит если запускается cmd под админом
+
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET);
 			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 				goto wrap;
@@ -611,6 +614,33 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			lbRc = TRUE;
 			break;
 		} // CECMD_GUIMACRO
+
+		case CECMD_CMDSTARTSTOP:
+		{
+			CRealServer* pRSrv = NULL;
+			CVConGuard VCon;
+			if (CVConGroup::GetVConBySrvPID(pIn->hdr.nSrcPID, &VCon))
+				pRSrv = &VCon->RCon()->m_RConServer;
+			if (pRSrv)
+			{
+				CESERVER_REQ* pOut = pRSrv->cmdStartStop(pInst, pIn, pIn->DataSize());
+				if (pOut)
+				{
+					DWORD nDataSize = pOut->DataSize();
+					pcbReplySize = pOut->hdr.cbSize;
+					if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pOut->hdr.nCmd, pcbReplySize))
+					{
+						if (nDataSize > 0)
+						{
+							memmove(ppReply->Data, pOut->Data, nDataSize);
+						}
+						lbRc = TRUE;
+					}
+					ExecuteFreeResult(pOut);
+				}
+			}
+			break;
+		} // CECMD_CMDSTARTSTOP
 
 		//case CECMD_DEFTERMSTARTED:
 		//{
