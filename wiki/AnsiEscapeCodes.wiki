@@ -111,6 +111,7 @@ if "%ConEmuANSI%"=="OFF" echo Disabled
 || ESC [ 48 ; 5 ; _n_ m || Set xterm background color, _n_ is color index from 0 to 255 ||
 || ESC [ 48 ; 2 ; _r_ ; _g_ ; _b_ m || Set xterm 24-bit background color, _r_, _g_, _b_ are from 0 to 255 ||
 || ESC [ 49 m || Reset background color to defauls ||
+|| ESC [ 30…37 m || Set ANSI text color ||
 
 ==OSC (Operating system commands)==
 *Note*. These codes may ends with ‘ESC\’ (two symbols - ESC and !BackSlash) or ‘BELL’ (symbol with code \x07, same as ‘^a’ in `*`nix).
