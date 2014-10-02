@@ -8755,7 +8755,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	//mb_PicViewWasHidden = FALSE;
 
 	if (ghOpWnd && isActive())
-		gpSetCls->UpdateConsoleMode(mp_RBuf->GetConMode());
+		gpSetCls->UpdateConsoleMode(mp_RBuf->GetConInMode(), mp_RBuf->GetConOutMode());
 
 	if (isActive())
 	{
@@ -11692,6 +11692,17 @@ wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)
 	CmdArg szCurDir;
 	m_Args.pszStartupDir = GetConsoleCurDir(szCurDir) ? szCurDir.ms_Arg : NULL;
 
+	SafeFree(m_Args.pszRenameTab);
+	CTab tab(__FILE__,__LINE__);
+	if (GetTab(0, tab) && (tab->Flags() & fwt_Renamed))
+	{
+		LPCWSTR pszRenamed = tab->Renamed.Ptr();
+		if (pszRenamed && *pszRenamed)
+		{
+			m_Args.pszRenameTab = lstrdup(pszRenamed);
+		}
+	}
+
 	wchar_t* pszCmd = m_Args.CreateCommandLine(abForTasks);
 
 	m_Args.pszStartupDir = pszDirSave;
@@ -12798,7 +12809,7 @@ bool CRealConsole::isSendMouseAllowed()
 	if (!this || (mp_ABuf->m_Type != rbt_Primary))
 		return false;
 
-	if (mp_ABuf->GetConsoleMode() & ENABLE_QUICK_EDIT_MODE)
+	if (mp_ABuf->GetConInMode() & ENABLE_QUICK_EDIT_MODE)
 		return false;
 
 	return true;
@@ -12980,6 +12991,12 @@ wrap:
 	return szDir.IsEmpty() ? NULL : (LPCWSTR)szDir;
 }
 
+void CRealConsole::GetPanelDirs(CmdArg& szActiveDir, CmdArg& szPassive)
+{
+	szActiveDir.Set(ms_CurWorkDir);
+	szPassive.Set(isFar() ? ms_CurPassiveDir : L"");
+}
+
 void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 {
 	if (!pNewCurDir || ((pNewCurDir->iActiveCch <= 0) && (pNewCurDir->iPassiveCch <= 0)))
@@ -13106,16 +13123,6 @@ void CRealConsole::OnConsoleLangChange(DWORD_PTR dwNewKeybLayout)
 		}
 	}
 }
-
-DWORD CRealConsole::GetConsoleStates()
-{
-	if (!this) return 0;
-
-	// Что именно хотим узать? Real или Active?
-	_ASSERTE(mp_ABuf==mp_RBuf);
-	return mp_RBuf->GetConMode();
-}
-
 
 void CRealConsole::CloseColorMapping()
 {
@@ -14213,20 +14220,25 @@ void CRealConsole::ShowPropertiesDialog()
 
 DWORD CRealConsole::GetConsoleCP()
 {
-	/*return con.m_dwConsoleCP;*/
 	return mp_RBuf->GetConsoleCP();
 }
 
 DWORD CRealConsole::GetConsoleOutputCP()
 {
-	/*return con.m_dwConsoleOutputCP;*/
 	return mp_RBuf->GetConsoleOutputCP();
 }
 
-DWORD CRealConsole::GetConsoleMode()
+void CRealConsole::GetConsoleModes(WORD& nConInMode, WORD& nConOutMode)
 {
-	/*return con.m_dwConsoleMode;*/
-	return mp_RBuf->GetConMode();
+	if (this && mp_RBuf)
+	{
+		nConInMode = mp_RBuf->GetConInMode();
+		nConOutMode = mp_RBuf->GetConOutMode();
+	}
+	else
+	{
+		nConInMode = nConOutMode = 0;
+	}
 }
 
 ExpandTextRangeType CRealConsole::GetLastTextRangeType()

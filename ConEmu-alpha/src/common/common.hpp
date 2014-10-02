@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    140
+#define CESERVER_REQ_VER    141
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -420,6 +420,7 @@ const CECMD
 	CECMD_SETCONSCRBUF   = 77, // CESERVER_REQ_SETCONSCRBUF - temporarily block active server reading thread to change console buffer size
 	CECMD_PORTABLESTART  = 78, // CESERVER_REQ_PORTABLESTARTED - used when XxxPortable.exe starts Xxx.exe (paf - kitty, tcc, etc.)
 	CECMD_STORECURDIR    = 79, // CESERVER_REQ_STORECURDIR <== GetCurrentDirectory()
+	CECMD_GETALLPANELS   = 80, // Result ==> CESERVER_REQ_GETALLPANELS
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -824,6 +825,18 @@ enum PaintBackgroundPlaces
 #define BkPanelInfo_FormatMax MAX_PATH
 #define BkPanelInfo_HostFileMax 32768
 
+struct BkPanelInfo
+{
+	BOOL bVisible;   // Наличие панели
+	BOOL bFocused;   // В фокусе
+	BOOL bPlugin;    // Плагиновая панель
+	int  nPanelType; // enum PANELINFOTYPE
+	wchar_t *szCurDir/*[32768]*/;    // Текущая папка на панели
+	wchar_t *szFormat/*[MAX_PATH]*/; // Доступно только в FAR2, в FAR3 это может быть префикс, если "формат" плагином не опереден
+	wchar_t *szHostFile/*[32768]*/;  // Доступно только в FAR2
+	RECT rcPanelRect; // Консольные кооринаты панели. В FAR 2+ с ключом /w верх может быть != {0,0}
+};
+
 struct PaintBackgroundArg
 {
 	DWORD cbSize;
@@ -865,17 +878,6 @@ struct PaintBackgroundArg
 
 	// Инфорация о панелях
 	BOOL bPanelsAllowed;
-	typedef struct tag_BkPanelInfo
-	{
-		BOOL bVisible;   // Наличие панели
-		BOOL bFocused;   // В фокусе
-		BOOL bPlugin;    // Плагиновая панель
-		int  nPanelType; // enum PANELINFOTYPE
-		wchar_t *szCurDir/*[32768]*/;    // Текущая папка на панели
-		wchar_t *szFormat/*[MAX_PATH]*/; // Доступно только в FAR2, в FAR3 это может быть префикс, если "формат" плагином не опереден
-		wchar_t *szHostFile/*[32768]*/;  // Доступно только в FAR2
-		RECT rcPanelRect; // Консольные кооринаты панели. В FAR 2 с ключом /w верх может быть != {0,0}
-	} BkPanelInfo;
 	BkPanelInfo LeftPanel;
 	BkPanelInfo RightPanel;
 
@@ -1432,7 +1434,8 @@ struct CESERVER_REQ_CONINFO_INFO
 	CONSOLE_CURSOR_INFO ci;
 	DWORD dwConsoleCP;
 	DWORD dwConsoleOutputCP;
-	DWORD dwConsoleMode;
+	WORD  dwConsoleInMode;
+	WORD  dwConsoleOutMode;
 	DWORD dwSbiSize;
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 	COORD crWindow; // Для удобства - размер ОКНА (не буфера) при последнем ReadConsoleData
@@ -1980,6 +1983,14 @@ struct CESERVER_REQ_STORECURDIR
 	wchar_t szDir[1];   // Variable length;
 };
 
+// CECMD_GETALLPANELS
+struct CESERVER_REQ_GETALLPANELS
+{
+	int iCount;         // Count of 0-term strings
+	int iCurrent;       // Index of the current panel
+	wchar_t szDirs[1]; // Variable length;
+};
+
 struct CESERVER_REQ
 {
 	CESERVER_REQ_HDR hdr;
@@ -2034,9 +2045,10 @@ struct CESERVER_REQ
 		CESERVER_REQ_ALTBUFFER AltBuf;
 		CESERVER_REQ_SETCONSCRBUF SetConScrBuf;
 		CESERVER_REQ_STORECURDIR CurDir;
+		CESERVER_REQ_GETALLPANELS Panels;
 	};
 
-	DWORD DataSize() { return this ? (hdr.cbSize - sizeof(hdr)) : 0; };
+	DWORD DataSize() { return (this && (hdr.cbSize >= sizeof(hdr))) ? (hdr.cbSize - sizeof(hdr)) : 0; };
 };
 
 
