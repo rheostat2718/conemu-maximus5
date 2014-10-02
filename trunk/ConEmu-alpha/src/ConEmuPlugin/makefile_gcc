@@ -9,6 +9,7 @@ SRCS = \
 		../common/MSection.cpp       \
 		../common/MSectionSimple.cpp \
 		../common/MSecurity.cpp      \
+		../common/MSetter.cpp        \
 		../common/MStrSafe.cpp       \
 		../common/SetEnvVar.cpp      \
 		../common/WinConsole.cpp     \
@@ -19,6 +20,7 @@ SRCS = \
 		ConEmuPlugin2800.cpp \
 		ConEmuPlugin995.cpp \
 		ConEmuPluginA.cpp \
+		ConEmuPluginBase.cpp\
 		PluginBackground.cpp \
 		PluginSrv.cpp
 

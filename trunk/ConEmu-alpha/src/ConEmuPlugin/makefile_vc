@@ -30,6 +30,7 @@ $(INTDIR)\ConEmuPlugin1900.obj \
 $(INTDIR)\ConEmuPlugin2800.obj \
 $(INTDIR)\ConEmuPlugin995.obj \
 $(INTDIR)\ConEmuPluginA.obj \
+$(INTDIR)\ConEmuPluginBase.obj \
 $(INTDIR)\Execute.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
@@ -37,6 +38,7 @@ $(INTDIR)\Monitors.obj \
 $(INTDIR)\MSection.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSecurity.obj \
+$(INTDIR)\MSetter.obj \
 $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\PluginBackground.obj \
 $(INTDIR)\PluginSrv.obj \
@@ -256,6 +258,8 @@ $(INTDIR)\ConEmuPlugin995.obj: ConEmuPlugin995.cpp
 
 $(INTDIR)\ConEmuPluginA.obj: ConEmuPluginA.cpp
 
+$(INTDIR)\ConEmuPluginBase.obj: ConEmuPluginBase.cpp ConEmuPluginBase.h
+
 $(INTDIR)\Execute.obj: ../common/execute.cpp
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
@@ -267,6 +271,8 @@ $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
 $(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSection.h
 
 $(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSimple.h
+
+$(INTDIR)\MSetter.obj: ../common/MSetter.cpp ../common/MSetter.h
 
 $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 

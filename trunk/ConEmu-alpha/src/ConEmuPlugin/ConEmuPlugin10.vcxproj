@@ -911,6 +911,7 @@
     <ClCompile Include="..\common\MSection.cpp" />
     <ClCompile Include="..\common\MSectionSimple.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />
+    <ClCompile Include="..\common\MSetter.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="..\common\WinConsole.cpp" />
@@ -920,6 +921,7 @@
     <ClCompile Include="ConEmuPlugin2800.cpp" />
     <ClCompile Include="ConEmuPlugin995.cpp" />
     <ClCompile Include="ConEmuPluginA.cpp" />
+    <ClCompile Include="ConEmuPluginBase.cpp" />
     <ClCompile Include="PluginBackground.cpp" />
     <ClCompile Include="PluginSrv.cpp" />
     <ClCompile Include="KeyEvents.cpp">
@@ -1063,11 +1065,13 @@
     <ClInclude Include="..\common\MSection.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="..\common\MSecurity.h" />
+    <ClInclude Include="..\common\MSetter.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\plugin_helper.h" />
     <ClInclude Include="..\common\pluginA.hpp" />
     <ClInclude Include="..\common\pluginW1761.hpp" />
     <ClInclude Include="..\common\pluginW1900.hpp" />
+    <ClInclude Include="..\common\pluginW2800.hpp" />
     <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\common\WinConsole.h" />
     <ClInclude Include="..\common\WinObjects.h" />
@@ -1075,6 +1079,11 @@
     <ClInclude Include="..\ConEmu\version.h" />
     <ClInclude Include="..\ConEmuHk\SetHook.h" />
     <ClInclude Include="ConEmu_Lang.h" />
+    <ClInclude Include="ConEmuPlugin1900.h" />
+    <ClInclude Include="ConEmuPlugin2800.h" />
+    <ClInclude Include="ConEmuPlugin995.h" />
+    <ClInclude Include="ConEmuPluginA.h" />
+    <ClInclude Include="ConEmuPluginBase.h" />
     <ClInclude Include="Dialogs.h" />
     <ClInclude Include="PluginBackground.h" />
     <ClInclude Include="PluginHeader.h" />
