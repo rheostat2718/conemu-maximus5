@@ -1,0 +1,8 @@
+﻿#summary Tasks in ConEmu
+
+The ‘Task’ is one or more predefined commands (shells) which you may start anytime by name or hotkey.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuStartTask.png" title="Start task dropdown menu" alt="ConEmu's tasks dropdown">
+
+Tasks may be configured in the [SettingsTasks ‘Settings’ dialog].
+

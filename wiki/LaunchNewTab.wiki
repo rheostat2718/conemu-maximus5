@@ -41,8 +41,6 @@ You may define your own tasks or just use predefined one.
 Choose the task from drop down menu or run task by hotkey.
 You may choose task in the ‘Create new console’ dialog too.
 
-<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuStartTask.png" title="Start task dropdown menu" alt="ConEmu's tasks dropdown">
-
 ==Create new tab from existing one==
 Use [NewConsole -new_console] switch while executing command.
 For example, if you want to start PuTTY in new !ConEmu tab,

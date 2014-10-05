@@ -15,6 +15,7 @@
     * Launch apps
       * [LaunchNewTab Launch new tab]
       * [RestartTab Restart tab]
+      * [Tasks Tasks]
       * [DefaultTerminal Default terminal]
       * [csudo sudo]
       * [CommandLine Command line switches]
