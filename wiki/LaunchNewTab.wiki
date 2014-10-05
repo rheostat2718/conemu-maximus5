@@ -1,7 +1,7 @@
 ﻿<font size="5">*Launching applications in !ConEmu*</font>
 <wiki:toc max_depth="3" />
 
-==[ConEmuArgs Using ConEmu switches]
+==[ConEmuArgs Using ConEmu switches]==
 When you run something from `Win+R` or shortcut from your Desktop,
 you may use `-cmd` or `-cmdlist` to run your application.
 Remember, `-cmd` or `-cmdlist` will be the last ConEmu's GUI interpreted switch.
@@ -21,7 +21,7 @@ This dialog may be opened from:
   * <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAddSys.png" title="System menu" alt="System menu">
 
 Well, what you can do with this dialog?
-  * Choose command line and startup directory for new process (you may use environment variables in both fields).
+  * Choose command line and startup directory for new process. You may use environment variables in both fields. Also, you may choose from drop down list either any of predefined [Tasks tasks] or any command from history.
   * Choose another user name and password, ‘Restricted current user’ account or ‘Run as administrator’ feature.
   * You may split active tab vertically or horizontally (you need last alpha versions for this feature).
   * And it is possible to start new tab in the new !ConEmu window (new `ConEmu.exe` process will be started).
@@ -29,12 +29,19 @@ Well, what you can do with this dialog?
 
 Similar dialog may be opened when you [RestartTab ‘Restart current console’].
 
-==Create new console without dialog==
+===Create new console without dialog===
 You may switch off create new console confirmation, just disable ‘Create confirmation’ checkbox
 on [Settings#Appearance Appearance] settings page.
 
 *Note*. You may pop up confirmation dialog even if ‘Create confirmation’ unchecked.
 Just hold Shift while creating console from toolbar, System menu, or Keyboard (Win+Shift+W by default).
+
+==[Tasks Tasks]==
+You may define your own tasks or just use predefined one.
+Choose the task from drop down menu or run task by hotkey.
+You may choose task in the ‘Create new console’ dialog too.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuStartTask.png" title="Start task dropdown menu" alt="ConEmu's tasks dropdown">
 
 ==Create new tab from existing one==
 Use [NewConsole -new_console] switch while executing command.
