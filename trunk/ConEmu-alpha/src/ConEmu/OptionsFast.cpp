@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsFast.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
+#include "../common/WinRegistry.h"
 
 static bool bCheckHooks, bCheckUpdate, bCheckIme;
 // Если файл конфигурации пуст, то после вызова CheckOptionsFast
@@ -530,6 +531,61 @@ wrap:
 	return bFound;
 }
 
+// Windows SDK
+static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
+{
+	int* piCreatIdx = (int*)lParam;
+	CEStr pszVerPath;
+
+	if (RegGetStringValue(hkVer, NULL, L"InstallationFolder", pszVerPath) > 0)
+	{
+		CEStr pszCmd = JoinPath(pszVerPath, L"Bin\\SetEnv.Cmd");
+		if (pszCmd && FileExists(pszCmd))
+		{
+			CEStr pszFull = lstrmerge(L"cmd /V /K \"", pszCmd, L"\" -new_console:t:\"WinSDK ", pszVer, L"\"");
+			// Create task
+			if (pszFull)
+			{
+				CEStr pszName = lstrmerge(L"WinSDK ", pszVer);
+				if (pszName)
+				{
+					gpSet->CmdTaskSet((*piCreatIdx)++, pszName, L"", pszFull);
+				}
+			}
+		}
+	}
+
+	return true; // continue reg enum
+}
+
+// Visual Studio C++
+static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
+{
+	int* piCreatIdx = (int*)lParam;
+	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\11.0\Setup\VC]
+	//"ProductDir"="C:\\Program Files (x86)\\Microsoft Visual Studio 11.0\\VC\\"
+	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\12.0\Setup\VC]
+	//"ProductDir"="C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\"
+	// %comspec% /k ""C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat"" x86
+
+	CEStr pszDir;
+	if (wcschr(pszVer, L'.'))
+	{
+		if (RegGetStringValue(hkVer, L"Setup\\VC", L"ProductDir", pszDir) > 0)
+		{
+			CEStr pszVcVarsBat = JoinPath(pszDir, L"vcvarsall.bat");
+			if (FileExists(pszVcVarsBat))
+			{
+				CEStr pszName = lstrmerge(L"VS ", pszVer, L" x86 tools prompt");
+				CEStr pszFull = lstrmerge(L"cmd /k \"\"", pszVcVarsBat, L"\"\" x86 -new_console:t:\"VS ", pszVer, L"\"");
+				gpSet->CmdTaskSet((*piCreatIdx)++, pszName, L"", pszFull);
+			}
+		}
+	}
+
+	return true; // continue reg enum
+}
+
 void CreateDefaultTasks(bool bForceAdd /*= false*/)
 {
 	int iCreatIdx = 0;
@@ -608,8 +664,6 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		// Putty?
 		{L"Putty",          L"Putty.exe",                              NULL},
 
-		// C++ build environments (Visual Studio) - !!!TODO!!!
-
 		// FIN
 		{NULL}
 	};
@@ -682,45 +736,13 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		gpSet->CmdTaskSet(iCreatIdx++, L"Chocolatey (Admin)", L"", L"*cmd /k Title Chocolatey & \"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd\"");
 	SafeFree(pszFull);
 
-	// Windows SDK
-	HKEY hk;
-	if (0 == RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", 0, KEY_READ, &hk))
-	{
-		UINT n = 0;
-		wchar_t szVer[34] = L""; DWORD cchMax = countof(szVer) - 1;
-		while (0 == RegEnumKeyEx(hk, n++, szVer, &cchMax, NULL, NULL, NULL, NULL))
-		{
-			HKEY hkVer;
-			if (0 == RegOpenKeyEx(hk, szVer, 0, KEY_READ, &hkVer))
-			{
-				wchar_t szVerPath[MAX_PATH+1] = L"";
-				DWORD cbSize = sizeof(szVerPath)-sizeof(szVerPath[0]);
-				if (0 == RegQueryValueEx(hkVer, L"InstallationFolder", NULL, NULL, (LPBYTE)szVerPath, &cbSize))
-				{
-					wchar_t* pszCmd = JoinPath(szVerPath, L"Bin\\SetEnv.Cmd");
-					if (pszCmd && FileExists(pszCmd))
-					{
-						pszFull = lstrmerge(L"cmd /V /K \"", pszCmd, L"\"");
-						// Create task
-						if (pszFull)
-						{
-							wcscpy_c(szVerPath, L"WinSDK ");
-							wcscat_c(szVerPath, szVer);
-							gpSet->CmdTaskSet(iCreatIdx++, szVerPath, L"", pszFull);
-							SafeFree(pszFull);
-						}
+	// Windows SDK: HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows
+	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", CreateWinSdkTasks, (LPARAM)&iCreatIdx);
 
-					}
-					SafeFree(pszCmd);
-				}
-				RegCloseKey(hkVer);
-			}
+	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
+	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)&iCreatIdx);
 
-			cchMax = countof(szVer) - 1;
-		}
-		RegCloseKey(hk);
-	}
-
+	// Done, free pointers
 	for (int i = 0; FindTasks[i].asName; i++)
 	{
 		SafeFree(FindTasks[i].pszFound);
