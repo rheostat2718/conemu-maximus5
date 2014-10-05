@@ -1,8 +1,48 @@
 ﻿#summary Tasks in ConEmu
 
-The ‘Task’ is one or more predefined commands (shells) which you may start anytime by name or hotkey.
+The ‘Task’ is one or more (tabbed or splitted) predefined commands (shells) which you may start anytime by name or hotkey.
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuStartTask.png" title="Start task dropdown menu" alt="ConEmu's tasks dropdown">
 
 Tasks may be configured in the [SettingsTasks ‘Settings’ dialog].
 
+==Creating new task==
+When you want to create new task absent in the default tasks list you need to know:
+
+  * The shell name. For example: cmd, powershell, bash and so on.
+  * The shell arguments. For example: `"/k vcvarsall.bat x86"
+  * Shell working directory. That may be very significant.
+  * In some cases you need to know environment variables.
+
+===Where you may get this information?===
+In most cases you may open properties of shortcut created by any installer.
+Just find the shortcut, right-click it, and choose ‘Properties’.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuVsTask1.png" title="Searching for VS tools prompt command" alt="VS tools prompt">
+
+  * Copy ‘Target’ contents to the ‘Task Commands’;
+  * Optionally set working directory with `/dir` switch in the ‘Task parameters’;
+  * If you want to choose specific tab name use [NewConsole -new_console:t:"VS 12.0"] switch;
+  * Finally, if you need to define some environment variables, just specify them before the shell.
+{{{
+set Var1=Value1 & set "Var2=Value with spaces" & cmd /k vcvarsall.bat x86 -new_console:t:"VS 12.0"
+}}}
+
+Finally, the task for VS prompt is ready.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuVsTask2.png" title="ConEmu task for VS tools prompt" alt="ConEmu VS tools prompt">
+
+===If there is no shortcut for that shell===
+Sometimes, if the shell is started from another program
+you may use ProcessExplorer or ProcessMonitor to detect
+which command is started, arguments and the working directory.
+
+If you can't do that, just google for alternatives.
+For example it is hard to find proper arguments for
+NuGet console started from Visual Studio because VS
+do not start `powershell.exe` but run powershell host
+internally. Just google! For example:
+
+  * [http://headsigned.com/article/using-nuget-standalone-command-line Using NuGet standalone command-line];
+  * [http://stackoverflow.com/a/13581202/1405560 Download Nuget Packages Without VS/NuGet Package Manager];
+  * [http://stackoverflow.com/a/15000559/1405560 Do an offline installation into Visual Studio].
