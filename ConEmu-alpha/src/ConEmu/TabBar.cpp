@@ -32,8 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
-#define DEBUGSTRRECENT(s) DEBUGSTR(s)
-#define DEBUGSTRCOUNT(s) DEBUGSTR(s)
+#define DEBUGSTRRECENT(s) //DEBUGSTR(s)
+#define DEBUGSTRCOUNT(s) //DEBUGSTR(s)
 
 #ifdef _DEBUG
 #define PRINT_RECENT_STACK
@@ -2065,6 +2065,29 @@ int CTabBarClass::ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** 
 	return nTab;
 }
 
+// -2 - out of control, -1 - out of tab-labels, 0+ - tab index 0-based
+int CTabBarClass::ActivateTabByPoint(LPPOINT pptCur, bool bScreen /*= true*/, bool bOverTabHitTest /*= true*/)
+{
+	int iHoverTab = GetTabFromPoint(NULL);
+	if (iHoverTab < 0)
+		return iHoverTab;
+	if (iHoverTab == GetCurSel())
+		return iHoverTab;
+
+	if (!CanActivateTab(iHoverTab))
+	{
+		iHoverTab = -2;
+	}
+	else
+	{
+		CVirtualConsole* pVCon = mp_Rebar->FarSendChangeTab(iHoverTab);
+		if (!pVCon)
+			iHoverTab = -2;
+	}
+
+	return iHoverTab;
+}
+
 // Прямоугольник в клиентских координатах ghWnd!
 bool CTabBarClass::GetRebarClientRect(RECT* rc)
 {
@@ -2086,6 +2109,27 @@ bool CTabBarClass::GetActiveTabRect(RECT* rcTab)
 	}
 
 	return bSet;
+}
+
+// -2 - out of control, -1 - out of tab-labels, 0+ - tab index 0-based
+int CTabBarClass::GetTabFromPoint(LPPOINT pptCur, bool bScreen /*= true*/, bool bOverTabHitTest /*= true*/)
+{
+	if (!IsTabsShown())
+		return -1;
+
+	POINT ptCur = {};
+	if (pptCur)
+	{
+		ptCur = *pptCur;
+	}
+	else
+	{
+		GetCursorPos(&ptCur);
+		bScreen = true;
+	}
+
+	int iTab = mp_Rebar->GetTabFromPoint(ptCur, bScreen, bOverTabHitTest);
+	return iTab;
 }
 
 bool CTabBarClass::Toolbar_GetBtnRect(int nCmd, RECT* rcBtnRect)

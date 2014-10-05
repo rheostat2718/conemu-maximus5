@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "VConGroup.h"
 #include "RealConsole.h"
+#include "TabBar.h"
 #include "Menu.h"
 #include "Update.h"
 
@@ -378,7 +379,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 		{
 			if (!(fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			{
-				pszMsg = (wchar_t*)calloc(nSize + 100,2);
+				pszMsg = (wchar_t*)calloc(nSize + 100, 2);
 				wcscpy(pszMsg, L"Can't create directory! Same name file exists!\n");
 				wcscat(pszMsg, pszFullName);
 				MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
@@ -389,7 +390,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 		}
 		else if (fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
-			pszMsg = (wchar_t*)calloc(nSize + 100,2);
+			pszMsg = (wchar_t*)calloc(nSize + 100, 2);
 			wcscpy(pszMsg, L"Can't create file! Same name folder exists!\n");
 			wcscat(pszMsg, pszFullName);
 			MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
@@ -400,7 +401,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 		else
 		{
 			int nCchSize = nSize + 255;
-			pszMsg = (wchar_t*)calloc(nCchSize,2);
+			pszMsg = (wchar_t*)calloc(nCchSize, 2);
 			LARGE_INTEGER liSize;
 			liSize.LowPart = fnd.nFileSizeLow; liSize.HighPart = fnd.nFileSizeHigh;
 			FILETIME ftl;
@@ -454,7 +455,7 @@ HANDLE CDragDrop::FileStart(LPCWSTR pszFullName)
 	{
 		DWORD dwErr = GetLastError();
 		INT_PTR nSize = _tcslen(pszFullName);
-		wchar_t* pszMsg = (wchar_t*)calloc(nSize + 100,2);
+		wchar_t* pszMsg = (wchar_t*)calloc(nSize + 100, 2);
 		wcscpy(pszMsg, L"Can't create file!\n");
 		wcscat(pszMsg, pszFullName);
 		DisplayLastError(pszMsg, dwErr);
@@ -501,7 +502,7 @@ HRESULT CDragDrop::FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData)
 	return S_OK;
 }
 
-HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
+HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 {
 	STGMEDIUM stgDescr = { 0 };
 	FORMATETC fmtetc = { CF_HDROP, 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
@@ -513,7 +514,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 	HRESULT hr = S_OK;
 	HRESULT hrStg = S_OK;
 	INT_PTR cchSubFolder = 32768;
-	wchar_t* pszSubFolder = (wchar_t*)calloc(cchSubFolder,sizeof(*pszSubFolder));
+	wchar_t* pszSubFolder = (wchar_t*)calloc(cchSubFolder, sizeof(*pszSubFolder));
 
 	if (!cBuffer || !pszSubFolder)
 	{
@@ -817,7 +818,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject * pDataObject, BOOL abActive)
 
 								while(nFileSize > 0)
 								{
-									dwRead = min(nFileSize,65536); //-V103
+									dwRead = min(nFileSize, 65536); //-V103
 									TODO("Сюда прогресс с градусником прицепить можно");
 
 									if (FileWrite(hFile, dwRead, ptrCur) != S_OK)
@@ -883,7 +884,7 @@ wrap:
 	return S_OK;
 }
 
-HRESULT CDragDrop::DropFromText(IDataObject * pDataObject)
+HRESULT CDragDrop::DropFromText(IDataObject* pDataObject)
 {
 	CVConGuard VCon;
 	if ((CVConGroup::GetActiveVCon(&VCon) < 0) || !VCon->RCon())
@@ -963,7 +964,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		SetForegroundWindow(ghWnd);
 
 		int nId = gpConEmu->mp_Menu->trackPopupMenu(tmp_PasteCmdLine, hPopup, TPM_LEFTALIGN|TPM_BOTTOMALIGN|TPM_RETURNCMD/*|TPM_NONOTIFY*/,
-	                         ptCur.x,ptCur.y, ghWnd);
+	                         ptCur.x, ptCur.y, ghWnd);
 		DestroyMenu(hPopup);
 
 		lbAddGoto = lbAddEdit = lbAddView = false;
@@ -1144,7 +1145,7 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 
 	for(int i = 0 ; i < iQuantity; i++)
 	{
-		int nLen = DragQueryFile(hDrop,i,curr,MAX_DROP_PATH);
+		int nLen = DragQueryFile(hDrop, i, curr, MAX_DROP_PATH);
 
 		if (nLen <= 0 || nLen >= MAX_DROP_PATH) continue;
 
@@ -1180,7 +1181,7 @@ HRESULT CDragDrop::DropLinks(HDROP hDrop, int iQuantity, BOOL abActive)
 	return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
+HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject* pDataObject, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 {
 	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
 
@@ -1200,7 +1201,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	#endif
 	*pdwEffect = DROPEFFECT_COPY|DROPEFFECT_MOVE;
 
-	POINT ppt = {pt.x,pt.y};
+	POINT ppt = {pt.x, pt.y};
 
 	#ifdef USE_DROP_HELPER
 	if (UseTargetHelper(mb_selfdrag))
@@ -1255,19 +1256,6 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	if (!lbDropFileNamesOnly && !lbActive && mb_selfdrag
 	        && (*pdwEffect == DROPEFFECT_COPY || *pdwEffect == DROPEFFECT_MOVE))
 	{
-		//wchar_t *mcr = (wchar_t*)calloc(128, sizeof(wchar_t));
-		////2010-02-18 Не было префикса '@'
-		////2010-03-26 префикс '@' ставить нельзя, ибо тогда процесса копирования видно не будет при отсутствии подтверждения
-		//// Если тянули ".." то перед копированием на другую панель сначала необходимо выйти на верхний уровень
-		//lstrcpyW(mcr, L"$If (APanel.SelCount==0 && APanel.Current==\"..\") CtrlPgUp $End ");
-		//// Теперь собственно клавиша запуска
-		//lstrcatW(mcr, (*pdwEffect == DROPEFFECT_MOVE) ? L"F6" : L"F5");
-
-		//// И если просили копировать сразу без подтверждения
-		//if (gpSet->isDropEnabled==2)
-		//	lstrcatW(mcr, L" Enter "); //$MMode 1");
-
-		//gpConEmu->PostCopy(mcr);
 
 		gpConEmu->PostDragCopy((*pdwEffect == DROPEFFECT_MOVE));
 
@@ -1284,6 +1272,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 	{
 		if (mb_selfdrag || lbDropFileNamesOnly)
 		{
+			// Позвать "VCon->RCon()->Paste(pm_Standard, pszText)"
 			if ((hr = DropFromText(pDataObject)) == S_OK)
 			{
 				return S_OK;
@@ -1299,10 +1288,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		return hr;
 	}
 
-	STGMEDIUM stgMediumMap = { 0 };
-	FORMATETC fmtetcMap = { (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILENAMEMAPW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
 	hDrop = (HDROP)stgMedium.hGlobal;
-	int iQuantity = DragQueryFile(hDrop,(UINT)-1,NULL,0);
+	int iQuantity = DragQueryFile(hDrop, (UINT)-1, NULL, 0);
 
 	if (iQuantity < 1)
 	{
@@ -1328,87 +1315,133 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		return hr;
 	}
 
+	return DropShellOp(pDataObject, pdwEffect, stgMedium, lbActive, iQuantity);
+}
+
+HRESULT CDragDrop::DropShellOp(IDataObject* pDataObject, DWORD* pdwEffect, STGMEDIUM& stgMedium, BOOL abActive, int iQuantity)
+{
+	HRESULT hr = S_OK;
+
+	HDROP hDrop = (HDROP)stgMedium.hGlobal;
+
+	STGMEDIUM stgMediumMap = { 0 };
+	FORMATETC fmtetcMap = { (CLIPFORMAT)RegisterClipboardFormat(CFSTR_FILENAMEMAPW), 0, DVASPECT_CONTENT, -1, TYMED_HGLOBAL };
+
+	ShlOpInfo *sfop = new ShlOpInfo;
+	memset(sfop, 0, sizeof(ShlOpInfo));
+	sfop->fop.hwnd = ghWnd;
+	sfop->pDnD = this;
+
+	hr = pDataObject->GetData(&fmtetcMap, &stgMediumMap);
+
+	BOOL lbMultiDest = (hr == S_OK && stgMediumMap.hGlobal);
+	TODO("Освободить stgMediumMap");
+	LPCWSTR pszFileMap = (LPCWSTR)GlobalLock(stgMediumMap.hGlobal);
+
+	if (!pszFileMap) lbMultiDest = FALSE;
+
+	LPCWSTR pszDropPath = abActive ? m_pfpi->pszActivePath : m_pfpi->pszPassivePath;
+	INT_PTR nCount = (MAX_DROP_PATH * iQuantity) + iQuantity + 1;
+	INT_PTR nDstCount = 0;
+	INT_PTR nDstFolderLen = 0;
+
+	if (!lbMultiDest)
 	{
-		//SHFILEOPSTRUCT *fop  = new SHFILEOPSTRUCT;
-		ShlOpInfo *sfop = new ShlOpInfo;
-		memset(sfop, 0, sizeof(ShlOpInfo));
-		sfop->fop.hwnd = ghWnd;
-		sfop->pDnD = this;
-		hr = pDataObject->GetData(&fmtetcMap, &stgMediumMap);
-		BOOL lbMultiDest = (hr == S_OK && stgMediumMap.hGlobal);
-		TODO("Освободить stgMediumMap");
-		LPCWSTR pszFileMap = (LPCWSTR)GlobalLock(stgMediumMap.hGlobal);
+		int nCchLen = lstrlenW(pszDropPath)+3;
+		sfop->fop.pTo = new WCHAR[nCchLen];
+		_wsprintf((LPWSTR)sfop->fop.pTo, SKIPLEN(nCchLen) _T("%s\\\0\0"), pszDropPath);
+	}
+	else
+	{
+		nDstFolderLen = lstrlenW(pszDropPath);
+		nDstCount = iQuantity*(nDstFolderLen+3+MAX_PATH) + iQuantity + 1;
+		sfop->fop.pTo = new WCHAR[nDstCount];
+		ZeroMemory((void*)sfop->fop.pTo, sizeof(WCHAR)*nDstCount);
+	}
 
-		if (!pszFileMap) lbMultiDest = FALSE;
+	sfop->fop.pFrom = new WCHAR[nCount];
+	ZeroMemory((void*)sfop->fop.pFrom, sizeof(WCHAR)*nCount);
+	WCHAR *curr = (WCHAR*)sfop->fop.pFrom;
+	WCHAR *dst = lbMultiDest ? (WCHAR*)sfop->fop.pTo : NULL;
 
-		LPCWSTR pszDropPath = lbActive ? m_pfpi->pszActivePath : m_pfpi->pszPassivePath;
-		INT_PTR nCount = MAX_DROP_PATH*iQuantity+iQuantity+1;
-		INT_PTR nDstCount = 0;
-		INT_PTR nDstFolderLen = 0;
+	int iValidCount = 0;
+
+	for (int i = 0; i < iQuantity; i++)
+	{
+		DragQueryFile(hDrop, i, curr, MAX_DROP_PATH);
+		INT_PTR iCurFileLen = _tcslen(curr);
 
 		if (!lbMultiDest)
 		{
-			int nCchLen = lstrlenW(pszDropPath)+3;
-			sfop->fop.pTo = new WCHAR[nCchLen];
-			_wsprintf((LPWSTR)sfop->fop.pTo, SKIPLEN(nCchLen) _T("%s\\\0\0"), pszDropPath);
-		}
-		else
-		{
-			nDstFolderLen = lstrlenW(pszDropPath);
-			nDstCount = iQuantity*(nDstFolderLen+3+MAX_PATH)+iQuantity+1;
-			sfop->fop.pTo=new WCHAR[nDstCount];
-			ZeroMemory((void*)sfop->fop.pTo,sizeof(WCHAR)*nDstCount);
-		}
-
-		sfop->fop.pFrom=new WCHAR[nCount];
-		ZeroMemory((void*)sfop->fop.pFrom,sizeof(WCHAR)*nCount);
-		WCHAR *curr = (WCHAR*)sfop->fop.pFrom;
-		WCHAR *dst = lbMultiDest ? (WCHAR*)sfop->fop.pTo : NULL;
-
-		for(int i = 0 ; i < iQuantity; i++)
-		{
-			DragQueryFile(hDrop,i,curr,MAX_DROP_PATH);
-			curr+=_tcslen(curr)+1;
-
-			if (lbMultiDest)
+			// Copying from folder "C:\\1\\" to folder "C:\\1\\" (noting to do)?
+			INT_PTR iToDirLen = _tcslen(pszDropPath);
+			if (iToDirLen > 0)
 			{
-				lstrcpy(dst, pszDropPath);
-				dst += nDstFolderLen;
-
-				if (*(dst-1) != L'\\')
+				if ((iCurFileLen > (iToDirLen+1))
+					&& (curr[iToDirLen] == L'\\')
+					&& !wcschr(curr+iToDirLen+1, L'\\'))
 				{
-					*dst++ = L'\\'; *dst = 0;
-				}
-
-				if (pszFileMap && *pszFileMap)
-				{
-					INT_PTR nNameLen = _tcslen(pszFileMap);
-					lstrcpyn(dst, pszFileMap, MAX_PATH);
-					pszFileMap += nNameLen+1;
-					dst += _tcslen(dst)+1;
-					MCHKHEAP;
+					curr[iToDirLen] = 0;
+					int iCmp = lstrcmpi(curr, pszDropPath);
+					curr[iToDirLen] = L'\\';
+					if (iCmp == 0)
+					{
+						// Src & Dst folders are equal, noting to do
+						curr[0] = curr[1] = 0;
+						continue;
+					}
 				}
 			}
 		}
-
-		MCHKHEAP;
-		//GlobalFree(stgMedium.hGlobal);
-		ReleaseStgMedium(&stgMedium);
-		hDrop = NULL;
-
-		if (stgMediumMap.hGlobal)
+		else
 		{
-			if (pszFileMap) GlobalUnlock(stgMediumMap.hGlobal);
+			lstrcpy(dst, pszDropPath);
+			dst += nDstFolderLen;
 
-			//GlobalFree(stgMediumMap.hGlobal);
-			ReleaseStgMedium(&stgMediumMap);
-			stgMediumMap.hGlobal = NULL;
+			if (*(dst-1) != L'\\')
+			{
+				*dst++ = L'\\'; *dst = 0;
+			}
+
+			if (pszFileMap && *pszFileMap)
+			{
+				INT_PTR nNameLen = _tcslen(pszFileMap);
+				lstrcpyn(dst, pszFileMap, MAX_PATH);
+				pszFileMap += nNameLen+1;
+				dst += _tcslen(dst)+1;
+				MCHKHEAP;
+			}
 		}
 
+		iValidCount++;
+		curr += iCurFileLen+1;
+	}
+
+	MCHKHEAP;
+
+	ReleaseStgMedium(&stgMedium);
+	hDrop = NULL;
+
+	if (stgMediumMap.hGlobal)
+	{
+		if (pszFileMap) GlobalUnlock(stgMediumMap.hGlobal);
+
+		//GlobalFree(stgMediumMap.hGlobal);
+		ReleaseStgMedium(&stgMediumMap);
+		stgMediumMap.hGlobal = NULL;
+	}
+
+	if (iValidCount == 0)
+	{
+		hr = S_FALSE;
+		DebugLog(_T("DnD: There is nothing to copy"));
+	}
+	else
+	{
 		if (*pdwEffect == DROPEFFECT_MOVE)
-			sfop->fop.wFunc=FO_MOVE;
+			sfop->fop.wFunc = FO_MOVE;
 		else
-			sfop->fop.wFunc=FO_COPY;
+			sfop->fop.wFunc = FO_COPY;
 
 		sfop->fop.fFlags = lbMultiDest ? FOF_MULTIDESTFILES : 0;
 		//sfop->fop.fFlags=FOF_SIMPLEPROGRESS; -- пусть полностью показывает
@@ -1431,7 +1464,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::Drop(IDataObject * pDataObject,DWORD grfKey
 		DebugLog(NULL);
 	}
 
-	return S_OK; //1;
+	return hr;
 }
 
 DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
@@ -1507,8 +1540,11 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 	return 0;
 }
 
-HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
+HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 {
+	// Drag over tab? Activate hovered
+	gpConEmu->mp_TabBar->ActivateTabByPoint((LPPOINT)&pt);
+
 	// Drag over inactive pane?
 	if (NeedRefreshToInfo(pt))
 	{
@@ -1526,7 +1562,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	#ifdef USE_DROP_HELPER
 	if (UseTargetHelper(mb_selfdrag))
 	{
-		POINT ppt = {pt.x,pt.y};
+		POINT ppt = {pt.x, pt.y};
 		hrHelper = mp_TargetHelper->DragOver(&ppt, *pdwEffect);
 		UNREFERENCED_PARAMETER(hrHelper);
 	}
@@ -1535,7 +1571,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragOver(DWORD grfKeyState,POINTL pt,DWORD 
 	return hr;
 }
 
-HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
+HRESULT CDragDrop::DragOverInt(DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 {
 	HRESULT hr = S_OK;
 	DWORD dwAllowed = *pdwEffect;
@@ -1688,7 +1724,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
 	return hr;
 }
 
-HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD grfKeyState,POINTL pt,DWORD * pdwEffect)
+HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject* pDataObject, DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 {
 	HRESULT hrHelper = S_FALSE; UNREFERENCED_PARAMETER(hrHelper);
 	DEBUGSTROVER(L"CDragDrop::DragEnter() called\n");
@@ -1708,7 +1744,8 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 
 	CheckIsUpdatePackage(pDataObject);
 
-	//bool bNeedLoadImg = false;
+	// Drag over tab? Activate hovered
+	gpConEmu->mp_TabBar->ActivateTabByPoint((LPPOINT)&pt);
 
 	// При "DragEnter" считывать информацию из фара нужно всегда
 	if (gpSet->isDropEnabled /*&& !mb_selfdrag*/ /*&& NeedRefreshToInfo(pt)*/)
@@ -1747,7 +1784,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject * pDataObject,DWORD g
 		PRAGMA_ERROR("UNLOCKED_DRAG - проверить HWND");
 		#endif
 
-		POINT ppt = {pt.x,pt.y};
+		POINT ppt = {pt.x, pt.y};
 		hrHelper = mp_TargetHelper->DragEnter(ghWnd, pDataObject, &ppt, *pdwEffect);
 	}
 	#endif
@@ -1835,7 +1872,7 @@ HRESULT CDragDrop::CreateLink(LPCTSTR lpszPathObj, LPCTSTR lpszPathLink, LPCTSTR
 	return hres;
 }
 
-void CDragDrop::ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownError)
+void CDragDrop::ReportUnknownData(IDataObject* pDataObject, LPCWSTR sUnknownError)
 {
 	HANDLE hFile = NULL;
 	size_t nLen = _tcslen(sUnknownError);
@@ -1854,9 +1891,9 @@ void CDragDrop::ReportUnknownData(IDataObject * pDataObject, LPCWSTR sUnknownErr
 		return;
 
 	// Дать пользователю выбрать файл
-	OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
+	OPENFILENAME ofn = {};
 	WCHAR temp[MAX_PATH+5];
-	ofn.lStructSize=sizeof(ofn);
+	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = ghWnd;
 	ofn.lpstrFilter = _T("Reports (*.txt)\0*.txt\0\0");
 	ofn.nFilterIndex = 1;
