@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "../common/Monitors.h"
+#include "../common/WinUser.h"
 
 #include "ConEmu.h"
 #include "ConEmuSize.h"
@@ -586,8 +587,25 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		case CER_MONITOR: // switch (tFrom)
 			// Например, таким способом можно получить размер развернутого окна на текущем мониторе
 			// RECT rcMax = CalcRect(CER_MAXIMIZED, MakeRect(0,0), CER_MAXIMIZED);
-			_ASSERTE((tFrom!=CER_FULLSCREEN && tFrom!=CER_MAXIMIZED && tFrom!=CER_RESTORE) || (tFrom==tWhat));
+		{
+			switch (tFrom)
+			{
+			case CER_FULLSCREEN: // switch (tFrom)
+			case CER_MAXIMIZED: // switch (tFrom)
+				rcShift = CalcMargins(CEM_CAPTION);
+				break;
+			case CER_RESTORE: // switch (tFrom)
+			case CER_MONITOR: // switch (tFrom)
+				rcShift = CalcMargins(CEM_FRAMECAPTION);
+				break;
+			default:
+				_ASSERTE((tFrom==tWhat) && "Unhandled tFrom/tWhat");
+				ZeroStruct(rcShift);
+			}
+			AddMargins(rc, rcShift, false/*abExpand*/);
+			tFromNow = CER_MAINCLIENT;
 			break;
+		}
 		case CER_BACK: // switch (tFrom)
 			break;
 		default:
@@ -1477,9 +1495,13 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	RECT rcFrame = CalcMargins(CEM_FRAMEONLY);
 
 
-	// We prefer monitor, nearest to upper-left part of window
-	//--RECT rcFind = {rcStore.left, rcStore.right, rcStore.left+(rcStore.right-rcStore.left)/3, rcStore.top+(rcStore.bottom-rcStore.top)/3};
-	RECT rcFind = {rcStore.left+(rcFrame.left+1)*2, rcStore.top+(rcFrame.top+1)*2, rcStore.left+(rcFrame.left+1)*3, rcStore.top+(rcFrame.top+1)*3};
+	// We prefer nearest monitor
+	RECT rcFind = {
+		rcStore.left+(rcFrame.left+1)*2,
+		rcStore.top+(rcFrame.top+1)*2,
+		rcStore.right-(rcFrame.left+1)*2 /*rcStore.left+(rcFrame.left+1)*3*/,
+		rcStore.bottom-(rcFrame.top+1)*2 /*rcStore.top+(rcFrame.top+1)*3*/
+	};
 	MONITORINFO mi; GetNearestMonitor(&mi, &rcFind);
 	// Get work area (may be FullScreen)
 	rcWork = (wndMode == wmFullScreen) ? mi.rcMonitor : mi.rcWork;
@@ -1820,9 +1842,17 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 
 	// *** Минимально допустимые размеры консоли
 	RECT rcMin = MakeRect(MIN_CON_WIDTH,MIN_CON_HEIGHT);
+	SIZE Splits = {};
 	if (mp_ConEmu->isVConExists(0))
-		rcMin = CVConGroup::AllTextRect(true);
+		rcMin = CVConGroup::AllTextRect(&Splits, true);
 	RECT rcFrame = CalcRect(CER_MAIN, rcMin, CER_CONSOLE_ALL);
+	if (Splits.cx > 0)
+		rcFrame.right += Splits.cx * gpSet->nSplitWidth;
+	if (Splits.cy > 0)
+		rcFrame.bottom += Splits.cy * gpSet->nSplitHeight;
+	#ifdef _DEBUG
+	RECT rcWork = CalcRect(CER_WORKSPACE, rcFrame, CER_MAIN);
+	#endif
 	pInfo->ptMinTrackSize.x = rcFrame.right;
 	pInfo->ptMinTrackSize.y = rcFrame.bottom;
 
@@ -2531,16 +2561,21 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 		AutoSizeFont(wndSizeRect, CER_MAIN);
 		srctWindow = CalcRect(CER_CONSOLE_ALL, wndSizeRect, CER_MAIN);
 
+		RECT rcMin = MakeRect(MIN_CON_WIDTH,MIN_CON_HEIGHT);
+		SIZE Splits = {};
+		if (mp_ConEmu->isVConExists(0))
+			rcMin = CVConGroup::AllTextRect(&Splits, true);
+
 		// Минимально допустимые размеры консоли
-		if (srctWindow.right < MIN_CON_WIDTH)
+		if (srctWindow.right < rcMin.right)
 		{
-			srctWindow.right = MIN_CON_WIDTH;
+			srctWindow.right = rcMin.right;
 			bNeedFixSize = true;
 		}
 
-		if (srctWindow.bottom < MIN_CON_HEIGHT)
+		if (srctWindow.bottom < rcMin.bottom)
 		{
-			srctWindow.bottom = MIN_CON_HEIGHT;
+			srctWindow.bottom = rcMin.bottom;
 			bNeedFixSize = true;
 		}
 
@@ -2548,6 +2583,10 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 		if (bNeedFixSize)
 		{
 			calcRect = CalcRect(CER_MAIN, srctWindow, CER_CONSOLE_ALL);
+			if (Splits.cx > 0)
+				calcRect.right += Splits.cx * gpSet->nSplitWidth;
+			if (Splits.cy > 0)
+				calcRect.bottom += Splits.cy * gpSet->nSplitHeight;
 			#ifdef _DEBUG
 			RECT rcRev = CalcRect(CER_CONSOLE_ALL, calcRect, CER_MAIN);
 			_ASSERTE(rcRev.right==srctWindow.right && rcRev.bottom==srctWindow.bottom);

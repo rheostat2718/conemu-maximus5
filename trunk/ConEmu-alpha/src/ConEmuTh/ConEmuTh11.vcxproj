@@ -243,7 +243,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">
     <OutDir>E:\Source\FARUnicode\trunk\unicode_far\Debug.32.vc\plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
@@ -251,7 +251,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">
     <OutDir>E:\Source\FARUnicode\trunk\unicode_far\Debug.64.vc\plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh.x64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
@@ -259,112 +259,112 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\..\Release\plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>$(SolutionDir)\_VCBUILD\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>..\..\Release\plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>$(SolutionDir)\_VCBUILD\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh.x64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">
     <OutDir>C:\ConEmu\Plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
     <OutDir>C:\ConEmu\Plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh.x64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">
     <OutDir>\Far3\plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|x64'">
     <OutDir>..\..\Release.x64\plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh.x64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">
     <OutDir>Z:\Plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">
     <OutDir>Z:\Plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh.x64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">
     <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x86\Plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">
     <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far1x64\Plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh.x64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_PDB|Win32'">
     <OutDir>..\..\Release.PDB\plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_PDB|x64'">
     <OutDir>..\..\Release.PDB\plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh.x64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">
     <OutDir>\VCProject\FarPlugin\ConEmu\Maximus5\Debug\Far2x86\Plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">
     <OutDir>F:\Utils\FAR\Far2x64\Plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh.x64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">
     <OutDir>$(ConEmuDebugF3)\Plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">
     <OutDir>$(ConEmuDebugF3)\Plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuTh.x64</TargetName>
     <TargetExt>.dll</TargetExt>
     <LinkIncremental>true</LinkIncremental>
@@ -846,6 +846,8 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\CmdArg.cpp" />
+    <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
@@ -854,7 +856,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClCompile Include="..\common\MSecurity.cpp" />
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\RgnDetect.cpp" />
+    <ClCompile Include="..\common\WinFiles.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
+    <ClCompile Include="..\common\WinUser.cpp" />
     <ClCompile Include="ConEmuTh.cpp" />
     <ClCompile Include="ConEmuTh1900.cpp" />
     <ClCompile Include="ConEmuTh2800.cpp" />
@@ -901,6 +905,8 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\CmdArg.h" />
+    <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuColors.h" />
     <ClInclude Include="..\common\ConEmuColors3.h" />
@@ -914,7 +920,9 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Thumbs\ConEmuTh.dll copy "$(TargetDir)Co
     <ClInclude Include="..\common\pluginW1761.hpp" />
     <ClInclude Include="..\common\pluginW1900.hpp" />
     <ClInclude Include="..\common\RgnDetect.h" />
+    <ClInclude Include="..\common\WinFiles.h" />
     <ClInclude Include="..\common\WinObjects.h" />
+    <ClInclude Include="..\common\WinUser.h" />
     <ClInclude Include="ConEmuTh.h" />
     <ClInclude Include="ConEmuTh_Lang.h" />
     <ClInclude Include="Display.h" />

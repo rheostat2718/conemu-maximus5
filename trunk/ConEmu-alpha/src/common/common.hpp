@@ -97,11 +97,11 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CECOPYRIGHTSTRING_W L"© 2009-2014 ConEmu.Maximus5@gmail.com"
 
 
-#define CEHOMEPAGE_A    "http://conemu-maximus5.googlecode.com"
+#define CEHOMEPAGE_A    "http://code.google.com/p/conemu-maximus5"
 #define CEHOMEPAGE     _CRT_WIDE(CEHOMEPAGE_A)
 #define CEDOWNLPAGE    L"http://www.fosshub.com/ConEmu.html"
-#define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/issues/entry"
-#define CEREPORTCRASH  L"http://code.google.com/p/conemu-maximus5/issues/entry"
+#define CEREPORTBUG    L"http://code.google.com/p/conemu-maximus5/wiki/Issues?tm=3"
+#define CEREPORTCRASH  L"http://code.google.com/p/conemu-maximus5/wiki/Issues?tm=3"
 #define CEWHATSNEW     L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New"
 #define CEMSBUGWIKI    L"http://code.google.com/p/conemu-maximus5/wiki/MicrosoftBugs"
 #define CEHOOKSWIKI    L"http://code.google.com/p/conemu-maximus5/wiki/ConEmuHk"
@@ -643,6 +643,7 @@ enum PanelViewMode
 	pvm_Tiles = 2,
 	pvm_Icons = 4,
 	// следующий режим (если он будет) делать 4! (это bitmask)
+	pvm_TurnOff = 256,
 };
 
 /* Основной шрифт в GUI */

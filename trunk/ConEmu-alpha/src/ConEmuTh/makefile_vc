@@ -23,6 +23,8 @@ BUILD_SUFFUX=x86
 
 
 LINK_OBJS = \
+$(INTDIR)\CmdArg.obj \
+$(INTDIR)\CmdLine.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmuTh.obj \
 $(INTDIR)\ConEmuTh1900.obj \
@@ -38,7 +40,9 @@ $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSecurity.obj \
 $(INTDIR)\MStrSafe.obj \
 $(INTDIR)\RgnDetect.obj \
-$(INTDIR)\WinObjects.obj
+$(INTDIR)\WinFiles.obj \
+$(INTDIR)\WinObjects.obj \
+$(INTDIR)\WinUser.obj
 
 
 RC_NAME=$(NAME)
@@ -210,6 +214,10 @@ clean:
 ################
 #LINK_OBJS begin
 
+$(INTDIR)\CmdArg.obj: ../common/CmdArg.cpp ../common/CmdArg.h
+
+$(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
+
 $(INTDIR)\common.obj: ../common/common.cpp
 
 $(INTDIR)\ConEmuTh.obj: ConEmuTh.cpp
@@ -240,7 +248,11 @@ $(INTDIR)\MStrSafe.obj: ../common/MStrSafe.cpp
 
 $(INTDIR)\RgnDetect.obj: ../common/RgnDetect.cpp
 
+$(INTDIR)\WinFiles.obj: ../common/WinFiles.cpp ../common/WinFiles.h
+
 $(INTDIR)\WinObjects.obj: ../common/WinObjects.cpp
+
+$(INTDIR)\WinUser.obj: ../common/WinUser.cpp
 
 #LINK_OBJS end
 ##############

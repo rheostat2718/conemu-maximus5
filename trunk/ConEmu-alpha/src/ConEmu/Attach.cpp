@@ -34,10 +34,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Inside.h"
 #include "OptionsClass.h"
 #include "VConGroup.h"
+#include "../common/ConEmuCheck.h"
 #include "../common/Monitors.h"
 #include "../common/ProcessData.h"
+#include "../common/WinUser.h"
 #include "../ConEmuCD/ExitCodes.h"
-#include "../common/ConEmuCheck.h"
 
 //#undef ALLOW_GUI_ATTACH
 #define ALLOW_GUI_ATTACH
@@ -391,27 +392,12 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 		return false;
 
 	_wsprintf(Info.szPid, SKIPLEN(countof(Info.szPid)) L"%u", Info.nPID);
+	const wchar_t sz32bit[] = L" [32]";
+	const wchar_t sz64bit[] = L" [64]";
 
 	HANDLE h;
+	DEBUGTEST(DWORD nErr);
 	bool lbExeFound = false;
-	int nImageBits = 32;
-
-	#if 0
-	// Так можно получить только имя файла процесса, а интересен еще и путь
-	PROCESSENTRY32 pi = {sizeof(pi)};
-	h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (h && h != INVALID_HANDLE_VALUE)
-	{
-		if (Process32First(h, &pi))
-		{
-			while (pi.th32ProcessID != nPID)
-			{
-				if (!Process32Next(h, &pi))
-					pi.th32ProcessID = 0;
-			}
-		}
-	}
-	#endif
 
 	if (apProcessData)
 	{
@@ -420,42 +406,50 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 		{
 			//ListView_SetItemText(hList, nItem, alc_File, szExeName);
 			//ListView_SetItemText(hList, nItem, alc_Path, szExePathName);
-			if (bIsWin64)
+			if (bIsWin64 && Info.nImageBits)
 			{
-				wcscat_c(Info.szPid, (nImageBits == 64) ? L" *64" : L" *32");
+				wcscat_c(Info.szPid, (Info.nImageBits == 64) ? sz64bit : sz32bit);
 			}
 		}
 	}
 
 	if (!lbExeFound)
 	{
+		Info.nImageBits = GetProcessBits(Info.nPID);
+		if (bIsWin64 && Info.nImageBits)
+		{
+			wcscat_c(Info.szPid, (Info.nImageBits == 64) ? sz64bit : sz32bit);
+		}
+
 		h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, Info.nPID);
 		if (h && h != INVALID_HANDLE_VALUE)
 		{
 			MODULEENTRY32 mi = {sizeof(mi)};
 			if (Module32First(h, &mi))
 			{
-				//ListView_SetItemText(hList, nItem, alc_File, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath));
 				lstrcpyn(Info.szExeName, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath), countof(Info.szExeName));
-				//ListView_SetItemText(hList, nItem, alc_Path, mi.szExePath);
 				lstrcpyn(Info.szExePathName, mi.szExePath, countof(Info.szExePathName));
-				if (bIsWin64)
-				{
-					wcscat_c(Info.szPid, WIN3264TEST(L" *32",L" *64"));
-				}
 				lbExeFound = true;
 			}
 			else
 			{
 				if (bIsWin64)
 				{
-					wcscat_c(Info.szPid, L" *64");
+					wcscat_c(Info.szPid, sz64bit);
 				}
 			}
 			CloseHandle(h);
 		}
+		else
+		{
+			#ifdef _DEBUG
+			nErr = GetLastError();
+			_ASSERTE(nErr == 5 || (nErr == 299 && Info.nImageBits == 64));
+			#endif
+			wcscpy_c(Info.szExeName, L"???");
+		}
 
-		#ifdef _WIN64
+		#if 0 //#ifdef _WIN64 -- no need to call TH32CS_SNAPMODULE32, simple TH32CS_SNAPMODULE will handle both if it can
 		if (!lbExeFound)
 		{
 			h = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE|TH32CS_SNAPMODULE32, Info.nPID);
@@ -468,12 +462,32 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 					lstrcpyn(Info.szExeName, *mi.szModule ? mi.szModule : (wchar_t*)PointToName(mi.szExePath), countof(Info.szExeName));
 					//ListView_SetItemText(hList, nItem, alc_Path, mi.szExePath);
 					lstrcpyn(Info.szExePathName, mi.szExePath, countof(Info.szExePathName));
-					wcscat_c(Info.szPid, L" *32");
 				}
 				CloseHandle(h);
 			}
 		}
 		#endif
+	}
+
+	if (!lbExeFound)
+	{
+		// Так можно получить только имя файла процесса
+		PROCESSENTRY32 pi = {sizeof(pi)};
+		h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (h && h != INVALID_HANDLE_VALUE)
+		{
+			if (Process32First(h, &pi))
+			{
+				do
+				{
+					if (pi.th32ProcessID == Info.nPID)
+					{
+						lstrcpyn(Info.szExeName, pi.szExeFile, countof(Info.szExeName));
+						break;
+					}
+				} while (Process32Next(h, &pi));
+			}
+		}
 	}
 
 	wcscpy_c(Info.szType, isConsoleClass(Info.szClass) ? szTypeCon : szTypeGui);
@@ -710,7 +724,9 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	STARTUPINFO si = {sizeof(si)};
 	SHELLEXECUTEINFO sei = {sizeof(sei)};
 	CESERVER_REQ *pIn = NULL, *pOut = NULL;
-	HANDLE hPipeTest = NULL, hProcTest = NULL;
+	HANDLE hPipeTest = NULL;
+	HANDLE hPluginTest = NULL;
+	HANDLE hProcTest = NULL;
 	DWORD nErrCode = 0;
 	bool lbCreate;
 	CESERVER_CONSOLE_MAPPING_HDR srv;
@@ -745,6 +761,15 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 		ExecuteFreeResult(pOut);
 	}
 
+
+	// Может быть это Far Manager с загруженным плагином ConEmu.dll?
+	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEPLUGINPIPENAME, L".", anPID);
+	hPluginTest = CreateFile(szPipe, GENERIC_READ|GENERIC_WRITE, 0, LocalSecurity(), OPEN_EXISTING, 0, NULL);
+	if (hPluginTest && hPluginTest != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle(hPluginTest);
+		goto DoPluginCall;
+	}
 
 	// Может быть в процессе уже есть ConEmuHk.dll? Или этот процесс вообще уже во вкладке другого ConEmu?
 	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEHOOKSPIPENAME, L".", anPID);
@@ -848,6 +873,14 @@ DoExecute:
 		_ASSERTE(ahAttachWnd && IsWindow(ahAttachWnd));
 		pIn->NewServer.hAppWnd = ahAttachWnd;
 	}
+	goto DoPipeCall;
+
+DoPluginCall:
+	// Просто попросим плагин подцепиться к GUI
+	pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, sizeof(CESERVER_REQ_HDR));
+	goto DoPipeCall;
+
+DoPipeCall:
 	pOut = ExecuteCmd(szPipe, pIn, 500, ghWnd);
 	if (!pOut || (pOut->hdr.cbSize < pIn->hdr.cbSize) || (pOut->dwData[0] == 0))
 	{
@@ -855,6 +888,8 @@ DoExecute:
 
 		wchar_t szMsg[255], szTitle[128];
 		wcscpy_c(szMsg, L"Failed to start console server in the remote process");
+		if (hPluginTest && hPluginTest != INVALID_HANDLE_VALUE)
+			wcscat_c(szMsg, L"\nFar ConEmu plugin was loaded");
 		if (hPipeTest && hPipeTest != INVALID_HANDLE_VALUE)
 			wcscat_c(szMsg, L"\nHooks already was set");
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());

@@ -28,56 +28,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "CmdArg.h"
+
 #define CmdEscapeNeededChars  L"<>()&|^\""
 #define QuotationNeededChars  (L" " CmdEscapeNeededChars)
 
-typedef struct CmdArg
-{
-public:
-	wchar_t *ms_Arg;
-	INT_PTR mn_MaxLen;
-
-	// Point to the end dblquot
-	LPCWSTR mpsz_Dequoted;
-	// if 0 - this is must be first call (first token of command line)
-	// so, we need to test for mpsz_Dequoted
-	int mn_TokenNo;
-	// To bee able corretly parse double quotes in commands like
-	// "C:\Windows\system32\cmd.exe" /C ""C:\Python27\python.EXE""
-	// "reg.exe add "HKEY_CLASSES_ROOT\Directory\Background\shell\Command Prompt\command" /ve /t REG_EXPAND_SZ /d "\"D:\Applications\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f"
-	enum { cc_Undefined, cc_CmdExeFound, cc_CmdCK, cc_CmdCommand } mn_CmdCall;
-
-	#ifdef _DEBUG
-	// Debug, для отлова "не сброшенных" вызовов
-	LPCWSTR ms_LastTokenEnd;
-	wchar_t ms_LastTokenSave[32];
-	#endif
-
-	bool mb_RestorePath; // Если используется для сохранения переменной %PATH%, восстановить при закрытии объекта
-
-public:
-	operator LPCWSTR() const { return ms_Arg; };
-
-	wchar_t* GetBuffer(INT_PTR cchMaxLen);
-	wchar_t* Detach();
-	LPCWSTR  Attach(wchar_t* asPtr);
-	void Empty();
-	bool IsEmpty();
-	LPCWSTR Set(LPCWSTR asNewValue, INT_PTR anChars = -1);
-	void SavePathVar(LPCWSTR asCurPath);
-	void SetAt(INT_PTR nIdx, wchar_t wc);
-
-	void GetPosFrom(const CmdArg& arg);
-
-	CmdArg();
-	CmdArg(wchar_t* asPtr);
-	~CmdArg();
-} CEStr;
-
 int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart=NULL);
 
-int AddEndSlash(wchar_t* rsPath, int cchMax);
-const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
 LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax);
 int GetDirectory(CmdArg& szDir);
@@ -87,13 +44,17 @@ bool IsFarExe(LPCWSTR asModuleName);
 bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CmdArg &szExe,
 			   LPCWSTR* rsArguments = NULL, BOOL* rpbNeedCutStartEndQuot = NULL,
 			   BOOL* rpbRootIsCmdExe = NULL, BOOL* rpbAlwaysConfirmExit = NULL, BOOL* rpbAutoDisableConfirmExit = NULL);
+
 bool IsQuotationNeeded(LPCWSTR pszPath);
-bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CmdArg* rpsTitle = NULL);
+const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 
-bool FileExistsSearch(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath = true, bool abRegSearch = true);
-
-#ifndef CONEMU_MINIMAL
-bool SearchAppPaths(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg* rpsPathRestore = NULL);
-#endif
-
+int AddEndSlash(wchar_t* rsPath, int cchMax);
 wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams);
+wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 = NULL);
+
+bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired = false);
+
+const wchar_t* PointToName(const wchar_t* asFullPath);
+const char* PointToName(const char* asFileOrPath);
+const wchar_t* PointToExt(const wchar_t* asFullPath);
+const wchar_t* Unquote(wchar_t* asParm, bool abFirstQuote = false);
