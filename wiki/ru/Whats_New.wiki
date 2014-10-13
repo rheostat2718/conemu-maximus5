@@ -7,6 +7,15 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 141013==
+  * Issue 1753: Cursor goes out of screen while executing commands from "far" without "/w".
+  * Issue 1754: Some changes with using WM_SYSCOMMAND.
+  * More logging of SystemMenu processing.
+  * If SystemMenu was opened by `LClick` on the title bar icon and closed by Esc promptly !ConEmu window may be closed.
+  * `ConEmu.ShiftEnter.*`: Check if plugin is ready to process "`ConEmu:run:`" prefix.
+  * Do not request synchronous paint of the status bar from background threads.
+
+
 ==Build 141012==
   * Ensure that just installed (new config) !ConEmu's window will not be larger that monitor working area.
   * While converting old config do not get data from !LogFont if it was not created yet.
@@ -15,7 +24,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * Issue 1334: !ConEmu plugin was not realized the attach is finished (call from plugin menu).
   * Tab initialization fix for "far.exe /e ...".
   * `Ctrl+LClick` was failed in some cases (Far editor, Lua macro).
-  * Issue 1731: Fix attach external Far Manager console from plugin (not recommended though).
+  * Issue 338: Fix attach external Far Manager console from plugin (not recommended though).
   * Update application manifests to Windows 10.
   * Attach list (`Win+G`) was failed sometimes with showing correct bitness of processes.
   * Show new console size in the status bar during resizing with mouse.
