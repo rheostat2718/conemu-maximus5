@@ -267,6 +267,7 @@ BOOL ServerInitConsoleMode();
 void SetupCreateDumpOnException();
 int ComspecInit();
 void ComspecDone(int aiRc);
+bool CoordInSmallRect(const COORD& cr, const SMALL_RECT& rc);
 BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = NULL);
 void CreateLogSizeFile(int nLevel);
 void LogSize(COORD* pcrSize, LPCSTR pszLabel);
@@ -311,7 +312,6 @@ extern FDebugActiveProcessStop pfnDebugActiveProcessStop;
 typedef BOOL (WINAPI *FDebugSetProcessKillOnExit)(BOOL KillOnExit);
 extern FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit;
 void ProcessDebugEvent();
-//BOOL IsUserAdmin();
 void _wprintf(LPCWSTR asBuffer);
 bool IsOutputRedirected();
 #ifdef CRTPRINTF

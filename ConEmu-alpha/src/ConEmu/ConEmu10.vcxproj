@@ -221,58 +221,58 @@
   <PropertyGroup>
     <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_E|x64'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)\_VCBUILD\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)\_VCBUILD\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Instrument|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Instrument|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Instrument|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Instrument|x64'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release_PDB|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release_PDB|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release_PDB|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release_PDB|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release_PDB|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release_PDB|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release_PDB|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release_PDB|x64'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_F2|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_F2|x64'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">\Far3\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">C:\Temp\CE10\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">\Far3\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">C:\Temp\CE10\$(ProjectName).$(Platform).$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">true</LinkIncremental>
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'" />
@@ -933,6 +933,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\CmdArg.cpp" />
     <ClCompile Include="..\common\CmdLine.cpp" />
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
@@ -949,12 +950,15 @@
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\MTimer.cpp" />
     <ClCompile Include="..\common\MToolTip.cpp" />
+    <ClCompile Include="..\common\ProcessSetEnv.cpp" />
     <ClCompile Include="..\common\RConStartArgs.cpp" />
     <ClCompile Include="..\common\RgnDetect.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="..\common\WinConsole.cpp" />
+    <ClCompile Include="..\common\WinFiles.cpp" />
     <ClCompile Include="..\common\WinObjects.cpp" />
     <ClCompile Include="..\common\WinRegistry.cpp" />
+    <ClCompile Include="..\common\WinUser.cpp" />
     <ClCompile Include="AboutDlg.cpp" />
     <ClCompile Include="Attach.cpp" />
     <ClCompile Include="Background.cpp" />
@@ -1020,6 +1024,7 @@
     <ClCompile Include="VirtualConsole.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\CmdArg.h" />
     <ClInclude Include="..\common\CmdLine.h" />
     <ClInclude Include="..\common\common.hpp" />
     <ClInclude Include="..\common\ConEmuCheck.h" />
@@ -1041,6 +1046,8 @@
     <ClInclude Include="..\common\MTimer.h" />
     <ClInclude Include="..\common\MToolTip.h" />
     <ClInclude Include="..\common\PipeServer.h" />
+    <ClInclude Include="..\common\ProcessData.h" />
+    <ClInclude Include="..\common\ProcessSetEnv.h" />
     <ClInclude Include="..\common\RConStartArgs.h" />
     <ClInclude Include="..\common\RgnDetect.h" />
     <ClInclude Include="..\common\SetEnvVar.h" />
@@ -1049,8 +1056,10 @@
     <ClInclude Include="..\common\StartupEnvEx.h" />
     <ClInclude Include="..\common\UnicodeChars.h" />
     <ClInclude Include="..\common\WinConsole.h" />
+    <ClInclude Include="..\common\WinFiles.h" />
     <ClInclude Include="..\common\WinObjects.h" />
     <ClInclude Include="..\common\WinRegistry.h" />
+    <ClInclude Include="..\common\WinUser.h" />
     <ClInclude Include="..\ConEmuCD\ExitCodes.h" />
     <ClInclude Include="..\ConEmuCD\GuiHooks.h" />
     <ClInclude Include="AboutDlg.h" />

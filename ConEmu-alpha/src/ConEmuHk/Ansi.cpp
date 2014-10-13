@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TCHAR.h>
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
+#include "../common/CmdLine.h"
 #include "SetHook.h"
 #include "ConEmuHooks.h"
 #include "../common/ConsoleAnnotation.h"
@@ -692,7 +693,7 @@ wrap:
 }
 
 
-BOOL /*WINAPI*/ CEAnsi::OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
+BOOL WINAPI CEAnsi::OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
 {
 	typedef BOOL (WINAPI* OnScrollConsoleScreenBufferA_t)(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
 	ORIGINALFAST(ScrollConsoleScreenBufferA);
@@ -711,7 +712,7 @@ BOOL /*WINAPI*/ CEAnsi::OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, cons
 	return lbRc;
 }
 
-BOOL /*WINAPI*/ CEAnsi::OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
+BOOL WINAPI CEAnsi::OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
 {
 	typedef BOOL (WINAPI* OnScrollConsoleScreenBufferW_t)(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
 	ORIGINALFAST(ScrollConsoleScreenBufferW);
@@ -735,7 +736,7 @@ BOOL /*WINAPI*/ CEAnsi::OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, cons
 	return lbRc;
 }
 
-BOOL /*WINAPI*/ CEAnsi::OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
+BOOL WINAPI CEAnsi::OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
 	typedef BOOL (WINAPI* OnWriteFile_t)(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 	ORIGINALFAST(WriteFile);
@@ -758,7 +759,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumbe
 	return lbRc;
 }
 
-BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
+BOOL WINAPI CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
 {
 	typedef BOOL (WINAPI* OnWriteConsoleA_t)(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 	ORIGINALFAST(WriteConsoleA);
@@ -847,7 +848,7 @@ TODO("По хорошему, после WriteConsoleOutputAttributes тоже н
 // Но пока можно это проигнорировать, большинство (?) программ, используюет ее в связке
 // WriteConsoleOutputAttributes/WriteConsoleOutputCharacter
 
-BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
+BOOL WINAPI CEAnsi::OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
 {
 	typedef BOOL (WINAPI* OnWriteConsoleOutputCharacterA_t)(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
 	ORIGINALFAST(WriteConsoleOutputCharacterA);
@@ -865,7 +866,7 @@ BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LP
 	return lbRc;
 }
 
-BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
+BOOL WINAPI CEAnsi::OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
 {
 	typedef BOOL (WINAPI* OnWriteConsoleOutputCharacterW_t)(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
 	ORIGINALFAST(WriteConsoleOutputCharacterW);
@@ -925,7 +926,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	return lbRc;
 }
 
-BOOL /*WINAPI*/ CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
+BOOL WINAPI CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
 {
 	ORIGINALFAST(WriteConsoleW);
 	//BOOL bMainThread = FALSE; // поток не важен
@@ -2763,7 +2764,7 @@ void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 	}
 }
 
-BOOL /*WINAPI*/ CEAnsi::OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
+BOOL WINAPI CEAnsi::OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 {
 	typedef BOOL (WINAPI* OnSetConsoleMode_t)(HANDLE hConsoleHandle, DWORD dwMode);
 	ORIGINALFAST(SetConsoleMode);

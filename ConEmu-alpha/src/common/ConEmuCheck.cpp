@@ -28,14 +28,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define HIDE_USE_EXCEPTION_INFO
-#include <windows.h>
-#include "MAssert.h"
 #include "common.hpp"
 #include "Memory.h"
 #include "ConEmuCheck.h"
-#include "WinObjects.h"
 #include "ConEmuPipeMode.h"
 #include "MFileMapping.h"
+
+#ifdef _DEBUG
+#include "CmdLine.h"
+#endif
 
 #ifdef _DEBUG
 #define DEBUGSTRCMD(s) //OutputDebugString(s)
@@ -1173,7 +1174,7 @@ HWND GetConEmuHWND(int aiType)
 			p = (CESERVER_CONSOLE_MAPPING_HDR*)MapViewOfFile(hMapping, nFlags,0,0,0);
 		}
 
-		if (p && p->hConEmuRoot && isWindow(p->hConEmuRoot))
+		if (p && p->hConEmuRoot && IsWindow(p->hConEmuRoot))
 		{
 			// Успешно
 			ConEmuRoot = p->hConEmuRoot;

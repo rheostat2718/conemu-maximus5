@@ -155,6 +155,7 @@ struct ConProcess
 	bool  IsCmd;     // значит фар выполняет команду
 	bool  NameChecked, RetryName;
 	bool  Alive, inConsole;
+	int   Bits;
 	wchar_t Name[64]; // чтобы полная инфа об ошибке влезала
 };
 
@@ -295,12 +296,13 @@ class CRealConsole
 			bool    bInSetFocus;
 			DWORD   nGuiWndStyle, nGuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
 			DWORD   nGuiWndPID;
+			int     nBits;
 			wchar_t szGuiWndProcess[MAX_PATH];
 			CESERVER_REQ_PORTABLESTARTED paf;
 			// some helpers
 			bool    isGuiWnd() { return (hGuiWnd && (hGuiWnd != (HWND)INVALID_HANDLE_VALUE)); };
 		} m_ChildGui;
-		void setGuiWndPID(HWND ahGuiWnd, DWORD anPID, LPCWSTR asProcessName);
+		void setGuiWndPID(HWND ahGuiWnd, DWORD anPID, int anBits, LPCWSTR asProcessName);
 		void setGuiWnd(HWND ahGuiWnd);
 		static  BOOL CALLBACK FindChildGuiWindowProc(HWND hwnd, LPARAM lParam);
 
@@ -337,7 +339,7 @@ class CRealConsole
 		BOOL    isGuiVisible();
 		BOOL    isGuiOverCon();
 		void    StoreGuiChildRect(LPRECT prcNewPos);
-		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, RECT arcPrev);
+		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, int anBits, RECT arcPrev);
 		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui, LPCWSTR pszExeName);
 		static bool CanCutChildFrame(LPCWSTR pszExeName);
 
@@ -454,7 +456,7 @@ class CRealConsole
 		void SetFarStatus(DWORD nNewFarStatus);
 		DWORD GetActivePID();
 		LPCWSTR GetActiveProcessName();
-		int GetActiveAppSettingsId(LPCWSTR* ppProcessName=NULL);
+		int GetActiveAppSettingsId(LPCWSTR* ppProcessName = NULL, bool* pbIsAdmin = NULL, int* pnBits = NULL, DWORD* pnPID = NULL);
 	private:
 		int GetDefaultAppSettingsId();
 	public:
@@ -762,6 +764,7 @@ class CRealConsole
 		void SetActivePID(DWORD anNewPID);
 		DWORD mn_LastSetForegroundPID; // PID процесса, которому в последний раз было разрешено AllowSetForegroundWindow
 		DWORD mn_LastProcessNamePID;
+		int   mn_LastProcessBits;
 		wchar_t ms_LastProcessName[MAX_PATH];
 		int mn_LastAppSettingsId;
 		//

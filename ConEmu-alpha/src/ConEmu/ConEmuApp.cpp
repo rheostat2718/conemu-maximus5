@@ -47,6 +47,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "../common/MMap.h"
 #include "../common/execute.h"
+#include "../common/WinFiles.h"
+#include "../common/WinUser.h"
 //#include "../common/TokenHelper.h"
 #include "AboutDlg.h"
 #include "Options.h"
@@ -4499,8 +4501,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		// load settings from registry
 		DEBUGSTRSTARTUP(L"Loading config from settings storage");
-		gpSet->LoadSettings(&bNeedCreateVanilla);
+		gpSet->LoadSettings(bNeedCreateVanilla);
 	}
+
+	// Settings are loaded, fixup
 	SettingsLoadedFlags slfFlags = slf_OnStartupLoad | slf_AllowFastConfig
 		| (bNeedCreateVanilla ? slf_NeedCreateVanilla : slf_None)
 		| (ResetSettings ? slf_DefaultSettings : slf_None);

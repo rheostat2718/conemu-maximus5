@@ -39,12 +39,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCTRL(s) DEBUGSTR(s)
 
 
-//#include <stdio.h>
-#include <windows.h>
-#include <Tlhelp32.h>
-//#include <windowsx.h>
-//#include <string.h>
-//#include <tchar.h>
 #include "../common/common.hpp"
 #pragma warning( disable : 4995 )
 #include "../common/pluginW1761.hpp" // Отличается от 995 наличием SynchoApi
@@ -54,8 +48,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/FarVersion.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"
+#include "../common/WinUser.h"
 #include "ConEmuTh.h"
 #include "ImgCache.h"
+
+#include <Tlhelp32.h>
 
 #define Free free
 #define Alloc calloc
@@ -195,7 +192,7 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 		//if ((OpenFrom & OPEN_FROMMACRO) == OPEN_FROMMACRO)
 		if (FromMacro)
 		{
-			if (Item == pvm_Thumbnails || Item == pvm_Tiles || Item == pvm_Icons)
+			if (Item == pvm_Thumbnails || Item == pvm_Tiles || Item == pvm_Icons || Item == pvm_TurnOff)
 				PVM = (PanelViewMode)Item;
 		}
 	}
@@ -212,6 +209,9 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 				PVM = pvm_Tiles;
 				break;
 			case 2:
+				PVM = pvm_TurnOff;
+				break;
+			case 3:
 				PVM = pvm_Icons;
 				break;
 			default:
@@ -235,7 +235,7 @@ void EntryPoint(int OpenFrom,INT_PTR Item,bool FromMacro)
 	DWORD dwMode = pvm_None; //PanelViewMode
 
 	// Если View не создан, или смена режима
-	if ((lhView == NULL) || (!lbWasVisible && pi->Visible) || (PVM != pi->PVM))
+	if ((PVM != pvm_TurnOff) && ((lhView == NULL) || (!lbWasVisible && pi->Visible) || (PVM != pi->PVM)))
 	{
 		// Для корректного определения положения колонок необходим один из флажков в настройке панели:
 		// [x] Показывать заголовки колонок [x] Показывать суммарную информацию
@@ -1996,6 +1996,21 @@ void UpdateEnvVar(BOOL abForceRedraw)
 	//}
 }
 
+CeFullPanelInfo* GetFocusedThumbnails()
+{
+	if (pviLeft.hView == NULL && pviRight.hView == NULL)
+		return NULL;
+
+	CeFullPanelInfo* pi = NULL;
+
+	if (pviLeft.hView && pviLeft.Focus && pviLeft.Visible)
+		pi = &pviLeft;
+	else if (pviRight.hView && pviRight.Focus && pviRight.Visible)
+		pi = &pviRight;
+
+	return pi;
+}
+
 CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 {
 	if (pviLeft.hView == NULL && pviRight.hView == NULL)
@@ -2019,10 +2034,7 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 
 	if (abFocusRequired)
 	{
-		if (pviLeft.hView && pviLeft.Focus && pviLeft.Visible)
-			pi = &pviLeft;
-		else if (pviRight.hView && pviRight.Focus && pviRight.Visible)
-			pi = &pviRight;
+		pi = GetFocusedThumbnails();
 
 		// Видим?
 		if (pi)
@@ -2054,7 +2066,7 @@ CeFullPanelInfo* IsThumbnailsActive(BOOL abFocusRequired)
 		MapWindowPoints(ghConEmuWnd, NULL, &pt, 1);
 		hChild[1] = WindowFromPoint(pt);
 
-		for(int i = 0; i <= 1; i++)
+		for (int i = 0; i <= 1; i++)
 		{
 			// В принципе, может быть и NULL, если координата попала в "прозрачную" часть hView
 			if (hChild[i] && hChild[i] != pi->hView)

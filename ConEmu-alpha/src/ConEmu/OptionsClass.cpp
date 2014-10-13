@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Monitors.h"
 #include "../common/StartupEnvDef.h"
+#include "../common/WinUser.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuPlugin/FarDefaultMacros.h"
@@ -747,7 +748,7 @@ bool CSettings::SetOption(LPCWSTR asName, LPCWSTR asValue)
 
 void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine /*= NULL*/)
 {
-	if ((ghWnd == NULL) || slfFlags & slf_OnResetReload)
+	if ((ghWnd == NULL) || (slfFlags & slf_OnResetReload))
 	{
 		gpConEmu->wndX = gpSet->_wndX;
 		gpConEmu->wndY = gpSet->_wndY;
@@ -764,6 +765,31 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		DEBUGSTRDPI(szInfo);
 		LogString(szInfo, true, false);
 	}
+
+	#if 0
+	// Не требуется, размер будет скорректирован в CreateMainWindow()
+	if (slfFlags & (slf_NeedCreateVanilla|slf_DefaultSettings) && (gpSet->FontSizeY > 1))
+	{
+		// Under debug the default console width is set to 110x35,
+		// that may be too large on small displays
+		MONITORINFO mi = {};
+		if (gpConEmu->FindInitialMonitor(&mi))
+		{
+			// Примерно, лишь бы сильно за рабочую область не вылезало...
+			RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_ALL, mi.rcWork, CER_MONITOR);
+			//RECT rcDC = gpConEmu->CalcRect(CER_BACK, mi.rcWork, CER_MONITOR);
+			//RECT rcCon = MakeRect((rcDC.right - rcDC.left) / (gpSet->FontSizeX ? gpSet->FontSizeX : (gpSet->FontSizeY / 2)), (rcDC.bottom - rcDC.top) / gpSet->FontSizeY);
+			if ((rcCon.right > 0) && (rcCon.bottom > 0)
+				&& ((rcCon.right < gpSet->wndWidth.Value) || (rcCon.bottom < gpSet->wndHeight.Value)))
+			{
+				gpSet->wndWidth.Set(true, ss_Standard, min(gpSet->wndWidth.Value, rcCon.right));
+				gpSet->wndHeight.Set(false, ss_Standard, min(gpSet->wndHeight.Value, rcCon.bottom));
+				gpConEmu->WndWidth.Raw = gpSet->wndWidth.Raw;
+				gpConEmu->WndHeight.Raw = gpSet->wndHeight.Raw;
+			}
+		}
+	}
+	#endif
 
 	// Обработать 32/64 (найти tcc.exe и т.п.)
 	FindComspec(&gpSet->ComSpec);
@@ -928,16 +954,20 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 void CSettings::SettingsPreSave()
 {
-	lstrcpyn(gpSet->inFont, LogFont.lfFaceName, countof(gpSet->inFont));
-	lstrcpyn(gpSet->inFont2, LogFont2.lfFaceName, countof(gpSet->inFont2));
-	#if 0
-	// was #ifdef UPDATE_FONTSIZE_RECREATE
-	gpSet->FontSizeY = LogFont.lfHeight;
-	#endif
-	gpSet->mn_LoadFontCharSet = LogFont.lfCharSet;
-	gpSet->mn_AntiAlias = LogFont.lfQuality;
-	gpSet->isBold = (LogFont.lfWeight >= FW_BOLD);
-	gpSet->isItalic = (LogFont.lfItalic != 0);
+	// Do not get data from LogFont if it was not created yet
+	if (gpConEmu->mn_StartupFinished >= CConEmuMain::ss_Started)
+	{
+		lstrcpyn(gpSet->inFont, LogFont.lfFaceName, countof(gpSet->inFont));
+		lstrcpyn(gpSet->inFont2, LogFont2.lfFaceName, countof(gpSet->inFont2));
+		#if 0
+		// was #ifdef UPDATE_FONTSIZE_RECREATE
+		gpSet->FontSizeY = LogFont.lfHeight;
+		#endif
+		gpSet->mn_LoadFontCharSet = LogFont.lfCharSet;
+		gpSet->mn_AntiAlias = LogFont.lfQuality;
+		gpSet->isBold = (LogFont.lfWeight >= FW_BOLD);
+		gpSet->isItalic = (LogFont.lfItalic != 0);
+	}
 
 	// Макросы, совпадающие с "умолчательными" - не пишем
 	if (gpSet->sRClickMacro && (lstrcmp(gpSet->sRClickMacro, gpSet->RClickMacroDefault(fmv_Default)) == 0 || lstrcmp(gpSet->sRClickMacro, gpSet->RClickMacroDefault(fmv_Lua)) == 0))
@@ -6205,7 +6235,7 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 	{
 		// Если надо - загрузить из реестра/xml
 		bool bNeedCreateVanilla = false;
-		gpSet->LoadSettings(&bNeedCreateVanilla, pXmlStorage);
+		gpSet->LoadSettings(bNeedCreateVanilla, pXmlStorage);
 	}
 	else
 	{
@@ -7425,7 +7455,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 							break;
 
 						// Перезагрузить App distinct
-						gpSet->LoadAppSettings(NULL, true);
+						gpSet->LoadAppsSettings(NULL, true);
 
 						// Обновить список на экране
 						OnInitDialog_Apps(hWnd2, true);
@@ -10394,7 +10424,11 @@ LONG CSettings::FontWidth()
 {
 	if (LogFont.lfWidth <= 0)
 	{
-		_ASSERTE(LogFont.lfWidth>0);
+		// Сюда мы должны попадать только для примерных расчетов во время старта!
+		_ASSERTE(LogFont.lfWidth>0 || gpConEmu->mn_StartupFinished<=CConEmuMain::ss_Starting);
+		int iEvalWidth = FontHeight() * 10 / 18;
+		if (iEvalWidth)
+			return _abs(iEvalWidth);
 		return 8;
 	}
 
@@ -10413,7 +10447,17 @@ LONG CSettings::FontHeight()
 {
 	if (LogFont.lfHeight <= 0)
 	{
-		_ASSERTE(LogFont.lfHeight>0);
+		// Сюда мы должны попадать только для примерных расчетов во время старта!
+		_ASSERTE(LogFont.lfHeight>0 || gpConEmu->mn_StartupFinished<=CConEmuMain::ss_Starting);
+		int iEvalHeight = 0;
+		if (gpSet->FontSizeY)
+		{
+			iEvalHeight = EvalSize(gpSet->FontSizeY, esf_Vertical|esf_CanUseUnits|esf_CanUseDpi|esf_CanUseZoom);
+			if (iEvalHeight < 0)
+				iEvalHeight = -iEvalHeight * 17 / 14;
+		}
+		if (iEvalHeight)
+			return _abs(iEvalHeight);
 		return 12;
 	}
 
@@ -10427,7 +10471,7 @@ LONG CSettings::FontHeightHtml()
 	if (LogFont.lfHeight <= 0)
 	{
 		_ASSERTE(LogFont.lfHeight>0);
-		return 12;
+		return FontHeight();
 	}
 
 	int iHeight, iLineGap = 0;

@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuPlugin2800.h"
 #include "PluginBackground.h"
 #include "../common/ConEmuCheckEx.h"
+#include "../common/EmergencyShow.h"
 #include "../common/FarVersion.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"
@@ -73,6 +74,7 @@ static BOOL gbTryOpenMapHeader = FALSE;
 static BOOL gbStartupHooksAfterMap = FALSE;
 
 BOOL gbWasDetached = FALSE;
+BOOL gbFarWndVisible = FALSE;
 CONSOLE_SCREEN_BUFFER_INFO gsbiDetached;
 
 DWORD gnPeekReadCount = 0;
@@ -1390,6 +1392,14 @@ bool CPluginBase::Attach2Gui()
 	wchar_t* pszSlash = NULL;
 	DWORD nStartWait = 255;
 
+	if (GetConEmuHWND(0/*Gui console DC window*/))
+	{
+		ShowMessageGui(CECantStartServer4, MB_ICONSTOP|MB_SYSTEMMODAL);
+		goto wrap;
+	}
+
+	gbWasDetached = TRUE;
+
 	if (!FindConEmuBaseDir(szConEmuBase, szConEmuGui, ghPluginModule))
 	{
 		ShowMessageGui(CECantStartServer2, MB_ICONSTOP|MB_SYSTEMMODAL);
@@ -2359,6 +2369,8 @@ void CPluginBase::InitHWND()
 	//        ==2: Console window
 	FarHwnd = GetConEmuHWND(2/*Console window*/);
 	ghConEmuWndDC = GetConEmuHWND(0/*Gui console DC window*/);
+	gbWasDetached = (ghConEmuWndDC == NULL);
+	gbFarWndVisible = IsWindowVisible(FarHwnd);
 
 
 	{
@@ -2479,6 +2491,25 @@ void CPluginBase::CheckConEmuDetached()
 	}
 }
 
+void CPluginBase::EmergencyShow()
+{
+	if (IsWindowVisible(FarHwnd))
+		return;
+
+	// If there is a ConEmuCD - just skip 'Plugin version'
+	HMODULE hSrv = GetModuleHandle(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
+	if (hSrv)
+		return;
+
+	// May be server exists? Wait a little for it
+	Sleep(2000);
+	if (IsWindowVisible(FarHwnd))
+		return;
+
+	// Last chance, lets try to do it here
+	::EmergencyShow(FarHwnd);
+}
+
 // Эту нить нужно оставить, чтобы была возможность отобразить консоль при падении ConEmu
 // static, WINAPI
 DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
@@ -2518,7 +2549,7 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 
 				if (!TerminalMode && !IsWindowVisible(FarHwnd))
 				{
-					EmergencyShow(FarHwnd);
+					EmergencyShow();
 				}
 			}
 		}
@@ -2544,7 +2575,7 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 
 				if (!TerminalMode && !IsWindowVisible(FarHwnd))
 				{
-					EmergencyShow(FarHwnd);
+					EmergencyShow();
 				}
 				else if (!gbWasDetached)
 				{
@@ -2566,6 +2597,12 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 				SetConEmuEnvVar(gpConMapInfo->hConEmuRoot);
 				SetConEmuEnvVarChild(gpConMapInfo->hConEmuWndDc, gpConMapInfo->hConEmuWndBack);
 
+				if (gbStartupHooksAfterMap)
+				{
+					gbStartupHooksAfterMap = FALSE;
+					StartupHooks(ghPluginModule);
+				}
+
 				CPluginBase* p = Plugin();
 
 				// Передернуть отрисовку, чтобы обновить TrueColor
@@ -2578,6 +2615,14 @@ DWORD CPluginBase::MonitorThreadProcW(LPVOID lpParameter)
 				if (gnCurTabCount && gpTabs)
 				{
 					p->SendTabs(gnCurTabCount, TRUE);
+				}
+			}
+			else if (FarHwnd && gbFarWndVisible && !gbTryOpenMapHeader)
+			{
+				if (!IsWindowVisible(FarHwnd))
+				{
+					gbFarWndVisible = FALSE;
+					gbTryOpenMapHeader = TRUE;
 				}
 			}
 		}
@@ -5021,6 +5066,7 @@ BOOL /*WINAPI*/ CPluginBase::OnConsoleDetaching(HookCallbackArg* pArgs)
 VOID /*WINAPI*/ CPluginBase::OnConsoleWasAttached(HookCallbackArg* pArgs)
 {
 	FarHwnd = GetConEmuHWND(2);
+	gbFarWndVisible = IsWindowVisible(FarHwnd);
 
 	if (gbWasDetached)
 	{
@@ -5044,7 +5090,7 @@ VOID /*WINAPI*/ CPluginBase::OnConsoleWasAttached(HookCallbackArg* pArgs)
 		// сразу переподцепимся к GUI
 		if (!Plugin()->Attach2Gui())
 		{
-			EmergencyShow(FarHwnd);
+			EmergencyShow();
 		}
 
 		// Сбрасываем после Attach2Gui, чтобы MonitorThreadProcW случайно

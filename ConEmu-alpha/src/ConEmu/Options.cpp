@@ -571,8 +571,11 @@ void Settings::InitSettings()
 	isExtendUCharMap = true;
 	isDownShowHiddenMessage = false;
 	ParseCharRanges(L"2013-25C4", mpc_FixFarBorderValues);
-	wndWidth.Set(true, ss_Standard, DEF_CON_WIDTH);
-	wndHeight.Set(false, ss_Standard, DEF_CON_HEIGHT);
+
+	// [Debug] Максимальный видимый размер подкорректируется в CConEmuMain::CreateMainWindow()
+	wndWidth.Set(true, ss_Standard, DEF_CON_WIDTH);    // RELEASEDEBUGTEST(80,110)
+	wndHeight.Set(false, ss_Standard, DEF_CON_HEIGHT); // RELEASEDEBUGTEST(25,35)
+
 	ntvdmHeight = 0; // Подбирать автоматически
 	mb_IntegralSize = false;
 	_WindowMode = rNormal;
@@ -891,7 +894,7 @@ void Settings::FreeApps(int NewAppCount, AppSettings** NewApps/*, Settings::CEAp
 	//SafeFree(OldAppColors);
 }
 
-void Settings::LoadAppSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
+void Settings::LoadAppsSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 {
 	bool lbDelete = false;
 	if (!reg)
@@ -2246,7 +2249,7 @@ void Settings::FreeProgresses()
 /* ************************************************************************ */
 /* ************************************************************************ */
 
-void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* apStorage /*= NULL*/)
+void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* apStorage /*= NULL*/)
 {
 	if (!gpConEmu)
 	{
@@ -2281,6 +2284,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 
 			if (hParent == INSIDE_PARENT_NOT_FOUND)
 			{
+				_ASSERTE(FALSE && "Settings initialization skipped because InsideFindParent was failed");
 				return;
 			}
 			else if (hParent)
@@ -2324,28 +2328,44 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 
 	wcscpy_c(Type, reg->m_Storage.szType);
 
-	BOOL lbOpened = FALSE;
-	*rbNeedCreateVanilla = false;
+	bool lbOpened = false;
+	rbNeedCreateVanilla = false;
 
 	lbOpened = reg->OpenKey(gpSetCls->GetConfigPath(), KEY_READ);
 	// Поддержка старого стиля хранения (настройки БЕЗ имени конфига - лежали в корне ключа Software\ConEmu)
 	if (!lbOpened && (*gpSetCls->GetConfigName() == 0))
 	{
 		lbOpened = reg->OpenKey(CONEMU_ROOT_KEY, KEY_READ);
-		*rbNeedCreateVanilla = (lbOpened != FALSE);
+		// rbNeedCreateVanilla means we need to convert old xml format (re-save all settings after loading)
+		if (lbOpened)
+		{
+			// We need to check if there is a real config stored in the HKCU\Software\ConEmu
+			// but not an installer values (like a ConEmuStartShortcutInstalled).
+			CEStr cmd;  BYTE KeybHook = 0xFF;
+			if (reg->Load(L"KeyboardHooks", KeybHook)
+				|| reg->Load(L"CmdLine", &cmd.ms_Arg))
+			{
+				rbNeedCreateVanilla = true;
+			}
+		}
 	}
 
-	if (*rbNeedCreateVanilla)
+	if (rbNeedCreateVanilla)
 	{
-		IsConfigNew = true;
-		// Здесь можно включить настройки, которые должны включаться только для новых конфигураций!
-		InitVanilla();
+		// That may be only there was old (not ".Vanilla") settings in the CONEMU_ROOT_KEY
+		_ASSERTE(lbOpened);
+		// The config was saved in the old format, but it is not a 'new config'.
+		IsConfigNew = false;
 	}
 	else
 	{
-		IsConfigNew = false;
+		IsConfigNew = !lbOpened;
+		// Здесь можно включить настройки, которые должны включаться только для новых конфигураций!
+		if (IsConfigNew)
+		{
+			InitVanilla();
+		}
 	}
-
 
 	// Для совместимости настроек
 	bool bSendAltEnter = false, bSendAltSpace = false, bSendAltF9 = false;
@@ -2971,7 +2991,7 @@ void Settings::LoadSettings(bool *rbNeedCreateVanilla, const SettingsStorage* ap
 
 	LoadPalettes(reg);
 
-	LoadAppSettings(reg);
+	LoadAppsSettings(reg);
 
 	LoadCmdTasks(reg);
 
@@ -3221,7 +3241,7 @@ void Settings::SaveFindOptions(SettingsBase* reg/* = NULL*/)
 	}
 }
 
-void Settings::SaveAppSettings(SettingsBase* reg)
+void Settings::SaveAppsSettings(SettingsBase* reg)
 {
 	BOOL lbOpened = FALSE;
 	wchar_t szAppKey[MAX_PATH+64];
@@ -3726,7 +3746,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 
 		/* Subsections */
 		SaveCmdTasks(reg);
-		SaveAppSettings(reg);
+		SaveAppsSettings(reg);
 		SavePalettes(reg);
 
 		/* Done */

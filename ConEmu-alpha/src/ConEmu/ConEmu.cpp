@@ -55,8 +55,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MFileLog.h"
 #include "../common/Monitors.h"
 #include "../common/MToolTip.h"
-#include "../common/StartupEnvDef.h"
 #include "../common/MWow64Disable.h"
+#include "../common/ProcessSetEnv.h"
+#include "../common/StartupEnvDef.h"
+#include "../common/WinFiles.h"
+#include "../common/WinUser.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuCD/RegPrepare.h"
 #include "Attach.h"
@@ -152,8 +155,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 const wchar_t* gsHomePage    = CEHOMEPAGE;    //L"http://conemu-maximus5.googlecode.com";
 const wchar_t* gsDownlPage   = CEDOWNLPAGE;   //L"http://www.fosshub.com/ConEmu.html";
-const wchar_t* gsReportBug   = CEREPORTBUG;   //L"http://code.google.com/p/conemu-maximus5/issues/entry";
-const wchar_t* gsReportCrash = CEREPORTCRASH; //L"http://code.google.com/p/conemu-maximus5/issues/entry";
+const wchar_t* gsReportBug   = CEREPORTBUG;   //L"http://code.google.com/p/conemu-maximus5/wiki/Issues?tm=3";
+const wchar_t* gsReportCrash = CEREPORTCRASH; //L"http://code.google.com/p/conemu-maximus5/wiki/Issues?tm=3";
 const wchar_t* gsWhatsNew    = CEWHATSNEW;    //L"http://code.google.com/p/conemu-maximus5/wiki/Whats_New";
 
 #define gsPortableApps_LauncherIni  L"\\..\\AppInfo\\Launcher\\ConEmuPortable.ini"
@@ -1725,6 +1728,20 @@ BOOL CConEmuMain::CreateMainWindow()
 		//	+ (this->isTabsShown() ? (gpSet->rcTabMargins.top+gpSet->rcTabMargins.bottom) : 0);
 		//mrc_Ideal = MakeRect(gpSet->wndX, gpSet->wndY, gpSet->wndX+nWidth, gpSet->wndY+nHeight);
 		RECT rcWnd = GetDefaultRect();
+		if (gpSet->IsConfigNew)
+		{
+			// Сюда мы попадаем при запуске на "чистой настройке"
+			// Скорректируем положение окна, чтобы оно не вылезло за монитор
+			if (FixWindowRect(rcWnd, CEB_ALL))
+			{
+				this->wndX = rcWnd.left;
+				this->wndY = rcWnd.top;
+				RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);
+				_ASSERTE(this->WndWidth.Style == ss_Standard && this->WndHeight.Style == ss_Standard);
+				this->WndWidth.Set(true, ss_Standard, rcCon.right);
+				this->WndHeight.Set(false, ss_Standard, rcCon.bottom);
+			}
+		}
 		UpdateIdealRect(rcWnd);
 		nWidth = rcWnd.right - rcWnd.left;
 		nHeight = rcWnd.bottom - rcWnd.top;
