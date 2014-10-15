@@ -102,7 +102,7 @@ Most settings are configured using the Settings dialog, not from the command lin
   #. By default (when started without command-line parameters), !ConEmu runs "`far.exe`" from its home folder, or "cmd.exe"/"tcc.exe" if Far Manager was not found. Alternatively, You may indicate any root command by specifying a "[Command_Line /Cmd <App with params>]" argument in !ConEmu's shortcut or command line. 
 
 ==Screenshots==
-<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuSplits.png" title="ConEmu splits and tabs">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuSplits3.png" title="ConEmu splits and tabs">
 <br><br> 
 
 <wiki:comment>
