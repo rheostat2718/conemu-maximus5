@@ -1,4 +1,4 @@
-﻿[http://code.google.com/p/conemu-maximus5/downloads/list Download (Far1/Far2/Far3 x86/x64)]
+﻿[http://plugring.farmanager.com/plugin.php?pid=792 Download (Far1/Far2/Far3 x86/x64)]
 
 ===About===
  This Far Manager plugin allows to browse and edit Windows Registry.

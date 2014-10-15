@@ -1,4 +1,4 @@
-﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=summary:ImpEx Download (Far1/Far2 x86/x64)]
+﻿[http://plugring.farmanager.com/plugin.php?pid=790 Download (Far1/Far2 x86/x64)]
 
 ===About===
 This is another PE browser (Far Manager plugin).

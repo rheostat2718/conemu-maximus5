@@ -1,4 +1,4 @@
-﻿[http://code.google.com/p/conemu-maximus5/downloads/list?q=summary:MBlockEditor Download (Far1/Far2/Far3 x86/x64)]
+﻿[http://plugring.farmanager.com/plugin.php?pid=791 Download (Far1/Far2/Far3 x86/x64)]
 
 ===About===
 This plugin can tabify/untabify/comment/uncomment selected text (or current line) if Far Editor.

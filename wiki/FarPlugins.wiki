@@ -1,8 +1,12 @@
 #labels Featured
+
+*Note* Some old plugins from this list will not be working in the latest
+builds of Far 3. Updated plugins were moved to [https://github.com/Maximus5/FarPlugins GitHub].
+
 ===List of Far Manager plugins (hosted on this project)===
   * [ClipFixer ClipFixer]
   * [FARSelector FAR Selector]
-  * [Far3Wrapper FAR2->Far3 wrapper]
+  * [Far3Wrapper FAR2->Far3 wrapper] (is not working in the latest Far3)
   * [FarWDS FarWDS]
   * [FileTypes FileTypes]
   * [ImpEx ImpEx (PE format browser)]

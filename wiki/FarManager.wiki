@@ -64,7 +64,7 @@ Through it you can use many plugins from Far 2.x.
 
 =1. Downloads / Installation=
   #. Download Full version from [http://www.farmanager.com/download.php?l=en official site]. Does not matter whatever you use - msi installer or 7z package.
-  #. (Optionally) update binary files with my [http://code.google.com/p/conemu-maximus5/downloads/list Far3bis]. List of improvements [http://conemu-maximus5.googlecode.com/svn/trunk/Far3bis/unicode_far/bis_changelog here]. In breaf - improvements of plugin manager (!AltShiftF9), optimization of C0 column, !MacroLib support.
+  #. (Optionally) update binary files with my [https://sourceforge.net/projects/conemu/files/FarManager/ Far3bis]. List of improvements [http://conemu-maximus5.googlecode.com/svn/trunk/Far3bis/unicode_far/bis_changelog here]. In breaf - improvements of plugin manager (!AltShiftF9), optimization of C0 column.
 
 After installing (unpacking) Far Manager you have such directory structure (by example of Far 3.x)
 ||.\Far.exe<br>.\!FarEng.hlf<br>.\!FarEng.lng||General Far Manager files - executable, help, language data||
@@ -79,28 +79,26 @@ Installing choosen plugin (in most cases) means create subfolder in ‘Plugins�
 
 To make Far Manager load new plugins you may:
  * Simply restart Far Manager
- * or, for [http://code.google.com/p/conemu-maximus5/downloads/list bis] versions, press !AltShiftF9 in panels to open ‘Plugins configuration’ menu, and press CtrlR
+ * or, for [https://sourceforge.net/projects/conemu/files/FarManager/ bis] versions, press !AltShiftF9 in panels to open ‘Plugins configuration’ menu, and press CtrlR
  * or, navigate to plugin folder, type in command prompt ‘load:plugin_file_name.dll’ and press Enter.
 
 ==Examples==
-  #. You have downloaded [https://sourceforge.net/projects/colorer/files/FAR%20Colorer/ FarColorer_far3_1.0.3.10.7z] (syntax hilighting in editor). This archive already contans root folder ‘FarColorer’. So, just unpack 7z package to ‘Plugins’ and restart far. Note, this 7z package contains both x86 and x64 versions of !FarColorer.
+  #. (Note, this plugin already included in the latest Far distro). You have downloaded [https://sourceforge.net/projects/colorer/files/FAR%20Colorer/ FarColorer_far3_1.0.3.10.7z] (syntax hilighting in editor). This archive already contans root folder ‘FarColorer’. So, just unpack 7z package to ‘Plugins’ and restart far. Note, this 7z package contains both x86 and x64 versions of !FarColorer.
   #. You have downloaded [http://code.google.com/p/conemu-maximus5/wiki/RegEditor RegEdit3.1.1.36.2580.7z]. This package does not have root folder, so create and unpack package files to ‘Plugins\!RegEdit’. Note, this 7z package contains both x86 and x64 versions of plugin.
-  #. You have downloaded [http://code.google.com/p/conemu-maximus5/wiki/ImpEx ImpEx.0.8.10.7z] (PE file browser). You owe to use [http://code.google.com/p/conemu-maximus5/wiki/Far3Wrapper Far3wrap] with Far 3.x. So:
-    * Unpack !ImpEx.0.8.10.7z to ‘Plugins\!ImpEx’
 
 ==Main plugins sources==
+  * [http://plugring.farmanager.com/index.php?l=en PlugRing]
   * [http://forum.farmanager.com/viewforum.php?f=11 Plugin announces (russian)]
-  * [http://plugring.farmanager.com/index.php?l=en PlugRing (rarely updated, old plugins)]
   * [http://forum.farmanager.com/viewtopic.php?f=5&t=4590 Plugin dashboard 1], [http://forum.farmanager.com/viewtopic.php?f=5&t=3478 dashboard 2].
 
 ==Developer sites==
-  * [http://colorer.sourceforge.net/farplugin.html Colorer (syntax hilighting in Editor, even in truecolor)]
-  * [http://code.google.com/p/conemu-maximus5/wiki/FarPlugins Regeditor, Picture View, ImpEx (PE browser), Far3wrap and others]
+  * [https://github.com/Maximus5/FarPlugins Regeditor, Picture View, ImpEx (PE browser), Far3wrap and others] and [http://code.google.com/p/conemu-maximus5/wiki/FarPlugins old mirror].
   * [http://code.google.com/p/far-plugins/ MacroLib, Unicode CharMap, Visual Compare, and others]
   * [http://code.google.com/p/far-macro-library/wiki/Common?wl=en Macros repository]
   * [http://sourceforge.net/projects/far-observer/ Observer multi-format (msi/pst/iso/mime/pdb) browser]
   * [http://code.google.com/p/farplug-alvls/ farplug-alvls]
   * [http://code.google.com/p/farplugs/ Hexitor (Hex editor), Media Info, Image Info, SQLiteDB, Disk menu and others]
+  * (Note, this plugin already included in the latest Far distro). [http://colorer.sourceforge.net/farplugin.html Colorer (syntax hilighting in Editor, even in truecolor)]
   * [https://code.google.com/p/evil-programmers/ Many plugin sources]
 
 =3. Help, FAQ, Documentation=

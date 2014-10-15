@@ -1,4 +1,4 @@
-﻿[http://code.google.com/p/conemu-maximus5/downloads/list?can=2&q=Resolve Download (Far2/Far3 x86/x64)]
+﻿[http://plugring.farmanager.com/plugin.php?pid=948 Download (Far3 x86/x64)]
 
 ===About===
 Resolve plugin for Far Manager 2.x and 3.x
