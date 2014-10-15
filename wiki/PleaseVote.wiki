@@ -1,4 +1,6 @@
-﻿=Please VOTE! for the June Community Choice SourceForge project of the Month=
+﻿<wiki:comment>
+
+=Please VOTE! for the June Community Choice SourceForge project of the Month=
 
 ConEmu has been selected to be on the ballot for the June Community Choice SourceForge project of the Month!
 
@@ -9,3 +11,5 @@ Just ‘Log in or Join’ to SourceForge and post the following:
 {{{
 VOTE: conemu
 }}}
+
+</wiki:comment>
