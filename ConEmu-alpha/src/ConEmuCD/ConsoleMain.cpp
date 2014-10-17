@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_INJECTREM_MSGBOX
 //	#define SHOW_ATTACH_MSGBOX
 //	#define SHOW_ROOT_STARTED
+//	#define SHOW_ASYNC_STARTED
 	#define WINE_PRINT_PROC_INFO
 //	#define USE_PIPE_DEBUG_BOXES
 //	#define SHOW_SETCONTITLE_MSGBOX
@@ -106,8 +107,8 @@ WARNING("Обязательно получить код и имя родител
 #ifdef USEPIPELOG
 namespace PipeServerLogger
 {
-    Event g_events[BUFFER_SIZE];
-    LONG g_pos = -1;
+	Event g_events[BUFFER_SIZE];
+	LONG g_pos = -1;
 }
 #endif
 
@@ -207,6 +208,7 @@ RunMode gnRunMode = RM_UNDEFINED;
 BOOL  gbDumpServerInitStatus = FALSE;
 BOOL  gbNoCreateProcess = FALSE;
 BOOL  gbDontInjectConEmuHk = FALSE;
+BOOL  gbAsyncRun = FALSE;
 int   gnCmdUnicodeMode = 0;
 UINT  gnPTYmode = 0; // 1 enable PTY, 2 - disable PTY (work as plain console), 0 - don't change
 BOOL  gbRootIsCmdExe = TRUE;
@@ -574,6 +576,14 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 void OnProcessCreatedDbg(BOOL bRc, DWORD dwErr, LPPROCESS_INFORMATION pProcessInformation, LPSHELLEXECUTEINFO pSEI)
 {
 	int iDbg = 0;
+
+#ifdef SHOW_ASYNC_STARTED
+	if (gbAsyncRun)
+	{
+		_ASSERTE(FALSE && "Async startup requested");
+	}
+#endif
+
 #ifdef SHOW_ROOT_STARTED
 	if (bRc)
 	{
@@ -737,7 +747,7 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 	{
 		// если фильтр уже был установлен перед нашим - будем звать его
 		// все-равно уже свалились, на валидность адреса можно не проверяться
-        lExRc = gpfnPrevExFilter(ExceptionInfo);
+		lExRc = gpfnPrevExFilter(ExceptionInfo);
 	}
 
 	return lExRc;
@@ -1698,8 +1708,8 @@ wait:
 		xf_validate(NULL);
 		#endif
 
-		DWORD dwWait;
-		dwWait = nWaitComspecExit = WaitForSingleObject(pi.hProcess, INFINITE);
+		DWORD nWaitMS = gbAsyncRun ? 0 : INFINITE;
+		nWaitComspecExit = WaitForSingleObject(pi.hProcess, nWaitMS);
 
 		#ifdef _DEBUG
 		xf_validate(NULL);
@@ -1768,7 +1778,7 @@ wrap:
 	else if (pi.hProcess)
 		GetExitCodeProcess(pi.hProcess, &gnExitCode);
 	// Ассерт может быть если был запрос на аттач, который не удался
-	_ASSERTE(gnExitCode!=STILL_ACTIVE || (iRc==CERR_ATTACHFAILED) || (iRc==CERR_RUNNEWCONSOLE));
+	_ASSERTE(gnExitCode!=STILL_ACTIVE || (iRc==CERR_ATTACHFAILED) || (iRc==CERR_RUNNEWCONSOLE) || gbAsyncRun);
 
 	if (gbPrintRetErrLevel)
 	{
@@ -2015,6 +2025,7 @@ AltServerDone:
 	ShutdownSrvStep(L"Finalizing done");
 	UNREFERENCED_PARAMETER(gpszCheck4NeedCmd);
 	UNREFERENCED_PARAMETER(nWaitDebugExit);
+	UNREFERENCED_PARAMETER(nWaitComspecExit);
 #if 0
 	if (gnRunMode == RM_SERVER)
 	{
@@ -2533,7 +2544,7 @@ int CheckUnicodeFont()
 				cpinfo.CodePageName);
 		}
 		WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
-    }
+	}
 
 
 	// Simlify checking of ConEmu's "colorization"
@@ -2550,7 +2561,7 @@ int CheckUnicodeFont()
 	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
 
 
-    WriteConsoleW(hOut, L"\r\nCheck ", 8, &nTmp, NULL);
+	WriteConsoleW(hOut, L"\r\nCheck ", 8, &nTmp, NULL);
 
 
 	if ((bInfo = GetConsoleScreenBufferInfo(hOut, &csbi)) != FALSE)
@@ -2563,10 +2574,8 @@ int CheckUnicodeFont()
 			msprintf(sAttrWrite+i, 2, L"%X", aWrite[i]);
 		}
 
-		COORD /*crSize = {(SHORT)nLen,1},*/ cr0 = {0,0};
-		//SMALL_RECT rcWrite = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, csbi.dwCursorPosition.X+(SHORT)nLen-1, csbi.dwCursorPosition.Y};
+		COORD cr0 = {0,0};
 		if ((bWrite = WriteConsoleOutputCharacterW(hOut, szText, nLen, csbi.dwCursorPosition, &nWrite)) != FALSE)
-        //if ((bWrite = WriteConsoleOutputW(hOut, cWrite, crSize, cr0, &rcWrite)) != FALSE)
 		{
 			if (((bRead = ReadConsoleOutputCharacterW(hOut, szCheck, nLen*2, csbi.dwCursorPosition, &nRead)) != FALSE)
 				/*&& (nRead == nLen)*/)
@@ -4579,7 +4588,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				_ASSERTE(ghConWnd!=NULL);
 				#endif
 			}
-            else if (gpSrv->dwRootProcess == 0)
+			else if (gpSrv->dwRootProcess == 0)
 			{
 				_printf("Attach to GUI was requested, but invalid PID specified:\n");
 				_wprintf(GetCommandLineW());
@@ -4700,27 +4709,27 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (wcsncmp(szArg, L"/TA=", 4)==0)
 		{
 			wchar_t* pszEnd = NULL;
-        	DWORD nColors = wcstoul(szArg+4, &pszEnd, 16);
-        	if (nColors)
-        	{
-        		DWORD nTextIdx = (nColors & 0xFF);
-        		DWORD nBackIdx = ((nColors >> 8) & 0xFF);
-        		DWORD nPopTextIdx = ((nColors >> 16) & 0xFF);
-        		DWORD nPopBackIdx = ((nColors >> 24) & 0xFF);
+			DWORD nColors = wcstoul(szArg+4, &pszEnd, 16);
+			if (nColors)
+			{
+				DWORD nTextIdx = (nColors & 0xFF);
+				DWORD nBackIdx = ((nColors >> 8) & 0xFF);
+				DWORD nPopTextIdx = ((nColors >> 16) & 0xFF);
+				DWORD nPopBackIdx = ((nColors >> 24) & 0xFF);
 
-        		if ((nTextIdx <= 15) && (nBackIdx <= 15) && (nTextIdx != nBackIdx))
-        			gnDefTextColors = (WORD)(nTextIdx | (nBackIdx << 4));
+				if ((nTextIdx <= 15) && (nBackIdx <= 15) && (nTextIdx != nBackIdx))
+					gnDefTextColors = (WORD)(nTextIdx | (nBackIdx << 4));
 
-        		if ((nPopTextIdx <= 15) && (nPopBackIdx <= 15) && (nPopTextIdx != nPopBackIdx))
-        			gnDefPopupColors = (WORD)(nPopTextIdx | (nPopBackIdx << 4));
+				if ((nPopTextIdx <= 15) && (nPopBackIdx <= 15) && (nPopTextIdx != nPopBackIdx))
+					gnDefPopupColors = (WORD)(nPopTextIdx | (nPopBackIdx << 4));
 
-        		if (gnDefTextColors || gnDefPopupColors)
-        		{
-        			HANDLE hConOut = ghConOut;
-        			BOOL bPassed = FALSE;
+				if (gnDefTextColors || gnDefPopupColors)
+				{
+					HANDLE hConOut = ghConOut;
+					BOOL bPassed = FALSE;
 
-        			if (gnDefPopupColors && (gnOsVer >= 0x600))
-        			{
+					if (gnDefPopupColors && (gnOsVer >= 0x600))
+					{
 						CONSOLE_SCREEN_BUFFER_INFO csbi0 = {};
 						GetConsoleScreenBufferInfo(hConOut, &csbi0);
 
@@ -4773,10 +4782,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 					if (!bPassed && gnDefTextColors)
 					{
-        				SetConsoleTextAttribute(hConOut, gnDefTextColors);
-    				}
-        		}
-        	}
+						SetConsoleTextAttribute(hConOut, gnDefTextColors);
+					}
+				}
+			}
 		}
 		else if (lstrcmpni(szArg, L"/DEBUGPID=", 10)==0)
 		{
@@ -4893,15 +4902,9 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			// Reuse config if starting "ConEmu.exe" from console server!
 			SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, szArg);
 		}
-		// После этих аргументов - идет то, что передается в CreateProcess!
-		else if (wcscmp(szArg, L"/ROOT")==0 || wcscmp(szArg, L"/root")==0)
+		else if (lstrcmpi(szArg, L"/ASYNC") == 0 || lstrcmpi(szArg, L"/FORK") == 0)
 		{
-			#ifdef SHOW_SERVER_STARTED_MSGBOX
-			ShowServerStartedMsgBox();
-			#endif
-			gnRunMode = RM_SERVER; gbNoCreateProcess = FALSE;
-			SetWorkEnvVar();
-			break; // lsCmdLine уже указывает на запускаемую программу
+			gbAsyncRun = TRUE;
 		}
 		else if (lstrcmpi(szArg, L"/NOINJECT")==0)
 		{
@@ -4910,6 +4913,17 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpi(szArg, L"/DOSBOX")==0)
 		{
 			gbUseDosBox = TRUE;
+		}
+		// После этих аргументов - идет то, что передается в CreateProcess!
+		else if (lstrcmpi(szArg, L"/ROOT")==0)
+		{
+			#ifdef SHOW_SERVER_STARTED_MSGBOX
+			ShowServerStartedMsgBox();
+			#endif
+			gnRunMode = RM_SERVER; gbNoCreateProcess = FALSE;
+			gbAsyncRun = FALSE;
+			SetWorkEnvVar();
+			break; // lsCmdLine уже указывает на запускаемую программу
 		}
 		// После этих аргументов - идет то, что передается в COMSPEC (CreateProcess)!
 		//if (wcscmp(szArg, L"/C")==0 || wcscmp(szArg, L"/c")==0 || wcscmp(szArg, L"/K")==0 || wcscmp(szArg, L"/k")==0) {
@@ -5278,7 +5292,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		if (GetEnvironmentVariable(L"ComSpecC", gszComSpec, MAX_PATH))
 		{
 			_ASSERTE(gszComSpec[0] == 0);
-        }
+		}
 		#endif
 
 		if (!GetEnvironmentVariable(L"ComSpec", gszComSpec, MAX_PATH) || gszComSpec[0] == 0)
@@ -5291,7 +5305,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			//if (!SearchPathW(NULL, L"cmd.exe", NULL, MAX_PATH, gszComSpec, &psFilePart))
 
 			LPCWSTR pszFind = GetComspecFromEnvVar(gszComSpec, countof(gszComSpec));
-            if (!pszFind || !wcschr(pszFind, L'\\') || !FileExists(pszFind))
+			if (!pszFind || !wcschr(pszFind, L'\\') || !FileExists(pszFind))
 			{
 				_ASSERTE("cmd.exe not found!");
 				_printf("Can't find cmd.exe!\n");
@@ -6915,7 +6929,7 @@ void OnAltServerChanged(int nStep, StartStopType nStarted, DWORD nAltServerPID, 
 			{
 				// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 				_ASSERTE(((nAltServerPID == gpSrv->dwAltServerPID) || !gpSrv->dwAltServerPID || ((nStarted != sst_AltServerStop) && (nAltServerPID != gpSrv->dwAltServerPID) && !AS.bPrevFound)) && "Expected active alt.server!");
-            }
+			}
 		}
 	}
 	else if (nStep == 2)
@@ -8848,13 +8862,6 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 }
 
 
-
-bool CoordInSmallRect(const COORD& cr, const SMALL_RECT& rc)
-{
-	return (cr.X >= rc.Left && cr.X <= rc.Right && cr.Y >= rc.Top && cr.Y <= rc.Bottom);
-}
-
-
 static bool AdaptConsoleFontSize(const COORD& crNewSize)
 {
 	bool lbRc = true;
@@ -9083,7 +9090,7 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 
 	// BTW, сейчас при ресайзе меняется только ширина csbi.dwSize.X (ну, кроме случаев изменения высоты буфера)
 
-	if (nScreenAtBottom <= 0)
+	if ((nScreenAtBottom <= 0) && (nCursorAtBottom <= 0))
 	{
 		// Все просто, фиксируем нижнюю границу по размеру буфера
 		rNewRect.Bottom = csbi.dwSize.Y-1;

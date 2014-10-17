@@ -998,7 +998,8 @@ void CStatus::UpdateStatusBar(bool abForce /*= false*/, bool abRepaintNow /*= fa
 
 	InvalidateStatusBar(&rcInvalidated);
 
-	if (abRepaintNow)
+	// Do not call redraw syncronously because of possible termination deadlocks
+	if (abRepaintNow && isMainThread())
 	{
 		RedrawWindow(ghWnd, &rcInvalidated, NULL, RDW_INTERNALPAINT|RDW_NOERASE|RDW_NOFRAME|RDW_UPDATENOW|RDW_VALIDATE);
 	}
@@ -1364,6 +1365,7 @@ void CStatus::ShowStatusSetupMenu()
 		// (ну так, на всякий случай, чтобы и статусное меню можно было показать)
 		&& (ptClient.x <= min(80,(m_Items[0].rcClient.right/2))))
 	{
+		LogString(L"ShowSysmenu called from (StatusBar)");
 		gpConEmu->mp_Menu->ShowSysmenu(ptCur.x, ptCur.y, TPM_BOTTOMALIGN);
 		return;
 	}

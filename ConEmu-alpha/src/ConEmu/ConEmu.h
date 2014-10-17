@@ -485,6 +485,7 @@ class CConEmuMain
 		UINT GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
 	private:
 		UINT RegisterMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
+		void RegisterMessages();
 	protected:
 		friend class CConEmuCtrl;
 		friend class CRunQueue;
@@ -540,6 +541,7 @@ class CConEmuMain
 		UINT mn_MsgMacroExecSync;
 		UINT mn_MsgActivateVCon;
 		UINT mn_MsgPostScClose;
+		UINT mn_MsgOurSysCommand;
 
 		//
 		virtual void OnUseGlass(bool abEnableGlass) override;

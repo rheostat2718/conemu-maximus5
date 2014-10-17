@@ -46,6 +46,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define CONSOLE_MOUSE_SELECTION         0x0004   // selecting with mouse
 #endif
 
+#ifndef WM_MOUSEHWHEEL
+	#define WM_MOUSEHWHEEL                  0x020E
+#endif
+
 #include "Options.h"
 
 class CMatch;
@@ -105,8 +109,8 @@ public:
 	BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 	void OnBufferHeight();
 
-	LRESULT OnScroll(int nDirection, short nTrackPos = -1, UINT nCount = 1);
-	LRESULT OnSetScrollPos(WPARAM wParam);
+	LRESULT DoScrollBuffer(int nDirection, short nTrackPos = -1, UINT nCount = 1);
+	LRESULT DoSetScrollPos(WPARAM wParam);
 
 	BOOL ApplyConsoleInfo();
 
