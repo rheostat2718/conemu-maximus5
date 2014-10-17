@@ -75,6 +75,8 @@ CConEmuMenu::CConEmuMenu()
 	mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	mn_TrackMenuPlace = tmp_None;
 
+	mn_MsgOurSysCommand = gpConEmu->GetRegisteredMessage("UM_SYSCOMMAND");
+
 	HMENU* hMenu[] = {
 		&mh_SysDebugPopup, &mh_SysEditPopup, &mh_ActiveVConPopup, &mh_TerminateVConPopup, &mh_VConListPopup, &mh_HelpPopup, // Popup's для SystemMenu
 		&mh_InsideSysMenu,
@@ -755,6 +757,10 @@ bool CConEmuMenu::OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags)
 {
 	bool bRc = true;
 
+	wchar_t szInfo[80];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"OnMenuSelected selected, ID=%u, Flags=x%04X", nID, nFlags);
+	LogString(szInfo);
+
 	switch (mn_TrackMenuPlace)
 	{
 	case tmp_Cmd:
@@ -1400,7 +1406,15 @@ int CConEmuMenu::trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, 
 	if (!(uFlags & (TPM_HORIZONTAL|TPM_VERTICAL)))
 		uFlags |= TPM_HORIZONTAL;
 
+	wchar_t szInfo[100];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"TrackPopupMenuEx started, place=%i, flags=x%08X, {%i,%i}", place, uFlags, x, y);
+	LogString(szInfo);
+
+	SetLastError(0);
 	int cmd = TrackPopupMenuEx(hMenu, uFlags, x, y, hWnd, &ex);
+
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"TrackPopupMenuEx done, command=%i, code=%u", cmd, GetLastError());
+	LogString(szInfo);
 
 	mn_TrackMenuPlace = prevPlace;
 
@@ -1475,6 +1489,7 @@ void CConEmuMenu::OnNcIconLClick()
 	// When Alt is hold down - sysmenu will be immediately closed
 	else if (!isPressed(VK_MENU))
 	{
+		LogString(L"ShowSysmenu called from (OnNcIconLClick)");
 		ShowSysmenu();
 	}
 }
@@ -1531,24 +1546,21 @@ void CConEmuMenu::ShowSysmenu(int x, int y, DWORD nFlags /*= 0*/)
 	SendMessage(ghWnd, WM_INITMENU, (WPARAM)systemMenu, 0);
 	SendMessage(ghWnd, WM_INITMENUPOPUP, (WPARAM)systemMenu, MAKELPARAM(0, true));
 
-	// Переехало в OnMenuPopup
-	//BOOL bSelectionExist = ActiveCon()->RCon()->isSelectionPresent();
-	//EnableMenuItem(systemMenu, ID_CON_COPY, MF_BYCOMMAND | (bSelectionExist?MF_ENABLED:MF_GRAYED));
 	SetActiveWindow(ghWnd);
-	//mb_InTrackSysMenu = TRUE;
+
 	mn_SysMenuOpenTick = GetTickCount();
 	POINT ptCurBefore = {}; GetCursorPos(&ptCurBefore);
 
 	int command = trackPopupMenu(tmp_System, systemMenu,
 		 TPM_RETURNCMD | TPM_LEFTBUTTON | TPM_RIGHTBUTTON | nFlags,
 		 x, y, ghWnd);
-	//mb_InTrackSysMenu = FALSE;
+
 	if (command == 0)
 	{
-		DEBUGTEST(bool bLbnPressed = isPressed(VK_LBUTTON));
+		bool bLbnPressed = isPressed(VK_LBUTTON);
 		mn_SysMenuCloseTick = GetTickCount();
 
-		if ((mn_SysMenuCloseTick - mn_SysMenuOpenTick) < GetDoubleClickTime())
+		if (bLbnPressed && ((mn_SysMenuCloseTick - mn_SysMenuOpenTick) < GetDoubleClickTime()))
 		{
 			POINT ptCur = {}; GetCursorPos(&ptCur);
 			if (gpConEmu->PtDiffTest(ptCur, ptCurBefore.x, ptCurBefore.y, 8))
@@ -1593,7 +1605,8 @@ void CConEmuMenu::ShowSysmenu(int x, int y, DWORD nFlags /*= 0*/)
 
 	if (command)
 	{
-		PostMessage(ghWnd, WM_SYSCOMMAND, (WPARAM)command, 0);
+		// gpConEmu will trigger our OnSysCommand method on post received
+		PostMessage(ghWnd, mn_MsgOurSysCommand/*WM_SYSCOMMAND*/, (WPARAM)command, 0);
 	}
 }
 
@@ -1995,16 +2008,22 @@ LPCWSTR CConEmuMenu::MenuAccel(int DescrID, LPCWSTR asText)
 	return szTemp;
 }
 
-LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
+LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT Msg /*= 0*/)
 {
-#ifdef _DEBUG
-	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand (%i(0x%X), %i)\n", (DWORD)wParam, (DWORD)wParam, (DWORD)lParam);
+	wchar_t szDbg[128], szName[32];
+	wcscpy_c(szName, Msg == WM_SYSCOMMAND ? L" - WM_SYSCOMMAND" : Msg == mn_MsgOurSysCommand ? L" - UM_SYSCOMMAND" : L"");
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand (%i(0x%X), %i)%s", (DWORD)wParam, (DWORD)wParam, (DWORD)lParam, szName);
+	LogString(szDbg);
+
+	#ifdef _DEBUG
+	wcscat_c(szDbg, L"\n");
 	DEBUGSTRSIZE(szDbg);
 	if (wParam == SC_HOTKEY)
 	{
 		_ASSERTE(wParam!=SC_HOTKEY);
 	}
-#endif
+	#endif
+
 	LRESULT result = 0;
 
 	if (wParam >= IDM_VCON_FIRST && wParam <= IDM_VCON_LAST)

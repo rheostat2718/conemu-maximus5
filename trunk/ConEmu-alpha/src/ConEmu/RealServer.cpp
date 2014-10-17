@@ -104,7 +104,7 @@ bool CRealServer::Start()
 	mp_RConServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
 	// ConEmuC ожидает готовый пайп после возврата из CECMD_SRVSTARTSTOP
-	if (!mp_RConServer->StartPipeServer(mp_RCon->ms_VConServer_Pipe, (LPARAM)this, LocalSecurity(),
+	if (!mp_RConServer->StartPipeServer(false, mp_RCon->ms_VConServer_Pipe, (LPARAM)this, LocalSecurity(),
 			ServerCommand, ServerCommandFree, NULL, NULL, ServerThreadReady))
 	{
 		MBoxAssert("mp_RConServer->StartPipeServer"==0);
@@ -408,9 +408,24 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			}
 			else
 			{
+				int iDefaultBufferHeight = gpSet->DefaultBufferHeight;
 				BOOL bAllowBufferHeight = (gpSet->AutoBufferHeight || mp_RCon->isBufferHeight()) && (nParentFarPid != 0);
 				if (pIn->StartStop.bForceBufferHeight)
+				{
 					bAllowBufferHeight = (pIn->StartStop.nForceBufferHeight != 0);
+				}
+				else
+				{
+					int nNewWidth = 0, nNewHeight = 0; DWORD nScroll = 0;
+					if (mp_RCon->mp_RBuf->GetConWindowSize(pIn->StartStop.sbi, &nNewWidth, &nNewHeight, &nScroll))
+					{
+						if (nScroll & rbs_Vert)
+						{
+							bAllowBufferHeight = TRUE;
+							iDefaultBufferHeight = pIn->StartStop.sbi.dwSize.Y;
+						}
+					}
+				}
 
 				// но пока его нужно сбросить
 				mp_RCon->mb_IgnoreCmdStop = FALSE;
@@ -422,7 +437,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 				else
 				{
 					// в ComSpec передаем именно то, что сейчас в gpSet
-					pOut->StartStopRet.nBufferHeight = bAllowBufferHeight ? gpSet->DefaultBufferHeight : 0;
+					pOut->StartStopRet.nBufferHeight = bAllowBufferHeight ? iDefaultBufferHeight : 0;
 				}
 				// 111125 было "con.m_sbi.dwSize.X" и "con.m_sbi.dwSize.X"
 				pOut->StartStopRet.nWidth = mp_RCon->mp_RBuf->GetBufferWidth()/*con.m_sbi.dwSize.X*/;
@@ -724,7 +739,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 		}
 
 		mp_RCon->tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchNonPanel, pIn->hdr.nSrcPID);
-		mp_RCon->SetTabs(NULL, 1);
+		mp_RCon->SetTabs(NULL, 1, 0);
 		gpConEmu->mp_TabBar->PrintRecentStack();
 	}
 	else
@@ -828,7 +843,7 @@ CESERVER_REQ* CRealServer::cmdTabsChanged(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 			TODO("DoubleView: все видимые");
 			//gpConEmu->ActiveCon()->Invalidate();
 			CVConGroup::InvalidateAll();
-			mp_RCon->SetTabs(pIn->Tabs.tabs, pIn->Tabs.nTabCount);
+			mp_RCon->SetTabs(pIn->Tabs.tabs, pIn->Tabs.nTabCount, pIn->hdr.nSrcPID);
 			gpConEmu->mp_TabBar->SetRedraw(TRUE);
 			//gpConEmu->ActiveCon()->Redraw();
 			CVConGroup::Redraw();

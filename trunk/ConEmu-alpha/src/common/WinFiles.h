@@ -31,12 +31,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CmdLine.h"
 
 bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll = false, int anListCount = -1);
+bool FileExistSubDir(LPCWSTR asDirectory, LPCWSTR asFile, int iDepth, CEStr& rsFound);
 bool DirectoryExists(LPCWSTR asPath);
 bool MyCreateDirectory(wchar_t* asPath);
+
+bool IsDotsName(LPCWSTR asName);
 
 bool SearchAppPaths(LPCWSTR asFilePath, CmdArg& rsFound, bool abSetPath, CmdArg* rpsPathRestore = NULL);
 
 wchar_t* GetFullPathNameEx(LPCWSTR asPath);
+bool FindFileName(LPCWSTR asPath, CEStr& rsName);
+bool MakePathProperCase(CEStr& rsPath);
 
 int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP = 0);
 int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen = -1, DWORD OutCP = CP_UTF8, bool WriteBOM = true, LPDWORD rnErrCode = NULL);

@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSection.h"
 #include "../common/MSetter.h"
 #include "../common/MWow64Disable.h"
+#include "../common/WinFiles.h"
 #include "../common/WinConsole.h"
 #include "../common/SetEnvVar.h"
 #include "../ConEmuHk/SetHook.h"
@@ -848,11 +849,11 @@ void CPluginBase::ShowTabsList()
 					if (nArea != -1)
 					{
 						if (nArea == ma_Shell || nArea == ma_Search || nArea == ma_InfoPanel || nArea == ma_QViewPanel || nArea == ma_TreePanel)
-							gnPluginOpenFrom = of_FilePanel;
+							nOpenFrom = of_FilePanel;
 						else if (nArea == ma_Editor)
-							gnPluginOpenFrom = of_Editor;
+							nOpenFrom = of_Editor;
 						else if (nArea == ma_Viewer)
-							gnPluginOpenFrom = of_Viewer;
+							nOpenFrom = of_Viewer;
 					}
 					gnPluginOpenFrom = nOpenFrom;
 					ProcessCommand(CMD_SETWINDOW, FALSE, &nTab, NULL, true/*bForceSendTabs*/);
@@ -5319,7 +5320,7 @@ void CPluginBase::ProcessDragFrom()
 
 				if (i == 0
 				        && ((FileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-				        && !lstrcmpW(piNames[i], L".."))
+				        && IsDotsName(piNames[i]))
 				{
 					SafeFree(piNames[i]);
 					continue;

@@ -469,8 +469,8 @@ class CRealConsole
 		bool isServerCreated(bool bFullRequired = false);
 		bool isServerAvailable();
 		bool isServerClosing();
-		LRESULT OnScroll(int nDirection, UINT nCount = 1);
-		LRESULT OnSetScrollPos(WPARAM wParam);
+		LRESULT DoScroll(int nDirection, UINT nCount = 1);
+		LRESULT DoSetScrollPos(WPARAM wParam);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 		bool isConSelectMode();
 		bool isFar(bool abPluginRequired=false);
@@ -519,7 +519,7 @@ class CRealConsole
 		//LRESULT OnConEmuCmd(BOOL abStarted, DWORD anConEmuC_PID);
 		BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 		void UpdateScrollInfo();
-		void SetTabs(ConEmuTab* apTabs, int anTabsCount);
+		void SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID);
 		void DoRenameTab();
 		bool DuplicateRoot(bool bSkipMsg = false, bool bRunAsAdmin = false, LPCWSTR asNewConsole = NULL, LPCWSTR asApp = NULL, LPCWSTR asParm = NULL);
 		void RenameTab(LPCWSTR asNewTabText = NULL);

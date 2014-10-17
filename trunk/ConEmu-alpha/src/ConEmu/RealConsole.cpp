@@ -364,7 +364,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	/* *** TABS *** */
 	// -- т.к. автопоказ табов может вызвать ресайз - то табы в самом конце инициализации!
 	_ASSERTE(isMainThread()); // Иначе табы сразу не перетряхнутся
-	SetTabs(NULL,1); // Для начала - показывать вкладку Console, а там ФАР разберется
+	SetTabs(NULL, 1, 0); // Для начала - показывать вкладку Console, а там ФАР разберется
 	MCHKHEAP;
 
 	/* *** Set start pending *** */
@@ -3315,7 +3315,7 @@ void CRealConsole::ResetVarsOnStart()
 
 	// Обновить закладки
 	tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchNonPanel, 0);
-	SetTabs(NULL,1);
+	SetTabs(NULL, 1, 0);
 	mp_ConEmu->mp_TabBar->PrintRecentStack();
 }
 
@@ -5117,6 +5117,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 			mp_ConEmu->OnRConStartedSuccess(NULL);
 			LogString(L"### Main Thread wating timeout, terminating...\n");
 			DEBUGSTRPROC(L"### Main Thread wating timeout, terminating...\n");
+			_ASSERTE(FALSE && "Terminating mh_MonitorThread");
 			mb_WasForceTerminated = TRUE;
 			TerminateThread(mh_MonitorThread, 1);
 		}
@@ -5139,7 +5140,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		else
 		{
 			// Должен быть NULL, если нет - значит завис предыдующий макрос
-			_ASSERTE(mh_PostMacroThread==NULL);
+			_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
 			TerminateThread(mh_PostMacroThread, 100);
 			CloseHandle(mh_PostMacroThread);
 		}
@@ -5389,7 +5390,7 @@ LPCWSTR CRealConsole::GetTabTitle(CTab& tab)
 }
 
 // nDirection is one of the standard SB_xxx constants
-LRESULT CRealConsole::OnScroll(int nDirection, UINT nCount /*= 1*/)
+LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 {
 	if (!this || !mp_ABuf)
 		return 0;
@@ -5427,16 +5428,16 @@ LRESULT CRealConsole::OnScroll(int nDirection, UINT nCount /*= 1*/)
 		break;
 	}
 
-	lRc = mp_ABuf->OnScroll(nDirection, nTrackPos, nCount);
+	lRc = mp_ABuf->DoScrollBuffer(nDirection, nTrackPos, nCount);
 wrap:
 	return lRc;
 }
 
-LRESULT CRealConsole::OnSetScrollPos(WPARAM wParam)
+LRESULT CRealConsole::DoSetScrollPos(WPARAM wParam)
 {
 	if (!this) return 0;
 
-	return mp_ABuf->OnSetScrollPos(wParam);
+	return mp_ABuf->DoSetScrollPos(wParam);
 }
 
 const ConEmuHotKey* CRealConsole::ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars)
@@ -9099,7 +9100,7 @@ void CRealConsole::_TabsInfo::StoreActiveTab(int anActiveIndex, const CTabID* ap
 	}
 }
 
-void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
+void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID)
 {
 #ifdef _DEBUG
 	wchar_t szDbg[128];
@@ -9239,9 +9240,18 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 			| (apTabs[i].Current ? fwt_CurrentFarWnd : fwt_Any)
 			| (apTabs[i].Modal ? fwt_ModalFarWnd : fwt_Any);
 
-		int nPID = ((TypeAndFlags & (fwt_ModalFarWnd|fwt_Editor|fwt_Viewer)) != 0) ? GetFarPID() : 0;
+		bool bModal = ((TypeAndFlags & fwt_ModalFarWnd) == fwt_ModalFarWnd);
+		bool bEditorViewer = (((TypeAndFlags & fwt_TypeMask) == fwt_Editor) || ((TypeAndFlags & fwt_TypeMask) == fwt_Viewer));
 
-		bHasModal |= (TypeAndFlags & fwt_ModalFarWnd) == fwt_ModalFarWnd;
+		// Do not use GetFarPID() here, because Far states may not be updated yet?
+		int nPID = (bModal || bEditorViewer) ? anFarPID : 0;
+		#ifdef _DEBUG
+		_ASSERTE(nPID || ((TypeAndFlags & fwt_TypeMask) == fwt_Panels));
+		if (nPID && !GetFarPID())
+			int nDbg = 0; // That may happens with "edit:<git log", if processes were not updated yet (in MonitorThread)
+		#endif
+
+		bHasModal |= bModal;
 
 		if (tabs.m_Tabs.UpdateFarWindow(hUpdate, mp_VCon, apTabs[i].Name, TypeAndFlags, nPID, apTabs[i].Pos, apTabs[i].EditViewId, ActiveTab))
 			bTabsChanged = true;
@@ -9281,7 +9291,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount)
 	for (int I = tabs.mn_tabsCount-1; I >= 0; I--)
 	{
 		CTab tab(__FILE__,__LINE__);
-		if (GetTab(I, tab))
+		if (tabs.m_Tabs.GetTabByIndex(I, tab))
 		{
 			if (tab->Flags() & fwt_CurrentFarWnd)
 			{
@@ -9832,7 +9842,11 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	}
 	else if (tabIdx > 0)
 	{
-		return false;
+		// Return all tabs, even if Far is in background
+		#ifdef _DEBUG
+		//return false;
+		int iDbg = 0;
+		#endif
 	}
 
 	// Go
@@ -10265,7 +10279,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 				}
 				else
 				{
-					SetTabs(pGetTabs, TabHdr.nTabCount);
+					SetTabs(pGetTabs, TabHdr.nTabCount, dwPID);
 					int iActive = -1;
 					if ((anWndIndex >= 0) && (TabHdr.nTabCount > 0))
 					{
@@ -12965,22 +12979,17 @@ LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 		LPCWSTR pszDir = GetConsoleCurDir(szDir);
 		_ASSERTE(pszDir && wcschr(pszDir,L'/')==NULL);
 
-		if (!FilesExists(pszDir, pszWinPath, true, 1))
+		// Попытаться просканировать один-два уровеня подпапок
+		if (!FileExistSubDir(pszDir, pszWinPath, 2, szFull))
 		{
-			TODO("Попытаться просканировать один уровень подпапок");
-			//return szFull.Attach(szWinPath.Detach());
 			return NULL;
 		}
+	}
 
-		bool bDirSlash  = (pszDir && *pszDir) ? (pszDir[lstrlen(pszDir)-1] == L'\\') : false;
-		bool bFileSlash = (pszWinPath[0] == L'\\');
-
-		if (bDirSlash && bFileSlash)
-			szFull.Attach(lstrmerge(pszDir, pszWinPath+1));
-		else if (bDirSlash || bFileSlash)
-			szFull.Attach(lstrmerge(pszDir, pszWinPath));
-		else
-			szFull.Attach(lstrmerge(pszDir, L"\\", pszWinPath));
+	if (!szFull.IsEmpty())
+	{
+		// "src\conemu\realconsole.cpp" --> "src\ConEmu\RealConsole.cpp"
+		MakePathProperCase(szFull);
 	}
 
 	return szFull;
@@ -13732,7 +13741,7 @@ void CRealConsole::PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData)
 		else
 		{
 			// Должен быть NULL, если нет - значит завис предыдующий макрос
-			_ASSERTE(mh_PostMacroThread==NULL);
+			_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
 			TerminateThread(mh_PostMacroThread, 100);
 			CloseHandle(mh_PostMacroThread);
 		}
@@ -13892,7 +13901,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 			else
 			{
 				// Должен быть NULL, если нет - значит завис предыдующий макрос
-				_ASSERTE(mh_PostMacroThread==NULL);
+				_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
 				TerminateThread(mh_PostMacroThread, 100);
 				CloseHandle(mh_PostMacroThread);
 			}

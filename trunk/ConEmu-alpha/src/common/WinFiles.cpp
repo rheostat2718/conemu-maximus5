@@ -193,6 +193,134 @@ wchar_t* GetFullPathNameEx(LPCWSTR asPath)
 	return pszResult;
 }
 
+bool FindFileName(LPCWSTR asPath, CEStr& rsName)
+{
+	LPCWSTR pszName = wcsrchr(asPath, L'\\');
+	if (!pszName || pszName[1] == 0)
+	{
+		rsName.Empty();
+		return false;
+	}
+	else
+	{
+		pszName++;
+	}
+
+	rsName.Set(pszName);
+
+	// "." or ".."
+	if (IsDotsName(pszName))
+	{
+		return true;
+	}
+
+	bool lbFileFound = false;
+	WIN32_FIND_DATAW fnd = {0};
+	DWORD nErrCode;
+	HANDLE hFind = FindFirstFile(asPath, &fnd);
+
+	if (hFind == INVALID_HANDLE_VALUE)
+	{
+		// FindFirstFile может обломаться из-за симлинков
+		nErrCode = GetLastError();
+		if (nErrCode == ERROR_ACCESS_DENIED)
+		{
+			hFind = CreateFile(asPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+			if (hFind == INVALID_HANDLE_VALUE)
+				hFind = CreateFile(asPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+			lbFileFound = (hFind && hFind != INVALID_HANDLE_VALUE);
+			SafeCloseHandle(hFind);
+		}
+	}
+	else
+	{
+		// that may be folder or file
+		rsName.Set(fnd.cFileName);
+		lbFileFound = true;
+		FindClose(hFind);
+	}
+
+	return lbFileFound;
+}
+
+bool MakePathProperCase(CEStr& rsPath)
+{
+	if (rsPath.IsEmpty())
+		return false;
+
+	bool bFound = false;
+	// Must be full path here with back-slashes
+	_ASSERTE(wcschr(rsPath,L'/')==NULL && wcschr(rsPath,L'\\')!=NULL);
+
+	// Let loop through folders
+	wchar_t* psz = rsPath.ms_Arg;
+	if (psz[0] == L'\\' && psz[1] == L'\\')
+	{
+		// Network or UNC
+		psz += 2;
+		if ((psz[0] == L'?' || psz[0] == L'.') && psz[1] == L'\\')
+		{
+			psz += 2;
+			if (psz[0] == L'U' && psz[1] == L'N' && psz[2] == L'C' && psz[3] == L'\\')
+				psz += 4;
+		}
+		if (!(isDriveLetter(psz[0]) && psz[1] == L':'))
+		{
+			// "Server\Share\" is expected here, just skip them
+		}
+	}
+
+	if (isDriveLetter(psz[0]) && psz[1] == L':')
+	{
+		// Uppercase the drive letter
+		CharUpperBuff(psz, 1);
+		psz += 2;
+		if (psz[0] == L'\\')
+		{
+			psz++; // Skip first slash
+		}
+		else
+		{
+			_ASSERTE(psz[0] == L'\\');
+		}
+	}
+
+	CEStr lsName;
+	int iName, iFound;
+
+	while (psz && *psz)
+	{
+		while (*psz == L'\\') psz++; // Hmm? Double slashes?
+		if (!*psz)
+			break;
+
+		wchar_t* pszSlash = wcschr(psz, L'\\');
+		if (pszSlash)
+			*pszSlash = 0;
+
+		bFound = FindFileName(rsPath.ms_Arg, lsName);
+		if (bFound)
+		{
+			iName = lstrlen(psz);
+			iFound = lstrlen(lsName);
+			// If length matches but case differs (do not touch short names like as "PROGRA~1")
+			if ((iName == iFound) && lstrcmp(psz, lsName))
+			{
+				memmove(psz, lsName.ms_Arg, sizeof(*psz)*iName);
+			}
+		}
+
+		if (pszSlash)
+			*pszSlash = L'\\';
+
+		if (!pszSlash || !bFound)
+			break;
+		psz = pszSlash+1;
+	}
+
+	return bFound;
+}
+
 int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP /*= 0*/)
 {
 	HANDLE hFile = CreateFile(asPath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
@@ -435,6 +563,61 @@ bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll /*= false*/
 	return bFound;
 }
 
+bool IsDotsName(LPCWSTR asName)
+{
+	return (asName && (asName[0] == L'.' && (asName[1] == 0 || (asName[1] == L'.' && asName[2] == 0))));
+}
+
+// Useful for searching sources from compilation error log
+bool FileExistSubDir(LPCWSTR asDirectory, LPCWSTR asFile, int iDepth, CEStr& rsFound)
+{
+	if (FilesExists(asDirectory, asFile, true, 1))
+	{
+		rsFound.Attach(JoinPath(asDirectory, asFile));
+		return true;
+	}
+	else if (iDepth <= 0)
+	{
+		return false;
+	}
+
+	CEStr lsFind = JoinPath(asDirectory, L"*");
+
+	WIN32_FIND_DATAW fnd = {0};
+	HANDLE hFind = FindFirstFile(lsFind, &fnd);
+	if (!hFind || (hFind == INVALID_HANDLE_VALUE))
+	{
+		return false;
+	}
+
+	bool lbFound = false;
+
+	do
+	{
+		if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+		{
+			// Each find returns "." and ".." items
+			// We do not need them
+			if (!IsDotsName(fnd.cFileName))
+			{
+				lsFind.Attach(JoinPath(asDirectory, fnd.cFileName));
+				int iChildDepth = (iDepth-1);
+				if (lstrcmpi(fnd.cFileName, L".git") == 0 || lstrcmpi(fnd.cFileName, L".svn") == 0)
+					iChildDepth = 0; // do not scan children of ".git", ".svn"
+				// Recursion
+				lbFound = FileExistSubDir(lsFind, asFile,  iChildDepth, rsFound);
+				if (lbFound)
+					break;
+			}
+		}
+	}
+	while (FindNextFile(hFind, &fnd));
+
+	FindClose(hFind);
+
+	return lbFound;
+}
+
 bool DirectoryExists(LPCWSTR asPath)
 {
 	if (!asPath || !*asPath)
@@ -468,7 +651,9 @@ bool DirectoryExists(LPCWSTR asPath)
 	{
 		if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
 		{
-			if (lstrcmp(fnd.cFileName, L".") && lstrcmp(fnd.cFileName, L".."))
+			// Each find returns "." and ".." items
+			// We do not need them
+			if (!IsDotsName(fnd.cFileName))
 			{
 				lbFound = TRUE;
 				break;
