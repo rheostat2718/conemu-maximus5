@@ -6,3 +6,5 @@ between *!RightWin* and *!RightShift* on most
 
 Sometimes it's called *Application/Menu*. Thought, it is not correct in Windows
 because `VK_MENU` (from `WinUser.h`) refers to the *Alt* key in fact.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/KeyboardAppsKey.png" title="Apps key">
