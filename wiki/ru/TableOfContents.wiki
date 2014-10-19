@@ -91,6 +91,7 @@
       * [CygwinWorkDir Cygwin & ${HOME}]
       * [CygwinAnsi Cygwin & Ansi]
       * [CygwinHeap Cygwin heap error]
+      * [ShellWorkDir#bash_and_other_cygwin_shells Cygwin work dir]
     * Far Manager
       * [ConEmuFarPlugin Плагины Far & ConEmu]
       * [FarMacro Far макросы]
