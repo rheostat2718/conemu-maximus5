@@ -1,0 +1,5 @@
+﻿#summary cygwin, mingw, ConEmu and current shell directory
+
+ConEmu may utilize shell's current directory.
+
+ShellWorkDir

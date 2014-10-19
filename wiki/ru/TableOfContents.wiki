@@ -88,10 +88,10 @@
       * [GuiMacro GUI макросы]
       * [TabletPC Far и тачскрин]
     * [CygwinMsys Cygwin & Msys]
-      * [CygwinWorkDir Cygwin & ${HOME}]
+      * [CygwinStartDir Cygwin & ${HOME}]
       * [CygwinAnsi Cygwin & Ansi]
       * [CygwinHeap Cygwin heap error]
-      * [ShellWorkDir#bash_and_other_cygwin_shells Cygwin work dir]
+      * [CygwinCurDir Cygwin current dir]
     * Far Manager
       * [ConEmuFarPlugin Плагины Far & ConEmu]
       * [FarMacro Far макросы]
