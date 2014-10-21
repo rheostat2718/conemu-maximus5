@@ -140,13 +140,16 @@ extern int     gnConfirmExitParm;
 extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
 extern int     gbRootWasFoundInCon;
 extern BOOL    gbComspecInitCalled;
-enum AttachModeEnum
-{
-	am_None = 0,
-	am_Simple,    // As is
-	am_Auto,      // Same as am_Simple, but always return 0 as errorlevel
-	am_Admin,     // Special "attach" when ConEmu is run under "User" and console "As admin"
-};
+typedef DWORD AttachModeEnum;
+const AttachModeEnum
+	am_Simple  = 0x0001,    // As is
+	am_Auto    = 0x0002,    // Same as am_Simple, but always return 0 as errorlevel
+	am_Modes   = (am_Simple|am_Auto),
+	am_Async   = 0x0010,    // "/AUTOATTACH" must be async to be able to call from cmd prompt
+	am_DefTerm = 0x0020,    // "/
+	am_Admin   = 0x1000,    // Special "attach" when ConEmu is run under "User" and console "As admin"
+	am_None    = 0
+;
 extern AttachModeEnum gbAttachMode; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console)
 extern BOOL    gbAlternativeAttach; // TRUE - Подцепиться к существующей консоли, без внедрения в процесс ConEmuHk.dll
 extern BOOL    gbAlienMode;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
@@ -533,7 +536,7 @@ struct SrvInfo
 	DWORD dwDisplayMode;
 	BOOL  bAltBufferEnabled;
 	//USHORT nUsedHeight; // Высота, используемая в GUI - вместо него используем gcrBufferSize.Y
-	SHORT nTopVisibleLine; // Прокрутка в GUI может быть заблокирована. Если -1 - без блокировки, используем текущее значение
+	TOPLEFTCOORD TopLeft; // Прокрутка в GUI может быть заблокирована. Если -1 - без блокировки, используем текущее значение
 	SHORT nVisibleHeight;  // По идее, должен быть равен (gcrBufferSize.Y). Это гарантированное количество строк psChars & pnAttrs
 	DWORD nMainTimerElapse;
 	HANDLE hRefreshEvent; // ServerMode, перечитать консоль, и если есть изменения - отослать в GUI
@@ -595,6 +598,7 @@ struct SrvInfo
 		csColorerMappingCreate.Init();
 		csReadConsoleInfo.Init();
 		AltServers.Init();
+		TopLeft.Reset();
 	};
 	void FinalizeFields()
 	{

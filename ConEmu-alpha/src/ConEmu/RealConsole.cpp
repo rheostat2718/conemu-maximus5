@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Macro.h"
 #include "Menu.h"
 #include "OptionsClass.h"
+#include "RConFiles.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
 #include "RunQueue.h"
@@ -92,6 +93,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRGUICHILDPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRPROGRESS(s) //DEBUGSTR(s)
 #define DEBUGSTRFARPID(s) DEBUGSTR(s)
+#define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -161,6 +163,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	_ASSERTE(mp_VCon == apVCon);
 	mp_VCon = apVCon;
 	mp_Log = NULL;
+	mp_Files = NULL;
 
 	MCHKHEAP;
 	SetConStatus(L"Initializing ConEmu (2)", cso_ResetOnConsoleReady|cso_DontUpdate|cso_Critical);
@@ -1328,6 +1331,8 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 		_ASSERTE(pszChars && cchCount);
 		return false;
 	}
+
+	mp_RBuf->OnKeysSending();
 
 	wchar_t* pszEnd = pszChars + cchCount;
 	INPUT_RECORD r[2];
@@ -4108,8 +4113,48 @@ COORD CRealConsole::BufferToScreen(COORD crMouse, bool bFixup /*= true*/, bool b
 }
 
 // x,y - экранные координаты
+void CRealConsole::OnScroll(UINT messg, WPARAM wParam, int x, int y, bool abFromTouch /*= false*/)
+{
+	#ifdef _DEBUG
+	wchar_t szDbgInfo[200]; _wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"RBuf::OnMouse %s XY={%i,%i}%s\n",
+		messg==WM_MOUSEWHEEL?L"WM_MOUSEWHEEL":messg==WM_MOUSEHWHEEL?L"WM_MOUSEHWHEEL":
+		L"{OtherMsg}", x,y, (abFromTouch?L" Touch":L""));
+	DEBUGSTRMOUSE(szDbgInfo);
+	#endif
+
+	switch (messg)
+	{
+	case WM_MOUSEWHEEL:
+	{
+		SHORT nDir = (SHORT)HIWORD(wParam);
+		BOOL lbCtrl = isPressed(VK_CONTROL);
+
+		UINT nCount = abFromTouch ? 1 : gpConEmu->mouse.GetWheelScrollLines();
+
+		if (nDir > 0)
+		{
+			mp_ABuf->DoScrollBuffer(lbCtrl ? SB_PAGEUP : SB_LINEUP, -1, nCount);
+		}
+		else if (nDir < 0)
+		{
+			mp_ABuf->DoScrollBuffer(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN, -1, nCount);
+		}
+		break;
+	} // WM_MOUSEWHEEL
+
+	case WM_MOUSEHWHEEL:
+	{
+		TODO("WM_MOUSEHWHEEL - горизонтальная прокрутка");
+		_ASSERTE(FALSE && "Horz scrolling! WM_MOUSEHWHEEL");
+		//return true; -- когда будет готово - return true;
+		break;
+	} // WM_MOUSEHWHEEL
+	} // switch (messg)
+}
+
+// x,y - экранные координаты
 // Если abForceSend==true - не проверять на "повторность" события, и не проверять "isPressed(VK_?BUTTON)"
-void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend /*= false*/, bool abFromTouch /*= false*/)
+void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend /*= false*/)
 {
 #ifndef WM_MOUSEHWHEEL
 #define WM_MOUSEHWHEEL                  0x020E
@@ -4138,7 +4183,7 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	if (messg == WM_LBUTTONDOWN)
 		mb_WasMouseSelection = false;
 
-	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse, abFromTouch))
+	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
 		return; // В консоль не пересылать, событие обработал "сам буфер"
 
 
@@ -4240,6 +4285,12 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	// -- заменено на сброс мышиных событий в ConEmuHk при завершении консольного приложения
 	if (isFarInStack() && !gpSet->isUseInjects)
 		return;
+
+	// Если MouseWheel таки посылается в консоль - сбросить TopLeft чтобы избежать коллизий
+	if ((messg == WM_MOUSEWHEEL || messg == WM_MOUSEWHEEL) && (mp_ABuf->m_Type == rbt_Primary))
+	{
+		mp_ABuf->ResetTopLeft();
+	}
 
 	PostMouseEvent(messg, wParam, crMouse, abForceSend);
 
@@ -5389,6 +5440,13 @@ LPCWSTR CRealConsole::GetTabTitle(CTab& tab)
 	return pszName;
 }
 
+void CRealConsole::ResetTopLeft()
+{
+	if (!this || !mp_RBuf)
+		return;
+	mp_RBuf->ResetTopLeft();
+}
+
 // nDirection is one of the standard SB_xxx constants
 LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 {
@@ -5398,7 +5456,10 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 	LRESULT lRc = 0;
 	short nTrackPos = -1;
 	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+	SMALL_RECT srRealWindow = {};
 	int nVisible = 0;
+
+	mp_ABuf->ConsoleScreenBufferInfo(&sbi, &srRealWindow);
 
 	switch (nDirection)
 	{
@@ -5409,35 +5470,63 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 		_ASSERTE(nDirection==SB_LINEUP || nDirection==SB_LINEDOWN);
 		_ASSERTE(SB_LINEUP==(SB_HALFPAGEUP-SB_HALFPAGEUP) && SB_LINEDOWN==(SB_HALFPAGEDOWN-SB_HALFPAGEUP));
 		break;
+	case SB_THUMBTRACK:
+	case SB_THUMBPOSITION:
+		nTrackPos = nCount;
+		nCount = 1;
+		break;
+	case SB_LINEDOWN:
+	case SB_LINEUP:
+		nCount = 1;
+		break;
+	case SB_PAGEDOWN:
+	case SB_PAGEUP:
+		nCount = TextHeight();
+		nDirection -= SB_PAGEDOWN;
+		_ASSERTE(nDirection==SB_LINEUP || nDirection==SB_LINEDOWN);
+		break;
+	case SB_TOP:
+		nTrackPos = 0;
+		nCount = 1;
+		break;
+	case SB_BOTTOM:
+		nTrackPos = sbi.dwSize.Y - TextHeight() + 1;
+		nCount = 1;
+		break;
 	case SB_GOTOCURSOR:
 		nVisible = mp_ABuf->GetTextHeight();
-		mp_ABuf->ConsoleScreenBufferInfo(&sbi);
 		nDirection = SB_THUMBPOSITION;
 		// Курсор выше видимой области?
 		if ((sbi.dwCursorPosition.Y < sbi.srWindow.Top)
 			// Курсор ниже видимой области?
 			|| (sbi.dwCursorPosition.Y > sbi.srWindow.Bottom))
 		{
+			// Видимая область GUI отличается от области консоли?
+			if ((mp_ABuf->m_Type == rbt_Primary)
+				&& CoordInSmallRect(sbi.dwCursorPosition, srRealWindow))
+			{
+				// Просто сбросить
+				mp_ABuf->ResetTopLeft();
+				goto wrap;
+			}
 			// Let it set to one from the bottom
 			nTrackPos = max(0,sbi.dwCursorPosition.Y-nVisible+2);
+			nCount = 1;
 		}
 		else
 		{
-			goto wrap; // Он и так видим
+			// Он и так видим, но сбросим TopLeft
+			mp_ABuf->ResetTopLeft();
+			goto wrap;
 		}
 		break;
+	case SB_ENDSCROLL:
+		goto wrap;
 	}
 
 	lRc = mp_ABuf->DoScrollBuffer(nDirection, nTrackPos, nCount);
 wrap:
 	return lRc;
-}
-
-LRESULT CRealConsole::DoSetScrollPos(WPARAM wParam)
-{
-	if (!this) return 0;
-
-	return mp_ABuf->DoSetScrollPos(wParam);
 }
 
 const ConEmuHotKey* CRealConsole::ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars)
@@ -5516,10 +5605,45 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		return;
 	}
 
+	if (((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST))
+	{
+		// Такие коды с клавиатуры приходить не должны, а то для "мышки" ничего не останется
+		_ASSERTE(!(((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST)));
+		return;
+	}
 
-	WARNING("Тут кое-что нехорошо. Некоторые кнопки нужно обрабатывать раньше.");
-	// Например, AltEnter может посылаться в консоль, а может и "менять FullScreen" (в последнем случае его наверное нужно обработать)
+	// Hotkey не группируются
+	// Иначе получается маразм, например, с Ctrl+Shift+O,
+	// который по идее должен разбивать АКТИВНУЮ консоль,
+	// но пытается разбить все видимые, в итоге срывает крышу
+	if (mp_ConEmu->ProcessHotKeyMsg(messg, wParam, lParam, pszChars, this))
+	{
+		// Yes, Skip
+		return;
+	}
 
+	TODO("Добавить хоткей/макрос влючения/отключения группировки");
+	// сохраняться флажок должен на уровне группы
+	bool bGrouped = false;
+	if (bGrouped)
+	{
+		KeyboardIntArg args = {hWnd, messg, wParam, lParam, pszChars, pDeadCharMsg};
+		CVConGroup::EnumVCon(evf_Visible, OnKeyboardBackCall, (LPARAM)&args);
+		return; // Done
+	}
+
+	OnKeyboardInt(hWnd, messg, wParam, lParam, pszChars, pDeadCharMsg);
+}
+
+bool CRealConsole::OnKeyboardBackCall(CVirtualConsole* pVCon, LPARAM lParam)
+{
+	KeyboardIntArg* p = (KeyboardIntArg*)lParam;
+	pVCon->RCon()->OnKeyboardInt(p->hWnd, p->messg, p->wParam, p->lParam, p->pszChars, p->pDeadCharMsg);
+	return true;
+}
+
+void CRealConsole::OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg)
+{
 	// Основная обработка
 	{
 		if (wParam == VK_MENU && (messg == WM_KEYUP || messg == WM_SYSKEYUP) && gpSet->isFixAltOnAltTab)
@@ -5547,19 +5671,8 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		}
 		#endif
 
-		// Hotkey?
-		if (((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST))
-		{
-			// Такие коды с клавиатуры приходить не должны, а то для "мышки" ничего не останется
-			_ASSERTE(!(((wParam & 0xFF) >= VK_WHEEL_FIRST) && ((wParam & 0xFF) <= VK_WHEEL_LAST)));
-		}
-		else if (mp_ConEmu->ProcessHotKeyMsg(messg, wParam, lParam, pszChars, this))
-		{
-			// Yes, Skip
-			return;
-		}
-		// *** Not send to console ***
-		else if (m_ChildGui.isGuiWnd())
+		// *** Do not send to console ***
+		if (m_ChildGui.isGuiWnd())
 		{
 			switch (messg)
 			{
@@ -5627,7 +5740,7 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			}
 
 			// Завершение выделения по KeyPress?
-			if (mp_ABuf->isSelfSelectMode())
+			if (mp_ABuf->isSelectionPresent())
 			{
 				// буквы/цифры/символы/...
 				if ((gpSet->isCTSEndOnTyping && (pszChars && *pszChars))
@@ -5652,6 +5765,18 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			{
 				// Пропускать кнопки в консоль только если буфер реальный
 				return;
+			}
+
+			// Если видимый регион заблокирован, то имеет смысл его сбросить
+			// если нажата не кнопка-модификатор?
+			WORD vk = LOWORD(wParam);
+			if ((pszChars && *pszChars)
+				|| (vk && vk != VK_LWIN && vk != VK_RWIN
+					&& vk != VK_CONTROL && vk != VK_LCONTROL && vk != VK_RCONTROL
+					&& vk != VK_MENU && vk != VK_LMENU && vk != VK_RMENU
+					&& vk != VK_SHIFT && vk != VK_LSHIFT && vk != VK_RSHIFT))
+			{
+				mp_RBuf->OnKeysSending();
 			}
 
 			// А теперь собственно отсылка в консоль
@@ -9089,6 +9214,7 @@ void CRealConsole::_TabsInfo::StoreActiveTab(int anActiveIndex, const CTabID* ap
 	{
 		nActiveIndex = anActiveIndex;
 		nActiveFarWindow = apActiveTab->Info.nFarWindowID;
+		_ASSERTE(apActiveTab->Info.Type & fwt_CurrentFarWnd);
 		nActiveType = apActiveTab->Info.Type;
 	}
 	else
@@ -9622,6 +9748,7 @@ void CRealConsole::RenameTab(LPCWSTR asNewTabText /*= NULL*/)
 			tab->Renamed.Set(NULL);
 			tab->Info.Type &= ~fwt_Renamed;
 		}
+		_ASSERTE(tab->Info.Type & fwt_CurrentFarWnd);
 		tabs.nActiveType = tab->Info.Type;
 	}
 
@@ -10053,6 +10180,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	if (!dwPID)
 	{
 		wcscpy_c(tabs.sTabActivationErr, L"Far was not found in console");
+		LogString(tabs.sTabActivationErr);
 		return -1; // консоль активируется без разбора по вкладкам (фара нет)
 	}
 
@@ -10065,6 +10193,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	if (anWndIndex < 0 /*|| anWndIndex >= tabs.mn_tabsCount*/)
 	{
 		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Bad anWndIndex=%i was requested", anWndIndex);
+		LogString(tabs.sTabActivationErr);
 		AssertCantActivate(anWndIndex>=0);
 		return 0;
 	}
@@ -10073,12 +10202,14 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	if (tabs.nActiveFarWindow == anWndIndex)
 	{
 		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Far window %i is already active", anWndIndex);
+		LogString(tabs.sTabActivationErr);
 		return (DWORD)-1; // Нужное окно уже выделено, лучше не дергаться...
 	}
 
 	if (isPictureView(TRUE))
 	{
 		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"PicView was found\r\nPID=%u, anWndIndex=%i", dwPID, anWndIndex);
+		LogString(tabs.sTabActivationErr);
 		AssertCantActivate("isPictureView"==NULL);
 		return 0; // При наличии PictureView переключиться на другой таб этой консоли не получится
 	}
@@ -10090,6 +10221,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	if (GetProgress(NULL)>=0)
 	{
 		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Progress was detected\r\nPID=%u, anWndIndex=%i", dwPID, anWndIndex);
+		LogString(tabs.sTabActivationErr);
 		AssertCantActivate("GetProgress>0"==NULL);
 		return 0; // Идет копирование или какая-то другая операция
 	}
@@ -10110,6 +10242,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	if (!mp_RBuf->isInitialized())
 	{
 		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Buffer not initialized\r\nPID=%u, anWndIndex=%i", dwPID, anWndIndex);
+		LogString(tabs.sTabActivationErr);
 		AssertCantActivate("Buf.isInitiazed"==NULL);
 		return 0; // консоль не инициализирована, ловить нечего
 	}
@@ -10117,6 +10250,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	if (mp_RBuf != mp_ABuf)
 	{
 		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Alternative buffer is active\r\nPID=%u, anWndIndex=%i", dwPID, anWndIndex);
+		LogString(tabs.sTabActivationErr);
 		AssertCantActivate("mp_RBuf != mp_ABuf"==NULL);
 		return 0; // если активирован доп.буфер - менять окна нельзя
 	}
@@ -10139,6 +10273,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	if (lbMenuOrMacro)
 	{
 		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Menu or macro was detected\r\nPID=%u, anWndIndex=%i", dwPID, anWndIndex);
+		LogString(tabs.sTabActivationErr);
 		AssertCantActivate(lbMenuOrMacro==FALSE);
 		return 0;
 	}
@@ -10147,6 +10282,7 @@ DWORD CRealConsole::CanActivateFarWindow(int anWndIndex)
 	if (mp_ABuf && (mp_ABuf->GetDetector()->GetFlags() & FR_FREEDLG_MASK))
 	{
 		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Dialog was detected\r\nPID=%u, anWndIndex=%i", dwPID, anWndIndex);
+		LogString(tabs.sTabActivationErr);
 		AssertCantActivate("FR_FREEDLG_MASK"==NULL);
 		return 0;
 	}
@@ -10207,6 +10343,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 	if (!IsSwitchFarWindowAllowed())
 	{
 		if (!*tabs.sTabActivationErr) wcscpy_c(tabs.sTabActivationErr, L"!IsSwitchFarWindowAllowed()");
+		LogString(tabs.sTabActivationErr);
 		return false;
 	}
 
@@ -10215,6 +10352,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 	if (!dwPID)
 	{
 		if (!*tabs.sTabActivationErr) wcscpy_c(tabs.sTabActivationErr, L"Far PID not found (0)");
+		LogString(tabs.sTabActivationErr);
 		return false;
 	}
 	else if (dwPID == (DWORD)-1)
@@ -10230,6 +10368,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 	if (!pipe.Init(_T("CRealConsole::ActivateFarWindow")))
 	{
 		_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"Pipe initialization failed\r\nPID=%u", dwPID);
+		LogString(tabs.sTabActivationErr);
 	}
 	else
 	{
@@ -10246,6 +10385,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 		if (!pipe.Execute(CMD_SETWINDOW, nData, 8))
 		{
 			_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"CMD_SETWINDOW failed\r\nPID=%u, Err=%u", dwPID, GetLastError());
+			LogString(tabs.sTabActivationErr);
 		}
 		else
 		{
@@ -10266,6 +10406,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 			if (!pipe.Read(&TabHdr, nHdrSize, &cbBytesRead))
 			{
 				_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr)) L"CMD_SETWINDOW result read failed\r\nPID=%u, Err=%u", dwPID, GetLastError());
+				LogString(tabs.sTabActivationErr);
 			}
 			else
 			{
@@ -10276,6 +10417,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 				{
 					_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr))
 						L"CMD_SETWINDOW bad result header\r\nPID=%u, (%u != %u*%u)", dwPID, cbBytesRead, TabHdr.nTabCount, (DWORD)sizeof(ConEmuTab));
+					LogString(tabs.sTabActivationErr);
 				}
 				else
 				{
@@ -10303,6 +10445,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 					{
 						_wsprintf(tabs.sTabActivationErr, SKIPLEN(countof(tabs.sTabActivationErr))
 							L"Tabs received but wrong tab is active\r\nPID=%u, Req=%i, Cur=%i", dwPID, anWndIndex, iActive);
+						LogString(tabs.sTabActivationErr);
 					}
 				}
 
@@ -12873,6 +13016,22 @@ bool CRealConsole::isSendMouseAllowed()
 	return true;
 }
 
+bool CRealConsole::isInternalScroll()
+{
+	if (gpSet->isDisableMouse || !isSendMouseAllowed())
+		return true;
+
+	// Если прокрутки нет - крутить нечего?
+	if (!mp_ABuf->isScroll())
+		return false;
+
+	// События колеса мышки посылать в фар?
+	if (isFar())
+		return false;
+
+	return true;
+}
+
 bool CRealConsole::isFarKeyBarShown()
 {
 	if (!isFar())
@@ -12961,38 +13120,13 @@ LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 		return NULL;
 	}
 
-	CmdArg szWinPath;
-	LPCWSTR pszWinPath = szWinPath.Attach(MakeWinPath(asSrc));
-	if (!pszWinPath || !*pszWinPath)
-	{
-		_ASSERTE(pszWinPath && *pszWinPath);
-		return NULL;
-	}
+	MSectionLockSimple CS; CS.Lock(mpcs_CurWorkDir);
 
-	if (IsFilePath(pszWinPath, true))
-	{
-		szFull.Attach(szWinPath.Detach());
-	}
-	else
-	{
-		CmdArg szDir;
-		LPCWSTR pszDir = GetConsoleCurDir(szDir);
-		_ASSERTE(pszDir && wcschr(pszDir,L'/')==NULL);
+	if (!mp_Files)
+		mp_Files = new CRConFiles(this);
 
-		// Попытаться просканировать один-два уровеня подпапок
-		if (!FileExistSubDir(pszDir, pszWinPath, 2, szFull))
-		{
-			return NULL;
-		}
-	}
-
-	if (!szFull.IsEmpty())
-	{
-		// "src\conemu\realconsole.cpp" --> "src\ConEmu\RealConsole.cpp"
-		MakePathProperCase(szFull);
-	}
-
-	return szFull;
+	// Caching
+	return mp_Files->GetFileFromConsole(asSrc, szFull);
 }
 
 LPCWSTR CRealConsole::GetConsoleCurDir(CmdArg& szDir)
@@ -13058,6 +13192,7 @@ void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 		return;
 
 	MSectionLockSimple CS; CS.Lock(mpcs_CurWorkDir);
+
 	LPCWSTR pszArg = pNewCurDir->szDir;
 	for (int i = 0; i <= 1; i++)
 	{
@@ -13080,6 +13215,10 @@ void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 
 		SafeFree(pszWinPath);
 	}
+
+	if (mp_Files)
+		mp_Files->ResetCache();
+
 	CS.Unlock();
 
 	LPCWSTR pszTabTempl = isFar() ? gpSet->szTabPanels : gpSet->szTabConsole;
@@ -13579,13 +13718,17 @@ void CRealConsole::UpdateCursorInfo()
 	if (!isActive())
 		return;
 
-	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
-	CONSOLE_CURSOR_INFO ci = {};
-	//mp_RBuf->GetCursorInfo(&cr, &ci);
-	mp_ABuf->ConsoleCursorInfo(&ci);
-	mp_ABuf->ConsoleScreenBufferInfo(&sbi);
+	ConsoleInfoArg arg = {};
+	GetConsoleInfo(&arg);
 
-	mp_ConEmu->UpdateCursorInfo(&sbi, sbi.dwCursorPosition, ci);
+	mp_ConEmu->UpdateCursorInfo(&arg);
+}
+
+void CRealConsole::GetConsoleInfo(ConsoleInfoArg* pInfo)
+{
+	mp_ABuf->ConsoleCursorInfo(&pInfo->cInfo);
+	mp_ABuf->ConsoleScreenBufferInfo(&pInfo->sbi, &pInfo->srRealWindow, &pInfo->TopLeft);
+	pInfo->crCursor = pInfo->sbi.dwCursorPosition;
 }
 
 bool CRealConsole::isNeedCursorDraw()

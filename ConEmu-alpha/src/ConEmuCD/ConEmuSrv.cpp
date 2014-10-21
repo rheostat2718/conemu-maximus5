@@ -322,7 +322,8 @@ int AttachRootProcess()
 		return CERR_RUNNEWCONSOLE;
 	}
 
-	if (gpSrv->dwRootProcess == 0 && !gpSrv->DbgInfo.bDebuggerActive)
+	// "/AUTOATTACH" must be asynchronous
+	if ((gbAttachMode & am_Auto) || (gpSrv->dwRootProcess == 0 && !gpSrv->DbgInfo.bDebuggerActive))
 	{
 		// Нужно попытаться определить PID корневого процесса.
 		// Родительским может быть cmd (comspec, запущенный из FAR)
@@ -424,6 +425,9 @@ int AttachRootProcess()
 		}
 
 		gpSrv->dwRootProcess = dwParentPID;
+
+		int nParentBitness = GetProcessBits(gpSrv->dwRootProcess, gpSrv->hRootProcess);
+
 		// Запустить вторую копию ConEmuC НЕМОДАЛЬНО!
 		wchar_t szSelf[MAX_PATH+1];
 		wchar_t szCommand[MAX_PATH+100];
@@ -436,6 +440,13 @@ int AttachRootProcess()
 			return CERR_CREATEPROCESS;
 		}
 
+		if (nParentBitness && (nParentBitness != WIN3264TEST(32,64)))
+		{
+			wchar_t* pszName = (wchar_t*)PointToName(szSelf);
+			*pszName = 0;
+			wcscat_c(szSelf, (nParentBitness==32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
+		}
+
 		//if (wcschr(pszSelf, L' '))
 		//{
 		//	*(--pszSelf) = L'"';
@@ -444,7 +455,7 @@ int AttachRootProcess()
 
 		wchar_t szGuiWnd[32];
 		if (gpSrv->bRequestNewGuiWnd)
-			wcscat_c(szGuiWnd, L"/GHWND=NEW");
+			wcscpy_c(szGuiWnd, L"/GHWND=NEW");
 		else if (gpSrv->hGuiWnd)
 			_wsprintf(szGuiWnd, SKIPLEN(countof(szGuiWnd)) L"/GHWND=%08X", (DWORD)(DWORD_PTR)gpSrv->hGuiWnd);
 		else
@@ -1065,7 +1076,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	gpSrv->csAltSrv = new MSection();
 	gpSrv->csProc = new MSection();
 	gpSrv->nMainTimerElapse = 10;
-	gpSrv->nTopVisibleLine = -1; // блокировка прокрутки не включена
+	gpSrv->TopLeft.Reset(); // блокировка прокрутки не включена
 	// Инициализация имен пайпов
 	_wsprintf(gpSrv->szPipename, SKIPLEN(countof(gpSrv->szPipename)) CESERVERPIPENAME, L".", gnSelfPID);
 	_wsprintf(gpSrv->szInputname, SKIPLEN(countof(gpSrv->szInputname)) CESERVERINPUTNAME, L".", gnSelfPID);
@@ -2444,8 +2455,8 @@ bool TryConnect2Gui(HWND hGui, CESERVER_REQ* pIn)
 			{
 				pSizeIn->SetSize.nBufferHeight = pStartStopRet->Info.nBufferHeight;
 				pSizeIn->SetSize.size = crNewSize;
-				pSizeIn->SetSize.nSendTopLine = -1;
-				pSizeIn->SetSize.rcWindow = rcWnd;
+				//pSizeIn->SetSize.nSendTopLine = -1;
+				//pSizeIn->SetSize.rcWindow = rcWnd;
 
 				pSizeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pSizeIn, ghConWnd);
 			}
@@ -2500,7 +2511,9 @@ HWND Attach2Gui(DWORD nTimeout)
 	if (gpSrv->bWasDetached)
 	{
 		gpSrv->bWasDetached = FALSE;
-		gbAttachMode = am_Simple;
+		_ASSERTE(gbAttachMode==am_None);
+		if (!(gbAttachMode & am_Modes))
+			gbAttachMode |= am_Simple;
 		if (gpSrv->pConsole)
 			gpSrv->pConsole->bDataChanged = TRUE;
 	}
@@ -3433,7 +3446,7 @@ void InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 	SetEnvironmentVariable(ENV_CONEMUANSILOG_VAR_W, szPath);
 }
 
-
+#if 0
 // Возвращает TRUE - если меняет РАЗМЕР видимой области (что нужно применить в консоль)
 BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 {
@@ -3521,7 +3534,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 
 	return lbChanged;
 }
-
+#endif
 
 
 bool CheckWasFullScreen()
@@ -3625,7 +3638,7 @@ static int ReadConsoleInfo()
 	if (gpSrv->dwConsoleOutMode != LOWORD(ldwConsoleMode))
 	{
 		_ASSERTE(LOWORD(ldwConsoleMode) == ldwConsoleMode);
-		gpSrv->dwConsoleOutMode = ldwConsoleMode; lbChanged = TRUE;
+		gpSrv->dwConsoleOutMode = LOWORD(ldwConsoleMode); lbChanged = TRUE;
 	}
 
 	MCHKHEAP;
@@ -3845,7 +3858,10 @@ static BOOL ReadConsoleData()
 	int TextWidth = 0, TextHeight = 0;
 	short nMaxWidth = -1, nMaxHeight = -1;
 	char sFailedInfo[128];
+
+	// sbi считывается в ReadConsoleInfo
 	BOOL bSuccess = ::GetConWindowSize(gpSrv->sbi, gcrVisibleSize.X, gcrVisibleSize.Y, nCurScroll, &TextWidth, &TextHeight, &nNewScroll);
+
 	UNREFERENCED_PARAMETER(bSuccess);
 	//TextWidth  = gpSrv->sbi.dwSize.X;
 	//TextHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
@@ -3921,6 +3937,9 @@ static BOOL ReadConsoleData()
 	}
 
 	gpSrv->pConsole->info.crWindow.X = TextWidth; gpSrv->pConsole->info.crWindow.Y = TextHeight;
+
+	gpSrv->pConsole->info.sbi.srWindow = rgn;
+
 	hOut = (HANDLE)ghConOut;
 
 	if (hOut == INVALID_HANDLE_VALUE)

@@ -110,7 +110,7 @@ public:
 	void OnBufferHeight();
 
 	LRESULT DoScrollBuffer(int nDirection, short nTrackPos = -1, UINT nCount = 1);
-	LRESULT DoSetScrollPos(WPARAM wParam);
+	void ResetTopLeft();
 
 	BOOL ApplyConsoleInfo();
 
@@ -124,7 +124,7 @@ public:
 
 	void ShowKeyBarHint(WORD nID);
 
-	bool OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse, bool abFromTouch = false);
+	bool OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse);
 
 	BOOL GetRBtnDrag(COORD* pcrMouse);
 	void SetRBtnDrag(BOOL abRBtnDrag, const COORD* pcrMouse = NULL);
@@ -147,10 +147,10 @@ public:
 	bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = 0xFF /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile = NULL);
 	void UpdateSelection();
 	bool isConSelectMode();
-	bool isSelfSelectMode();
 	bool isStreamSelection();
 
 	bool OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
+	void OnKeysSending();
 	const ConEmuHotKey* ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars);
 
 	COORD GetDefaultNtvdmHeight();
@@ -173,7 +173,7 @@ public:
 	bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 	int  GetSelectionCellsCount();
 
-	void ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
+	void ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi, SMALL_RECT* psrRealWindow = NULL, TOPLEFTCOORD* pTopLeft = NULL);
 	void ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
 	void ConsoleCursorPos(COORD* pcr);
 	void GetCursorInfo(COORD* pcr, CONSOLE_CURSOR_INFO* pci);
@@ -195,6 +195,7 @@ public:
 	const CRgnDetect* GetDetector();
 
 private:
+	void ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool& bSetApplyFinished, bool& lbChanged, bool& bBufRecreate);
 	BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
 	BOOL InitBuffers(DWORD anCellCount = 0, int anWidth = 0, int anHeight = 0);
 	BOOL CheckBufferSize();
@@ -246,9 +247,10 @@ protected:
 		CONSOLE_CURSOR_INFO m_ci;
 		DWORD m_dwConsoleCP, m_dwConsoleOutputCP;
 		WORD m_dwConsoleInMode, m_dwConsoleOutMode;
-		CONSOLE_SCREEN_BUFFER_INFO m_sbi;
+		CONSOLE_SCREEN_BUFFER_INFO m_sbi; // srWindow - "видимое" в GUI окно
+		SMALL_RECT srRealWindow; // Те реальные координаты, которые видимы в RealConsole (а не то, что видимо в GUI окне)
 		COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
-		USHORT nTopVisibleLine; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
+		TOPLEFTCOORD TopLeft; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
 		DWORD LastStartInitBuffersTick, LastEndInitBuffersTick, LastStartReadBufferTick, LastEndReadBufferTick;
 		BOOL bInGetConsoleData;
 		int nCreatedBufWidth, nCreatedBufHeight; // Informational
@@ -277,6 +279,7 @@ protected:
 		// Последний etr... (подсветка URL's и строк-ошибок-компиляторов)
 		ConEmuTextRange etr; // etrLast, mcr_FileLineStart, mcr_FileLineEnd
 	} con;
+	bool SetTopLeft(int ay = -1, int ax = -1, bool abServerCall = false);
 
 	CMatch* mp_Match;
 

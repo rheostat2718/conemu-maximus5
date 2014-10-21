@@ -214,7 +214,6 @@ UINT  gnPTYmode = 0; // 1 enable PTY, 2 - disable PTY (work as plain console), 0
 BOOL  gbRootIsCmdExe = TRUE;
 BOOL  gbAttachFromFar = FALSE;
 BOOL  gbAlternativeAttach = FALSE; // Подцепиться к существующей консоли, без внедрения в процесс ConEmuHk.dll
-BOOL  gbAttachDefTerm = FALSE;
 BOOL  gbSkipWowChange = FALSE;
 BOOL  gbConsoleModeFlags = TRUE;
 DWORD gnConsoleModeFlags = 0; //(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
@@ -1029,7 +1028,9 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		_ASSERTE(gnRunMode == RM_UNDEFINED);
 		gnRunMode = RM_ALTSERVER;
 		_ASSERTE(!gbCreateDumpOnExceptionInstalled);
-		gbAttachMode = am_Simple;
+		_ASSERTE(gbAttachMode==am_None);
+		if (!(gbAttachMode & am_Modes))
+			gbAttachMode |= am_Simple;
 		gnConfirmExitParm = 2;
 		gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
 		gbNoCreateProcess = TRUE;
@@ -1201,7 +1202,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
 	// Перед CreateProcess нужно ставить 0, иначе из-за антивирусов может наступить
 	// timeout ожидания окончания процесса еще ДО выхода из CreateProcess
-	if (!gbAttachMode)
+	if (!(gbAttachMode & am_Modes))
 		gpSrv->nProcessStartTick = 0;
 
 	if (gbNoCreateProcess)
@@ -1494,7 +1495,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		iRc = CERR_CREATEPROCESS; goto wrap;
 	}
 
-	if (gbAttachMode)
+	if ((gbAttachMode & am_Modes))
 	{
 		// мы цепляемся к уже существующему процессу:
 		// аттач из фар плагина или запуск dos-команды в новой консоли через -new_console
@@ -1790,7 +1791,7 @@ wrap:
 		_wprintf(szInfo);
 	}
 
-	if (iRc && (gbAttachMode == am_Auto))
+	if (iRc && (gbAttachMode & am_Auto))
 	{
 		// Issue 1003: Non zero exit codes leads to problems in some applications...
 		iRc = 0;
@@ -3656,6 +3657,8 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 								*pszDst = L'\n'; break;
 							case L't': case L'T':
 								*pszDst = L'\t'; break;
+							case L'a': case L'A':
+								*pszDst = 7; break;
 							case L'b': case L'B':
 								*pszDst = L'\b'; break;
 							case L'e': case L'E': case L'[':
@@ -3984,7 +3987,7 @@ void UpdateConsoleTitle()
 	{
 		// Не должны сюда попадать - сброс заголовка не допустим
 		#ifdef _DEBUG
-		if (gbAttachMode == am_None)
+		if (!(gbAttachMode & am_Modes))
 		{
 			_ASSERTE(pszReq && *pszReq);
 		}
@@ -4331,7 +4334,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 			#endif
 
-			gbAttachMode = am_Admin;
+			gbAttachMode |= am_Admin;
 			gnRunMode = RM_SERVER;
 		}
 		else if (wcscmp(szArg, L"/ATTACH")==0)
@@ -4345,11 +4348,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 			#endif
 
-			if (!gbAttachMode)
-				gbAttachMode = am_Simple;
+			if (!(gbAttachMode & am_Modes))
+				gbAttachMode |= am_Simple;
 			gnRunMode = RM_SERVER;
 		}
-		else if ((wcscmp(szArg, L"/AUTOATTACH")==0) || (wcscmp(szArg, L"/ATTACHDEFTERM")==0))
+		else if ((lstrcmpi(szArg, L"/AUTOATTACH")==0) || (lstrcmpi(szArg, L"/ATTACHDEFTERM")==0))
 		{
 			#if defined(SHOW_ATTACH_MSGBOX)
 			if (!IsDebuggerPresent())
@@ -4361,10 +4364,13 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			#endif
 
 			gnRunMode = RM_SERVER;
-			gbAttachMode = am_Auto;
+			gbAttachMode |= am_Auto;
 			gbAlienMode = TRUE;
 			gbNoCreateProcess = TRUE;
-			gbAttachDefTerm = (wcscmp(szArg, L"/ATTACHDEFTERM")==0);
+			if (lstrcmpi(szArg, L"/AUTOATTACH")==0)
+				gbAttachMode |= am_Async;
+			if (lstrcmpi(szArg, L"/ATTACHDEFTERM")==0)
+				gbAttachMode |= am_DefTerm;
 
 			// Еще может быть "/GHWND=NEW" но оно ниже. Там ставится "gpSrv->bRequestNewGuiWnd=TRUE"
 
@@ -4393,8 +4399,8 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 			#endif
 
-			if (!gbAttachMode)
-				gbAttachMode = am_Simple;
+			if (!(gbAttachMode & am_Modes))
+				gbAttachMode |= am_Simple;
 			lbAttachGuiApp = TRUE;
 			wchar_t* pszEnd;
 			HWND hAppWnd = (HWND)wcstoul(szArg+11, &pszEnd, 16);
@@ -4738,7 +4744,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 						{
 							// Microsoft bug? When console is started elevated - it does NOT show
 							// required attributes, BUT GetConsoleScreenBufferInfoEx returns them.
-							if ((gbAttachMode != am_Admin)
+							if (!(gbAttachMode & am_Admin)
 								&& (!gnDefTextColors || (csbi.wAttributes = gnDefTextColors))
 								&& (!gnDefPopupColors || (csbi.wPopupAttributes = gnDefPopupColors)))
 							{
@@ -4995,7 +5001,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		return iFRc;
 	}
 
-	if (gbAttachDefTerm && !gbParmVisibleSize)
+	if ((gbAttachMode & am_DefTerm) && !gbParmVisibleSize)
 	{
 		// To avoid "small" and trimmed text after starting console
 		_ASSERTE(gcrVisibleSize.X==80 && gcrVisibleSize.Y==25);
@@ -5039,7 +5045,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			}
 		}
 
-		if (!gbAlternativeAttach && !gbAttachDefTerm && !gpSrv->dwRootProcess)
+		if (!gbAlternativeAttach && !(gbAttachMode & am_DefTerm) && !gpSrv->dwRootProcess)
 		{
 			// В принципе, сюда мы можем попасть при запуске, например: "ConEmuC.exe /ADMIN /ROOT cmd"
 			// Но только не при запуске "из ConEmu" (т.к. будут установлены gpSrv->hGuiWnd, gnConEmuPID)
@@ -6448,7 +6454,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		USHORT nBufferHeight = 0;
 		COORD  crNewSize = {0,0};
 		SMALL_RECT rNewRect = {0};
-		SHORT  nNewTopVisible = -1;
+		//SHORT  nNewTopVisible = -1;
 		//memmove(&nBufferHeight, in.Data, sizeof(USHORT));
 		nBufferHeight = in.SetSize.nBufferHeight;
 
@@ -6468,11 +6474,8 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		crNewSize = in.SetSize.size;
 
-		// Блокировка при прокрутке, значение используется только "виртуально" в CorrectVisibleRect
-		nNewTopVisible = in.SetSize.nSendTopLine;
-
-		// rect по идее вообще не нужен, за блокировку при прокрутке отвечает nSendTopLine
-		rNewRect = in.SetSize.rcWindow;
+		//// rect по идее вообще не нужен, за блокировку при прокрутке отвечает nSendTopLine
+		//rNewRect = in.SetSize.rcWindow;
 
 		MCHKHEAP;
 		(*out)->hdr.nCmd = in.hdr.nCmd;
@@ -6516,7 +6519,11 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 			gpSrv->bInSyncResize = TRUE;
 		}
 
-		gpSrv->nTopVisibleLine = nNewTopVisible;
+		#if 0
+		// Блокировка при прокрутке, значение используется только "виртуально" в CorrectVisibleRect
+		gpSrv->TopLeft = in.SetSize.TopLeft;
+		#endif
+
 		nTick1 = GetTickCount();
 		csRead.Unlock();
 		WARNING("Если указан dwFarPID - это что-ли два раза подряд выполнится?");
@@ -8076,11 +8083,12 @@ BOOL cmd_AltBuffer(CESERVER_REQ& in, CESERVER_REQ** out)
 				pSizeIn->hdr.nCmd = CECMD_SETSIZESYNC;
 				pSizeIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE);
 
-				pSizeIn->SetSize.rcWindow.Left = pSizeIn->SetSize.rcWindow.Top = 0;
-				pSizeIn->SetSize.rcWindow.Right = lsbi.srWindow.Right - lsbi.srWindow.Left;
-				pSizeIn->SetSize.rcWindow.Bottom = lsbi.srWindow.Bottom - lsbi.srWindow.Top;
+				//pSizeIn->SetSize.rcWindow.Left = pSizeIn->SetSize.rcWindow.Top = 0;
+				//pSizeIn->SetSize.rcWindow.Right = lsbi.srWindow.Right - lsbi.srWindow.Left;
+				//pSizeIn->SetSize.rcWindow.Bottom = lsbi.srWindow.Bottom - lsbi.srWindow.Top;
 				pSizeIn->SetSize.size.X = lsbi.srWindow.Right - lsbi.srWindow.Left + 1;
 				pSizeIn->SetSize.size.Y = lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1;
+
 
 				if (in.AltBuf.AbFlags & abf_BufferOff)
 				{
@@ -8571,6 +8579,13 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			lbRc = cmd_CtrlBreakEvent(in, out);
 		} break;
+		case CECMD_SETTOPLEFT:
+		{
+			size_t cbReplySize = sizeof(CESERVER_REQ_HDR);
+			*out = ExecuteNewCmd(CECMD_SETTOPLEFT, cbReplySize);
+			gpSrv->TopLeft = in.ReqConInfo.TopLeft;
+			lbRc = true;
+		} break;
 		default:
 		{
 			// Отлов необработанных
@@ -8589,6 +8604,99 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 
 
 
+static void UndoConsoleWindowZoom()
+{
+	BOOL lbRc = FALSE;
+
+	// Если юзер случайно нажал максимизацию, когда консольное окно видимо - ничего хорошего не будет
+	if (IsZoomed(ghConWnd))
+	{
+		SendMessage(ghConWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+		DWORD dwStartTick = GetTickCount();
+
+		do
+		{
+			Sleep(20); // подождем чуть, но не больше секунды
+		}
+		while (IsZoomed(ghConWnd) && (GetTickCount()-dwStartTick)<=1000);
+
+		Sleep(20); // и еще чуть-чуть, чтобы консоль прочухалась
+		// Теперь нужно вернуть (вдруго он изменился) размер буфера консоли
+		// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
+		RECT rcConPos;
+		GetWindowRect(ghConWnd, &rcConPos);
+		MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+
+		TODO("Horizontal scroll");
+		if (gnBufferHeight == 0)
+		{
+			//specified width and height cannot be less than the width and height of the console screen buffer's window
+			lbRc = SetConsoleScreenBufferSize(ghConOut, gcrVisibleSize);
+		}
+		else
+		{
+			// ресайз для BufferHeight
+			COORD crHeight = {gcrVisibleSize.X, gnBufferHeight};
+			MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
+			lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
+		}
+
+		// И вернуть тот видимый прямоугольник, который был получен в последний раз (успешный раз)
+		lbRc = SetConsoleWindowInfo(ghConOut, TRUE, &gpSrv->sbi.srWindow);
+	}
+
+	UNREFERENCED_PARAMETER(lbRc);
+}
+
+void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INFO& csbi)
+{
+	if (!gbIsDBCS || csbi.dwSize.X <= 0 || csbi.dwCursorPosition.X <= 0)
+		return;
+
+	// Issue 577: Chinese display error on Chinese
+	// -- GetConsoleScreenBufferInfo возвращает координаты курсора в DBCS, а нам нужен wchar_t !!!
+	DWORD nCP = GetConsoleOutputCP();
+	if ((nCP != CP_UTF8) && (nCP != CP_UTF7))
+	{
+		UINT MaxCharSize = 0;
+		if (AreCpInfoLeads(nCP, &MaxCharSize) && (MaxCharSize > 1))
+		{
+			_ASSERTE(MaxCharSize==2);
+			WORD Attrs[200];
+			LONG cchMax = countof(Attrs);
+			WORD* pAttrs = (csbi.dwCursorPosition.X <= cchMax) ? Attrs : (WORD*)calloc(csbi.dwCursorPosition.X, sizeof(*pAttrs));
+			if (pAttrs)
+				cchMax = csbi.dwCursorPosition.X;
+			else
+				pAttrs = Attrs; // memory allocation fail? try part of line?
+			COORD crRead = {0, csbi.dwCursorPosition.Y};
+			//120830 - DBCS uses 2 cells per hieroglyph
+			DWORD nRead = 0;
+			if (ReadConsoleOutputAttribute(ahConOut, pAttrs, cchMax, crRead, &nRead) && nRead)
+			{
+				_ASSERTE(nRead==cchMax);
+				int nXShift = 0;
+				LPWORD p = pAttrs, pEnd = pAttrs+nRead;
+				while (p < pEnd)
+				{
+					if ((*p) & COMMON_LVB_LEADING_BYTE)
+					{
+						nXShift++;
+						p++;
+						_ASSERTE((p < pEnd) && ((*p) & COMMON_LVB_TRAILING_BYTE));
+					}
+					p++;
+				}
+				_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
+				csbi.dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
+			}
+			if (pAttrs && (pAttrs != Attrs))
+			{
+				free(pAttrs);
+			}
+		}
+	}
+}
 
 // Действует аналогично функции WinApi (GetConsoleScreenBufferInfo), но в режиме сервера:
 // 1. запрещает (то есть отменяет) максимизацию консольного окна
@@ -8597,56 +8705,32 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc)
 {
 	BOOL lbRc = FALSE, lbSetRc = TRUE;
+	DWORD nErrCode = 0;
 
-	//CSection cs(NULL,NULL);
-	//MSectionLock CSCS;
-	//if (gnRunMode == RM_SERVER)
-	//CSCS.Lock(&gpSrv->cChangeSize);
-	//cs.Enter(&gpSrv->csChangeSize, &gpSrv->ncsTChangeSize);
-
-	if (gnRunMode == RM_SERVER && ghConEmuWnd && IsWindow(ghConEmuWnd))  // ComSpec окно менять НЕ ДОЛЖЕН!
+	// ComSpec окно менять НЕ ДОЛЖЕН!
+	if ((gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
+		&& ghConEmuWnd && IsWindow(ghConEmuWnd))
 	{
 		// Если юзер случайно нажал максимизацию, когда консольное окно видимо - ничего хорошего не будет
 		if (IsZoomed(ghConWnd))
 		{
-			SendMessage(ghConWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
-			DWORD dwStartTick = GetTickCount();
-
-			do
-			{
-				Sleep(20); // подождем чуть, но не больше секунды
-			}
-			while (IsZoomed(ghConWnd) && (GetTickCount()-dwStartTick)<=1000);
-
-			Sleep(20); // и еще чуть-чуть, чтобы консоль прочухалась
-			// Теперь нужно вернуть (вдруго он изменился) размер буфера консоли
-			// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
-			RECT rcConPos;
-			GetWindowRect(ghConWnd, &rcConPos);
-			MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-
-			if (gnBufferHeight == 0)
-			{
-				//specified width and height cannot be less than the width and height of the console screen buffer's window
-				lbRc = SetConsoleScreenBufferSize(ghConOut, gcrVisibleSize);
-			}
-			else
-			{
-				// Начался ресайз для BufferHeight
-				COORD crHeight = {gcrVisibleSize.X, gnBufferHeight};
-				MoveWindow(ghConWnd, rcConPos.left, rcConPos.top, 1, 1, 1);
-				lbRc = SetConsoleScreenBufferSize(ghConOut, crHeight); // а не crNewSize - там "оконные" размеры
-			}
-
-			// И вернуть тот видимый прямоугольник, который был получен в последний раз (успешный раз)
-			SetConsoleWindowInfo(ghConOut, TRUE, &gpSrv->sbi.srWindow);
+			UndoConsoleWindowZoom();
 		}
 	}
 
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {{0,0}};
+	SMALL_RECT srRealWindow = {};
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	lbRc = GetConsoleScreenBufferInfo(ahConOut, &csbi);
-	// Issue 373: wmic
-	if (lbRc)
+	if (!lbRc)
+	{
+		nErrCode = GetLastError();
+		_ASSERTE(FALSE && "GetConsoleScreenBufferInfo failed, conhost was destroyed?");
+		goto wrap;
+	}
+
+	srRealWindow = csbi.srWindow;
+
+	// Issue 373: wmic (Horizontal buffer)
 	{
 		TODO("Его надо и из ConEmu обновлять");
 		if (csbi.dwSize.X && (gnBufferWidth != csbi.dwSize.X))
@@ -8655,8 +8739,10 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 			gnBufferWidth = 0;
 	}
 
+	// CONSOLE_FULLSCREEN/*1*/ or CONSOLE_FULLSCREEN_HARDWARE/*2*/
 	if (pfnGetConsoleDisplayMode && pfnGetConsoleDisplayMode(&gpSrv->dwDisplayMode))
 	{
+		// Need to be compared to CONSOLE_FULLSCREEN_HARDWARE/*2*/?
 		if (gpSrv->dwDisplayMode)
 		{
 			// While in hardware fullscreen - srWindow still shows window region
@@ -8670,194 +8756,94 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	//
 	_ASSERTE((csbi.srWindow.Bottom-csbi.srWindow.Top)<200);
 
-	if (lbRc && (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER))  // ComSpec окно менять НЕ ДОЛЖЕН!
+	// ComSpec окно менять НЕ ДОЛЖЕН!
+	// ??? Приложениям запрещено менять размер видимой области.
+	// ??? Размер буфера - могут менять, но не менее чем текущая видимая область
+	if ((gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER) && gpSrv)
 	{
-		// Перенесено в SetConsoleSize
-		//     if (gnBufferHeight) {
-		//// Если мы знаем о режиме BufferHeight - можно подкорректировать размер (зачем это было сделано?)
-		//         if (gnBufferHeight <= (csbi.dwMaximumWindowSize.Y * 12 / 10))
-		//             gnBufferHeight = max(300, (SHORT)(csbi.dwMaximumWindowSize.Y * 12 / 10));
-		//     }
-		// Если прокрутки быть не должно - по возможности уберем ее, иначе при запуске FAR
-		// запустится только в ВИДИМОЙ области
-		BOOL lbNeedCorrect = FALSE; // lbNeedUpdateSrvMap = FALSE;
-
-		#ifdef _DEBUG
-		SHORT nWidth = (csbi.srWindow.Right - csbi.srWindow.Left + 1);
-		SHORT nHeight = (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
-		#endif
-
-		// Приложениям запрещено менять размер видимой области.
-		// Размер буфера - могут менять, но не менее чем текущая видимая область
-		if (gpSrv && !gpSrv->nRequestChangeSize && (gpSrv->crReqSizeNewSize.X > 0) && (gpSrv->crReqSizeNewSize.Y > 0))
+		// Если мы НЕ в ресайзе, проверить максимально допустимый размер консоли
+		if (!gpSrv->nRequestChangeSize && (gpSrv->crReqSizeNewSize.X > 0) && (gpSrv->crReqSizeNewSize.Y > 0))
 		{
 			COORD crMax = MyGetLargestConsoleWindowSize(ghConOut);
 			// Это может случиться, если пользователь резко уменьшил разрешение экрана
+			// ??? Польза здесь сомнительная
 			if (crMax.X > 0 && crMax.X < gpSrv->crReqSizeNewSize.X)
 			{
 				gpSrv->crReqSizeNewSize.X = crMax.X;
 				TODO("Обновить gcrVisibleSize");
-				//lbNeedUpdateSrvMap = TRUE;
 			}
 			if (crMax.Y > 0 && crMax.Y < gpSrv->crReqSizeNewSize.Y)
 			{
 				gpSrv->crReqSizeNewSize.Y = crMax.Y;
 				TODO("Обновить gcrVisibleSize");
-				//lbNeedUpdateSrvMap = TRUE;
 			}
-
-			WARNING("Пока всякую коррекцию убрал. Ибо конфликтует с gpSrv->nRequestChangeSize.");
-			//Видимо, нужно сравнивать не с gpSrv->crReqSizeNewSize, а с gcrVisibleSize
-#if 0
-			if (nWidth != gpSrv->crReqSizeNewSize.X && gpSrv->crReqSizeNewSize.X <= )
-			{
-
-				csbi.srWindow.Right = min(csbi.dwSize.X, gpSrv->crReqSizeNewSize.X)-1;
-				csbi.srWindow.Left = max(0, (csbi.srWindow.Right-gpSrv->crReqSizeNewSize.X+1));
-				lbNeedCorrect = TRUE;
-			}
-
-			if (nHeight != gpSrv->crReqSizeNewSize.Y)
-			{
-				csbi.srWindow.Bottom = min(csbi.dwSize.Y, gpSrv->crReqSizeNewSize.Y)-1;
-				csbi.srWindow.Top = max(0, (csbi.srWindow.Bottom-gpSrv->crReqSizeNewSize.Y+1));
-				lbNeedCorrect = TRUE;
-			}
-
-			if (lbNeedUpdateSrvMap)
-				UpdateConsoleMapHeader();
-#endif
-		}
-
-#if 0
-		// Левая граница
-		if (csbi.srWindow.Left > 0)
-		{
-			lbNeedCorrect = TRUE; csbi.srWindow.Left = 0;
-		}
-
-		// Максимальный размер консоли
-		if (csbi.dwSize.X > csbi.dwMaximumWindowSize.X)
-		{
-			// Это может случиться, если пользователь резко уменьшил разрешение экрана
-			// или консольное приложение значительно увеличило размер горизонтального буфера (Issue 373: падает при запуске wmic)
-			lbNeedCorrect = TRUE;
-			if (gpSrv
-				&& (gpSrv->crReqSizeNewSize.X > 0)
-				&& gpSrv->crReqSizeNewSize.X <= csbi.dwMaximumWindowSize.X)
-			{
-				csbi.dwSize.X = gpSrv->crReqSizeNewSize.X;
-			}
-			else
-			{
-				csbi.dwSize.X = csbi.dwMaximumWindowSize.X;
-			}
-			csbi.srWindow.Right = (csbi.dwSize.X - 1);
-		}
-
-		if ((csbi.srWindow.Right+1) < csbi.dwSize.X)
-		{
-			lbNeedCorrect = TRUE; csbi.srWindow.Right = (csbi.dwSize.X - 1);
-		}
-
-		BOOL lbBufferHeight = FALSE;
-		SHORT nHeight = (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
-		// 2010-11-19 заменил "12 / 10" на "2"
-		// 2010-12-12 заменил (csbi.dwMaximumWindowSize.Y * 2) на (nHeight + 1)
-		WARNING("Проверить, не будет ли глючить MyGetConsoleScreenBufferInfo если резко уменьшить размер экрана");
-
-		if (csbi.dwSize.Y >= (nHeight + 1))
-		{
-			lbBufferHeight = TRUE;
-		}
-		else if (csbi.dwSize.Y > csbi.dwMaximumWindowSize.Y)
-		{
-			// Это может случиться, если пользователь резко уменьшил разрешение экрана
-			lbNeedCorrect = TRUE; csbi.dwSize.Y = csbi.dwMaximumWindowSize.Y;
-		}
-
-		if (!lbBufferHeight)
-		{
-			_ASSERTE((csbi.srWindow.Bottom-csbi.srWindow.Top)<200);
-
-			if (csbi.srWindow.Top > 0)
-			{
-				lbNeedCorrect = TRUE; csbi.srWindow.Top = 0;
-			}
-
-			if ((csbi.srWindow.Bottom+1) < csbi.dwSize.Y)
-			{
-				lbNeedCorrect = TRUE; csbi.srWindow.Bottom = (csbi.dwSize.Y - 1);
-			}
-		}
-#endif
-
-		WARNING("CorrectVisibleRect пока закомментарен, ибо все равно нифига не делает");
-
-		//if (CorrectVisibleRect(&csbi))
-		//	lbNeedCorrect = TRUE;
-		if (lbNeedCorrect)
-		{
-			lbSetRc = SetConsoleWindowInfo(ghConOut, TRUE, &csbi.srWindow);
-			_ASSERTE(lbSetRc);
-			lbRc = GetConsoleScreenBufferInfo(ahConOut, &csbi);
 		}
 	}
 
-	// Возвращаем (возможно) скорректированные данные
-	*apsc = csbi;
-	//cs.Leave();
-	//CSCS.Unlock();
-#ifdef _DEBUG
-#endif
-
-	if (lbRc && gbIsDBCS && csbi.dwSize.X && csbi.dwCursorPosition.X)
+	// Issue 577: Chinese display error on Chinese
+	// -- GetConsoleScreenBufferInfo возвращает координаты курсора в DBCS, а нам нужен wchar_t !!!
+	if (gbIsDBCS && csbi.dwSize.X && csbi.dwCursorPosition.X)
 	{
-		// Issue 577: Chinese display error on Chinese
-		// -- GetConsoleScreenBufferInfo возвращает координаты курсора в DBCS, а нам нужен wchar_t !!!
-		DWORD nCP = GetConsoleOutputCP();
-		if ((nCP != CP_UTF8) && (nCP != CP_UTF7))
+		CorrectDBCSCursorPosition(ahConOut, csbi);
+	}
+
+	// Блокировка видимой области, TopLeft задается из GUI
+	if ((gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER) && gpSrv)
+	{
+		// Коррекция srWindow
+		if (gpSrv->TopLeft.isLocked())
 		{
-			UINT MaxCharSize = 0;
-			if (AreCpInfoLeads(nCP, &MaxCharSize) && (MaxCharSize > 1))
+			SHORT nWidth = (csbi.srWindow.Right - csbi.srWindow.Left + 1);
+			SHORT nHeight = (csbi.srWindow.Bottom - csbi.srWindow.Top + 1);
+
+			if (gpSrv->TopLeft.x >= 0)
 			{
-				_ASSERTE(MaxCharSize==2);
-				WORD Attrs[40];
-				LONG cchMax = countof(Attrs);
-				WORD* pAttrs = (csbi.dwCursorPosition.X <= cchMax) ? Attrs : (WORD*)calloc(csbi.dwCursorPosition.X, sizeof(*pAttrs));
-				if (pAttrs)
-					cchMax = csbi.dwCursorPosition.X;
-				else
-					pAttrs = Attrs; // memory allocation fail? try part of line?
-				COORD crRead = {0, csbi.dwCursorPosition.Y};
-				//120830 - DBCS uses 2 cells per hieroglyph
-				DWORD nRead = 0;
-				if (ReadConsoleOutputAttribute(ahConOut, pAttrs, cchMax, crRead, &nRead) && nRead)
-				{
-					_ASSERTE(nRead==cchMax);
-					int nXShift = 0;
-					LPWORD p = pAttrs, pEnd = pAttrs+nRead;
-					while (p < pEnd)
-					{
-						if ((*p) & COMMON_LVB_LEADING_BYTE)
-						{
-							nXShift++;
-							p++;
-							_ASSERTE((p < pEnd) && ((*p) & COMMON_LVB_TRAILING_BYTE));
-						}
-						p++;
-					}
-					_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
-					apsc->dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
-				}
-				if (pAttrs && (pAttrs != Attrs))
-				{
-					free(pAttrs);
-				}
+				csbi.srWindow.Right = min(csbi.dwSize.X, gpSrv->TopLeft.x+nWidth) - 1;
+				csbi.srWindow.Left = max(0, csbi.srWindow.Right-nWidth+1);
 			}
+			if (gpSrv->TopLeft.y >= 0)
+			{
+				csbi.srWindow.Bottom = min(csbi.dwSize.Y, gpSrv->TopLeft.y+nHeight) - 1;
+				csbi.srWindow.Top = max(0, csbi.srWindow.Bottom-nHeight+1);
+			}
+		}
+
+		// Eсли
+		// a) в прошлый раз курсор БЫЛ видим, а сейчас нет, И
+		// b) TopLeft не был изменен с тех пор (GUI не прокручивали)
+		// Это значит, что в консоли, например, нажали Enter в prompt
+		// или приложение продолжает вывод в консоль, в общем,
+		// содержимое консоли прокручивается,
+		// и то же самое нужно сделать в GUI
+		if (gpSrv->pConsole && gpSrv->TopLeft.isLocked())
+		{
+			// Был видим в той области, которая ушла в GUI
+			if (CoordInSmallRect(gpSrv->pConsole->info.sbi.dwCursorPosition, gpSrv->pConsole->info.sbi.srWindow)
+				// и видим сейчас в RealConsole
+				&& CoordInSmallRect(csbi.dwCursorPosition, srRealWindow)
+				// но стал НЕ видим в скорректированном (по TopLeft) прямоугольнике
+				&& !CoordInSmallRect(csbi.dwCursorPosition, csbi.srWindow)
+				// И TopLeft в GUI не менялся
+				&& gpSrv->TopLeft.Equal(gpSrv->pConsole->info.TopLeft))
+			{
+				// Сбросить блокировку и вернуть реальное положение в консоли
+				gpSrv->TopLeft.Reset();
+				csbi.srWindow = srRealWindow;
+			}
+		}
+
+		if (gpSrv->pConsole)
+		{
+			gpSrv->pConsole->info.TopLeft = gpSrv->TopLeft;
+			gpSrv->pConsole->info.srRealWindow = srRealWindow;
 		}
 	}
 
+wrap:
+	if (apsc)
+		*apsc = csbi;
+	// Возвращаем (возможно) скорректированные данные
+	UNREFERENCED_PARAMETER(nErrCode);
 	return lbRc;
 }
 

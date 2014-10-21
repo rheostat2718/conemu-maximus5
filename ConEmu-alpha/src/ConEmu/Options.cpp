@@ -411,6 +411,7 @@ void Settings::InitSettings()
 	isSendAltTab = isSendAltEsc = isSendAltPrintScrn = isSendPrintScrn = isSendCtrlEsc = false;
 	isMonitorConsoleLang = 3; // bitmask. 1 - follow up console HKL (e.g. after XLat in Far Manager), 2 - use one HKL for all tabs
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
+	UseScrollLock = true;
 	isSaveCmdHistory = true;
 	nCmdOutputCP = 0;
 	ComSpec.AddConEmu2Path = CEAP_AddAll;
@@ -698,6 +699,7 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_ConsoleTitle] = true;
 	#ifndef _DEBUG
 	isStatusColumnHidden[csi_KeyHooks] = true;
+	isStatusColumnHidden[csi_ViewLock] = true;
 	#endif
 	isStatusColumnHidden[csi_InputLocale] = true;
 	isStatusColumnHidden[csi_WindowPos] = true;
@@ -2579,6 +2581,9 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 			DefaultBufferHeight = LONGOUTPUTHEIGHT_MAX;
 
 		reg->Load(L"AutoBufferHeight", AutoBufferHeight);
+
+		reg->Load(L"UseScrollLock", UseScrollLock);
+
 		//reg->Load(L"FarSyncSize", FarSyncSize);
 		reg->Load(L"CmdOutputCP", nCmdOutputCP);
 
@@ -3548,6 +3553,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ConsoleFontHeight", ConsoleFont.lfHeight);
 		reg->Save(L"DefaultBufferHeight", DefaultBufferHeight);
 		reg->Save(L"AutoBufferHeight", AutoBufferHeight);
+		reg->Save(L"UseScrollLock", UseScrollLock);
 		reg->Save(L"CmdOutputCP", nCmdOutputCP);
 		reg->Save(L"ComSpec.Type", (BYTE)ComSpec.csType);
 		reg->Save(L"ComSpec.Bits", (BYTE)ComSpec.csBits);

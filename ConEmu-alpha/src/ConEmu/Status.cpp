@@ -60,6 +60,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 const wchar_t gsReady[] = L"Waiting...";
+const wchar_t gsViewLock[] = L"Visible region lock";
+const wchar_t gsViewName[] = L"REAL";
 
 //Информация по колонкам
 //{
@@ -102,6 +104,10 @@ static StatusColInfo gStatusCols[] =
 	{csi_ScrollLock,	L"StatusBar.Hide.ScrL",
 						L"Scroll Lock state",
 						L"Scroll Lock state, left click to change"},
+
+	{csi_ViewLock,		L"StatusBar.Hide.VisL",
+						L"Visible region lock",
+						gsViewLock},
 
 	{csi_KeyHooks,		L"StatusBar.Hide.KeyHooks",
 						L"Keyboard hooks",
@@ -259,6 +265,7 @@ CStatus::CStatus()
 	ms_ForeInfo[0] = ms_FocusInfo[0] = 0;
 
 	mb_Caps = mb_Num = mb_Scroll = false;
+	mb_ViewLock = false;
 	mb_KeyHooks = false;
 	mhk_Locale = 0;
 
@@ -537,17 +544,20 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 
 		m_Items[nDrawCount].nID = nID;
 
+		LPCWSTR pszCalcText = m_Items[nDrawCount].sText;
+
 		switch (nID)
 		{
 			case csi_Info:
 			{
+				pszCalcText = ms_Status[0] ? ms_Status :
+					pRCon ? pRCon->GetConStatus() : NULL;
 				pszTmp =
 					(m_ClickedItemDesc == csi_Info && !mb_InSetupMenu) ? L"Right click to show System Menu" :
 					((mb_InSetupMenu && m_ClickedItemDesc == csi_Info)
 						|| (m_ClickedItemDesc > csi_Info && m_ClickedItemDesc < csi_Last))
 					? m_Values[m_ClickedItemDesc].sHelp :
-					ms_Status[0] ? ms_Status :
-					pRCon ? pRCon->GetConStatus() : NULL;
+					pszCalcText;
 
 				if (pszTmp && *pszTmp)
 				{
@@ -611,6 +621,10 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				wcscpy_c(m_Items[nDrawCount].sText, L"SCRL");
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"SCRL");
 				break;
+			case csi_ViewLock:
+				wcscpy_c(m_Items[nDrawCount].sText, m_Values[csi_ViewLock].sText);
+				wcscpy_c(m_Items[nDrawCount].szFormat, m_Values[csi_ViewLock].szFormat);
+				break;
 			case csi_InputLocale:
 				// чтобы не задавали вопросов, нафига дублируется.
 				if (LOWORD((DWORD)mhk_Locale) == HIWORD((DWORD)mhk_Locale))
@@ -672,7 +686,8 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 			continue;
 		}
 
-		if (!GetTextExtentPoint32(hDrawDC, m_Items[nDrawCount].sText, m_Items[nDrawCount].nTextLen, &m_Items[nDrawCount].TextSize) || (m_Items[nDrawCount].TextSize.cx <= 0))
+		// Чтобы при наведении курсора на поля статус-бара не срывало крышу и колонки не начинали бешено скакать
+		if (!GetTextExtentPoint32(hDrawDC, pszCalcText, lstrlen(pszCalcText), &m_Items[nDrawCount].TextSize) || (m_Items[nDrawCount].TextSize.cx <= 0))
 		{
 			if (nID != csi_Info)
 				continue;
@@ -717,7 +732,11 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 		m_Items[i].bShow = FALSE;
 	}
 
-
+	if (nDrawCount < 1)
+	{
+		_ASSERTE(nDrawCount>=1);
+		goto wrap;
+	}
 
 	if (nDrawCount == 1)
 	{
@@ -725,14 +744,26 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	}
 	else
 	{
-		// Подсчет допустимой ширины
-		nTotalWidth = nMinInfoWidth + 2*nGapWidth + nDashWidth;
+		int iFirstWidth = m_Items[0].TextSize.cx + szVerSize.cx;
 
-		for (size_t i = 1; i < nDrawCount; i++)
+		// Подсчет допустимой ширины
+		nTotalWidth = iFirstWidth + 2*nGapWidth + nDashWidth; // nMinInfoWidth + 2*nGapWidth + nDashWidth;
+
+		DEBUGTEST(int iShown = 0);
+
+		size_t iMax = nDrawCount;
+
+		// Favor SizeGrip to be visible
+		if (m_Items[iMax-1].bShow && (m_Items[iMax-1].nID == csi_SizeGrip))
+		{
+			nTotalWidth += (m_Items[--iMax].TextSize.cx + 2*nGapWidth + nDashWidth);
+		}
+
+		for (size_t i = 1; i < iMax; i++)
 		{
 			if (m_Items[i].bShow)
 			{
-				if ((nTotalWidth+m_Items[i].TextSize.cx+2*nGapWidth) > nStatusWidth)
+				if ((nTotalWidth+m_Items[i].TextSize.cx+2*nGapWidth) >= nStatusWidth)
 				{
 					m_Items[i].bShow = FALSE;
 					// Но продолжим, может следующая ячейки будет уже и "влезет"
@@ -741,24 +772,13 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				{
 					// Раз этот элемент показан
 					nTotalWidth += (m_Items[i].TextSize.cx + 2*nGapWidth + nDashWidth);
+					DEBUGTEST(iShown++);
 				}
 			}
-			// -- don't break, may be further columns!
-			//else
-			//{
-			//	break; // дальше смысла нет - ячейки кончились
-			//}
+			// -- don't break, may be further column will be visible and fit!
 		}
 
-
-		//if (nMinInfoWidth < (nStatusWidth - nTotalWidth))
-		//{
-		//	//int nMaxInfoWidth = nStatusWidth - nTotalWidth - nGapWidth - 1;
-		//	//m_Items[0].TextSize.cx = max(nMinInfoWidth,nMaxInfoWidth);
-		//	m_Items[0].TextSize.cx = nStatusWidth - nTotalWidth;
-		//}
-
-		m_Items[0].TextSize.cx = max(nMinInfoWidth,(nStatusWidth - nTotalWidth + nMinInfoWidth));
+		m_Items[0].TextSize.cx = max(nMinInfoWidth,(nStatusWidth - nTotalWidth + iFirstWidth));
 	}
 
 
@@ -824,6 +844,9 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				break;
 			case csi_ScrollLock:
 				SetTextColor(hDrawDC, mb_Scroll ? crText : crDash);
+				break;
+			case csi_ViewLock:
+				SetTextColor(hDrawDC, mb_ViewLock ? crText : crDash);
 				break;
 			case csi_KeyHooks:
 				SetTextColor(hDrawDC, mb_KeyHooks ? crText : crDash);
@@ -1185,6 +1208,8 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		return false; //bWasClick;
 	}
 
+	CVConGuard VCon;
+
 	switch (uMsg)
 	{
 	case WM_LBUTTONDOWN:
@@ -1292,6 +1317,12 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				case csi_ScrollLock:
 					keybd_event(VK_SCROLL, 0, 0, 0);
 					keybd_event(VK_SCROLL, 0, KEYEVENTF_KEYUP, 0);
+					break;
+				case csi_ViewLock:
+					if (gpConEmu->GetActiveVCon(&VCon) >= 0)
+					{
+						VCon->RCon()->ResetTopLeft();
+					}
 					break;
 				default:
 					;
@@ -1558,7 +1589,7 @@ void CStatus::OnWindowReposition(const RECT *prcNew)
 // bForceUpdate надо ставить в true, после изменения размеров консоли! Чтобы при ресайзе
 // актуальные данные показывать. Другие значения (скролл и курсор) можно и с задержкой
 // отображать, чтобы лишнюю нагрузку не создавать.
-void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CONSOLE_CURSOR_INFO* pci, bool bForceUpdate)
+void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CONSOLE_CURSOR_INFO* pci, const TOPLEFTCOORD* pTopLeft, bool bForceUpdate)
 {
 	bool bValid = (psbi != NULL);
 
@@ -1569,11 +1600,39 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 			(int)psbi->srWindow.Left+1, (int)psbi->srWindow.Top+1, (int)psbi->srWindow.Right+1, (int)psbi->srWindow.Bottom+1);
 		_wsprintf(m_Values[csi_ConsolePos].szFormat, SKIPLEN(countof(m_Values[csi_ConsolePos].szFormat)) L" (%i,%i)-(%i,%i) ",
 			(int)psbi->srWindow.Left+1, (int)psbi->srWindow.Top+1, (int)psbi->dwSize.X, (int)psbi->dwSize.Y);
+		if (mb_ViewLock != pTopLeft->isLocked())
+		{
+			mb_ViewLock = pTopLeft->isLocked();
+			bForceUpdate = true;
+		}
+		wchar_t szX[16] = L"", szY[16] = L"";
+		if (mb_ViewLock)
+		{
+			if (pTopLeft->x >= 0)
+				_wsprintf(szX, SKIPCOUNT(szX) L"%i", pTopLeft->x+1);
+			else
+				wcscpy_c(szX, L"-");
+			if (pTopLeft->y >= 0)
+				_wsprintf(szY, SKIPCOUNT(szY) L"%i", pTopLeft->y+1);
+			else
+				wcscpy_c(szY, L"-");
+			_wsprintf(m_Values[csi_ViewLock].sText, SKIPLEN(countof(m_Values[csi_ViewLock].sText)) L"{%s,%s}", szX, szY);
+		}
+		else
+		{
+			wcscpy_c(m_Values[csi_ViewLock].sText, gsViewName);
+		}
+		wcscpy_c(m_Values[csi_ViewLock].szFormat, L"{-,999}");
+		//_wsprintf(ms_ViewLockHint, SKIPLEN(countof(ms_ViewLockHint)-1) L"%s (%i,%i)",
+		//	gsViewLock, pTopLeft->x, pTopLeft->y);
+		//m_Values[csi_ViewLock].sHelp = ms_ViewLockHint;
 	}
 	else
 	{
 		wcscpy_c(m_Values[csi_ConsolePos].sText, L" ");
 		wcscpy_c(m_Values[csi_ConsolePos].szFormat, L"(0,0)-(199,199)"); // на самом деле может быть до 32766, но для уменьшения ширины - по умолчанию так
+		mb_ViewLock = false;
+		//m_Values[csi_ViewLock].sHelp = gsViewLock;
 	}
 
 	// csi_ConsoleSize:
@@ -1729,11 +1788,9 @@ void CStatus::OnActiveVConChanged(int nIndex/*0-based*/, CRealConsole* pRCon)
 		DWORD nAltServerPID = nMainServerPID ? pRCon->GetServerPID(false) : 0;
 		OnServerChanged(nMainServerPID, nAltServerPID);
 
-		CONSOLE_SCREEN_BUFFER_INFO sbi = {};
-		CONSOLE_CURSOR_INFO ci = {};
-		pRCon->GetConsoleScreenBufferInfo(&sbi);
-		pRCon->GetConsoleCursorInfo(&ci);
-		OnConsoleChanged(&sbi, &ci, false);
+		ConsoleInfoArg ci = {};
+		pRCon->GetConsoleInfo(&ci);
+		OnConsoleChanged(&ci.sbi, &ci.cInfo, &ci.TopLeft, false);
 
 		hView = pRCon->GetView();
 		hCon = pRCon->ConWnd();
@@ -1741,7 +1798,7 @@ void CStatus::OnActiveVConChanged(int nIndex/*0-based*/, CRealConsole* pRCon)
 	else
 	{
 		OnServerChanged(0, 0);
-		OnConsoleChanged(NULL, NULL, false);
+		OnConsoleChanged(NULL, NULL, NULL, false);
 	}
 
 	// csi_ConEmuView
