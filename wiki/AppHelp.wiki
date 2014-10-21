@@ -1,0 +1,28 @@
+﻿#summary The problem with apphelp.dll
+
+==Abstract==
+Several times I've seen cygwin/msys errors when their subsystem had failed to create child processes.
+
+===Example from cygwin's ls===
+{{{
+0 [main] us 0 init_cheap: VirtualAlloc pointer is null, Win32 error 487 AllocationBase 0x68520000, BaseAddress 0x68570000, RegionSize 0x218000, State 0x1000 C:\Program Files (x86)\Git\bin\ls.exe: *** Couldn't reserve space for cygwin's heap, Win32 error 487
+}}}
+
+===Example from msys-git's perl===
+{{{
+С:\GIT\bin\perl.exe: *** unable to remap С:\GIT\bin\libsvn_wc-1-0.dll to same address as parent -- 0x2190000
+1 [main] perl 8248 sync_with_child: child 5768(0xB60) died before initialization with status code 0x1
+2 [main] perl 8248 sync_with_child: *** child state child loading dlls
+C:\GIT\bin\perl.exe: *** unable to remap С:\GIT\lib\perl5\site_perl\5.8.8\msys\auto\SVN\_Delta\_Delta.dll to same address as parent -- 0x630000
+3 [main] perl 8248 sync_with_child: child 6632(0xB90) died before initialization with status code 0x6802752F
+3 [main] perl 8248 sync_with_child: *** child state child loading dlls
+}}}
+
+==The problem==
+Digging the problem for some time I've found the reason of these errors on my PC (in perl's case).
+
+  * Address, where perl wants to load its libraries was used by `C:\Windows\System32\uxtheme.dll`.
+  * This `uxtheme.dll` was loaded as static linked library by `C:\Windows\apppatch\AcGenral.dll`.
+  * This `AcGenral.dll` was loaded (dynamically) by `C:\Windows\System32\apphelp.dll`.
+  * And this `apphelp.dll` was loaded in the parent process of the `ConEmu.exe` (that was `USBSafelyRemove.exe` in my case).
+  * Oops...

@@ -89,8 +89,9 @@
     * [CygwinMsys Cygwin & Msys]
       * [CygwinStartDir Cygwin & ${HOME}]
       * [CygwinAnsi Cygwin & Ansi]
-      * [CygwinHeap Cygwin heap error]
       * [CygwinCurDir Cygwin current dir]
+      * [CygwinHeap Cygwin heap error]
+      * [AppHelp AppHelp problem]
     * Far Manager
       * [ConEmuFarPlugin Far & ConEmu plugins]
       * [FarMacro Far Macros]
@@ -124,6 +125,7 @@
       * [NamedPipes Named pipes]
       * [ProcessExplorer Process Explorer]
       * [ProcessMonitor Process Monitor]
+      * [DependencyWalker Dependency Walker]
       * [ConEmuHelping How you may help]
   * [FarManager About Far Manager]
     * [FarPlugins Far Manager plugins]

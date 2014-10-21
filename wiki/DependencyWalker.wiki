@@ -1,0 +1,4 @@
+﻿[http://www.dependencywalker.com/ Dependency Walker] builds hierarchical tree of the dynamic libraries used by process.
+
+It may work either ‘offline’ without actual executable run or ‘online’ monitoring all modules, debug messages,
+threads initializations and many other low-level information.
