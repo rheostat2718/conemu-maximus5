@@ -76,7 +76,7 @@ Use any of `"-e"`, `"-echo"`, `"/echo"` to echo.
 {{{
 ConEmuC -e [-r] [-n] [-b] "String to echo"
   Switches
-    -r  - do not replace "^e^r^n^t^b" with ASCII equivalents
+    -r  - do not replace "^e^r^n^t^a^b" with ASCII equivalents
           to print single "^" char - double it "^^"
           escape char alias - "^["
     -n  - do not add CRLF after printed line
