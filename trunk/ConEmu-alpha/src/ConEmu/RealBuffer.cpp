@@ -68,6 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRTOPLEFT(s) DEBUGSTR(s)
 
 // ANSI, without "\r\n"
 #define IFLOGCONSOLECHANGE gpSetCls->isAdvLogging>=2
@@ -115,6 +116,7 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primar
 	mn_LastRgnFlags = -1;
 
 	ZeroStruct(con);
+	con.TopLeft.Reset();
 	mp_Match = NULL;
 
 	mb_BuferModeChangeLocked = FALSE;
@@ -346,7 +348,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	con.m_sbi.srWindow.Bottom = nY - 1;
 	con.crMaxSize = mp_RCon->mp_RBuf->con.crMaxSize; //MakeCoord(max(dump.crSize.X,nX),max(dump.crSize.Y,nY));
 	con.m_sbi.dwMaximumWindowSize = con.crMaxSize; //dump.crSize;
-	con.nTopVisibleLine = 0;
+	SetTopLeft();
 	con.nTextWidth = nX/*dump.crSize.X*/;
 	con.nTextHeight = nY/*dump.crSize.Y*/;
 	con.nBufferHeight = dump.crSize.Y;
@@ -458,7 +460,8 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	con.m_sbi.srWindow.Right = nX - 1;
 	con.m_sbi.srWindow.Left = 0;
 	con.m_sbi.srWindow.Bottom = min((storedSbi.srWindow.Top + (int)nY - 1),(storedSbi.dwSize.Y - 1));
-	con.nTopVisibleLine = con.m_sbi.srWindow.Top = max(0,con.m_sbi.srWindow.Bottom - nY + 1);
+	con.m_sbi.srWindow.Top = max(0,con.m_sbi.srWindow.Bottom - nY + 1);
+	SetTopLeft();
 
 	con.crMaxSize = mp_RCon->mp_RBuf->con.crMaxSize; //MakeCoord(max(dump.crSize.X,nX),max(dump.crSize.Y,nY));
 	con.m_sbi.dwMaximumWindowSize = con.crMaxSize; //dump.crSize;
@@ -720,23 +723,10 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	pIn->SetSize.size.X = sizeX;
 	pIn->SetSize.size.Y = sizeY;
 
-	TODO("nTopVisibleLine должен передаваться при скролле, а не при ресайзе!");
-	#ifdef SHOW_AUTOSCROLL
-	pIn->SetSize.nSendTopLine = (gpSetCls->AutoScroll || !con.bBufferHeight) ? -1 : con.nTopVisibleLine;
-	#else
-	pIn->SetSize.nSendTopLine = mp_RCon->InScroll() ? con.nTopVisibleLine : -1;
-	#endif
-
-	// rect по идее вообще не нужен, за блокировку при прокрутке отвечает nSendTopLine
-	pIn->SetSize.rcWindow = rect;
-
 	pIn->SetSize.dwFarPID = (con.bBufferHeight && !mp_RCon->isFarBufferSupported()) ? 0 : mp_RCon->GetFarPID(TRUE);
 
-	// Если размер менять не нужно - то и CallNamedPipe не делать
-	//if (mp_ConsoleInfo) {
-
 	// Если заблокирована верхняя видимая строка - выполнять строго
-	if (anCmdID != CECMD_CMDFINISHED && pIn->SetSize.nSendTopLine == -1)
+	if (anCmdID != CECMD_CMDFINISHED && con.TopLeft.isLocked())
 	{
 		// иначе - проверяем текущее соответствие
 		//CONSOLE_SCREEN_BUFFER_INFO sbi = mp_ConsoleInfo->sbi;
@@ -781,8 +771,8 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		default:
 			_wsprintfA(szSizeCmd, SKIPLEN(countof(szSizeCmd)) "SizeCmd=%u", anCmdID);
 		}
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%s(Cols=%i, Rows=%i, Buf=%i, Top=%i)",
-		           szSizeCmd, sizeX, sizeY, sizeBuffer, pIn->SetSize.nSendTopLine);
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%s(Cols=%i, Rows=%i, Buf=%i, TopLeft={%i,%i})",
+		           szSizeCmd, sizeX, sizeY, sizeBuffer, con.TopLeft.y, con.TopLeft.x);
 		mp_RCon->LogString(szInfo, TRUE);
 	}
 
@@ -822,14 +812,12 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				{
 					bSecondTry = true;
 					pIn->SetSize.size.X = pOut->SetSizeRet.crMaxSize.X;
-					pIn->SetSize.rcWindow.Right = pIn->SetSize.rcWindow.Left + pIn->SetSize.size.X - 1;
 				}
 				// And height
 				if ((pOut->SetSizeRet.crMaxSize.Y > nSetHeight) && (sizeY > (UINT)nSetHeight))
 				{
 					bSecondTry = true;
 					pIn->SetSize.size.Y = pOut->SetSizeRet.crMaxSize.Y;
-					pIn->SetSize.rcWindow.Bottom = pIn->SetSize.rcWindow.Top + pIn->SetSize.size.Y - 1;
 				}
 				// Try again with lesser size?
 				if (bSecondTry)
@@ -1074,7 +1062,7 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 
 		if (mp_RCon->isActive())
 		{
-			gpConEmu->mp_Status->OnConsoleChanged(&con.m_sbi, &con.m_ci, true);
+			gpConEmu->mp_Status->OnConsoleChanged(&con.m_sbi, &con.m_ci, NULL, true);
 		}
 
 		return TRUE;
@@ -1142,7 +1130,6 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 	_wsprintf(szStatus, SKIPCOUNT(szStatus) L"{%u,%u} size, {%i,%i} buffer", sizeX, sizeY, iBufWidth, iBufHeight);
 	mp_RCon->SetConStatus(szStatus, CRealConsole::cso_Critical);
 
-#ifndef _DEBUG
 	// Попробовать для консолей (cmd, и т.п.) делать ресайз после отпускания мышки
 	if ((gpConEmu->mouse.state & MOUSE_SIZING_BEGIN)
 		&& (!mp_RCon->GuiWnd() && !mp_RCon->GetFarPID()))
@@ -1158,7 +1145,6 @@ BOOL CRealBuffer::SetConsoleSize(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, 
 			goto wrap;
 		}
 	}
-#endif
 
 	// Сразу поставим, чтобы в основной нити при синхронизации размер не слетел
 	// Необходимо заблокировать RefreshThread, чтобы не вызывался ApplyConsoleInfo ДО ЗАВЕРШЕНИЯ SetConsoleSize
@@ -1231,7 +1217,7 @@ void CRealBuffer::SyncConsole2Window(USHORT wndSizeX, USHORT wndSizeY)
 
 BOOL CRealBuffer::isScroll(RealBufferScroll aiScroll/*=rbs_Any*/)
 {
-	TODO("горизонтальная прокрутка");
+	TODO("Horizontal scroll");
 	return con.bBufferHeight;
 }
 
@@ -1352,7 +1338,7 @@ BOOL CRealBuffer::PreInit()
 	con.nTextWidth = rcCon.right;
 	con.nTextHeight = rcCon.bottom;
 
-	con.nTopVisibleLine = 0;
+	SetTopLeft();
 
 	con.m_sbi.wAttributes = 7;
 	con.m_sbi.srWindow.Left = con.m_sbi.srWindow.Top = 0;
@@ -1393,7 +1379,7 @@ BOOL CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 			return FALSE;
 	}
 
-	// Функция вызывается с (anCellCount!=0) ТОЛЬКО из CRealBuffer::ApplyConsoleInfo()
+	// Функция вызывается с (anCellCount!=0) ТОЛЬКО из ApplyConsoleInfo()
 	if (anCellCount)
 	{
 		nCellCount = anCellCount;
@@ -1572,7 +1558,7 @@ SHORT CRealBuffer::GetBufferPosY()
 	}
 	#endif
 
-	return con.nTopVisibleLine;
+	return (con.TopLeft.y >= 0) ? con.TopLeft.y : con.m_sbi.srWindow.Top;
 }
 
 int CRealBuffer::TextWidth()
@@ -2132,7 +2118,6 @@ wrap:
 BOOL CRealBuffer::ApplyConsoleInfo()
 {
 	bool bBufRecreate = false;
-	bool bNeedLoadData = false;
 	bool lbChanged = false;
 
 	#ifdef _DEBUG
@@ -2154,7 +2139,10 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 	ResetEvent(mp_RCon->mh_ApplyFinished);
 
 	const CESERVER_REQ_CONINFO_INFO* pInfo = NULL;
-	CESERVER_REQ_HDR cmd; ExecutePrepareCmd(&cmd, CECMD_CONSOLEDATA, sizeof(cmd));
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_CONSOLEDATA, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO));
+
+	// Request exact TopLeft position if it is locked in GUI
+	pIn->ReqConInfo.TopLeft = con.TopLeft;
 
 	if (mp_RCon->mb_SwitchActiveServer)
 	{
@@ -2164,7 +2152,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 	{
 		_ASSERTE(mp_RCon->m_ConsoleMap.IsValid());
 	}
-	else if (!mp_RCon->m_GetDataPipe.Transact(&cmd, sizeof(cmd), (const CESERVER_REQ_HDR**)&pInfo) || !pInfo)
+	else if (!mp_RCon->m_GetDataPipe.Transact((CESERVER_REQ_HDR*)pIn, pIn->hdr.cbSize, (const CESERVER_REQ_HDR**)&pInfo) || !pInfo)
 	{
 		#ifdef _DEBUG
 		if (mp_RCon->m_GetDataPipe.GetErrorCode() == ERROR_PIPE_NOT_CONNECTED)
@@ -2190,10 +2178,31 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		_ASSERTE(pInfo->cmd.cbSize >= sizeof(CESERVER_REQ_CONINFO_INFO));
 	}
 	else
-		//if (!mp_ConsoleInfo->mp_RCon->hConWnd || !mp_ConsoleInfo->nCurDataMapIdx) {
-		//	_ASSERTE(mp_ConsoleInfo->mp_RCon->hConWnd && mp_ConsoleInfo->nCurDataMapIdx);
-		//} else
 	{
+		ApplyConsoleInfo(pInfo, bSetApplyFinished, lbChanged, bBufRecreate);
+	}
+
+	if (bSetApplyFinished)
+	{
+		SetEvent(mp_RCon->mh_ApplyFinished);
+	}
+
+	if (lbChanged)
+	{
+		mp_RCon->mb_DataChanged = TRUE; // Переменная используется внутри класса
+		con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
+
+		//if (mp_RCon->isActive()) -- mp_RCon->isActive() проверит сама UpdateScrollInfo, а скроллбар может быть и в видимой но НЕ активной консоли
+		mp_RCon->UpdateScrollInfo();
+	}
+
+	return lbChanged;
+}
+
+void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool& bSetApplyFinished, bool& lbChanged, bool& bBufRecreate)
+{
+	bool bNeedLoadData = false;
+
 		//if (mn_LastConsoleDataIdx != mp_ConsoleInfo->nCurDataMapIdx) {
 		//	ReopenMapData();
 		//}
@@ -2296,12 +2305,15 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 				_wsprintf(szCursorDbg, SKIPLEN(countof(szCursorDbg)) L"CursorPos is %ux%u. ", pInfo->sbi.dwCursorPosition.X, pInfo->sbi.dwCursorPosition.Y);
 			#endif
 
+			#if 0
 			CONSOLE_SCREEN_BUFFER_INFO lsbi = pInfo->sbi;
 			// Если мышкой тащат ползунок скроллера - не менять TopVisible
 			if (mp_RCon->InScroll())
 			{
 				UINT nY = lsbi.srWindow.Bottom - lsbi.srWindow.Top;
-				lsbi.srWindow.Top = max(0,min(con.nTopVisibleLine,lsbi.dwSize.Y-nY-1));
+				SHORT iMaxTop = lsbi.dwSize.Y-nY-1;
+				SHORT iTop = (con.nTopVisibleLine >= 0) ? con.nTopVisibleLine : iMaxTop;
+				lsbi.srWindow.Top = max(0,min(iTop,iMaxTop));
 				lsbi.srWindow.Bottom = lsbi.srWindow.Top + nY;
 				#ifdef _DEBUG
 				int l = lstrlen(szCursorDbg);
@@ -2324,11 +2336,24 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 				DEBUGSTRCURSORPOS(szCursorDbg);
 			}
 			#endif
+			#endif
 
-			con.m_sbi = lsbi;
+			con.m_sbi = pInfo->sbi;
+			con.srRealWindow = pInfo->srRealWindow;
+
+			// Если мышкой тащат ползунок скроллера - не менять TopVisible
+			if (!mp_RCon->InScroll()
+				&& con.TopLeft.isLocked()
+				&& !pInfo->TopLeft.isLocked())
+			{
+				// Сброс позиции прокрутки, она поменялась
+				// в результате действий пользователя в консоли
+				SetTopLeft();
+			}
+
 
 			DWORD nScroll;
-			if (GetConWindowSize(lsbi, &nNewWidth, &nNewHeight, &nScroll))
+			if (GetConWindowSize(pInfo->sbi, &nNewWidth, &nNewHeight, &nScroll))
 			{
 				// Far sync resize (avoid panel flickering)
 				// refresh VCon only when server return new size/data
@@ -2368,6 +2393,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			}
 
 
+			#if 0
 			#ifdef SHOW_AUTOSCROLL
 			if (gpSetCls->AutoScroll)
 				con.nTopVisibleLine = con.m_sbi.srWindow.Top;
@@ -2375,6 +2401,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			// Если мышкой тащат ползунок скроллера - не менять TopVisible
 			if (!mp_RCon->InScroll())
 				con.nTopVisibleLine = con.m_sbi.srWindow.Top;
+			#endif
 			#endif
 
 			HEAPVAL
@@ -2386,13 +2413,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			// Это может случиться во время пересоздания консоли (когда фар падал)
 			// или при изменении параметров экрана (Aero->Standard)
 			// или при закрытии фара (он "восстанавливает" размер консоли)
-			_ASSERTE((nNewWidth == pInfo->crWindow.X && nNewHeight == pInfo->crWindow.Y) || con.bLockChange2Text);
-			// 10
-			//DWORD MaxBufferSize = pInfo->nCurDataMaxSize;
-			//if (MaxBufferSize != 0) {
-
-			//// Не будем гонять зря данные по пайпу, если изменений нет
-			//if (mp_RCon->mn_LastConsolePacketIdx != pInfo->nPacketId)
+			//_ASSERTE((nNewWidth == pInfo->crWindow.X && nNewHeight == pInfo->crWindow.Y) || con.bLockChange2Text);
 
 			DWORD CharCount = nNewWidth * nNewHeight;
 			DWORD nCalcCount = 0;
@@ -2475,11 +2496,11 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			SetChange2Size(-1, -1);
 		}
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 		wchar_t szCursorInfo[60];
 		_wsprintf(szCursorInfo, SKIPLEN(countof(szCursorInfo)) L"Cursor (X=%i, Y=%i, Vis:%i, H:%i)\n",
-		          con.m_sbi.dwCursorPosition.X, con.m_sbi.dwCursorPosition.Y,
-		          con.m_ci.bVisible, con.m_ci.dwSize);
+					con.m_sbi.dwCursorPosition.X, con.m_sbi.dwCursorPosition.Y,
+					con.m_ci.bVisible, con.m_ci.dwSize);
 		DEBUGSTRPKT(szCursorInfo);
 
 		// Данные уже должны быть заполнены, и там не должно быть лажы
@@ -2510,7 +2531,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 
 		//_ASSERTE(lbDataValid);
 		HEAPVAL;
-#endif
+	#endif
 
 		// Проверка буфера TrueColor
 		if (!lbChanged && gpSet->isTrueColorer && mp_RCon->mp_TrueColorerData)
@@ -2527,25 +2548,6 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 			CheckBufferSize();
 			HEAPVAL;
 		}
-
-		sc.Unlock();
-	}
-
-	if (bSetApplyFinished)
-	{
-		SetEvent(mp_RCon->mh_ApplyFinished);
-	}
-
-	if (lbChanged)
-	{
-		mp_RCon->mb_DataChanged = TRUE; // Переменная используется внутри класса
-		con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
-
-		//if (mp_RCon->isActive()) -- mp_RCon->isActive() проверит сама UpdateScrollInfo, а скроллбар может быть и в видимой но НЕ активной консоли
-		mp_RCon->UpdateScrollInfo();
-	}
-
-	return lbChanged;
 }
 
 // По переданному CONSOLE_SCREEN_BUFFER_INFO определяет, включена ли прокрутка
@@ -2613,8 +2615,10 @@ COORD CRealBuffer::ScreenToBuffer(COORD crMouse)
 
 	if (isScroll())
 	{
+		#if 0
 		// Прокрутка может быть заблокирована?
 		_ASSERTE((con.nTopVisibleLine == con.m_sbi.srWindow.Top) || (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION));
+		#endif
 
 		crMouse.X += con.m_sbi.srWindow.Left;
 		crMouse.Y += con.m_sbi.srWindow.Top;
@@ -3173,16 +3177,16 @@ void CRealBuffer::OnTimerCheckSelection()
 // x,y - экранные координаты
 // crMouse - ScreenToBuffer
 // Возвращает true, если мышку обработал "сам буфер"
-bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse, bool abFromTouch /*= false*/)
+bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse)
 {
 	#ifdef _DEBUG
-	wchar_t szDbgInfo[200]; _wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"RBuf::OnMouse %s XY={%i,%i} CR={%i,%i}%s SelFlags=x%08X\n",
+	wchar_t szDbgInfo[200]; _wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"RBuf::OnMouse %s XY={%i,%i} CR={%i,%i} SelFlags=x%08X\n",
 		messg==WM_MOUSEMOVE?L"WM_MOUSEMOVE":
 		messg==WM_LBUTTONDOWN?L"WM_LBUTTONDOWN":messg==WM_LBUTTONUP?L"WM_LBUTTONUP":messg==WM_LBUTTONDBLCLK?L"WM_LBUTTONDBLCLK":
 		messg==WM_RBUTTONDOWN?L"WM_RBUTTONDOWN":messg==WM_RBUTTONUP?L"WM_RBUTTONUP":messg==WM_RBUTTONDBLCLK?L"WM_RBUTTONDBLCLK":
 		messg==WM_MBUTTONDOWN?L"WM_MBUTTONDOWN":messg==WM_MBUTTONUP?L"WM_MBUTTONUP":messg==WM_MBUTTONDBLCLK?L"WM_MBUTTONDBLCLK":
 		messg==WM_MOUSEWHEEL?L"WM_MOUSEWHEEL":messg==WM_MOUSEHWHEEL?L"WM_MOUSEHWHEEL":
-		L"{OtherMsg}", x,y, crMouse.X,crMouse.Y,(abFromTouch?L" Touch":L""), con.m_sel.dwFlags);
+		L"{OtherMsg}", x,y, crMouse.X,crMouse.Y, con.m_sel.dwFlags);
 	DEBUGSTRMOUSE(szDbgInfo);
 	#endif
 
@@ -3307,32 +3311,13 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 	if (con.bBufferHeight
 		&& ((m_Type != rbt_Primary) || !lbFarBufferSupported || !lbMouseSendAllowed || lbMouseOverScroll
-			|| (((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL)) && isSelfSelectMode())
+			|| (((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL)) && isSelectionPresent())
 			))
 	{
-		if (messg == WM_MOUSEWHEEL)
+		if ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL))
 		{
-			SHORT nDir = (SHORT)HIWORD(wParam);
-			BOOL lbCtrl = isPressed(VK_CONTROL);
-
-			UINT nCount = abFromTouch ? 1 : gpConEmu->mouse.GetWheelScrollLines();
-
-			if (nDir > 0)
-			{
-				DoScrollBuffer(lbCtrl ? SB_PAGEUP : SB_LINEUP, -1, nCount);
-			}
-			else if (nDir < 0)
-			{
-				DoScrollBuffer(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN, -1, nCount);
-			}
-
-			return true; // уже обработано
-		}
-		else if (messg == WM_MOUSEHWHEEL)
-		{
-			TODO("WM_MOUSEHWHEEL - горизонтальная прокрутка");
-			_ASSERTE(FALSE && "Horz scrolling! WM_MOUSEHWHEEL");
-			//return true; -- когда будет готово - return true;
+			_ASSERTE(FALSE && "Must be processed in CRealConsole::OnScroll");
+			return true; // обработано
 		}
 
 		if (!isConSelectMode())
@@ -3817,8 +3802,6 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 			// Нашли
 			size_t nCharIdx = (pszFrom - pszDataStart);
 
-			WARNING("Переделать выделение на поддержку прокрутки, а не только видимой области");
-
 			// А пока - возможная коррекция видимой области, если нашли "за пределами"
 			if (m_Type != rbt_Primary)
 			{
@@ -3827,14 +3810,16 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 				if (pszFrom < pszFrom1)
 				{
 					// Прокрутить буфер вверх
-					con.nTopVisibleLine = con.m_sbi.srWindow.Top = max(0,((int)(nCharIdx / nWidth))-1);
+					con.m_sbi.srWindow.Top = max(0,((int)(nCharIdx / nWidth))-1);
 					con.m_sbi.srWindow.Bottom = min((con.m_sbi.srWindow.Top + nRows), con.m_sbi.dwSize.Y-1);
+					SetTopLeft(con.m_sbi.srWindow.Top, con.TopLeft.x);
 				}
 				else if (pszFrom >= pszEnd1)
 				{
 					// Прокрутить буфер вниз
 					con.m_sbi.srWindow.Bottom = min((nCharIdx / nWidth)+1, (UINT)con.m_sbi.dwSize.Y-1);
-					con.nTopVisibleLine = con.m_sbi.srWindow.Top = max(0, con.m_sbi.srWindow.Bottom-nRows);
+					con.m_sbi.srWindow.Top = max(0, con.m_sbi.srWindow.Bottom-nRows);
+					SetTopLeft(con.m_sbi.srWindow.Top, con.TopLeft.x);
 				}
 
 				if (nCharIdx >= (size_t)(con.m_sbi.srWindow.Top*nWidth))
@@ -3883,7 +3868,7 @@ done:
 
 void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=-1*/, BOOL abByMouse/*=FALSE*/, UINT anFromMsg/*=0*/, COORD *pcrTo/*=NULL*/)
 {
-	_ASSERTE(anY==-1 || anY>=con.nTopVisibleLine);
+	_ASSERTE(anY==-1 || anY>=GetBufferPosY());
 
 	// Если начинается выделение - запретить фару начинать драг, а то подеремся
 	if (abByMouse)
@@ -3968,7 +3953,7 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	con.m_sel.dwSelectionAnchor = cr;
 	con.m_sel.srSelection.Left = con.m_sel.srSelection.Right = cr.X;
 	con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
-	_ASSERTE(cr.Y>=con.nTopVisibleLine && cr.Y<GetBufferHeight());
+	_ASSERTE(cr.Y>=GetBufferPosY() && cr.Y<GetBufferHeight());
 
 	UpdateSelection();
 
@@ -4001,17 +3986,17 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 {
 	_ASSERTE(con.m_sel.dwFlags!=0);
-	// Добавил "-3" чтобы на прокрутку не ругалась
-	_ASSERTE(anY==-1 || anY>=(con.nTopVisibleLine-3));
+	// -- // Добавил "-3" чтобы на прокрутку не ругалась
+	_ASSERTE(anY==-1 || anY>=GetBufferPosY()/*(con.nTopVisibleLine-3)*/);
 
 	CONSOLE_SELECTION_INFO cur_sel = con.m_sel;
 
 	// 131017 Scroll content if selection cursor goes out of visible screen
-	if (anY < con.nTopVisibleLine)
+	if (anY < GetBufferPosY())
 	{
 		DoScrollBuffer(SB_LINEUP);
 	}
-	else if (anY >= (con.nTopVisibleLine + con.nTextHeight))
+	else if (anY >= (GetBufferPosY() + con.nTextHeight))
 	{
 		DoScrollBuffer(SB_LINEDOWN);
 	}
@@ -4658,13 +4643,6 @@ bool CRealBuffer::isConSelectMode()
 	return false;
 }
 
-bool CRealBuffer::isSelfSelectMode()
-{
-	if (!this) return false;
-
-	return (con.m_sel.dwFlags != 0);
-}
-
 bool CRealBuffer::isStreamSelection()
 {
 	if (!this) return false;
@@ -4837,6 +4815,26 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	// Разрешить дальнейшую обработки (хоткеи и прочее)
 	return false;
+}
+
+void CRealBuffer::OnKeysSending()
+{
+	_ASSERTE(m_Type == rbt_Primary);
+	if (!con.TopLeft.isLocked())
+		return;
+
+	bool bReset = false;
+	COORD crTopLeft = {con.TopLeft.x>=0 ? con.TopLeft.x : 0, con.TopLeft.y>=0 ? con.TopLeft.y : 0};
+
+	if (con.TopLeft.y == con.m_sbi.srWindow.Top)
+		bReset = true;
+	else if (!CoordInSmallRect(con.m_sbi.dwCursorPosition, con.srRealWindow))
+		bReset = true;
+	else if (mp_RCon->isFar())
+		bReset = true;
+
+	if (bReset)
+		ResetTopLeft();
 }
 
 COORD CRealBuffer::GetDefaultNtvdmHeight()
@@ -6126,25 +6124,26 @@ void CRealBuffer::GetCursorInfo(COORD* pcr, CONSOLE_CURSOR_INFO* pci)
 	}
 }
 
-void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi)
+void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi, SMALL_RECT* psrRealWindow /*= NULL*/, TOPLEFTCOORD* pTopLeft /*= NULL*/)
 {
 	if (!this) return;
 
 	*sbi = con.m_sbi;
 
+	if (psrRealWindow)
+	{
+		*psrRealWindow = con.srRealWindow;
+	}
+
+	if (pTopLeft)
+	{
+		*pTopLeft = con.TopLeft;
+	}
+
+	// В режиме выделения - положение курсора ставим сами
 	if (con.m_sel.dwFlags)
 	{
-		// В режиме выделения - положение курсора ставим сами
 		ConsoleCursorPos(&(sbi->dwCursorPosition));
-		//if (con.m_sel.dwSelectionAnchor.X == con.m_sel.srSelection.Left)
-		//	sbi->dwCursorPosition.X = con.m_sel.srSelection.Right;
-		//else
-		//	sbi->dwCursorPosition.X = con.m_sel.srSelection.Left;
-		//
-		//if (con.m_sel.dwSelectionAnchor.Y == con.m_sel.srSelection.Top)
-		//	sbi->dwCursorPosition.Y = con.m_sel.srSelection.Bottom;
-		//else
-		//	sbi->dwCursorPosition.Y = con.m_sel.srSelection.Top;
 	}
 }
 
@@ -6199,10 +6198,11 @@ bool CRealBuffer::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 
 	*prcScr = rcCon;
 
-	if (con.bBufferHeight && con.nTopVisibleLine)
+	int iTop = GetBufferPosY();
+	if (con.bBufferHeight && iTop)
 	{
-		prcScr->top -= con.nTopVisibleLine;
-		prcScr->bottom -= con.nTopVisibleLine;
+		prcScr->top -= iTop;
+		prcScr->bottom -= iTop;
 	}
 
 	bool lbRectOK = true;
@@ -6567,6 +6567,14 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 	return nProgress;
 }
 
+void CRealBuffer::ResetTopLeft()
+{
+	if (con.TopLeft.isLocked())
+	{
+		SetTopLeft(-1, -1, true);
+	}
+}
+
 LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UINT nCount /*= 1*/)
 {
 	if (!this) return 0;
@@ -6585,6 +6593,7 @@ LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UI
 	}
 
 	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
+	#if 0
 	if (m_Type == rbt_Primary)
 	{
 		if ((nDirection != SB_THUMBTRACK) && (nDirection != SB_THUMBPOSITION))
@@ -6624,6 +6633,7 @@ LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UI
 		}
 	}
 	else
+	#endif
 	{
 		SHORT nNewTop = con.m_sbi.srWindow.Top;
 
@@ -6670,31 +6680,55 @@ LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UI
 		}
 
 
-		if (nNewTop != con.m_sbi.srWindow.Top)
+		if (nNewTop != GetBufferPosY())
 		{
 			con.m_sbi.srWindow.Top = nNewTop;
 			con.m_sbi.srWindow.Bottom = nNewTop + nVisible - 1;
 
-			con.nTopVisibleLine = con.m_sbi.srWindow.Top;
+			SetTopLeft(nNewTop, con.TopLeft.x, true);
 
-			//mp_RCon->mp_VCon->Invalidate();
-			mp_RCon->mb_DataChanged = TRUE; // Переменная используется внутри класса
-			con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
-
-			//if (mp_RCon->isActive()) -- mp_RCon->isActive() проверит сама UpdateScrollInfo, а скроллбар может быть и в видимой но НЕ активной консоли
-			//mp_RCon->UpdateScrollInfo();
+			if (m_Type != rbt_Primary)
+			{
+				mp_RCon->mb_DataChanged = TRUE; // Переменная используется внутри класса
+				con.bConsoleDataChanged = TRUE; // А эта - при вызовах из CVirtualConsole
+			}
 		}
 	}
 	return 0;
 }
 
-LRESULT CRealBuffer::DoSetScrollPos(WPARAM wParam)
+bool CRealBuffer::SetTopLeft(int ay /*= -1*/, int ax /*= -1*/, bool abServerCall /*= false*/)
 {
-	if (!this) return 0;
+	bool bChanged = false;
 
-	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
-	DoScrollBuffer(LOWORD(wParam),HIWORD(wParam));
-	return 0;
+	if (con.TopLeft.y != ay || con.TopLeft.x != ax)
+	{
+		bChanged = true;
+
+		#ifdef _DEBUG
+		wchar_t szDbg[120]; DWORD nSrvPID = mp_RCon->GetServerPID();
+		_wsprintf(szDbg, SKIPCOUNT(szDbg) L"TopLeft changed to {%i,%i} from {%i,%i} SrvPID=%u\n", ay,ax, con.TopLeft.y, con.TopLeft.x, nSrvPID);
+		DEBUGSTRTOPLEFT(szDbg);
+		#endif
+	}
+
+	con.TopLeft.y = ay;
+	con.TopLeft.x = ax;
+
+	if (abServerCall && (m_Type == rbt_Primary))
+	{
+		DWORD nSrvPID = mp_RCon->GetServerPID();
+		if (nSrvPID)
+		{
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETTOPLEFT, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO));
+			pIn->ReqConInfo.TopLeft = con.TopLeft;
+			CESERVER_REQ *pOut = ExecuteSrvCmd(nSrvPID, pIn, ghWnd);
+			ExecuteFreeResult(pOut);
+			ExecuteFreeResult(pIn);
+		}
+	}
+
+	return bChanged;
 }
 
 const CRgnDetect* CRealBuffer::GetDetector()

@@ -227,6 +227,7 @@ class CRgnDetect;
 class CRealBuffer;
 class CDpiForDialog;
 class MFileLog;
+class CRConFiles;
 
 enum RealBufferType
 {
@@ -254,6 +255,7 @@ enum StartDebugType
 };
 
 struct ConEmuHotKey;
+struct ConsoleInfoArg;
 
 #include "HotkeyChord.h"
 #include "RealServer.h"
@@ -415,13 +417,20 @@ class CRealConsole
 		HANDLE mh_PostMacroThread; DWORD mn_PostMacroThreadID;
 		void PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData);
 		DWORD mn_InPostDeadChar;
+		void OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg);
+		struct KeyboardIntArg
+		{
+			HWND hWnd; UINT messg; WPARAM wParam; LPARAM lParam; const wchar_t *pszChars; const MSG* pDeadCharMsg;
+		};
+		static bool OnKeyboardBackCall(CVirtualConsole* pVCon, LPARAM lParam);
 	public:
 		//BOOL FlushInputQueue(DWORD nTimeout = 500);
 		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg);
 		const ConEmuHotKey* ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars);
 		void ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false, bool abFromTouch = false);
+		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false);
+		void OnScroll(UINT messg, WPARAM wParam, int x, int y, bool abFromTouch = false);
 		void OnFocus(BOOL abFocused);
 
 		void StopSignal();
@@ -437,6 +446,7 @@ class CRealConsole
 		LPCWSTR GetPanelTitle();
 		LPCWSTR GetTabTitle(CTab& tab);
 		void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
+		void GetConsoleInfo(ConsoleInfoArg* pInfo);
 		//void GetConsoleCursorPos(COORD *pcr);
 		void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr = NULL);
 		DWORD GetConsoleCP();
@@ -469,8 +479,8 @@ class CRealConsole
 		bool isServerCreated(bool bFullRequired = false);
 		bool isServerAvailable();
 		bool isServerClosing();
+		void ResetTopLeft();
 		LRESULT DoScroll(int nDirection, UINT nCount = 1);
-		LRESULT DoSetScrollPos(WPARAM wParam);
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 		bool isConSelectMode();
 		bool isFar(bool abPluginRequired=false);
@@ -478,6 +488,7 @@ class CRealConsole
 		bool isSendMouseAllowed();
 		bool isFarInStack();
 		bool isFarKeyBarShown();
+		bool isInternalScroll();
 		bool isSelectionAllowed();
 		bool isSelectionPresent();
 		bool isMouseSelectionPresent();
@@ -942,6 +953,9 @@ class CRealConsole
 		//	} m_DetectedDialogs;
 		bool mb_InPostCloseMacro;
 		bool mb_WasMouseSelection; // Useful to know when processing LBtnUp
+
+		// Поиск файлов в консоли
+		CRConFiles* mp_Files;
 };
 
 //#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i\n\nPress <Retry> to report a bug (web page)", _T(#V), _T(__FILE__), __LINE__); CRealConsole::Box(szAMsg, MB_RETRYCANCEL); }
