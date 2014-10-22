@@ -97,7 +97,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 //#include "../common/clink.h"
 #include "../common/UnicodeChars.h"
-#include "../common/WinConsole.h"
+#include "../common/WConsole.h"
 
 
 bool USE_INTERNAL_QUEUE = true;
@@ -6537,6 +6537,13 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 		#endif
 	}
 
+	// Do not do useless calls
+	if ((dwSize.X == sbi.dwSize.X) && (dwSize.Y == sbi.dwSize.Y))
+	{
+		lbRc = TRUE;
+		goto wrap;
+	}
+
 	if (F(SetConsoleScreenBufferSize))
 	{
 		CESERVER_REQ *pIn = NULL, *pOut = NULL;
@@ -6573,6 +6580,7 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 		LockServerReadingThread(false, dwSize, pIn, pOut);
 	}
 
+wrap:
 	return lbRc;
 }
 

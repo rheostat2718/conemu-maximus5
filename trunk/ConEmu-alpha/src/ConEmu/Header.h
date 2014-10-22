@@ -123,6 +123,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TIMER_ADMSHIELD_ELAPSE 1000
 #define TIMER_QUAKE_AUTOHIDE_ID 9
 #define TIMER_QUAKE_AUTOHIDE_ELAPSE 100
+#define QUAKE_FOCUS_CHECK_TIMER_DELAY 500
 #define TIMER_FAILED_TABBAR_ID 10 // FAILED_TABBAR_TIMERID
 #define TIMER_FAILED_TABBAR_ELAPSE 3000 // FAILED_TABBAR_TIMEOUT
 #define TIMER_ACTIVATESPLIT_ID 11
@@ -326,7 +327,7 @@ struct SettingsStorage
 
 #include "../common/UnicodeChars.h"
 #include "../common/defines.h"
-#include "../common/WinObjects.h"
+#include "../common/WObjects.h"
 #include "../common/CmdLine.h"
 
 #define IsWindowsXP ((gOSVer.dwMajorVersion >= 6) || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion > 0))

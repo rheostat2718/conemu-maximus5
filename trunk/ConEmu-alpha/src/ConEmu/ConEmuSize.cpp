@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "../common/Monitors.h"
-#include "../common/WinUser.h"
+#include "../common/WUser.h"
 
 #include "ConEmu.h"
 #include "ConEmuSize.h"
@@ -75,6 +75,7 @@ CConEmuSize::CConEmuSize(CConEmuMain* pOwner)
 	mb_LockWindowRgn = false;
 	mh_MinFromMonitor = NULL;
 	mn_IgnoreQuakeActivation = 0;
+	mn_LastQuakeShowHide = 0;
 	mn_InResize = 0;
 	mn_QuakePercent = 0; // 0 - отключен
 	WindowMode = wmNormal;
@@ -2005,6 +2006,15 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		//SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
 	}
 
+	GetTileMode(true);
+
+	#ifdef _DEBUG
+	if (isFullScreen() && !isZoomed())
+	{
+		_ASSERTE(GetTileMode(false)==cwc_Current);
+	}
+	#endif
+
 	//if (WindowPosStackCount == 1)
 	//{
 	//	#ifdef _DEBUG
@@ -2815,7 +2825,7 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	if (NewQuakeMode && gpSet->isDesktopMode)  // этот режим с Desktop несовместим
 	{
 		gpSet->isDesktopMode = false;
-		mp_ConEmu->OnDesktopMode();
+		mp_ConEmu->DoDesktopModeSwitch();
 	}
 
 	HWND hWnd2 = gpSetCls->GetPage(CSettings::thi_Show); // Страничка с настройками
@@ -2920,11 +2930,49 @@ LPCWSTR CConEmuSize::FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, s
 		_wcscpy_c(pchBuf, cchBufMax, L"cwc_TileRight"); break;
 	case cwc_TileHeight:
 		_wcscpy_c(pchBuf, cchBufMax, L"cwc_TileHeight"); break;
+	case cwc_TileWidth:
+		_wcscpy_c(pchBuf, cchBufMax, L"cwc_TileWidth"); break;
 	default:
 		_wsprintf(pchBuf, SKIPLEN(cchBufMax) L"%u", (UINT)Tile);
 	}
 
 	return pchBuf;
+}
+
+RECT CConEmuSize::SetNormalWindowSize()
+{
+	RECT rcNewWnd = GetDefaultRect();
+
+	if (!ghWnd)
+	{
+		_ASSERTE(ghWnd!=NULL);
+		return rcNewWnd;
+	}
+
+	if (m_TileMode != cwc_Current)
+	{
+		_ASSERTE(m_TileMode == cwc_Current);
+		m_TileMode = cwc_Current;
+	}
+
+	HMONITOR hMon = NULL;
+
+	if (!isIconic())
+		hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
+	else
+		hMon = MonitorFromRect(&rcNewWnd, MONITOR_DEFAULTTONEAREST);
+
+	if (!hMon)
+	{
+		_ASSERTE(hMon!=NULL);
+		SetWindowPos(ghWnd, NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
+	}
+	else
+	{
+		JumpNextMonitor(ghWnd, hMon, true/*без разницы, если указан монитор*/, rcNewWnd);
+	}
+
+	return rcNewWnd;
 }
 
 bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
@@ -2951,9 +2999,9 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 		return false;
 	}
 
-	if (Tile != cwc_TileLeft && Tile != cwc_TileRight)
+	if (Tile != cwc_TileLeft && Tile != cwc_TileRight && Tile != cwc_TileHeight && Tile != cwc_TileWidth)
 	{
-		_ASSERTE(Tile==cwc_TileLeft || Tile==cwc_TileRight);
+		_ASSERTE(FALSE && "SetTileMode SKIPPED due to invalid mode");
 		mp_ConEmu->LogString(L"SetTileMode SKIPPED due to invalid mode");
 		return false;
 	}
@@ -2974,7 +3022,8 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 
 		HMONITOR hMon = NULL;
 
-		// When window is tiled to the right edge, and user press Win+Right
+		// When window is snapped to the right edge, and user press Win+Right
+		// Same with left edge and Win+Left
 		// ConEmu must jump to next monitor and set tile to Left
 		if ((CurTile == Tile) && (CurTile == cwc_TileLeft || CurTile == cwc_TileRight))
 		{
@@ -2989,45 +3038,65 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 				Tile = (CurTile == cwc_TileRight) ? cwc_TileLeft : cwc_TileRight;
 			}
 		}
-		else
+		// Already snapped to right, Win+Left must "restore" window
+		else if ((Tile == cwc_TileLeft) && (CurTile == cwc_TileRight))
 		{
-			if ((Tile == cwc_TileLeft) && (CurTile == cwc_TileRight))
-			{
-				rcNewWnd = GetDefaultRect();
-				m_TileMode = Tile = cwc_Current;
-				hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
-				JumpNextMonitor(ghWnd, hMon, false, rcNewWnd);
-			}
-			else if ((Tile == cwc_TileRight) && (CurTile == cwc_TileLeft))
-			{
-				rcNewWnd = GetDefaultRect();
-				m_TileMode = Tile = cwc_Current;
-				hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
-				JumpNextMonitor(ghWnd, hMon, true, rcNewWnd);
-			}
+			m_TileMode = Tile = cwc_Current;
+			rcNewWnd = SetNormalWindowSize();
+			bChange = false;
+		}
+		// Already snapped to left, Win+Right must "restore" window
+		else if ((Tile == cwc_TileRight) && (CurTile == cwc_TileLeft))
+		{
+			m_TileMode = Tile = cwc_Current;
+			rcNewWnd = SetNormalWindowSize();
+			bChange = false;
+		}
+		// Already maximized by width or height?
+		else if (((Tile == cwc_TileWidth) || (Tile == cwc_TileHeight))
+			&& ((CurTile == cwc_TileWidth) || (CurTile == cwc_TileHeight)))
+		{
+			m_TileMode = Tile = cwc_Current;
+			rcNewWnd = SetNormalWindowSize();
+			bChange = false;
 		}
 
 
-		if (Tile == cwc_Current)
+		switch (Tile)
 		{
+		case cwc_Current:
 			// Вернуться из Tile-режима в нормальный
 			rcNewWnd = GetDefaultRect();
 			//bChange = true;
-		}
-		else if (Tile == cwc_TileLeft)
-		{
+			break;
+
+		case cwc_TileLeft:
 			rcNewWnd.left = mi.rcWork.left;
 			rcNewWnd.top = mi.rcWork.top;
 			rcNewWnd.bottom = mi.rcWork.bottom;
 			rcNewWnd.right = (mi.rcWork.left + mi.rcWork.right) >> 1;
 			bChange = true;
-		}
-		else if (Tile == cwc_TileRight)
-		{
+			break;
+
+		case cwc_TileRight:
 			rcNewWnd.right = mi.rcWork.right;
 			rcNewWnd.top = mi.rcWork.top;
 			rcNewWnd.bottom = mi.rcWork.bottom;
 			rcNewWnd.left = (mi.rcWork.left + mi.rcWork.right) >> 1;
+			bChange = true;
+			break;
+
+		case cwc_TileHeight:
+			rcNewWnd = GetDefaultRect();
+			rcNewWnd.top = mi.rcWork.top;
+			rcNewWnd.bottom = mi.rcWork.bottom;
+			bChange = true;
+			break;
+
+		case cwc_TileWidth:
+			rcNewWnd = GetDefaultRect();
+			rcNewWnd.left = mi.rcWork.left;
+			rcNewWnd.right = mi.rcWork.right;
 			bChange = true;
 		}
 
@@ -3060,7 +3129,10 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 				 rc.left, rc.top, rc.right, rc.bottom
 				 );
 			mp_ConEmu->LogString(szInfo);
+			DEBUGSTRSIZE(szInfo);
 		}
+
+		mp_ConEmu->UpdateProcessDisplay(false);
 	}
 
 	return true;
@@ -3068,18 +3140,28 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 
 ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=NULL*/)
 {
-	if (Estimate && IsSizePosFree())
+	if (Estimate && IsSizePosFree() && !isFullScreen() && !isZoomed() && !isIconic())
 	{
-		_ASSERTE(IsWindowVisible(ghWnd) && !isFullScreen() && !isZoomed() && !isIconic());
-
+		MONITORINFO mi = {};
+		RECT rcWnd = {};
 		ConEmuWindowCommand CurTile = cwc_Current;
 
-		MONITORINFO mi;
+		// Если окно развернуто - сбрасываем признак "Snap" (Tile)
+		if (isFullScreen() || isZoomed())
+		{
+			goto done;
+		}
+		// Если окно минимизировано - не трогать признак "Snap" (Tile)
+		if (!IsWindowVisible(ghWnd) || isIconic())
+		{
+			CurTile = m_TileMode;
+			goto done;
+		}
+
 		GetNearestMonitorInfo(&mi, NULL, NULL, ghWnd);
 		if (pmi)
 			*pmi = mi;
 
-		RECT rcWnd;
 		GetWindowRect(ghWnd, &rcWnd);
 		// _abs(x1-x2) <= 1 ?
 		if ((rcWnd.right == mi.rcWork.right)
@@ -3102,7 +3184,18 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 				CurTile = cwc_TileLeft;
 			}
 		}
+		else if ((rcWnd.top == mi.rcWork.top)
+			&& (rcWnd.bottom == mi.rcWork.bottom))
+		{
+			CurTile = cwc_TileHeight;
+		}
+		else if ((rcWnd.left == mi.rcWork.left)
+			&& (rcWnd.right == mi.rcWork.right))
+		{
+			CurTile = cwc_TileWidth;
+		}
 
+	done:
 		if (m_TileMode != CurTile)
 		{
 			// Сменился!
@@ -3110,8 +3203,11 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 			_wsprintf(szTile, SKIPLEN(countof(szTile)) L"Tile mode was changed externally: Our=%s, New=%s",
 				FormatTileMode(m_TileMode,szOldTile,countof(szOldTile)), FormatTileMode(CurTile,szNewTile,countof(szNewTile)));
 			LogString(szTile);
+			DEBUGSTRSIZE(szTile);
 
 			m_TileMode = CurTile;
+
+			mp_ConEmu->UpdateProcessDisplay(false);
 		}
 	}
 
@@ -4614,6 +4710,8 @@ void CConEmuSize::EndSizing(UINT nMouseMsg/*=0*/)
 			LogString(szTile);
 
 			m_TileMode = cwc_Current;
+
+			mp_ConEmu->UpdateProcessDisplay(false);
 		}
 
 		// Сама разберется, что надо/не надо
@@ -4654,7 +4752,7 @@ void CConEmuSize::CheckTopMostState()
 		if (IDYES == MsgBox(L"Some external program bring ConEmu OnTop\nRevert?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO))
 		{
 			//SetWindowStyleEx(dwStyleEx & ~WS_EX_TOPMOST);
-			mp_ConEmu->OnAlwaysOnTop();
+			mp_ConEmu->DoAlwaysOnTopSwitch();
 		}
 		else
 		{
@@ -4975,4 +5073,758 @@ void CConEmuSize::EvalVConCreateSize(CVirtualConsole* apVCon, uint& rnTextWidth,
 	{
 		Assert(WndWidth.Value && WndHeight.Value);
 	}
+}
+
+void CConEmuSize::DoFullScreen()
+{
+	if (mp_ConEmu->mp_Inside)
+	{
+		_ASSERTE(FALSE && "Must not change mode in the Inside mode");
+		return;
+	}
+
+	ConEmuWindowMode wm = GetWindowMode();
+
+	if (wm != wmFullScreen)
+		gpConEmu->SetWindowMode(wmFullScreen);
+	else if (gpSet->isDesktopMode && (wm != wmNormal))
+		gpConEmu->SetWindowMode(wmNormal);
+	else
+		gpConEmu->SetWindowMode(gpConEmu->isWndNotFSMaximized ? wmMaximized : wmNormal);
+}
+
+void CConEmuSize::DoMaximizeRestore()
+{
+	// abPosted - removed, all calls was as TRUE
+
+	if (mp_ConEmu->mp_Inside)
+	{
+		_ASSERTE(FALSE && "Must not change mode in the Inside mode");
+		return;
+	}
+
+	// -- this will be done in SetWindowMode
+	//StoreNormalRect(NULL); // Сама разберется, надо/не надо
+
+	ConEmuWindowMode wm = GetWindowMode();
+
+	gpConEmu->SetWindowMode((wm != wmMaximized) ? wmMaximized : wmNormal);
+}
+
+void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= sih_None*/)
+{
+	if (mp_ConEmu->mp_Inside)
+		return;
+
+	static bool bInFunction = false;
+	if (bInFunction)
+		return;
+
+	HWND hCurForeground = GetForegroundWindow();
+	bool bIsForeground = CVConGroup::isOurWindow(hCurForeground);
+	bool bIsIconic = isIconic();
+	BOOL bVis = IsWindowVisible(ghWnd);
+
+	wchar_t szInfo[120];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DoMinimizeRestore(%i) Fore=x%08X Our=%u Iconic=%u Vis=%u",
+		ShowHideType, (DWORD)hCurForeground, bIsForeground, bIsIconic, bVis);
+	LogFocusInfo(szInfo);
+
+	if (ShowHideType == sih_QuakeShowHide)
+	{
+		if (bIsIconic)
+		{
+			if (mn_LastQuakeShowHide && gpSet->isMinimizeOnLoseFocus())
+			{
+				DWORD nDelay = GetTickCount() - mn_LastQuakeShowHide;
+				if (nDelay < QUAKE_FOCUS_CHECK_TIMER_DELAY)
+				{
+					_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DoMinimizeRestore skipped, delay was %u ms", nDelay);
+					LogFocusInfo(szInfo);
+					return;
+				}
+			}
+
+			ShowHideType = sih_Show;
+		}
+		else
+		{
+			ShowHideType = sih_AutoHide; // дальше разберемся
+		}
+	}
+
+	if (ShowHideType == sih_AutoHide)
+	{
+		if (gpSet->isQuakeStyle)
+		{
+			bool bMin2TSA = gpSet->isMinToTray();
+
+			if (bMin2TSA)
+				ShowHideType = sih_HideTSA;
+			else
+				ShowHideType = sih_Minimize;
+		}
+		else
+		{
+			ShowHideType = sih_Minimize;
+		}
+	}
+
+	if ((ShowHideType == sih_HideTSA) || (ShowHideType == sih_Minimize))
+	{
+		// Some trick for clicks on taskbar and "Hide on focus lose"
+		mp_ConEmu->mn_ForceTimerCheckLoseFocus = 0;
+
+		if (bIsIconic || !bVis)
+		{
+			return;
+		}
+	}
+
+	bInFunction = true;
+
+	// 1. Функция вызывается при нажатии глобально регистрируемого хоткея
+	//    Win+C  -->  ShowHideType = sih_None
+	// 2. При вызове из другого приложения
+	//    аргумент /single  --> ShowHideType = sih_Show
+	// 3. При вызове из дрегого приложения
+	//    аргумент /showhide     --> ShowHideType = sih_ShowMinimize
+	//    аргумент /showhideTSA  --> ShowHideType = sih_ShowHideTSA
+	SingleInstanceShowHideType cmd = sih_None;
+
+	if (ShowHideType == sih_None)
+	{
+		// По настройкам
+		ShowHideType = gpSet->isMinToTray() ? sih_ShowHideTSA : sih_ShowMinimize;
+	}
+
+	// Go
+	if (ShowHideType == sih_Show)
+	{
+		cmd = sih_Show;
+	}
+	else if ((ShowHideType == sih_ShowMinimize)
+		|| (ShowHideType == sih_Minimize)
+		|| (ShowHideType == sih_ShowHideTSA)
+		|| (ShowHideType == sih_HideTSA))
+	{
+		if ((bVis && (bIsForeground || gpSet->isAlwaysOnTop) && !bIsIconic)
+			|| (ShowHideType == sih_HideTSA) || (ShowHideType == sih_Minimize))
+		{
+			// если видимо - спрятать
+			cmd = (ShowHideType == sih_HideTSA) ? sih_ShowHideTSA : ShowHideType;
+		}
+		else
+		{
+			// Иначе - показать
+			cmd = sih_Show;
+		}
+	}
+	else
+	{
+		_ASSERTE(ShowHideType == sih_SetForeground);
+		// Иначе - показываем (в зависимости от текущей видимости)
+		if (IsWindowVisible(ghWnd) && (bIsForeground || !bIsIconic)) // (!bIsIconic) - окошко развернуто, надо свернуть
+			cmd = sih_SetForeground;
+		else
+			cmd = sih_Show;
+	}
+
+	// Поехали
+	int nQuakeMin = 1;
+	int nQuakeShift = 10;
+	//int nQuakeDelay = gpSet->nQuakeAnimation / nQuakeShift; // 20;
+	bool bUseQuakeAnimation = false; //, bNeedHideTaskIcon = false;
+	bool bMinToTray = gpSet->isMinToTray();
+	if (gpSet->isQuakeStyle != 0)
+	{
+		// Если есть дочерние GUI окна - в них могут быть глюки с отрисовкой
+		if ((gpSet->nQuakeAnimation > 0) && !CVConGroup::isChildWindowVisible())
+		{
+			bUseQuakeAnimation = true;
+		}
+	}
+
+	DEBUGTEST(static DWORD nLastQuakeHide);
+
+	// Logging
+	if (RELEASEDEBUGTEST((gpSetCls->isAdvLogging>0),true))
+	{
+		switch (cmd)
+		{
+		case sih_None:
+			LogFocusInfo(L"DoMinimizeRestore(sih_None)"); break;
+		case sih_ShowMinimize:
+			LogFocusInfo(L"DoMinimizeRestore(sih_ShowMinimize)"); break;
+		case sih_ShowHideTSA:
+			LogFocusInfo(L"DoMinimizeRestore(sih_ShowHideTSA)"); break;
+		case sih_Show:
+			LogFocusInfo(L"DoMinimizeRestore(sih_Show)"); break;
+		case sih_SetForeground:
+			LogFocusInfo(L"DoMinimizeRestore(sih_SetForeground)"); break;
+		case sih_HideTSA:
+			LogFocusInfo(L"DoMinimizeRestore(sih_HideTSA)"); break;
+		case sih_Minimize:
+			LogFocusInfo(L"DoMinimizeRestore(sih_Minimize)"); break;
+		case sih_AutoHide:
+			LogFocusInfo(L"DoMinimizeRestore(sih_AutoHide)"); break;
+		case sih_QuakeShowHide:
+			LogFocusInfo(L"DoMinimizeRestore(sih_QuakeShowHide)"); break;
+		default:
+			LogFocusInfo(L"DoMinimizeRestore(Unknown cmd)");
+		}
+	}
+
+	if (cmd == sih_SetForeground)
+	{
+		apiSetForegroundWindow(ghWnd);
+	}
+	else if (cmd == sih_Show)
+	{
+		HWND hWndFore = hCurForeground;
+		DEBUGTEST(DWORD nHideShowDelay = GetTickCount() - nLastQuakeHide);
+		// Если активация идет кликом по кнопке на таскбаре (Quake без скрытия) то на WinXP
+		// может быть глюк - двойная отрисовка раскрытия (WM_ACTIVATE, WM_SYSCOMMAND)
+		bool bNoQuakeAnimation = false;
+
+		bool bPrevInRestore = false;
+		if (bIsIconic)
+			bPrevInRestore = mp_ConEmu->mp_Menu->SetRestoreFromMinimized(true);
+
+		//apiSetForegroundWindow(ghWnd);
+
+		if (gpSet->isFadeInactive)
+		{
+			CVConGuard VCon;
+			if (mp_ConEmu->GetActiveVCon(&VCon) >= 0)
+			{
+				// Чтобы при "Fade inactive" все сразу красиво отрисовалось
+				int iCur = mn_QuakePercent; mn_QuakePercent = 100;
+				VCon->Update();
+				mn_QuakePercent = iCur;
+			}
+		}
+
+		DEBUGTEST(bool bWasQuakeIconic = isQuakeMinimized);
+
+		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
+		{
+			// Для Quake-style необходимо СНАЧАЛА сделать окно "невидимым" перед его разворачиваем или активацией
+			if ((hWndFore == ghWnd) && !bIsIconic && bVis)
+			{
+				bNoQuakeAnimation = true;
+				mn_QuakePercent = 0;
+			}
+			else
+			{
+				StopForceShowFrame();
+				mn_QuakePercent = nQuakeMin;
+				UpdateWindowRgn();
+			}
+		}
+		else
+			mn_QuakePercent = 0;
+
+		if (Icon.isWindowInTray() || !IsWindowVisible(ghWnd))
+		{
+			mb_LockWindowRgn = true;
+			bool b = mb_LockShowWindow; mb_LockShowWindow = bUseQuakeAnimation;
+			Icon.RestoreWindowFromTray(false, bUseQuakeAnimation);
+			mb_LockShowWindow = b;
+			mb_LockWindowRgn = false;
+			bIsIconic = isIconic();
+			//bNeedHideTaskIcon = bUseQuakeAnimation;
+		}
+
+		// Здесь - интересует реальный IsIconic. Для isQuakeStyle может быть фейк
+		if (::IsIconic(ghWnd))
+		{
+			DEBUGTEST(WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl););
+			bool b = mp_ConEmu->mp_Menu->SetPassSysCommand(true);
+			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+			mp_ConEmu->mp_Menu->SetPassSysCommand(b);
+		}
+
+		// Страховка, коррекция позиции для Quake
+		if (gpSet->isQuakeStyle)
+		{
+			RECT rcWnd = GetDefaultRect();
+			SetWindowPos(ghWnd, NULL, rcWnd.left, rcWnd.top, 0,0, SWP_NOZORDER|SWP_NOSIZE);
+		}
+
+		isQuakeMinimized = false; // теперь можно сбросить
+
+		apiSetForegroundWindow(ghWnd);
+
+		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
+		{
+			if (!bNoQuakeAnimation)
+			{
+				if (bUseQuakeAnimation)
+				{
+					DWORD nAnimationMS = gpSet->nQuakeAnimation; // (100 / nQuakeShift) * nQuakeDelay * 2;
+					_ASSERTE(nAnimationMS > 0);
+					//MinMax(nAnimationMS, CONEMU_ANIMATE_DURATION, CONEMU_ANIMATE_DURATION_MAX);
+					MinMax(nAnimationMS, QUAKEANIMATION_MAX);
+
+					DWORD nFlags = AW_SLIDE|AW_VER_POSITIVE|AW_ACTIVATE;
+
+					// Need to hide window
+					DEBUGTEST(RECT rcNow; ::GetWindowRect(ghWnd, &rcNow));
+					RECT rcPlace = GetDefaultRect();
+					if (::IsWindowVisible(ghWnd))
+					{
+						apiShowWindow(ghWnd, SW_HIDE);
+					}
+					// and place it "in place"
+					int nWidth = rcPlace.right-rcPlace.left, nHeight = rcPlace.bottom-rcPlace.top;
+					SetWindowPos(ghWnd, NULL, rcPlace.left, rcPlace.top, nWidth, nHeight, SWP_NOZORDER);
+
+					mn_QuakePercent = 100;
+					UpdateWindowRgn();
+
+					// to enable animation
+					AnimateWindow(ghWnd, nAnimationMS, nFlags);
+				}
+				else
+				{
+					DWORD nStartTick = GetTickCount();
+
+					StopForceShowFrame();
+
+					// Begin of animation
+					_ASSERTE(mn_QuakePercent==0 || mn_QuakePercent==nQuakeMin);
+
+					if (gpSet->nQuakeAnimation > 0)
+					{
+						int nQuakeStepDelay = gpSet->nQuakeAnimation / nQuakeShift; // 20;
+
+						while (mn_QuakePercent < 100)
+						{
+							mn_QuakePercent += nQuakeShift;
+							UpdateWindowRgn();
+							RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
+
+							DWORD nCurTick = GetTickCount();
+							int nQuakeDelay = nQuakeStepDelay - ((int)(nCurTick - nStartTick));
+							if (nQuakeDelay > 0)
+							{
+								Sleep(nQuakeDelay);
+							}
+
+							nStartTick = GetTickCount();
+						}
+					}
+				}
+			}
+			if (mn_QuakePercent != 100)
+			{
+				mn_QuakePercent = 100;
+				UpdateWindowRgn();
+			}
+		}
+		mn_QuakePercent = 0; // 0 - отключен
+
+		CVConGuard VCon;
+		if (mp_ConEmu->GetActiveVCon(&VCon) >= 0)
+		{
+			VCon->PostRestoreChildFocus();
+			//gpConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"From DoMinimizeRestore(sih_Show)");
+		}
+
+		CVConGroup::EnumVCon(evf_Visible, CRealConsole::ThawMonitorThread, 0);
+
+		if (bIsIconic)
+			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(bPrevInRestore);
+	}
+	else
+	{
+		// Минимизация
+		_ASSERTE(((cmd == sih_ShowHideTSA) || (cmd == sih_ShowMinimize) || (cmd == sih_Minimize)) && "cmd must be determined!");
+
+		isQuakeMinimized = true; // сразу включим, чтобы не забыть. Используется только при gpSet->isQuakeStyle
+
+		if (bVis && !bIsIconic)
+		{
+			//UpdateIdealRect();
+			StoreIdealRect();
+		}
+
+		if ((ghLastForegroundWindow != ghWnd) && (ghLastForegroundWindow != ghOpWnd))
+		{
+			// Фокус не там где надо - например, в дочернем GUI приложении
+			if (CVConGroup::isOurWindow(ghLastForegroundWindow))
+			{
+				mp_ConEmu->setFocus();
+				apiSetForegroundWindow(ghWnd);
+			}
+			//TODO: Тут наверное нужно выйти и позвать Post для DoMinimizeRestore(cmd)
+			//TODO: иначе при сворачивании не активируется "следующее" окно, фокус ввода
+			//TODO: остается в дочернем Notepad (ввод текста идет в него)
+		}
+
+		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
+		{
+			if (bUseQuakeAnimation)
+			{
+				DWORD nAnimationMS = gpSet->nQuakeAnimation; // (100 / nQuakeShift) * nQuakeDelay * 2;
+				_ASSERTE(nAnimationMS > 0);
+				//MinMax(nAnimationMS, CONEMU_ANIMATE_DURATION, CONEMU_ANIMATE_DURATION_MAX);
+				MinMax(nAnimationMS, QUAKEANIMATION_MAX);
+
+				DWORD nFlags = AW_SLIDE|AW_VER_NEGATIVE|AW_HIDE;
+
+				DEBUGTEST(BOOL bVs1 = ::IsWindowVisible(ghWnd));
+				DEBUGTEST(RECT rc1; ::GetWindowRect(ghWnd, &rc1));
+				AnimateWindow(ghWnd, nAnimationMS, nFlags);
+				DEBUGTEST(BOOL bVs2 = ::IsWindowVisible(ghWnd));
+				DEBUGTEST(RECT rc2; ::GetWindowRect(ghWnd, &rc2));
+				DEBUGTEST(bVs1 = bVs2);
+
+				// 1. Если на таскбаре отображаются "табы", то после AnimateWindow(AW_HIDE) в Win8 иконка с таскбара не убирается
+				// 2. Issue 1042: Return focus to window which was active before showing ConEmu
+				StopForceShowFrame();
+				mn_QuakePercent = 1;
+				UpdateWindowRgn();
+				apiShowWindow(ghWnd, SW_SHOWNOACTIVATE);
+				apiShowWindow(ghWnd, SW_HIDE);
+
+				if (!bMinToTray && (cmd != sih_ShowHideTSA))
+				{
+					// Если в трей не скрываем - то окошко нужно "вернуть на таскбар"
+					apiShowWindow(ghWnd, SW_SHOWNOACTIVATE);
+				}
+
+			}
+			else
+			{
+				DWORD nStartTick = GetTickCount();
+				mn_QuakePercent = (gpSet->nQuakeAnimation > 0) ? (100 + nQuakeMin - nQuakeShift) : nQuakeMin;
+				StopForceShowFrame();
+
+				if (gpSet->nQuakeAnimation > 0)
+				{
+					int nQuakeStepDelay = gpSet->nQuakeAnimation / nQuakeShift; // 20;
+
+					while (mn_QuakePercent > 0)
+					{
+						UpdateWindowRgn();
+						RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
+						//Sleep(nQuakeDelay);
+						mn_QuakePercent -= nQuakeShift;
+
+						DWORD nCurTick = GetTickCount();
+						int nQuakeDelay = nQuakeStepDelay - ((int)(nCurTick - nStartTick));
+						if (nQuakeDelay > 0)
+						{
+							Sleep(nQuakeDelay);
+						}
+
+						nStartTick = GetTickCount();
+					}
+				}
+				else
+				{
+					UpdateWindowRgn();
+				}
+			}
+		}
+		mn_QuakePercent = 0; // 0 - отключен
+
+
+		if (cmd == sih_ShowHideTSA)
+		{
+			mb_LockWindowRgn = true;
+			// Явно попросили в TSA спрятать
+			Icon.HideWindowToTray();
+			mb_LockWindowRgn = false;
+		}
+		else if ((cmd == sih_ShowMinimize) || (ShowHideType == sih_Minimize))
+		{
+			if (gpSet->isQuakeStyle)
+			{
+				// No need. All magic was done with SW_SHOWNOACTIVATE and SW_HIDE
+
+				//// Найти окно "под" нами
+				//HWND hNext = NULL;
+				//if (hCurForeground && !bIsForeground)
+				//{
+				//	// Вернуть фокус туда где он был до наших ексерсизов
+				//	hNext = hCurForeground;
+				//}
+				//else
+				//{
+				//	while ((hNext = FindWindowEx(NULL, hNext, NULL, NULL)) != NULL)
+				//	{
+				//		if (::IsWindowVisible(hNext))
+				//		{
+				//			// Доп условия, аналог Alt-Tab?
+				//			DWORD nStylesEx = GetWindowLong(hNext, GWL_EXSTYLE);
+				//			DEBUGTEST(DWORD nStyles = GetWindowLong(hNext, GWL_STYLE));
+				//			if (!(nStylesEx & WS_EX_TOOLWINDOW))
+				//			{
+				//				break;
+				//			}
+				//		}
+				//	}
+				//}
+				//// И задвинуть в зад
+				//SetWindowPos(ghWnd, NULL, -32000, -32000, 0,0, SWP_NOZORDER|SWP_NOSIZE|SWP_NOACTIVATE);
+				//apiSetForegroundWindow(hNext ? hNext : GetDesktopWindow());
+			}
+			else
+			{
+				// SC_MINIMIZE сам обработает (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
+				SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+			}
+		}
+
+		DEBUGTEST(nLastQuakeHide = GetTickCount());
+	}
+
+	mn_LastQuakeShowHide = GetTickCount();
+	LogFocusInfo(L"DoMinimizeRestore finished");
+
+	bInFunction = false;
+ }
+
+void CConEmuSize::DoForcedFullScreen(bool bSet /*= true*/)
+{
+	static bool bWasSetTopMost = false;
+
+	// определить возможность перейти в текстовый FullScreen
+	if (!bSet)
+	{
+		// Снять флаг "OnTop", вернуть нормальные приоритеты процессам
+		if (bWasSetTopMost)
+		{
+			gpSet->isAlwaysOnTop = false;
+			DoAlwaysOnTopSwitch();
+			bWasSetTopMost = false;
+		}
+		return;
+	}
+
+	if (IsHwFullScreenAvailable())
+	{
+
+		CVConGuard VCon;
+		if (CVConGroup::GetActiveVCon(&VCon) >= 0)
+		{
+			//BOOL WINAPI SetConsoleDisplayMode(HANDLE hConsoleOutput, DWORD dwFlags, PCOORD lpNewScreenBufferDimensions);
+			//if (!isIconic())
+			//	SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+
+			::ShowWindow(ghWnd, SW_SHOWMINNOACTIVE);
+
+			bool bFRc = VCon->RCon()->SetFullScreen();
+
+			if (bFRc)
+				return;
+
+			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+		}
+	}
+
+	if (gpSet->isDesktopMode)
+	{
+		DisplayLastError(L"Can't set FullScreen in DesktopMode", -1);
+		return;
+	}
+
+	TODO("Поднять приоритет процессов");
+
+	// Установить AlwaysOnTop
+	if (!gpSet->isAlwaysOnTop)
+	{
+		gpSet->isAlwaysOnTop = true;
+		DoAlwaysOnTopSwitch();
+		bWasSetTopMost = true;
+	}
+
+	if (!mp_ConEmu->isMeForeground())
+	{
+		if (isIconic())
+		{
+			if (Icon.isWindowInTray() || !IsWindowVisible(ghWnd))
+				Icon.RestoreWindowFromTray();
+			else
+				SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+		}
+		//else
+		//{
+		//	//SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+		//	SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+		//}
+	}
+
+	SetWindowMode(wmFullScreen);
+
+	if (!mp_ConEmu->isMeForeground())
+	{
+		SwitchToThisWindow(ghWnd, FALSE);
+	}
+}
+
+void CConEmuSize::DoAlwaysOnTopSwitch()
+{
+	HWND hwndAfter = (gpSet->isAlwaysOnTop || gpSet->isDesktopMode) ? HWND_TOPMOST : HWND_NOTOPMOST;
+
+	#ifdef CATCH_TOPMOST_SET
+	_ASSERTE((hwndAfter!=HWND_TOPMOST) && "Setting TopMost mode - CConEmuMain::OnAlwaysOnTop()");
+	#endif
+
+	CheckMenuItem(gpConEmu->mp_Menu->GetSysMenu(), ID_ALWAYSONTOP, MF_BYCOMMAND |
+	              (gpSet->isAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
+	SetWindowPos(ghWnd, hwndAfter, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+
+	if (ghOpWnd && gpSet->isAlwaysOnTop)
+	{
+		SetWindowPos(ghOpWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+		apiSetForegroundWindow(ghOpWnd);
+	}
+}
+
+void CConEmuSize::DoDesktopModeSwitch()
+{
+	if (!this) return;
+
+	Icon.SettingsChanged();
+
+	if (mp_ConEmu->WindowStartMinimized || mp_ConEmu->ForceMinimizeToTray)
+		return;
+
+#ifndef CHILD_DESK_MODE
+	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
+	DWORD dwNewStyleEx = dwStyleEx;
+	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+	DWORD dwNewStyle = dwStyle;
+
+	if (gpSet->isDesktopMode)
+	{
+		dwNewStyleEx |= WS_EX_TOOLWINDOW;
+		dwNewStyle |= WS_POPUP;
+	}
+	else
+	{
+		dwNewStyleEx &= ~WS_EX_TOOLWINDOW;
+		dwNewStyle &= ~WS_POPUP;
+	}
+
+	if (dwNewStyleEx != dwStyleEx || dwNewStyle != dwStyle)
+	{
+		mp_ConEmu->SetWindowStyle(dwStyle);
+		mp_ConEmu->SetWindowStyleEx(dwStyleEx);
+		CVConGroup::SyncWindowToConsole(); // -- функция пустая, игнорируется
+		UpdateWindowRgn();
+	}
+
+#endif
+#ifdef CHILD_DESK_MODE
+	HWND hDesktop = GetDesktopWindow();
+
+	//HWND hProgman = FindWindowEx(hDesktop, NULL, L"Progman", L"Program Manager");
+	//HWND hParent = NULL;gpSet->isDesktopMode ?  : GetDesktopWindow();
+
+	OnTaskbarSettingsChanged();
+
+	if (gpSet->isDesktopMode)
+	{
+		// Shell windows is FindWindowEx(hDesktop, NULL, L"Progman", L"Program Manager");
+		HWND hShellWnd = GetShellWindow();
+		DWORD dwShellPID = 0;
+
+		if (hShellWnd)
+			GetWindowThreadProcessId(hShellWnd, &dwShellPID);
+
+		// But in Win7 it is not a real desktop holder :(
+		if (gOSVer.dwMajorVersion >= 6)  // Vista too?
+		{
+			// В каких-то случаях (на каких-то темах?) иконки создаются в "Progman", а в одном из "WorkerW" классов
+			// Все эти окна принадлежат одному процессу explorer.exe
+			HWND hShell = FindWindowEx(hDesktop, NULL, L"WorkerW", NULL);
+
+			while (hShell)
+			{
+				// У него должны быть дочерние окна
+				if (IsWindowVisible(hShell) && FindWindowEx(hShell, NULL, NULL, NULL))
+				{
+					// Теоретически, эти окна должны принадлежать одному процессу (Explorer.exe)
+					if (dwShellPID)
+					{
+						DWORD dwTestPID;
+						GetWindowThreadProcessId(hShell, &dwTestPID);
+
+						if (dwTestPID != dwShellPID)
+						{
+							hShell = FindWindowEx(hDesktop, hShell, L"WorkerW", NULL);
+							continue;
+						}
+					}
+
+					break;
+				}
+
+				hShell = FindWindowEx(hDesktop, hShell, L"WorkerW", NULL);
+			}
+
+			if (hShell)
+				hShellWnd = hShell;
+		}
+
+		if (gpSet->isQuakeStyle)  // этот режим с Desktop несовместим
+		{
+			SetQuakeMode(0, (WindowMode == wmFullScreen) ? wmMaximized : wmNormal);
+		}
+
+		if (WindowMode == wmFullScreen)  // этот режим с Desktop несовместим
+		{
+			SetWindowMode(wmMaximized);
+		}
+
+		if (!hShellWnd)
+		{
+			gpSet->isDesktopMode = false;
+
+			HWND hExt = gpSetCls->GetPage(gpSetCls->thi_Ext);
+
+			if (ghOpWnd && hExt)
+			{
+				CheckDlgButton(hExt, cbDesktopMode, BST_UNCHECKED);
+			}
+		}
+		else
+		{
+			mh_ShellWindow = hShellWnd;
+			GetWindowThreadProcessId(mh_ShellWindow, &mn_ShellWindowPID);
+			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+			MapWindowPoints(NULL, mh_ShellWindow, (LPPOINT)&rcWnd, 2);
+			//ShowWindow(SW_HIDE);
+			//SetWindowPos(ghWnd, NULL, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
+			SetParent(mh_ShellWindow);
+			SetWindowPos(ghWnd, NULL, rcWnd.left,rcWnd.top,0,0, SWP_NOSIZE|SWP_NOZORDER);
+			SetWindowPos(ghWnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
+			//ShowWindow(SW_SHOW);
+#ifdef _DEBUG
+			RECT rcNow; GetWindowRect(ghWnd, &rcNow);
+#endif
+		}
+	}
+
+	if (!gpSet->isDesktopMode)
+	{
+		//dwStyle |= WS_POPUP;
+		RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+		RECT rcVirtual = GetVirtualScreenRect(TRUE);
+		SetWindowPos(ghWnd, NULL, max(rcWnd.left,rcVirtual.left),max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
+		SetParent(hDesktop);
+		SetWindowPos(ghWnd, NULL, max(rcWnd.left,rcVirtual.left),max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
+		OnAlwaysOnTop();
+
+		if (ghOpWnd && !gpSet->isAlwaysOnTop)
+			apiSetForegroundWindow(ghOpWnd);
+	}
+
+	//SetWindowStyle(dwStyle);
+#endif
 }

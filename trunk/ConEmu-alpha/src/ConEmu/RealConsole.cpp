@@ -50,8 +50,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ProcessSetEnv.h"
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
-#include "../common/WinFiles.h"
-#include "../common/WinUser.h"
+#include "../common/WFiles.h"
+#include "../common/WUser.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "ConEmuPipe.h"
@@ -5482,7 +5482,7 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 	case SB_PAGEDOWN:
 	case SB_PAGEUP:
 		nCount = TextHeight();
-		nDirection -= SB_PAGEDOWN;
+		nDirection -= SB_PAGEUP;
 		_ASSERTE(nDirection==SB_LINEUP || nDirection==SB_LINEDOWN);
 		break;
 	case SB_TOP:
@@ -10425,6 +10425,12 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 					int iActive = -1;
 					if ((anWndIndex >= 0) && (TabHdr.nTabCount > 0))
 					{
+						// Последние изменения в фаре привели к невозможности
+						// проверки корректности активации таба по его ИД
+						// Очередной Far API breaking change
+						lbRc = true;
+
+						#if 0
 						for (UINT i = 0; i < TabHdr.nTabCount; i++)
 						{
 							if (pGetTabs[i].Current)
@@ -10439,6 +10445,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 								}
 							}
 						}
+						#endif
 					}
 					// Error reporting
 					if (!lbRc)

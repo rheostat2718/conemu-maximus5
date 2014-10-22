@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "RConFiles.h"
 #include "RealConsole.h"
-#include "../common/WinFiles.h"
+#include "../common/WFiles.h"
 
 CRConFiles::CRConFiles(CRealConsole* apRCon)
 	: mp_RCon(apRCon)
@@ -56,7 +56,7 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 
 	if (IsFilePath(pszWinPath, true))
 	{
-		if (FileExists(pszWinPath)) // otherwise it will cover directories too
+		if (!FileExists(pszWinPath)) // otherwise it will cover directories too
 			return NULL;
 		szFull.Attach(szWinPath.Detach());
 	}
