@@ -1,5 +1,10 @@
 ﻿#summary The problem with apphelp.dll
 
+<wiki:comment>
+https://bugs.php.net/bug.php?id=36055
+https://bugzilla.mozilla.org/show_bug.cgi?id=939043
+</wiki:comment>
+
 ==Abstract==
 Several times I've seen cygwin/msys errors when their subsystem had failed to create child processes.
 
