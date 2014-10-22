@@ -304,6 +304,10 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        HE: to-home(-1)/to-end(+1) with text selection
     SetDpi(<DPI>)
      - Change effective dpi for ConEmu window: 96, 120, 144, 192
+    SetOption("Check",<ID>,<Value>)
+       ID: numeric identifier of checkbox (ConEmu.rc, resource.h)
+       Value: 0 - off, 1 - on, 2 - third state
+       Read about SetOption below
     SetOption("<Name>",<Value>[,<IsRelative>])
      - Name=one of allowed for changing ConEmu options
        IsRelative=1 to use relative instead of absolute for some options
@@ -383,6 +387,26 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        "MPREV", "MNEXT" (move ConEmu to prev/next monitor)
     Zoom(N)
      - Set zoom value, 100 - original font size
+}}}
+
+==SetOption==
+You may change some (or most) of ConEmu settings using `SetOption` macro function.
+
+It may be used by name for several options, for example
+{{{
+SetOption("FarGotoEditorPath","far.exe /e%1:%2 \"%3\"")
+}}}
+
+Or by CheckBox/RadioButton ID. Of course you must know that ID, look at `ConEmu.rc` and `resource.h`.
+
+Turn scrollbar on:
+{{{
+ConEmuC -GuiMacro SetOption Check 2488 1
+}}}
+
+Turn Quake style activation off
+{{{
+ConEmuC -GuiMacro SetOption Check 2333 0
 }}}
 
 ==Examples==
