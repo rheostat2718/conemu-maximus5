@@ -392,12 +392,15 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
 ==!SetOption==
 You may change some (or most) of ConEmu settings using `SetOption` macro function.
 
-It may be used by name for several options, for example
+It may be used *by name* for several options, for example
 {{{
 SetOption("FarGotoEditorPath","far.exe /e%1:%2 \"%3\"")
 }}}
 
-Or by CheckBox/RadioButton ID. Of course you must know that ID, look at `ConEmu.rc` and `resource.h`.
+Or *by CheckBox/RadioButton ID*. Of course you must know that number-ID. Look up the control
+by its label in the [https://github.com/Maximus5/ConEmu/blob/master/src/ConEmu/ConEmu.rc ConEmu.rc]
+(don't forget about possible ‘`&`’) and then look up the exact number-ID by its string-ID
+in the [https://github.com/Maximus5/ConEmu/blob/master/src/ConEmu/resource.h resource.h].
 
 Turn scrollbar on:
 {{{
