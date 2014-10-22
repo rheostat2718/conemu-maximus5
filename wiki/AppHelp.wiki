@@ -31,3 +31,40 @@ Digging the problem for some time I've found the reason of these errors on my PC
   * This `AcGenral.dll` was loaded (dynamically) by `C:\Windows\System32\apphelp.dll`.
   * And this `apphelp.dll` was loaded in the parent process of the `ConEmu.exe` (that was `USBSafelyRemove.exe` in my case).
   * Oops...
+
+==The check==
+_The following examples shows msysgit x86_
+
+Almost all dll-s used by cygwin/msys must be loaded at high memory addresses (above 0x60000000).
+
+For example, if you call
+
+{{{
+dumpbin /HEADERS С:\GIT\bin\libsvn_wc-1-0.dll
+}}}
+
+You will see
+
+{{{
+OPTIONAL HEADER VALUES
+        6F1C0000 image base (6F1C0000 to 6F2E7FFF)
+}}}
+
+So, you you see that one of the cygwin/msys libraries is loaded in low memory address (below 0x5FFF0000)
+you have a problem most probably... The easies way to check is using ProcessExplorer.
+
+Press `Ctrl+D` (Menu `->` View `->` Lower pane view `->` DLLs) and look at ‘Base’ column in the lower pane.
+If it is not visible just right-click on the DLLs list header, choose ‘Select columns’ and turn on ‘Base address’
+on the ‘DLL’ tab page. And use ‘dumpbin’ to ensure that required ‘image base’ differs.
+
+Scroll the DLLs list in the ProcessExplorer lower pane to find ‘Base+Size’ which covers desired address was shown
+by ‘dumpbin’. And who was loaded that dll? You may use DependencyWalker or ImpEx to check ‘Imports’ section
+of each dll loaded before. Yeah, that is not too simple but rather...
+
+==The solution==
+1) You need to ‘rebase’ conflicting modules.
+
+2) Alternatively you need to run your shell in different way so process tree will not include DLLs raised the conflict.
+In my case, when I run !ConEmu from TaskBar icon there is no `apphelp.dll` in the result process tree (from `ConEmu.exe` down to `perl.exe`).
+But when I run !ConEmu from ‘USB Safe Remove’ tool (automatically on connecting USB flash), `apphelp.dll` appears in the process
+tree and perl is always failed...

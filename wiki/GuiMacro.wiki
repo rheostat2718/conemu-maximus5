@@ -26,8 +26,9 @@ if "%ConEmuMacroResult%"=="Yes" echo ConEmu found!
 F11 -> ConEmu -> Execute ConEmu macro
 }}}
   * you can use Far Manager macros to forward commands for !ConEmu GUI.
+    * *Far3-lua*: `Plugin.SyncCall("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()")`
+    * *Far3-pre-lua*: `Plugin.Call("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()")`, _callplugin is alias of Plugin.Call_
     * *Far2*: `callplugin(0x43454D55,"IsConEmu()")`
-    * *Far3*: `Plugin.Call("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()")`, _callplugin is alias of Plugin.Call_
 
 ==Syntax==
 !ConEmu !GuiMacro parser is flexible and support different styles.
@@ -114,6 +115,16 @@ No ‘escaped’ symbols, with the only exception of doublequote - they must be 
 print(@"CD /d ""C:\Users""")
 }}}
 
+====Far plugin notes====
+When you run some !GuiMacro's from Far Manager macro and the string has backslashes ("`C:\\Users\\...`")
+you need to use verbatim strings or double-double them because !ConEmu !GuiMacro parser always
+parse escaped symbols itself. The !GuiMacro may be called from many places (from command line for example)
+and parser is the one for all inputs.
+
+{{{
+Plugin.SyncCall("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"new_console\",@\""..win.GetEnv("FARHOME").."\\far.exe\")")
+}}}
+
 ==Command line==
 Syntax (doesn't matter `ConEmuC.exe` or `ConEmuC64.exe` you are using):
 {{{
@@ -158,13 +169,17 @@ ConEmuC -GuiMacro:x140F32 WindowMinimize
 You may run !GuiMacro from Far Plugin (`ConEmu.dll` / `ConEmu64.dll`) from:
   * Using menu command: `F11` -> `ConEmu` -> `Execute ConEmu macro`
   * Using Far Manager macro language:
+    * *Far v3.x Lua*:
+{{{
+Plugin.SyncCall("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()")
+}}}
+    * *Far v3.x pre Lua*:
+{{{
+Plugin.Call("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()")
+}}}
     * *Far v2.x*:
 {{{
 callplugin(0x43454D55,"IsConEmu()")
-}}}
-    * *Far v3.x*:
-{{{
-Plugin.Call("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()")
 }}}
 
 When you call plugin menu, result is show in the dialog field.
@@ -371,23 +386,35 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
 }}}
 
 ==Examples==
-===Far2===
+===Far3-Lua===
 {{{
-$if (callplugin(0x43454D55,"IsConEmu()")!=0 && env("ConEmuMacroResult")=="Yes")
-  MsgBox("Macro", "Far started under ConEmu")
-$end
+if Plugin.SyncCall("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()") and win.GetEnv("ConEmuMacroResult")=="Yes" then
+  mf.msgbox("Macro", "Far started under ConEmu")
+end
 }}}
-===Far3===
+{{{
+Plugin.SyncCall("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"open\",@\""..win.GetEnv("FARHOME").."\\Encyclopedia\\FarEncyclopedia.ru.chm\")")
+}}}
+{{{
+Plugin.SyncCall("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"new_console\",@\""..win.GetEnv("FARHOME").."\\far.exe\")")
+}}}
+===Far3-pre-Lua===
 {{{
 $if (callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()")!=0 && env("ConEmuMacroResult")=="Yes")
   MsgBox("Macro", "Far started under ConEmu")
 $end
 }}}
 {{{
-callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"open\",\""+env("FARHOME")+"\\Encyclopedia\\FarEncyclopedia.ru.chm\")")
+callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"open\",@\""+env("FARHOME")+"\\Encyclopedia\\FarEncyclopedia.ru.chm\")")
 }}}
 {{{
-callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"new_console\",\""+env("FARHOME")+"\\far.exe\")")
+callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"new_console\",@\""+env("FARHOME")+"\\far.exe\")")
+}}}
+===Far2===
+{{{
+$if (callplugin(0x43454D55,"IsConEmu()")!=0 && env("ConEmuMacroResult")=="Yes")
+  MsgBox("Macro", "Far started under ConEmu")
+$end
 }}}
 ===Far1===
 This is most complicated, cause of 'callplugin' absence in the Far 1.x
