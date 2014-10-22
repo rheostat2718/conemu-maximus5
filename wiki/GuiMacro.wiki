@@ -389,7 +389,7 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
      - Set zoom value, 100 - original font size
 }}}
 
-==SetOption==
+==!SetOption==
 You may change some (or most) of ConEmu settings using `SetOption` macro function.
 
 It may be used by name for several options, for example
