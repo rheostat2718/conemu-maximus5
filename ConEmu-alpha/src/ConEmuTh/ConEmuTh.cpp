@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/FarVersion.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"
-#include "../common/WinUser.h"
+#include "../common/WUser.h"
 #include "ConEmuTh.h"
 #include "ImgCache.h"
 
@@ -2257,7 +2257,7 @@ void ExecuteInMainThread(ConEmuThSynchroArg* pCmd)
 	}
 }
 
-int WINAPI ProcessSynchroEventW(int Event, void *Param)
+int ProcessSynchroEventCommon(int Event, void *Param)
 {
 	if (Event != SE_COMMONSYNCHRO) return 0;
 
@@ -2334,6 +2334,11 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 	gnMainThreadId = nPrevID;
 
 	return 0;
+}
+
+int WINAPI ProcessSynchroEventW(int Event, void *Param)
+{
+	return ProcessSynchroEventCommon(Event, Param);
 }
 
 

@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
-#include "../common/WinFiles.h"
+#include "../common/WFiles.h"
 
 #include "RealConsole.h"
 #include "VirtualConsole.h"
@@ -112,6 +112,7 @@ namespace ConEmuMacro
 	#ifdef _DEBUG
 	bool gbUnitTest = false;
 	#endif
+	LPWSTR Int2Str(UINT nValue, bool bSigned);
 
 	typedef LPWSTR (*MacroFunction)(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 
@@ -148,6 +149,8 @@ namespace ConEmuMacro
 	LPWSTR FontSetName(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Изменить размер шрифта. int nRelative, int N
 	LPWSTR FontSetSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// GetOption("<Name>")
+	LPWSTR GetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Change 'Highlight row/col' under mouse. Locally in current VCon.
 	LPWSTR HighlightMouse(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Проверка, есть ли ConEmu GUI. Функцию мог бы и сам плагин обработать, но для "общности" возвращаем "Yes" здесь
@@ -231,6 +234,7 @@ namespace ConEmuMacro
 		{Flash, {L"Flash", L"FlashWindow"}},
 		{FontSetName, {L"FontSetName"}},
 		{FontSetSize, {L"FontSetSize"}},
+		{GetOption, {L"GetOption"}},
 		{HighlightMouse, {L"HighlightMouse"}},
 		{IsConEmu, {L"IsConEmu"}},
 		{IsConsoleActive, {L"IsConsoleActive"}},
@@ -1357,10 +1361,10 @@ LPWSTR ConEmuMacro::WindowMaximize(GuiMacro* p, CRealConsole* apRCon, bool abFro
 	{
 	case 1:
 		// By width
-		gpConEmu->DoMaximizeWidthHeight(true,false); break;
+		gpConEmu->SetTileMode(cwc_TileWidth); break;
 	case 2:
 		// By height
-		gpConEmu->DoMaximizeWidthHeight(false,true); break;
+		gpConEmu->SetTileMode(cwc_TileHeight); break;
 	default:
 		gpConEmu->DoMaximizeRestore();
 	}
@@ -1461,6 +1465,7 @@ LPWSTR ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 	case cwc_TileLeft:
 	case cwc_TileRight:
 	case cwc_TileHeight:
+	case cwc_TileWidth:
 		gpConEmu->SetTileMode(Cmd);
 		break;
 	case cwc_PrevMonitor:
@@ -2357,6 +2362,54 @@ LPWSTR ConEmuMacro::SetDpi(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	return lstrdup(L"OK");
 }
 
+LPWSTR ConEmuMacro::Int2Str(UINT nValue, bool bSigned)
+{
+	wchar_t szNumber[20];
+	if (bSigned)
+		_wsprintf(szNumber, SKIPCOUNT(szNumber) L"%i", (int)nValue);
+	else
+		_wsprintf(szNumber, SKIPCOUNT(szNumber) L"%u", nValue);
+	return lstrdup(szNumber);
+}
+
+// GetOption("<Name>")
+LPWSTR ConEmuMacro::GetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszResult = NULL;
+	LPWSTR pszName = NULL;
+	int nID = 0;
+
+	if (p->GetIntArg(0, nID))
+	{
+		// TODO: ...
+	}
+	else if (p->GetStrArg(0, pszName))
+	{
+		if (!lstrcmpi(pszName, L"QuakeStyle") || !lstrcmpi(pszName, L"QuakeAutoHide"))
+		{
+			pszResult = Int2Str(gpSet->isQuakeStyle, false);
+		}
+		else if (!lstrcmpi(pszName, L"FarGotoEditorPath"))
+		{
+			pszResult = lstrdup(gpSet->sFarGotoEditor);
+		}
+		else if (!lstrcmpi(pszName, L"TabSelf"))
+		{
+			pszResult = Int2Str(gpSet->isTabSelf, false);
+		}
+		else if (!lstrcmpi(pszName, L"TabRecent"))
+		{
+			pszResult = Int2Str(gpSet->isTabRecent, false);
+		}
+		else if (!lstrcmpi(pszName, L"TabLazy"))
+		{
+			pszResult = Int2Str(gpSet->isTabLazy, false);
+		}
+	}
+
+	return pszResult ? pszResult : lstrdup(L"");
+}
+
 // SetOption("<Name>",<Value>)
 LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
@@ -2437,7 +2490,7 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 			gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
 			break;
 		}
-		gpConEmu->OnAlwaysOnTop();
+		gpConEmu->DoAlwaysOnTopSwitch();
 		pszResult = lstrdup(L"OK");
 	}
 	else if (!lstrcmpi(pszName, L"AlphaValue"))

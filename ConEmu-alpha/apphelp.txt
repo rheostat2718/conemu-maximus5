@@ -1,0 +1,6 @@
+﻿In his process, user32.dll was pulled in as a dependency of aclayers.dll,
+which was explicitly loaded by apphelp.dll, the Windows appcompat shim
+engine. Typically apphelp is loaded when you have compat flags on a binary.
+I was able to reproduce the assert by setting the Windows Vista mode flag
+on the exe. But on Ben's machine, apphelp gets loaded even without any
+flags, we suspect because of EMET.

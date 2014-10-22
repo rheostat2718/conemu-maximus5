@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShObjIdl_Part.h"
 #endif // __GNUC__
 
-#include "../common/WinUser.h"
+#include "../common/WUser.h"
 #include "AboutDlg.h"
 #include "Background.h"
 #include "ConEmu.h"
@@ -2749,7 +2749,7 @@ void CSetDlgButtons::OnBtn_DesktopMode(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbDesktopMode);
 
 	gpSet->isDesktopMode = uCheck;
-	gpConEmu->OnDesktopMode();
+	gpConEmu->DoDesktopModeSwitch();
 
 } // cbDesktopMode
 
@@ -2772,7 +2772,7 @@ void CSetDlgButtons::OnBtn_AlwaysOnTop(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbAlwaysOnTop);
 
 	gpSet->isAlwaysOnTop = uCheck;
-	gpConEmu->OnAlwaysOnTop();
+	gpConEmu->DoAlwaysOnTopSwitch();
 
 } // cbAlwaysOnTop
 
