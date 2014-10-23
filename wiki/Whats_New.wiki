@@ -13,8 +13,8 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * Update Far3/lua headers to build 4040.
   * Let `Plugin.SyncCall("4B675D80-1D4A-4EA9-8436-FDC23F2FC14B","...")` returns result as string if succeeded.
 {{{
-lua:far.Message(Plugin.SyncCall("4B675D80-1D4A-4EA9-8436-FDC23F2FC14B","IsConEmu"))
-lua:far.Message(Plugin.SyncCall("4B675D80-1D4A-4EA9-8436-FDC23F2FC14B","FindEditor(@\"C:\\autoexec.bat\")"))
+lua:=Plugin.SyncCall("4B675D80-1D4A-4EA9-8436-FDC23F2FC14B","IsConEmu")
+lua:=Plugin.SyncCall("4B675D80-1D4A-4EA9-8436-FDC23F2FC14B","FindEditor C:\\autoexec.bat")
 }}}
   * Hyperlink detector false detect: full directory paths.
   * GuiMacro: New function `GetOption("<Name>")` return string representation of !ConEmu option. Example for "Internal CtrlTab" option check (Far 3 lua macro)
