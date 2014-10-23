@@ -415,26 +415,26 @@ ConEmuC -GuiMacro SetOption Check 2333 0
 ==Examples==
 ===Far3-Lua===
 {{{
-if Plugin.SyncCall("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()") and win.GetEnv("ConEmuMacroResult")=="Yes" then
-  mf.msgbox("Macro", "Far started under ConEmu")
+local conemu = "4B675D80-1D4A-4EA9-8436-FDC23F2FC14B"
+
+if Plugin.SyncCall(conemu,"IsConEmu")=="Yes" then
+  far.Message("Far started under ConEmu","Macro")
 end
-}}}
-{{{
-Plugin.SyncCall("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"open\",@\""..win.GetEnv("FARHOME").."\\Encyclopedia\\FarEncyclopedia.ru.chm\")")
-}}}
-{{{
-Plugin.SyncCall("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"new_console\",@\""..win.GetEnv("FARHOME").."\\far.exe\")")
+
+local cmd = ('shell("open",@"%s")'):format(win.GetEnv"FARHOME"..[[\Encyclopedia\FarEncyclopedia.ru.chm]])
+Plugin.SyncCall(conemu,cmd)
+
+local cmd = ('shell("new_console",@"%s")'):format(win.GetEnv"FARHOME".."\\far.exe")
+Plugin.SyncCall(conemu,cmd)
 }}}
 ===Far3-pre-Lua===
 {{{
 $if (callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","IsConEmu()")!=0 && env("ConEmuMacroResult")=="Yes")
   MsgBox("Macro", "Far started under ConEmu")
 $end
-}}}
-{{{
+
 callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"open\",@\""+env("FARHOME")+"\\Encyclopedia\\FarEncyclopedia.ru.chm\")")
-}}}
-{{{
+
 callplugin("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"new_console\",@\""+env("FARHOME")+"\\far.exe\")")
 }}}
 ===Far2===
@@ -459,4 +459,3 @@ $if (%r=="Yes")
   MsgBox("Macro", "Far started under ConEmu")
 $end
 }}}
-
