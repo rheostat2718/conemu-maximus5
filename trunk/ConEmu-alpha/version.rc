@@ -1,6 +1,0 @@
-﻿            VALUE "CompanyName",       "Microsoft Corporation\0"
-            VALUE "FileDescription",   "Microsoft COM for Windows\0"
-            VALUE "FileVersion",       "6.3.9600.17031 (winblue_gdr.140221-1952)\0"
-            // Zero-length item found
-            VALUE "InternalName",      "COMBASE.DLL\0"
-            VALUE "LegalCopyright",    "© Microsoft Corporation. All rights reserved.\0"

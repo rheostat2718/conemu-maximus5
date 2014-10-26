@@ -26,6 +26,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define HIDE_USE_EXCEPTION_INFO
+
 #include "Header.h"
 #include "HotkeyList.h"
 #include "ConEmuCtrl.h"
@@ -181,6 +183,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkCloseGroupPrc,  chk_User,  NULL,    L"CloseGroupPrcKey",      CConEmuCtrl::key_GuiMacro, false, L"Close(7)")
 		;
 	Add(vkCloseAllCon,    chk_User,  NULL,    L"CloseAllConKey",        CConEmuCtrl::key_GuiMacro, false, L"Close(8)")
+		;
+	Add(vkCloseZombies,    chk_User,  NULL,   L"CloseZombiesKey",      CConEmuCtrl::key_GuiMacro, false, L"Close(9)")
 		;
 	Add(vkCloseExceptCon, chk_User,  NULL,    L"CloseExceptConKey",     CConEmuCtrl::key_GuiMacro, false, L"Close(5)")
 		;

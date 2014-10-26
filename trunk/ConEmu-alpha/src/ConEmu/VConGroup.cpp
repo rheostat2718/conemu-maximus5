@@ -26,6 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define HIDE_USE_EXCEPTION_INFO
 
 #include "Header.h"
 
@@ -63,6 +64,8 @@ static bool gb_InCreateGroup = false;
 
 static MSectionSimple* gpcs_VGroups = NULL;
 static CVConGroup* gp_VGroups[MAX_CONSOLE_COUNT*2] = {}; // на каждое разбиение добавляется +Parent
+
+CVConGroup* CVConGroup::mp_GroupSplitDragging = NULL;
 
 #ifdef _DEBUG
 MSectionSimple CRefRelease::mcs_Locks;
@@ -201,7 +204,8 @@ CVConGroup* CVConGroup::SplitVConGroup(RConStartArgs::SplitType aSplitType /*eSp
 	// Параметры разбиения
 	m_SplitType = aSplitType; // eSplitNone/eSplitHorz/eSplitVert
 	mn_SplitPercent10 = max(1,min(anPercent10,999)); // (0.1% - 99.9%)*10
-	mrc_Splitter = MakeRect(0,0);
+	SetRectEmpty(&mrc_Splitter);
+	SetRectEmpty(&mrc_DragSplitter);
 
 	// Перенести в mp_Grp1 текущий VCon, mp_Grp2 - будет новый пустой (пока) панелью
 	mp_Grp1->mp_Item = mp_Item;
@@ -406,6 +410,12 @@ void CVConGroup::RemoveGroup()
 CVConGroup::~CVConGroup()
 {
 	_ASSERTE(isMainThread()); // во избежание сбоев в индексах?
+
+	if (mp_GroupSplitDragging == this)
+	{
+		StopSplitDragging();
+		mp_GroupSplitDragging = NULL;
+	}
 
 	if (!mb_Released)
 		RemoveGroup();
@@ -796,7 +806,7 @@ void CVConGroup::RepositionVCon(RECT rcNewCon, bool bVisible)
 	else if (mp_Grp1 && mp_Grp2)
 	{
 		RECT rcCon1, rcCon2, rcSplitter;
-		CalcSplitRect(rcNewCon, rcCon1, rcCon2, rcSplitter);
+		CalcSplitRect(mn_SplitPercent10, rcNewCon, rcCon1, rcCon2, rcSplitter);
 
 		mrc_Full = rcNewCon;
 		mrc_Splitter = rcSplitter;
@@ -824,81 +834,64 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 	if (mp_Grp1 && mp_Grp2 && (nCellSize > 0))
 	{
 		RECT rcCon1 = {0}, rcCon2 = {0}, rcSplitter = {0};
-		CalcSplitRect(mrc_Full, rcCon1, rcCon2, rcSplitter);
+		CalcSplitRect(mn_SplitPercent10, mrc_Full, rcCon1, rcCon2, rcSplitter);
 
-		int iSize1 = (m_SplitType == RConStartArgs::eSplitVert) ? mrc_Splitter.top-mrc_Full.top : mrc_Splitter.left-mrc_Full.left;
-		int iSize2 = (m_SplitType == RConStartArgs::eSplitVert) ? mrc_Full.bottom-mrc_Splitter.bottom : mrc_Full.right-mrc_Splitter.right;
-		int iPadSize = gpSet->isTryToCenter ? 2*gpSet->nCenterConsolePad : 0;
-		int iDiff = iCells*nCellSize;
-		int iCellHalf = max(1,(nCellSize/2));
+		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL|CEM_PAD);
+
+		int iPadSize = (m_SplitType == RConStartArgs::eSplitVert) ? (rcScroll.top + rcScroll.bottom) : (rcScroll.left + rcScroll.right);
+		int iSize1 = ((m_SplitType == RConStartArgs::eSplitVert) ? mrc_Splitter.top-mrc_Full.top : mrc_Splitter.left-mrc_Full.left) - iPadSize;
+		int iSize2 = ((m_SplitType == RConStartArgs::eSplitVert) ? mrc_Full.bottom-mrc_Splitter.bottom : mrc_Full.right-mrc_Splitter.right) - iPadSize;
+		int iCellHalf = max(1,(nCellSize/2)) * (iCells > 0 ? 1 : -1);
+		int iDiff = iCells*nCellSize - iCellHalf;
 
 		bool bCanResize = (iCells < 0)
-			? ((iSize1 - iPadSize) >= (nCellSize*(nMinCells+1)))
-			: ((iSize2 - iPadSize) >= (nCellSize*(nMinCells+1)));
+			? (iSize1 >= (nCellSize*(nMinCells+1)))
+			: (iSize2 >= (nCellSize*(nMinCells+1)));
 		if (bCanResize)
 		{
-			int iNewSize1, iNewSize2;
-			if (iCells < 0)
+			RECT rcNewCon1 = {0}, rcNewCon2 = {0}, rcNewSplitter = {0};
+			int iNewSize1 = iSize1 + iDiff, iNewSize2 = iSize2 - iDiff;
+			for (int nTries = 20; nTries > 0; nTries--)
 			{
-				iNewSize1 = max((iPadSize+nCellSize*nMinCells),(iSize1 + iDiff + iCellHalf));
-				_ASSERTE(iNewSize1 < iSize1);
-				iNewSize2 = iSize2 + (iSize1 - iNewSize1);
+				// Считаем новый процент
+				int nNewSplitPercent10 = (iNewSize1 * 1000 / (iNewSize1 + iNewSize2));
+
+				// Do not try to calc if nNewSplitPercent10 was not changed into desired direction
+				if ((nNewSplitPercent10 > 0) && (nNewSplitPercent10 <= 999)
+					&& ((iCells < 0) == (nNewSplitPercent10 < mn_SplitPercent10)))
+				{
+					int nOldPercent = mn_SplitPercent10;
+					mn_SplitPercent10 = max(1,min(nNewSplitPercent10,999)); // (0.1% - 99.9%)*10
+
+					CalcSplitRect(mn_SplitPercent10, mrc_Full, rcNewCon1, rcNewCon2, rcNewSplitter);
+
+					int iChanged = ((m_SplitType == RConStartArgs::eSplitVert) ? rcNewSplitter.top : rcNewSplitter.left) - ((m_SplitType == RConStartArgs::eSplitVert) ? rcSplitter.top : rcSplitter.left);
+					int iCellsChanged = iChanged / nCellSize;
+
+					bChanged = (m_SplitType == RConStartArgs::eSplitVert) ? (rcNewSplitter.top != rcSplitter.top) : (rcNewSplitter.left != rcSplitter.left);
+					if (bChanged)
+						break;
+				}
+
+				// Из-за округлений, отступов и просветов на краях - могли не попасть в кратность ячейкам
+				iNewSize1 += iCellHalf; iNewSize2 -= iCellHalf;
+			}
+
+			// Если размер консоли окажется менее минимального - откатим
+			if (!bChanged
+				|| ((m_SplitType == RConStartArgs::eSplitVert)
+					&& (((rcNewCon1.bottom-rcNewCon1.top) < (iPadSize+nCellSize*nMinCells))
+						|| ((rcNewCon2.bottom-rcNewCon2.top) < (iPadSize+nCellSize*nMinCells))))
+				|| ((m_SplitType == RConStartArgs::eSplitHorz)
+					&& (((rcNewCon1.right-rcNewCon1.left) < (iPadSize+nCellSize*nMinCells))
+						|| ((rcNewCon2.right-rcNewCon2.left) < (iPadSize+nCellSize*nMinCells))))
+				)
+			{
+				mn_SplitPercent10 = nSaveSplitPercent10;
+				bChanged = false;
 			}
 			else
 			{
-				iNewSize2 = max((iPadSize+nCellSize*nMinCells),(iSize2 - iDiff + iCellHalf));
-				_ASSERTE(iNewSize2 < iSize2);
-				iNewSize1 = iSize1 + (iSize2 - iNewSize2);
-			}
-			_ASSERTE(((iSize1+iSize2)==(iNewSize1+iNewSize2)) && ((iNewSize1+iNewSize2)>0));
-
-			// Считаем новый процент
-			int nNewSplitPercent10 = (iNewSize1 * 1000 / (iNewSize1 + iNewSize2));
-			// Из-за округлений - могли "несмочь"
-			//if (nNewSplitPercent10 != mn_SplitPercent10)
-			{
-				int nOldPercent = mn_SplitPercent10;
-				mn_SplitPercent10 = max(1,min(nNewSplitPercent10,999)); // (0.1% - 99.9%)*10
-
-				RECT rcNewCon1 = {0}, rcNewCon2 = {0}, rcNewSplitter = {0};
-				CalcSplitRect(mrc_Full, rcNewCon1, rcNewCon2, rcNewSplitter);
-
-				int iChanged = ((m_SplitType == RConStartArgs::eSplitVert) ? rcNewSplitter.top : rcNewSplitter.left) - ((m_SplitType == RConStartArgs::eSplitVert) ? rcSplitter.top : rcSplitter.left);
-				int iCellsChanged = iChanged / nCellSize;
-
-				bChanged = (m_SplitType == RConStartArgs::eSplitVert) ? (rcNewSplitter.top != rcSplitter.top) : (rcNewSplitter.left != rcSplitter.left);
-
-				// Из-за округлений - могли "несмочь"
-				if (!bChanged)
-				{
-					int nTries = 20;
-					int nDiff = (iCells > 0)
-						? ((nCellSize * (1000/4)) / (iNewSize1 + iNewSize2))
-						: ((nCellSize * (-1000/4)) / (iNewSize1 + iNewSize2));
-					while (!bChanged && ((nTries--) > 0))
-					{
-						nNewSplitPercent10 = max(1,min(mn_SplitPercent10+nDiff,999)); // (0.1% - 99.9%)*10
-						if (nNewSplitPercent10 == mn_SplitPercent10)
-							break; // дальше некуда
-						mn_SplitPercent10 = nNewSplitPercent10;
-						// Пробуем еще раз
-						CalcSplitRect(mrc_Full, rcNewCon1, rcNewCon2, rcNewSplitter);
-						bChanged = (m_SplitType == RConStartArgs::eSplitVert) ? (rcNewSplitter.top != rcSplitter.top) : (rcNewSplitter.left != rcSplitter.left);
-					}
-				}
-
-				// Если размер консоли окажется менее минимального - откатим
-				if (((m_SplitType == RConStartArgs::eSplitVert)
-						&& (((rcNewCon1.bottom-rcNewCon1.top) < (iPadSize+nCellSize*nMinCells))
-							|| ((rcNewCon2.bottom-rcNewCon2.top) < (iPadSize+nCellSize*nMinCells))))
-					|| ((m_SplitType == RConStartArgs::eSplitHorz)
-						&& (((rcNewCon1.right-rcNewCon1.left) < (iPadSize+nCellSize*nMinCells))
-							|| ((rcNewCon2.right-rcNewCon2.left) < (iPadSize+nCellSize*nMinCells))))
-					)
-				{
-					mn_SplitPercent10 = nSaveSplitPercent10;
-				}
-
 				bChanged = (nSaveSplitPercent10 != mn_SplitPercent10);
 			}
 		}
@@ -907,11 +900,44 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 	return bChanged;
 }
 
+struct ReSizeSplitterHelperArg
+{
+	CVirtualConsole* pVCon;
+	int iHorz /*= 0*/;
+	int iVert /*= 0*/;
+
+	ReSizeSplitterHelperArg(CVirtualConsole* apVCon, int aiHorz, int aiVert)
+	{
+		pVCon = apVCon; iHorz = aiHorz; iVert = aiVert;
+	};
+};
+
+LPARAM CVConGroup::ReSizeSplitterHelper(LPARAM lParam)
+{
+	ReSizeSplitterHelperArg* p = (ReSizeSplitterHelperArg*)lParam;
+	ReSizeSplitter(p->pVCon, p->iHorz, p->iVert);
+	delete p;
+	return 0;
+}
+
 bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int iVert /*= 0*/)
 {
 	if (!apVCon || (!iHorz && !iVert))
 	{
 		_ASSERTE(apVCon && (iHorz || iVert));
+		return false;
+	}
+
+	if (!isMainThread())
+	{
+		ReSizeSplitterHelperArg* p = new ReSizeSplitterHelperArg(apVCon, iHorz, iVert);
+		apVCon->mp_ConEmu->CallMainThread(false, ReSizeSplitterHelper, (LPARAM)p);
+		return false;
+	}
+
+	// Валидна, или успела закрыться?
+	if (!isValid(apVCon))
+	{
 		return false;
 	}
 
@@ -967,7 +993,7 @@ bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int 
 }
 
 // Разбиение в координатах DC (pixels)
-void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter)
+void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter)
 {
 	rcCon1 = rcNewCon;
 	rcCon2 = rcNewCon;
@@ -992,26 +1018,27 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 
 	WARNING("Не учитывается gpSet->nCenterConsolePad?");
 
-	UINT nSplit = max(1,min(mn_SplitPercent10,999));
-	//UINT nPadSizeX = 0, nPadSizeY = 0;
+	UINT nSplit = max(1,min(nSplitPercent10,999));
+
 	if (m_SplitType == RConStartArgs::eSplitHorz)
 	{
 		UINT nWidth = rcNewCon.right - rcNewCon.left;
-		UINT nPadX = gpSet->nSplitWidth;
+
+		UINT nPadX = gpSetCls->EvalSize(gpSet->nSplitWidth, esf_Horizontal|esf_CanUseDpi);
 		if (nWidth >= nPadX)
 			nWidth -= nPadX;
 		else
 			nPadX = 0;
-		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
-		_ASSERTE(rcScroll.left==0);
-		if (rcScroll.right)
+
+		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL|CEM_PAD);
+		if (rcScroll.right || rcScroll.left)
 		{
-			_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // сюда должны попадать только при включенном постоянно скролле
-			if (nWidth > (UINT)(rcScroll.right * 2))
-				nWidth -= rcScroll.right * 2;
+			if (nWidth > (UINT)((rcScroll.right + rcScroll.left) * 2))
+				nWidth -= (rcScroll.right + rcScroll.left) * 2;
 			else
 				rcScroll.right = 0;
 		}
+
 		UINT nScreenWidth = (nWidth * nSplit / 1000);
 		LONG nCellWidth = gpSetCls->FontWidth();
 		LONG nCon2Width;
@@ -1024,8 +1051,8 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 				_ASSERTE(FALSE && "Too small rect?");
 				nCellCountX = nTotalCellCountX - 1;
 			}
-			nScreenWidth = nCellCountX * nCellWidth;
-			nCon2Width = (nTotalCellCountX - nCellCountX) * nCellWidth;
+			nScreenWidth = nCellCountX * nCellWidth + (rcScroll.right + rcScroll.left);
+			nCon2Width = (nTotalCellCountX - nCellCountX) * nCellWidth + (rcScroll.right + rcScroll.left);
 			_ASSERTE(nCon2Width > 0);
 		}
 		else
@@ -1043,21 +1070,22 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 	else // RConStartArgs::eSplitVert
 	{
 		UINT nHeight = rcNewCon.bottom - rcNewCon.top;
-		UINT nPadY = gpSet->nSplitHeight;
+
+		UINT nPadY = gpSetCls->EvalSize(gpSet->nSplitHeight, esf_Vertical|esf_CanUseDpi);
 		if (nHeight >= nPadY)
 			nHeight -= nPadY;
 		else
 			nPadY = 0;
-		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
-		_ASSERTE(rcScroll.top==0);
-		if (rcScroll.bottom)
+
+		RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL|CEM_PAD);
+		if (rcScroll.bottom || rcScroll.top)
 		{
-			_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // сюда должны попадать только при включенном постоянно скролле
-			if (nHeight > (UINT)(rcScroll.bottom * 2))
-				nHeight -= rcScroll.bottom * 2;
+			if (nHeight > (UINT)((rcScroll.bottom + rcScroll.top) * 2))
+				nHeight -= (rcScroll.bottom + rcScroll.top) * 2;
 			else
 				rcScroll.bottom = 0;
 		}
+
 		UINT nScreenHeight = (nHeight * nSplit / 1000);
 		LONG nCellHeight = gpSetCls->FontHeight();
 		LONG nCon2Height;
@@ -1070,8 +1098,8 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 				_ASSERTE(FALSE && "Too small rect?");
 				nCellCountY = nTotalCellCountY - 1;
 			}
-			nScreenHeight = nCellCountY * nCellHeight;
-			nCon2Height = (nTotalCellCountY - nCellCountY) * nCellHeight;
+			nScreenHeight = nCellCountY * nCellHeight + (rcScroll.bottom + rcScroll.top);
+			nCon2Height = (nTotalCellCountY - nCellCountY) * nCellHeight + (rcScroll.bottom + rcScroll.top);
 			_ASSERTE(nCon2Height > 0);
 		}
 		else
@@ -1087,6 +1115,7 @@ void CVConGroup::CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& 
 	}
 }
 
+// Evaluate rect of exact group (pTarget) from root rectange (CER_WORKSPACE)
 void CVConGroup::CalcSplitRootRect(RECT rcAll, RECT& rcCon, CVConGroup* pTarget /*= NULL*/)
 {
 	if (!this)
@@ -1117,11 +1146,211 @@ void CVConGroup::CalcSplitRootRect(RECT rcAll, RECT& rcCon, CVConGroup* pTarget 
 	else
 	{
 		RECT rc1, rc2, rcSplitter;
-		CalcSplitRect(rc, rc1, rc2, rcSplitter);
+		CalcSplitRect(mn_SplitPercent10, rc, rc1, rc2, rcSplitter);
 
 		_ASSERTE(pTarget == mp_Grp1 || pTarget == mp_Grp2);
 		rcCon = (pTarget == mp_Grp2) ? rc2 : rc1;
 	}
+}
+
+RConStartArgs::SplitType CVConGroup::isSplitterDragging()
+{
+	if (mp_GroupSplitDragging && !isPressed(VK_LBUTTON))
+	{
+		StopSplitDragging();
+	}
+
+	return (mp_GroupSplitDragging != NULL) ? mp_GroupSplitDragging->m_SplitType : RConStartArgs::eSplitNone;
+}
+
+LRESULT CVConGroup::OnMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	_ASSERTE(isMainThread());
+
+	LRESULT lRc = 0;
+	CVConGroup* pGrp = NULL;
+	POINT pt;
+	HCURSOR hCur;
+	UINT nPrevSplit;
+	UINT nNewSplit;
+	RECT rcNewSplit;
+
+	GetCursorPos(&pt);
+	MapWindowPoints(NULL, ghWnd, &pt, 1);
+
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
+	switch (uMsg)
+	{
+	case WM_SETCURSOR:
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONDBLCLK:
+		pGrp = mp_GroupSplitDragging ? mp_GroupSplitDragging : FindSplitGroup(pt, NULL);
+		break;
+
+	case WM_LBUTTONUP:
+	case WM_MOUSEMOVE:
+		if (isGroupVisible(mp_GroupSplitDragging))
+			pGrp = mp_GroupSplitDragging;
+		else
+			StopSplitDragging();
+		break;
+	}
+
+	if (!pGrp)
+	{
+		StopSplitDragging();
+		goto wrap;
+	}
+
+	if (uMsg == WM_SETCURSOR)
+	{
+		if (!pGrp || pGrp->m_SplitType == RConStartArgs::eSplitNone)
+			hCur = gpConEmu->mh_CursorArrow;
+		else if (pGrp->m_SplitType == RConStartArgs::eSplitHorz)
+			hCur = gpConEmu->mh_SplitH;
+		else if (pGrp->m_SplitType == RConStartArgs::eSplitVert)
+			hCur = gpConEmu->mh_SplitV;
+
+		if (hCur) // Must not be NULL, otherwise cursor will be hidden
+			SetCursor(hCur);
+
+		lRc = (hCur != gpConEmu->mh_CursorArrow);
+		goto wrap;
+	}
+
+	// No splitter - no actions
+	if (!pGrp || (pGrp->m_SplitType == RConStartArgs::eSplitNone))
+		goto wrap;
+
+	nNewSplit = nPrevSplit = pGrp->mn_SplitPercent10;
+	rcNewSplit = pGrp->mrc_DragSplitter;
+
+	switch (uMsg)
+	{
+	case WM_LBUTTONDBLCLK:
+		nNewSplit = 500; // Reset at center
+		break;
+
+	case WM_LBUTTONDOWN:
+		mp_GroupSplitDragging = pGrp;
+		SetCapture(hWnd);
+		break;
+
+	case WM_LBUTTONUP:
+	case WM_MOUSEMOVE:
+		if (mp_GroupSplitDragging)
+		{
+			int nAllSize = (pGrp->m_SplitType == RConStartArgs::eSplitVert)
+				? (pGrp->mrc_Full.bottom - pGrp->mrc_Full.top - (pGrp->mrc_Splitter.bottom - pGrp->mrc_Splitter.top))
+				: (pGrp->mrc_Full.right - pGrp->mrc_Full.left - (pGrp->mrc_Splitter.right - pGrp->mrc_Splitter.left));
+			int nNewPos = (pGrp->m_SplitType == RConStartArgs::eSplitVert)
+				? (pt.y - pGrp->mrc_Full.top)
+				: (pt.x - pGrp->mrc_Full.left);
+			// Need to consider scrollbars and pads?
+			if ((nAllSize > 0) && (nNewPos > 0) && (nNewPos < nAllSize))
+			{
+				nNewSplit = (nNewPos * 1000) / nAllSize;
+			}
+		}
+		break;
+	}
+
+	// New desired splitter position (for PatBlt)
+	if ((nNewSplit >= 1) && (nNewSplit <= 999) && (nNewSplit != nPrevSplit))
+	{
+		#if 0
+		if (pGrp->m_SplitType == RConStartArgs::eSplitVert)
+		{
+			int nNewPos = pt.y - pGrp->mrc_Full.top;
+			int nHeight = pGrp->mrc_Splitter.bottom - pGrp->mrc_Splitter.top;
+			rcNewSplit = MakeRect(pGrp->mrc_Splitter.left, nNewPos, pGrp->mrc_Splitter.right, nNewPos + nHeight);
+		}
+		else
+		{
+			int nNewPos = pt.x - pGrp->mrc_Full.left;
+			int nWidth = pGrp->mrc_Splitter.right - pGrp->mrc_Splitter.left;
+			rcNewSplit = MakeRect(nNewPos, pGrp->mrc_Splitter.top, nNewPos+nWidth, pGrp->mrc_Splitter.bottom);
+		}
+		#endif
+		pGrp->mn_SplitPercent10 = nNewSplit;
+		gpConEmu->OnSize(false);
+	}
+
+
+	if ((uMsg == WM_LBUTTONUP) || !isPressed(VK_LBUTTON))
+	{
+		StopSplitDragging();
+	}
+wrap:
+	return lRc;
+}
+
+void CVConGroup::StopSplitDragging()
+{
+	if (mp_GroupSplitDragging)
+	{
+		bool bChanged = false;
+		CGroupGuard Grp(mp_GroupSplitDragging);
+		if (!IsRectEmpty(&mp_GroupSplitDragging->mrc_DragSplitter))
+		{
+			RECT rcFull = mp_GroupSplitDragging->mrc_Full;
+			RECT rcSplit = mp_GroupSplitDragging->mrc_DragSplitter;
+			int nAllSize = (mp_GroupSplitDragging->m_SplitType == RConStartArgs::eSplitVert)
+				? (rcFull.bottom - rcFull.top - (rcSplit.bottom - rcSplit.top))
+				: (rcFull.right - rcFull.left - (rcSplit.right - rcSplit.left));
+			int nNewPos = (mp_GroupSplitDragging->m_SplitType == RConStartArgs::eSplitVert)
+				? (rcSplit.top - rcFull.top)
+				: (rcSplit.left - rcFull.left);
+			// Need to consider scrollbars and pads?
+			if ((nAllSize > 0) && (nNewPos > 0) && (nNewPos < nAllSize))
+			{
+				UINT nNewSplit = (nNewPos * 1000) / nAllSize;
+				if ((nNewSplit >= 1) && (nNewSplit <= 999) && (nNewSplit != mp_GroupSplitDragging->mn_SplitPercent10))
+				{
+					mp_GroupSplitDragging->mn_SplitPercent10 = nNewSplit;
+					bChanged = true;
+				}
+			}
+
+			SetRectEmpty(&mp_GroupSplitDragging->mrc_DragSplitter);
+		}
+		mp_GroupSplitDragging = NULL;
+		SetCapture(NULL);
+		gpConEmu->OnSize();
+	}
+}
+
+bool CVConGroup::isGroupVisible(CVConGroup* pGrp)
+{
+	if (!pGrp)
+		return false;
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	CVConGroup* p = GetRootOfVCon(gp_VActive);
+	return (p == pGrp->GetRootGroup());
+}
+
+CVConGroup* CVConGroup::FindSplitGroup(POINT ptWork, CVConGroup* pFrom)
+{
+	// gpcs_VGroups must be locked by caller!
+	CVConGroup* pGrp = pFrom ? pFrom : GetRootOfVCon(gp_VActive);
+
+	if (!pGrp || (pGrp->m_SplitType == RConStartArgs::eSplitNone))
+		return NULL;
+
+	if (PtInRect(&pGrp->mrc_Splitter, ptWork))
+		return pGrp;
+
+	if (!PtInRect(&pGrp->mrc_Full, ptWork))
+		return NULL;
+	
+	CVConGroup* pFind;
+	if (pGrp->mp_Grp1 && ((pFind = FindSplitGroup(ptWork, pGrp->mp_Grp1)) != NULL))
+		return pFind;
+	if (pGrp->mp_Grp2 && ((pFind = FindSplitGroup(ptWork, pGrp->mp_Grp2)) != NULL))
+		return pFind;
+
+	return NULL;
 }
 
 void CVConGroup::ShowAllVCon(int nShowCmd)
@@ -2541,7 +2770,7 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 	return lbAllowed;
 }
 
-void CVConGroup::CloseAllButActive(CVirtualConsole* apVCon/*may be null*/)
+void CVConGroup::CloseAllButActive(CVirtualConsole* apVCon/*may be null*/, bool abZombies, bool abNoConfirm)
 {
 	int i;
 	MArray<CVConGuard*> VCons;
@@ -2551,12 +2780,14 @@ void CVConGroup::CloseAllButActive(CVirtualConsole* apVCon/*may be null*/)
 	{
 		if ((gp_VCon[i] == NULL) || (gp_VCon[i] == apVCon))
 			continue;
+		if (abZombies && (gp_VCon[i]->RCon()->GetActivePID() != 0))
+			continue;
 
 		pGuard = new CVConGuard(gp_VCon[i]);
 		VCons.push_back(pGuard);
 	}
 
-	if (CloseQuery(&VCons, NULL, false, true))
+	if (abNoConfirm || CloseQuery(&VCons, NULL, false, true))
 	{
 		gpConEmu->SetScClosePending(true); // Disable confirmation of each console closing
 
@@ -3584,7 +3815,8 @@ bool CVConGroup::ConActivate(int nCon)
 				pVCon->RCon()->LogString(szInfo);
 			}
 
-			if (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight)
+			if (!pVCon->RCon()->isServerClosing()
+				&& (nOldConWidth != nNewConWidth || nOldConHeight != nNewConHeight))
 			{
 				lbSizeOK = pVCon->RCon()->SetConsoleSize(nNewConWidth,nNewConHeight);
 			}
@@ -4003,7 +4235,6 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			if (pGroup && (tWhat != CER_CONSOLE_ALL)
 				&& (tFrom == CER_MAINCLIENT || tFrom == CER_WORKSPACE))
 			{
-				//
 				pGroup->CalcSplitRootRect(rcAll, rc);
 			}
 
@@ -4147,63 +4378,6 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 	return rc;
 }
 
-#if 0
-void CVConGroup::CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2)
-{
-	sz1 = size; sz2 = size;
-
-	RECT rcCon = MakeRect(size.X, size.Y);
-	RECT rcPixels = gpConEmu->CalcRect(CER_DC, rcCon, CER_CONSOLE_CUR, gp_VActive);
-	// в пикселях нужно учитывать разделители и прокрутки
-	_ASSERTE(gpSet->isAlwaysShowScrollbar!=1); // доделать
-	if (m_SplitType == RConStartArgs::eSplitHorz)
-	{
-		if (gpSet->nSplitWidth && (rcPixels.right > (LONG)gpSet->nSplitWidth))
-			rcPixels.right -= gpSet->nSplitWidth;
-	}
-	else
-	{
-		if (gpSet->nSplitHeight && (rcPixels.bottom > (LONG)gpSet->nSplitHeight))
-			rcPixels.bottom -= gpSet->nSplitHeight;
-	}
-
-	RECT rc1 = rcPixels, rc2 = rcPixels, rcSplitter;
-	CalcSplitRect(rcPixels, rc1, rc2, rcSplitter);
-
-	RECT rcCon1 = CVConGroup::CalcRect(CER_CONSOLE_CUR, rc1, CER_BACK, gp_VActive);
-	RECT rcCon2 = CVConGroup::CalcRect(CER_CONSOLE_CUR, rc2, CER_BACK, gp_VActive);
-
-	//int nSplit = max(1,min(mn_SplitPercent10,999));
-
-	//RECT rcScroll = gpConEmu->CalcMargins(CEM_SCROLL);
-
-	if (m_SplitType == RConStartArgs::eSplitHorz)
-	{
-		//if (size.X >= gpSet->nSplitWidth)
-		//	size.X -= gpSet->nSplitWidth;
-
-		//_ASSERTE(rcScroll.left==0);
-		//if (size.X > (UINT)(rcScroll.right * 2))
-		//{
-		//	_ASSERTE(gpSet->isAlwaysShowScrollbar==1); // сюда должны попадать только при включенном постоянно скролле
-		//	size.X -= rcScroll.right * 2;
-		//}
-
-		//sz1.X = max(((size.X+1) * nSplit / 1000),MIN_CON_WIDTH);
-		//sz2.X = max((size.X - sz1.X),MIN_CON_WIDTH);
-		sz1.X = max(rcCon1.right,MIN_CON_WIDTH);
-		sz2.X = max(rcCon2.right,MIN_CON_WIDTH);
-	}
-	else
-	{
-		//sz1.Y = max(((size.Y+1) * nSplit / 1000),MIN_CON_HEIGHT);
-		//sz2.Y = max((size.Y - sz1.Y),MIN_CON_HEIGHT);
-		sz1.Y = max(rcCon1.bottom,MIN_CON_HEIGHT);
-		sz2.Y = max(rcCon2.bottom,MIN_CON_HEIGHT);
-	}
-}
-#endif
-
 void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool abSync)
 {
 	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
@@ -4248,7 +4422,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 
 		RECT rcCon = MakeRect(size.X,size.Y);
 
-		if (VCon.VCon() && VCon->RCon())
+		if (VCon.VCon() && VCon->RCon() && !VCon->RCon()->isServerClosing())
 		{
 			CRealConsole* pRCon = VCon->RCon();
 			COORD CurSize = {(SHORT)pRCon->TextWidth(), (SHORT)pRCon->TextHeight()};
@@ -4276,17 +4450,12 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 	// Do Split
 
 	RECT rcCon1, rcCon2, rcSplitter, rcSize1, rcSize2;
-	CalcSplitRect(rcNewCon, rcCon1, rcCon2, rcSplitter);
+	CalcSplitRect(mn_SplitPercent10, rcNewCon, rcCon1, rcCon2, rcSplitter);
 
 	rcSize1 = CalcRect(CER_CONSOLE_CUR, rcCon1, CER_BACK, VCon1.VCon());
 	rcSize2 = CalcRect(CER_CONSOLE_CUR, rcCon2, CER_BACK, VCon2.VCon());
 
 	COORD sz1 = {rcSize1.right,rcSize1.bottom}, sz2 = {rcSize2.right,rcSize2.bottom};
-
-#if 0
-	COORD sz1 = size, sz2 = size;
-	CalcSplitConSize(size, sz1, sz2);
-#endif
 
 	mp_Grp1->SetConsoleSizes(sz1, rcCon1, abSync);
 	mp_Grp2->SetConsoleSizes(sz2, rcCon2, abSync);

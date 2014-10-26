@@ -57,6 +57,7 @@ protected:
 	void RemoveGroup();
 	RECT mrc_Full;
 	RECT mrc_Splitter;
+	RECT mrc_DragSplitter;
 	bool mb_ResizeFlag; // взводится в true для корня, когда в группе что-то меняется
 	void SetResizeFlags();
 	void* mp_ActiveGroupVConPtr; // указатель (CVirtualConsole*) на последнюю активную консоль в этой группе
@@ -66,7 +67,7 @@ protected:
 	CVConGroup* GetAnotherGroup();
 	void MoveToParent(CVConGroup* apParent);
 	void RepositionVCon(RECT rcNewCon, bool bVisible);
-	void CalcSplitRect(RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter);
+	void CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter);
 	void CalcSplitRootRect(RECT rcAll, RECT& rcCon, CVConGroup* pTarget = NULL);
 	#if 0
 	void CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2);
@@ -81,6 +82,12 @@ protected:
 	bool ReSizeSplitter(int iCells);
 
 	CVConGroup* FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/);
+
+	static CVConGroup* mp_GroupSplitDragging;
+	static LPARAM ReSizeSplitterHelper(LPARAM lParam);
+	static CVConGroup* FindSplitGroup(POINT ptWork, CVConGroup* pFrom);
+	static bool isGroupVisible(CVConGroup* pGrp);
+	static void StopSplitDragging();
 
 private:
 	static CVirtualConsole* CreateVCon(RConStartArgs *args, CVirtualConsole*& ppVConI);
@@ -155,7 +162,7 @@ public:
 	static void OnUpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
 	static bool OnCloseQuery(bool* rbMsgConfirmed = NULL);
 	static bool DoCloseAllVCon(bool bMsgConfirmed = false);
-	static void CloseAllButActive(CVirtualConsole* apVCon/*may be null*/);
+	static void CloseAllButActive(CVirtualConsole* apVCon/*may be null*/, bool abZombies, bool abNoConfirm);
 	static void CloseGroup(CVirtualConsole* apVCon/*may be null*/, bool abKillActiveProcess = false);
 	static void OnDestroyConEmu();
 	static void OnVConClosed(CVirtualConsole* apVCon);
@@ -204,6 +211,9 @@ public:
 	static void OnConsoleResize(bool abSizingToDo);
 	static void ReSizePanes(RECT mainClient);
 	static bool ReSizeSplitter(CVirtualConsole* apVCon, int iHorz = 0, int iVert = 0);
+
+	static LRESULT OnMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static RConStartArgs::SplitType isSplitterDragging();
 
 	static void NotifyChildrenWindows();
 
