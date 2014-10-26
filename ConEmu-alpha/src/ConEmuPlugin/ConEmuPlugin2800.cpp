@@ -101,10 +101,13 @@ GUID guid_ConEmuMenu = { /* 2dc6b821-fd8e-4165-adcf-a4eda7b44e8e */
 struct PluginStartupInfo *InfoW2800=NULL;
 struct FarStandardFunctions *FSFW2800=NULL;
 
+static MArray<WindowInfo>* pwList = NULL;
+
 /* EXPORTS BEGIN */
 void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 {
-	_ASSERTE(Info->StructSize >= sizeof(GlobalInfo));
+	_ASSERTE(Info->StructSize >= (size_t)((LPBYTE)(&Info->Instance) - (LPBYTE)(Info)));
+
 	if (gFarVersion.dwBuild >= 2800)
 		Info->MinFarVersion = FARMANAGERVERSION;
 	else
@@ -523,8 +526,10 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 	_ASSERTE(bActiveInfo && (WActive.Flags & WIF_CURRENT));
 	static WindowInfo WLastActive;
 
+	if (!pwList)
+		pwList = new MArray<WindowInfo>();
+
 	// Another weird Far API breaking change. How more?..
-	static MArray<WindowInfo> wList;
 	MArray<WindowInfo> wCurrent;
 	// Load window list
 	for (int i = 0; i < windowCount; i++)
@@ -550,14 +555,14 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 		}
 	}
 	// Clear closed windows
-	for (INT_PTR i = 0; i < wList.size();)
+	for (INT_PTR i = 0; i < pwList->size();)
 	{
-		const WindowInfo& L = wList[i];
+		const WindowInfo& L = (*pwList)[i];
 
 		INT_PTR iFound = WExists(L, wCurrent);
 
 		if (iFound < 0)
-			wList.erase(i);
+			pwList->erase(i);
 		else
 			i++;
 	}
@@ -566,29 +571,29 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 	{
 		const WindowInfo& C = wCurrent[i];
 
-		INT_PTR iFound = WExists(C, wList);
+		INT_PTR iFound = WExists(C, *pwList);
 
 		if (iFound >= 0)
 		{
-			wList[iFound] = C;
+			(*pwList)[iFound] = C;
 		}
 		else
 		{
 			if (C.Type == WTYPE_PANELS)
 			{
-				if ((wList.size() > 0) && (wList[0].Type == WTYPE_PANELS))
-					wList[0] = C;
+				if ((pwList->size() > 0) && ((*pwList)[0].Type == WTYPE_PANELS))
+					(*pwList)[0] = C;
 				else
-					wList.insert(0, C);
+					pwList->insert(0, C);
 			}
 			else
 			{
-				wList.push_back(C);
+				pwList->push_back(C);
 			}
 		}
 	}
 	// And check the count
-	windowCount = wList.size();
+	windowCount = pwList->size();
 
 	// Проверить, есть ли активный редактор/вьювер/панель
 	if (bActiveInfo && (WActive.Type == WTYPE_EDITOR || WActive.Type == WTYPE_VIEWER || WActive.Type == WTYPE_PANELS))
@@ -605,7 +610,7 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 		// т.е. предпочитаем тот таб, который был активен ранее
 		for (int i = 0; i < windowCount; i++)
 		{
-			WInfo = wList[i];
+			WInfo = (*pwList)[i];
 			_ASSERTE(WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS);
 
 			if (!nTabs)
@@ -641,7 +646,7 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 
 	for (int i = 0; i < windowCount; i++)
 	{
-		WInfo = wList[i];
+		WInfo = (*pwList)[i];
 
 		if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER || WInfo.Type == WTYPE_PANELS)
 		{
@@ -676,49 +681,26 @@ bool CPluginW2800::UpdateConEmuTabsApi(int windowCount)
 
 	bool bHasPanels = this->CheckPanelExist();
 
-	// Скорее всего это модальный редактор (или вьювер?)
 	if (!lbActiveFound)
 	{
-		// Порядок инициализации поменялся, редактора сначала вообще "нет".
-		_ASSERTE((!bHasPanels && windowCount==1 && WInfo.Type == WTYPE_DESKTOP) && "Active window must be detected already!");
+		// Порядок инициализации поменялся, при запуске "far /e ..." редактора сначала вообще "нет".
+		_ASSERTE((!bHasPanels && windowCount==0 && bActiveInfo && WActive.Type == WTYPE_DESKTOP) && "Active window must be detected already!");
 
-		WInfo.Pos = -1;
-
-		_ASSERTE(GetCurrentThreadId() == gnMainThreadId);
-		if (InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo))
-		{
-			// Проверить, чего там...
-			_ASSERTE((WInfo.Flags & WIF_MODAL) == 0);
-
-			if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
-			{
-				WInfo.Pos = -1;
-				WInfo.Name = szWNameBuffer;
-				WInfo.NameSize = CONEMUTABMAX;
-				InfoW2800->AdvControl(&guid_ConEmu, ACTL_GETWINDOWINFO, 0, &WInfo);
-
-				if (WInfo.Type == WTYPE_EDITOR || WInfo.Type == WTYPE_VIEWER)
-				{
-					tabCount = 0;
-					TODO("Определение ИД Редактора/вьювера");
-					lbCh |= AddTab(tabCount, WInfo.Pos, false/*losingFocus*/, false/*editorSave*/,
-					               WInfo.Type, WInfo.Name, /*editorSave ? ei.FileName :*/ NULL,
-					               (WInfo.Flags & WIF_CURRENT), (WInfo.Flags & WIF_MODIFIED), 1/*Modal*/,
-								   0);
-				}
-			}
-			else if (WInfo.Type == WTYPE_PANELS)
-			{
-				gpTabs->Tabs.CurrentType = gnCurrentWindowType = WInfo.Type;
-			}
-		}
-
-		if ((tabCount == 0) && !bHasPanels)
+		if (tabCount == 0)
 		{
 			// Добавить в табы хоть что-то
-			lbCh |= AddTab(tabCount, WInfo.Pos, false/*losingFocus*/, false/*editorSave*/,
+			lbCh |= AddTab(tabCount, 0, false/*losingFocus*/, false/*editorSave*/,
 					               WTYPE_PANELS, L"far", /*editorSave ? ei.FileName :*/ NULL,
 					               1/*Current*/, 0/*Modified*/, 1/*Modal*/, 0);
+		}
+
+		if (tabCount > 0)
+		{
+			gpTabs->Tabs.CurrentType = gnCurrentWindowType = gpTabs->Tabs.tabs[tabCount-1].Type;
+		}
+		else
+		{
+			_ASSERTE(tabCount>0);
 		}
 	}
 
@@ -1336,6 +1318,17 @@ HANDLE CPluginW2800::Open(const void* apInfo)
 					Item = (INT_PTR)p->Values[0].String; break;
 				default:
 					_ASSERTE(p->Values[0].Type==FMVT_INTEGER || p->Values[0].Type==FMVT_STRING);
+				}
+
+				if (Item == CE_CALLPLUGIN_REQ_DIRS)
+				{
+					if (p->Count == 3)
+					{
+						LPCWSTR pszActive = (p->Values[1].Type == FMVT_STRING) ? p->Values[1].String : NULL;
+						LPCWSTR pszPassive = (p->Values[2].Type == FMVT_STRING) ? p->Values[2].String : NULL;
+						StorePanelDirs(pszActive, pszPassive);
+					}
+					return PANEL_NONE;
 				}
 			}
 		}

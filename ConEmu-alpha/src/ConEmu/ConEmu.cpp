@@ -115,6 +115,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRFOCUS(s) //DEBUGSTR(s)
 #define DEBUGSTRSESS(s) DEBUGSTR(s)
 #define DEBUGSTRDPI(s) DEBUGSTR(s)
+#define DEBUGSTRNOLOG(s) DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -770,6 +771,7 @@ void CConEmuMain::RegisterMessages()
 	mn_MsgActivateVCon = RegisterMessage("ActivateVCon");
 	mn_MsgPostScClose = RegisterMessage("ScClose");
 	mn_MsgOurSysCommand = RegisterMessage("UM_SYSCOMMAND");
+	mn_MsgCallMainThread = RegisterMessage("CallMainThread");
 }
 
 bool CConEmuMain::isMingwMode()
@@ -1626,7 +1628,15 @@ bool CConEmuMain::CreateLog()
 void CConEmuMain::LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/)
 {
 	if (!this || !mp_Log)
+	{
+		#ifdef _DEBUG
+		if (asInfo && *asInfo)
+		{
+			DEBUGSTRNOLOG(asInfo);
+		}
+		#endif
 		return;
+	}
 
 	mp_Log->LogString(asInfo, abWriteTime, NULL, abWriteLine);
 }
@@ -11515,6 +11525,13 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	}
 #endif
 
+	RConStartArgs::SplitType split = CVConGroup::isSplitterDragging();
+	if (split)
+	{
+		SetCursor((split == RConStartArgs::eSplitVert) ? mh_SplitV : mh_SplitH);
+		return TRUE;
+	}
+
 	POINT ptCur; GetCursorPos(&ptCur);
 	// Если сейчас идет trackPopupMenu - то на выход
 	CVirtualConsole* pVCon = isMenuActive() ? NULL : GetVConFromPoint(ptCur);
@@ -12875,6 +12892,14 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		} // WM_PAINT
 		break;
 
+	case WM_SETCURSOR:
+	case WM_MOUSEMOVE:
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+		result = CVConGroup::OnMouseEvent(hWnd, uMsg, wParam, lParam);
+		break;
+
 #ifdef _DEBUG
 	case WM_MOVE:
 		break;
@@ -12914,6 +12939,18 @@ UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal)
 		}
 	}
 	return RegisterMessage(asLocal, asGlobal);
+}
+
+LRESULT CConEmuMain::CallMainThread(bool bSync, CallMainThreadFn fn, LPARAM lParam)
+{
+	LRESULT lRc;
+	if (isMainThread() && bSync)
+		lRc = fn(lParam);
+	else if (!bSync)
+		lRc = PostMessage(ghWnd, mn_MsgCallMainThread, (WPARAM)fn, lParam);
+	else
+		lRc = SendMessage(ghWnd, mn_MsgCallMainThread, (WPARAM)fn, lParam);
+	return lRc;
 }
 
 // Speed up selection modifier checks
@@ -13736,6 +13773,11 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				this->mp_Menu->OnSysCommand(hWnd, wParam, lParam, messg);
 				return 0;
+			}
+			else if (messg == this->mn_MsgCallMainThread)
+			{
+				CallMainThreadFn fn = (CallMainThreadFn)wParam;
+				return fn ? fn(lParam) : -1;
 			}
 
 			//else if (messg == this->mn_MsgCmdStarted || messg == this->mn_MsgCmdStopped) {
