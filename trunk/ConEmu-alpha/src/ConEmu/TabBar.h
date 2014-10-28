@@ -95,7 +95,6 @@ class CTabBarClass
 		//RECT m_Margins;
 		//bool _titleShouldChange;
 		void SelectTab(int i);
-		void UpdateToolbarPos();
 		int PrepareTab(CTab& pTab, CVirtualConsole *apVCon);
 		ConEmuTab m_Tab4Tip;
 		WCHAR  ms_TmpTabText[MAX_PATH];
@@ -153,6 +152,7 @@ class CTabBarClass
 		virtual ~CTabBarClass();
 
 		void Activate(BOOL abPreSyncConsole=FALSE);
+		HWND ActivateSearchPane(bool bActivate);
 		int  ActiveTabByName(int anType, LPCWSTR asName, CVirtualConsole** ppVCon);
 		int  ActivateTabByPoint(LPPOINT pptCur, bool bScreen = true, bool bOverTabHitTest = true);
 		void CheckRebarCreated();
@@ -168,6 +168,7 @@ class CTabBarClass
 		void Invalidate();
 		bool IsTabsActive();
 		bool IsTabsShown();
+		bool IsSearchShown(bool bFilled);
 		void OnAlternative(BOOL abAlternative);
 		void OnBufferHeight(BOOL abBufferHeight);
 		void OnCaptionHidden();

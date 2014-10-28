@@ -454,6 +454,13 @@ bool CTabBarClass::IsTabsShown()
 	return _active && mp_Rebar->IsTabbarCreated() && _visible;
 }
 
+bool CTabBarClass::IsSearchShown(bool bFilled)
+{
+	if (!this || !_active || !_visible || !mp_Rebar)
+		return false;
+	return mp_Rebar->IsSearchShownInt(bFilled);
+}
+
 void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 {
 	CheckRebarCreated();
@@ -466,6 +473,13 @@ void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	}
 	gpConEmu->OnTabbarActivated(true);
 	UpdatePosition();
+}
+
+HWND CTabBarClass::ActivateSearchPane(bool bActivate)
+{
+	if (!IsSearchShown(false))
+		return NULL;
+	return mp_Rebar->ActivateSearchPaneInt(bActivate);
 }
 
 void CTabBarClass::Recreate()
@@ -1306,10 +1320,8 @@ void CTabBarClass::OnAlternative(BOOL abAlternative)
 
 void CTabBarClass::OnShowButtonsChanged()
 {
-	if (gpSet->isMultiShowButtons)
-	{
-		mp_Rebar->ShowToolbar(true);
-	}
+	mp_Rebar->ShowToolsPane(gpSet->isMultiShowButtons);
+	mp_Rebar->ShowSearchPane(gpSet->isMultiShowSearch);
 
 	Reposition();
 }

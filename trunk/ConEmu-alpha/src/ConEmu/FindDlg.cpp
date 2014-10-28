@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
+#include "TabBar.h"
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
@@ -72,10 +73,16 @@ void CEFindDlg::FindTextDialog()
 		return;
 	}
 
+	if (gpConEmu->mp_TabBar && gpConEmu->mp_TabBar->ActivateSearchPane(true))
+	{
+		// Контрол поиска встроен и показан в панели инструментов
+		return;
+	}
+
 	gpConEmu->SkipOneAppsRelease(true);
 
 	if (!mp_DpiAware)
-			mp_DpiAware = new CDpiForDialog();
+		mp_DpiAware = new CDpiForDialog();
 
 	// (CreateDialog)
 	mh_FindDlg = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_FIND), ghWnd, findTextProc, 0/*Param*/);
