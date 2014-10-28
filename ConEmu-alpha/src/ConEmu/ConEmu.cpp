@@ -7515,6 +7515,26 @@ void CConEmuMain::CheckAllowAutoChildFocus(DWORD nDeactivatedTID)
 	mb_AllowAutoChildFocus = bAllowAutoChildFocus;
 }
 
+bool CConEmuMain::IsChildFocusAllowed(HWND hChild)
+{
+	DWORD dwStyle = GetWindowLong(hChild, GWL_STYLE);
+
+	if ((dwStyle & (WS_POPUP|WS_OVERLAPPEDWINDOW|WS_DLGFRAME)) != 0)
+		return true; // Это диалог, не трогаем
+
+	if (dwStyle & WS_CHILD)
+	{
+		wchar_t szClass[200] = L"";
+		if (GetClassName(hChild, szClass, countof(szClass)))
+		{
+			if (lstrcmp(szClass, L"EDIT") == 0)
+				return true; // Контрол поиска, и пр.
+		}
+	}
+
+	return false;
+}
+
 LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom /*= NULL*/, BOOL abForceChild /*= FALSE*/)
 {
 	// Чтобы избежать лишних вызовов по CtrlWinAltSpace при работе с GUI приложением
@@ -7796,15 +7816,12 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		while ((hParent = GetParent(hNewFocus)) != NULL)
 		{
+			if (IsChildFocusAllowed(hNewFocus))
+				break; // не трогаем
 			if (hParent == hGuiWnd)
 				break;
 			else if (hParent == ghWnd)
 			{
-				DWORD dwStyle = GetWindowLong(hNewFocus, GWL_STYLE);
-
-				if ((dwStyle & (WS_POPUP|WS_OVERLAPPEDWINDOW|WS_DLGFRAME)) != 0)
-					break; // Это диалог, не трогаем
-
 				setFocus();
 				hNewFocus = GetFocus();
 
@@ -7822,6 +7839,14 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 
 			hNewFocus = hParent;
+		}
+	}
+
+	if (lbSetFocus && !hNewFocus && pVCon && mp_TabBar)
+	{
+		if (mp_TabBar->IsSearchShown(true))
+		{
+			hNewFocus = mp_TabBar->ActivateSearchPane(true);
 		}
 	}
 
@@ -12959,6 +12984,81 @@ void CConEmuMain::PreWndProc(UINT messg)
 	m_Pressed.bChecked = FALSE;
 }
 
+LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 0;
+	LogString(L"Activation by mouse");
+
+	// просто так фокус в дочернее окно ставить нельзя
+	// если переключать фокус в дочернее приложение по любому чиху
+	// вообще не получается активировать окно ConEmu, открыть системное меню,
+	// клацнуть по крестику в заголовке и т.п.
+	if (wParam && lParam && gpSet->isFocusInChildWindows)
+	{
+		CheckAllowAutoChildFocus((DWORD)lParam);
+	}
+
+	//return MA_ACTIVATEANDEAT; -- ест все подряд, а LBUTTONUP пропускает :(
+	this->mouse.nSkipEvents[0] = 0;
+	this->mouse.nSkipEvents[1] = 0;
+
+	bool bSkipActivation = false;
+
+	if (mp_TabBar && mp_TabBar->IsSearchShown(true))
+	{
+		RECT rcWork = CalcRect(CER_WORKSPACE);
+		POINT ptCur = {}; GetCursorPos(&ptCur);
+		MapWindowPoints(NULL, ghWnd, &ptCur, 1);
+		if (PtInRect(&rcWork, ptCur))
+		{
+			bSkipActivation = true;
+			mp_TabBar->ActivateSearchPane(false);
+		}
+	}
+
+	if (this->mouse.bForceSkipActivation  // принудительная активация окна, лежащего на Desktop
+		|| bSkipActivation
+		|| (gpSet->isMouseSkipActivation
+			&& (LOWORD(lParam) == HTCLIENT)
+			&& !isMeForeground(false,false))
+		)
+	{
+		this->mouse.bForceSkipActivation = FALSE; // Однократно
+		POINT ptMouse = {0}; GetCursorPos(&ptMouse);
+		//RECT  rcDC = {0}; GetWindowRect('ghWnd DC', &rcDC);
+		//if (PtInRect(&rcDC, ptMouse))
+		CVirtualConsole* pVCon = GetVConFromPoint(ptMouse);
+		if (pVCon)
+		{
+			if (HIWORD(lParam) == WM_LBUTTONDOWN)
+			{
+				this->mouse.nSkipEvents[0] = WM_LBUTTONDOWN;
+				this->mouse.nSkipEvents[1] = WM_LBUTTONUP;
+				this->mouse.nReplaceDblClk = WM_LBUTTONDBLCLK;
+			}
+			else if (HIWORD(lParam) == WM_RBUTTONDOWN)
+			{
+				this->mouse.nSkipEvents[0] = WM_RBUTTONDOWN;
+				this->mouse.nSkipEvents[1] = WM_RBUTTONUP;
+				this->mouse.nReplaceDblClk = WM_RBUTTONDBLCLK;
+			}
+			else if (HIWORD(lParam) == WM_MBUTTONDOWN)
+			{
+				this->mouse.nSkipEvents[0] = WM_MBUTTONDOWN;
+				this->mouse.nSkipEvents[1] = WM_MBUTTONUP;
+				this->mouse.nReplaceDblClk = WM_MBUTTONDBLCLK;
+			}
+		}
+	}
+
+	if (this->mp_Inside)
+	{
+		apiSetForegroundWindow(ghWnd);
+	}
+
+	return result;
+}
+
 // Window procedure for ghWnd
 // BUT! It may be called from child windows, e.g. for keyboard processing
 LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -13279,57 +13379,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = DefWindowProc(hWnd, messg, wParam, lParam); //-V519
 			break;
 		case WM_MOUSEACTIVATE:
-			LogString(L"Activation by mouse");
-			// просто так фокус в дочернее окно ставить нельзя
-			// если переключать фокус в дочернее приложение по любому чиху
-			// вообще не получается активировать окно ConEmu, открыть системное меню,
-			// клацнуть по крестику в заголовке и т.п.
-			if (wParam && lParam && gpSet->isFocusInChildWindows)
-			{
-				CheckAllowAutoChildFocus((DWORD)lParam);
-			}
-
-			//return MA_ACTIVATEANDEAT; -- ест все подряд, а LBUTTONUP пропускает :(
-			this->mouse.nSkipEvents[0] = 0;
-			this->mouse.nSkipEvents[1] = 0;
-
-			if (this->mouse.bForceSkipActivation  // принудительная активация окна, лежащего на Desktop
-					|| (gpSet->isMouseSkipActivation && LOWORD(lParam) == HTCLIENT
-					&& !isMeForeground(false,false)))
-			{
-				this->mouse.bForceSkipActivation = FALSE; // Однократно
-				POINT ptMouse = {0}; GetCursorPos(&ptMouse);
-				//RECT  rcDC = {0}; GetWindowRect('ghWnd DC', &rcDC);
-				//if (PtInRect(&rcDC, ptMouse))
-				CVirtualConsole* pVCon = GetVConFromPoint(ptMouse);
-				if (pVCon)
-				{
-					if (HIWORD(lParam) == WM_LBUTTONDOWN)
-					{
-						this->mouse.nSkipEvents[0] = WM_LBUTTONDOWN;
-						this->mouse.nSkipEvents[1] = WM_LBUTTONUP;
-						this->mouse.nReplaceDblClk = WM_LBUTTONDBLCLK;
-					}
-					else if (HIWORD(lParam) == WM_RBUTTONDOWN)
-					{
-						this->mouse.nSkipEvents[0] = WM_RBUTTONDOWN;
-						this->mouse.nSkipEvents[1] = WM_RBUTTONUP;
-						this->mouse.nReplaceDblClk = WM_RBUTTONDBLCLK;
-					}
-					else if (HIWORD(lParam) == WM_MBUTTONDOWN)
-					{
-						this->mouse.nSkipEvents[0] = WM_MBUTTONDOWN;
-						this->mouse.nSkipEvents[1] = WM_MBUTTONUP;
-						this->mouse.nReplaceDblClk = WM_MBUTTONDBLCLK;
-					}
-				}
-			}
-
-			if (this->mp_Inside)
-			{
-				apiSetForegroundWindow(ghWnd);
-			}
-
+			result = this->OnActivateByMouse(hWnd, messg, wParam, lParam);
 			result = DefWindowProc(hWnd, messg, wParam, lParam);
 			break;
 

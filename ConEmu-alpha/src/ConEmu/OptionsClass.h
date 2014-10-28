@@ -390,11 +390,11 @@ class CSettings
 		LRESULT OnInitDialog_Taskbar(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Cursor(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Startup(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Ext(HWND hWnd2);
+		LRESULT OnInitDialog_Ext(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Comspec(HWND hWnd2, bool abInitial);
 		//LRESULT OnInitDialog_Output(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_MarkCopy(HWND hWnd2);
-		LRESULT OnInitDialog_Paste(HWND hWnd2);
+		LRESULT OnInitDialog_MarkCopy(HWND hWnd2, bool abInitial);
+		LRESULT OnInitDialog_Paste(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Hilight(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Far(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_FarMacro(HWND hWnd2, bool abInitial);
@@ -419,6 +419,8 @@ class CSettings
 		bool mb_IgnoreCmdGroupEdit, mb_IgnoreCmdGroupList;
 		//LRESULT OnButtonClicked_Apps(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		//UINT mn_AppsEnableControlsMsg;
+		WNDPROC mf_MarkCopyPreviewProc;
+		static LRESULT CALLBACK MarkCopyPreviewProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		INT_PTR pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		static INT_PTR CALLBACK pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		INT_PTR pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM wParam, LPARAM lParam);

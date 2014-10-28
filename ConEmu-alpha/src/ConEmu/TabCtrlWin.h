@@ -29,11 +29,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 class CToolImg;
+class CFindPanel;
 
 class CTabPanelWin : public CTabPanelBase
 {
 private:
 	HWND mh_Tabbar, mh_Toolbar, mh_Rebar;
+	CFindPanel* mp_Find;
 	bool mb_ChangeAllowed;
 	int  mn_LastToolbarWidth;
 	int  mn_ThemeHeightDiff;
@@ -47,11 +49,13 @@ public:
 	virtual ~CTabPanelWin();
 
 public:
+	virtual HWND ActivateSearchPaneInt(bool bActivate) override;
 	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) override;
 	virtual void CreateRebar() override;
 	virtual void DestroyRebar() override;
 	virtual void DeleteItemInt(int I) override;
 	virtual bool IsCreated() override;
+	virtual bool IsSearchShownInt(bool bFilled) override;
 	virtual bool IsTabbarCreated() override;
 	virtual bool IsTabbarNotify(LPNMHDR nmhdr) override;
 	virtual bool IsToolbarCreated() override;
@@ -78,7 +82,9 @@ public:
 	virtual void SetTabbarFont(HFONT hFont) override;
 	virtual void SetToolBtnChecked(ToolbarCommandIdx iCmd, bool bChecked) override;
 	virtual void ShowBar(bool bShow) override;
-	virtual void ShowToolbar(bool bShow) override;
+	virtual void ShowSearchPane(bool bShow) override;
+	virtual void ShowTabsPane(bool bShow) override;
+	virtual void ShowToolsPane(bool bShow) override;
 private:
 	static LRESULT CALLBACK _TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT TabProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, WNDPROC defaultProc);
@@ -95,4 +101,5 @@ private:
 	HWND CreateToolbar();
 	void UpdateToolbarPos();
 	LRESULT TabHitTest(bool abForce = false, int* pnOverTabHit = NULL);
+	RECT GetRect();
 };

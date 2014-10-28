@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "ConEmu.h"
+#include "FindPanel.h"
 #include "VirtualConsole.h"
 #include "ToolImg.h"
 #include "TrayIcon.h"
@@ -60,10 +61,22 @@ static MMap<HWND,TabPanelWinMap>* gp_TabPanelWinMap = NULL;
 
 typedef BOOL (WINAPI* FAppThemed)();
 
+enum ReBarIndex
+{
+	rbi_TabBar  = 1,
+	rbi_ToolBar = 2,
+	rbi_FindBar = 3,
+};
+
+// не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+#define REBARBANDINFO_SIZE 80
+
+// methods
 CTabPanelWin::CTabPanelWin(CTabBarClass* ap_Owner)
 	: CTabPanelBase(ap_Owner)
 {
 	mh_Toolbar = NULL; mh_Tabbar = NULL; mh_Rebar = NULL;
+	mp_Find = NULL;
 	mb_ChangeAllowed = false;
 	mn_LastToolbarWidth = 0;
 	mn_ThemeHeightDiff = 0;
@@ -304,7 +317,21 @@ LRESULT CTabPanelWin::ToolProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 /* !!!Virtual!!! */
 
-void CTabPanelWin::CreateRebar()
+bool CTabPanelWin::IsSearchShownInt(bool bFilled)
+{
+	if (!mp_Find || !gpSet->isMultiShowSearch)
+		return false;
+	return mp_Find->IsAvailable(bFilled);
+}
+
+HWND CTabPanelWin::ActivateSearchPaneInt(bool bActivate)
+{
+	if (!IsSearchShownInt(false))
+		return NULL;
+	return mp_Find->Activate(bActivate);
+}
+
+RECT CTabPanelWin::GetRect()
 {
 	RECT rcWnd = {-32000, -32000, -32000+300, -32000+100};
 	if (ghWnd)
@@ -315,20 +342,35 @@ void CTabPanelWin::CreateRebar()
 	{
 		_ASSERTE(ghWnd!=NULL); // вроде ReBar для теста не создается.
 	}
+	return rcWnd;
+}
+
+void CTabPanelWin::CreateRebar()
+{
+	RECT rcWnd = GetRect();
 
 	gpSetCls->CheckTheming();
 
-	if (NULL == (mh_Rebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
+	if ((mh_Rebar != NULL) && IsWindow(mh_Rebar))
+	{
+		_ASSERTE((mh_Rebar==NULL) && "Rebar was already created!");
+		return;
+	}
+
+	mh_Rebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
 								(ghWnd ? (WS_VISIBLE | WS_CHILD) : 0)
 								|WS_CLIPSIBLINGS|WS_CLIPCHILDREN
 								|/*CCS_NORESIZE|*/CCS_NOPARENTALIGN
 								|RBS_FIXEDORDER|RBS_AUTOSIZE|/*RBS_VARHEIGHT|*/CCS_NODIVIDER,
-								0,0,rcWnd.right,16, ghWnd, NULL, g_hInstance, NULL)))
+								0,0,rcWnd.right,16, ghWnd, NULL, g_hInstance, NULL);
+	if (mh_Rebar == NULL)
+	{
 		return;
+	}
 
-#if !defined(__GNUC__)
-#pragma warning (disable : 4312)
-#endif
+	#if !defined(__GNUC__)
+	#pragma warning (disable : 4312)
+	#endif
 	// Надо
 	TabPanelWinMap map = {this}; //{ CTabPanelWin* object; HWND hWnd; WNDPROC defaultProc; };
 	map.defaultProc = (WNDPROC)SetWindowLongPtr(mh_Rebar, GWLP_WNDPROC, (LONG_PTR)_ReBarProc);
@@ -337,7 +379,6 @@ void CTabPanelWin::CreateRebar()
 
 
 	REBARINFO     rbi = {sizeof(REBARINFO)};
-	REBARBANDINFO rbBand = {80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
 
 	if (!SendMessage(mh_Rebar, RB_SETBARINFO, 0, (LPARAM)&rbi))
 	{
@@ -347,80 +388,30 @@ void CTabPanelWin::CreateRebar()
 		return;
 	}
 
-	rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE | RBBIM_COLORS;
-	rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
-	rbBand.clrBack = GetSysColor(COLOR_BTNFACE);
-	rbBand.clrFore = GetSysColor(COLOR_BTNTEXT);
-	SendMessage(mh_Rebar, RB_SETBKCOLOR, 0, GetSysColor(COLOR_BTNFACE));
+	COLORREF clrBack = GetSysColor(COLOR_BTNFACE);
+	SendMessage(mh_Rebar, RB_SETBKCOLOR, 0, clrBack);
 	SendMessage(mh_Rebar, RB_SETWINDOWTHEME, 0, (LPARAM)L" ");
-	CreateTabbar();
-	CreateToolbar();
-	SIZE sz = {0,0};
 
-	if (mh_Toolbar)
-	{
-		SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-	}
-	else
-	{
-		RECT rcClient = gpConEmu->GetGuiClientRect();
-		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
-		sz.cy = rcClient.top - 3 - mn_ThemeHeightDiff;
-	}
+	// Пока табы есть всегда
+	ShowTabsPane(true);
 
-	if (mh_Tabbar)
-	{
-		// Set values unique to the band with the toolbar.
-		rbBand.wID          = 1;
-		rbBand.hwndChild  = mh_Tabbar;
-		rbBand.cxMinChild = 100;
-		rbBand.cx = rbBand.cxIdeal = rcWnd.right - sz.cx - 80;
-		rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = mn_TabHeight; // sz.cy;
+	if (gpSet->isMultiShowButtons)
+		ShowToolsPane(true);
 
-		if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
-		{
-			DisplayLastError(_T("Can't initialize rebar (tabbar)"));
-		}
-	}
+	if (gpSet->isMultiShowSearch)
+		ShowSearchPane(true);
 
-	if (mh_Toolbar)
-	{
-		// Set values unique to the band with the toolbar.
-		rbBand.wID        = 2;
-		rbBand.hwndChild  = mh_Toolbar;
-		rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
-		rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = sz.cy + mn_ThemeHeightDiff;
+	RepositionInt();
 
-		// Add the band that has the toolbar.
-		if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
-		{
-			DisplayLastError(_T("Can't initialize rebar (toolbar)"));
-		}
-
-		//if (mn_ThemeHeightDiff) {
-		//	POINT pt = {0,0};
-		//	MapWindowPoints(mh_Toolbar, mh_Rebar, &pt, 1);
-		//	pt.y = 0;
-		//	SetWindowPos(mh_Toolbar, NULL, pt.x, pt.y, 0, 0, SWP_NOSIZE|SWP_NOZORDER);
-		//}
-	}
-
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	RECT rc;
 	GetWindowRect(mh_Rebar, &rc);
-#endif
-	//GetWindowRect(mh_Rebar, &rc);
-	//mn_TabHeight = rc.bottom - rc.top;
-	//if (gpSet->nTabsLocation == 1)
-	//	m_Margins = MakeRect(0,0,0,mn_TabHeight);
-	//else
-	//	m_Margins = MakeRect(0,mn_TabHeight,0,0);
-	//gpSet->UpdateMargins(m_Margins);
-	//_hwndTab = mh_Rebar; // пока...
+	#endif
 }
 
 void CTabPanelWin::DestroyRebar()
 {
+	SafeDelete(mp_Find);
 	HWND* pWnd[] = {&mh_Toolbar, &mh_Tabbar, &mh_Rebar};
 	for (INT_PTR i = 0; i < countof(pWnd); i++)
 	{
@@ -435,15 +426,10 @@ HWND CTabPanelWin::CreateTabbar()
 	gpSetCls->CheckTheming();
 
 	if (!mh_Rebar)
-		return NULL; // Табы создаются только как Band в ReBar
+		return NULL; // создаётся только как Band в ReBar
 
 	if (mh_Tabbar)
 		return mh_Tabbar; // Уже создали
-
-	//if (!m_TabIcons.IsInitialized())
-	//{
-	//	InitIconList();
-	//}
 
 	// Важно проверку делать после создания главного окна, иначе IsAppThemed будет возвращать FALSE
 	BOOL bAppThemed = FALSE, bThemeActive = FALSE;
@@ -466,9 +452,6 @@ HWND CTabPanelWin::CreateTabbar()
 	if (!bAppThemed || !bThemeActive)
 		mn_ThemeHeightDiff = 2;
 
-	/*mh_TabbarP = CreateWindow(_T("VirtualConsoleClassBar"), _T(""),
-	        WS_VISIBLE|WS_CHILD, 0,0,340,22, ghWnd, 0, 0, 0);
-	if (!mh_TabbarP) return NULL;*/
 	RECT rcClient = {-32000, -32000, -32000+300, -32000+100};
 	if (ghWnd)
 	{
@@ -479,8 +462,7 @@ HWND CTabPanelWin::CreateTabbar()
 		_ASSERTE(ghWnd!=NULL && "ConEmu main window must be created already!");
 	}
 
-	DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE|WS_CHILD/*|TCS_BUTTONS*//*|TCS_TOOLTIPS*/;
-			//|((gpSet->nTabsLocation == 1) ? TCS_BOTTOM : 0);
+	DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE|WS_CHILD;
 
 	mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0,
 	                         rcClient.right, 0, mh_Rebar, NULL, g_hInstance, NULL);
@@ -490,10 +472,6 @@ HWND CTabPanelWin::CreateTabbar()
 		return NULL;
 	}
 
-
-	//#if !defined(__GNUC__)
-	//#pragma warning (disable : 4312)
-	//#endif
 
 	// Надо
 	TabPanelWinMap map = {this}; //{ CTabPanelWin* object; HWND hWnd; WNDPROC defaultProc; };
@@ -509,9 +487,6 @@ HWND CTabPanelWin::CreateTabbar()
 	TabCtrl_SetToolTips(mh_Tabbar, mh_TabTip);
 
 	UpdateTabFontInt();
-	//HFONT hFont = CreateFont(gpSet->nTabFontHeight, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, gpSet->nTabFontCharSet, OUT_DEFAULT_PRECIS,
-	//                         CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, gpSet->sTabFontFace);
-	//SendMessage(mh_Tabbar, WM_SETFONT, WPARAM(hFont), TRUE);
 
 	if (!mh_Balloon || !IsWindow(mh_Balloon))
 	{
@@ -519,8 +494,8 @@ HWND CTabPanelWin::CreateTabbar()
 	}
 
 	// Добавляет закладку, или меняет (при необходимости) заголовок существующей
-	//AddTab(gpConEmu->isFar() ? gpSet->szTabPanels : gpSet->pszTabConsole, 0);
 	AddTabInt(gpConEmu->GetDefaultTabLabel(), 0, gpConEmu->mb_IsUacAdmin, -1);
+
 	// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
 	rcClient = MakeRect(600, 400);
 	QueryTabbarHeight();
@@ -532,7 +507,7 @@ HWND CTabPanelWin::CreateToolbar()
 	gpSetCls->CheckTheming();
 
 	if (!mh_Rebar || !gpSet->isMultiShowButtons)
-		return NULL; // нет табов - нет и тулбара
+		return NULL; // создаётся только как Band в ReBar
 
 	if (mh_Toolbar)
 		return mh_Toolbar; // Уже создали
@@ -873,21 +848,10 @@ void CTabPanelWin::ShowBar(bool bShow)
 	{
 		if (!IsWindowVisible(mh_Rebar))
 			apiShowWindow(mh_Rebar, nShow);
-
-		//MoveWindow(mh_Rebar, 0, 0, client.right, mn_TabHeight, 1);
 	}
 	else
 	{
-		if (!IsWindowVisible(mh_Tabbar))
-			apiShowWindow(mh_Tabbar, nShow);
-
-		if (bShow)
-		{
-			//if (gpSet->isTabFrame)
-			//	MoveWindow(mh_Tabbar, 0, 0, client.right, client.bottom, 1);
-			//else
-			MoveWindow(mh_Tabbar, 0, 0, client.right, mn_TabHeight, 1);
-		}
+		_ASSERTE((mh_Rebar!=NULL) && "ReBar was not created!");
 	}
 }
 
@@ -899,37 +863,7 @@ void CTabPanelWin::RepositionInt()
 
 	if (mh_Rebar)
 	{
-		SIZE sz = {0,0};
-		int nBarIndex = -1;
-		BOOL lbNeedShow = FALSE, lbWideEnough = FALSE;
-
-		if (mh_Toolbar)
-		{
-			nBarIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, 2, 0);
-
-			if (gpSet->isMultiShowButtons)
-			{
-				SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-				sz.cx += (gpSet->isHideCaptionAlways() ? gpSet->nToolbarAddSpace : 0);
-				lbWideEnough = (sz.cx + 150) <= client.right;
-
-				if (!lbWideEnough)
-				{
-					if (IsWindowVisible(mh_Toolbar))
-						SendMessage(mh_Rebar, RB_SHOWBAND, nBarIndex, 0);
-				}
-				else
-				{
-					if (!IsWindowVisible(mh_Toolbar))
-						lbNeedShow = TRUE;
-				}
-			}
-			else
-			{
-				SendMessage(mh_Rebar, RB_SHOWBAND, nBarIndex, 0);
-			}
-		}
-
+		// Rebar location (top/bottom)
 		if (gpSet->nTabsLocation == 1)
 		{
 			int nStatusHeight = gpSet->isStatusBarShow ? gpSet->StatusBarHeight() : 0;
@@ -940,57 +874,126 @@ void CTabPanelWin::RepositionInt()
 			MoveWindow(mh_Rebar, 0, 0, client.right, mn_TabHeight, 1);
 		}
 
-		// Не будем пока трогать. Некрасиво табы рисуются. Нужно на OwnerDraw переходить.
-		#if 0
-		DWORD nCurStyle = GetWindowLong(mh_Tabbar, GWL_STYLE);
-		DWORD nNeedStyle = (gpSet->nTabsLocation == 1) ? (nCurStyle | TCS_BOTTOM) : (nCurStyle & ~TCS_BOTTOM);
-		if (nNeedStyle != nCurStyle)
-		{
-			SetWindowLong(mh_Tabbar, GWL_STYLE, nNeedStyle);
+		// Visible panes
+		bool bRebarChanged = false;
+		int iAllWidth = 0;
+		// Desired panes position
+		struct {
+			ReBarIndex iPaneID;
+			HWND hChild;
+			int iPaneMinWidth;
+			bool bNeedShow;
+		} Panes[3] = {
+			{rbi_TabBar}, {rbi_FindBar}, {rbi_ToolBar}
+		};
 
-			//_ASSERTE(!gpSet->isTabFrame);
-			if (gpSet->nTabsLocation == 1)
+		// Default (minimal) widths
+		for (size_t i = 0; i < countof(Panes); i++)
+		{
+			switch (Panes[i].iPaneID)
 			{
-				RECT rcTab = client;
-				GetWindowRect(mh_Tabbar, &rcTab);
-				SetWindowPos(mh_Tabbar, NULL, 0, client.bottom - (rcTab.bottom-rcTab.top), 0,0, SWP_NOSIZE);
+			case rbi_TabBar:
+				Panes[i].hChild = mh_Tabbar;
+				Panes[i].iPaneMinWidth = max(150,mn_TabHeight*5);
+				break;
+			case rbi_FindBar:
+				if (mp_Find && ((Panes[i].hChild = mp_Find->GetHWND()) != NULL))
+				{
+					if (gpSet->isMultiShowSearch)
+						Panes[i].iPaneMinWidth = mp_Find->GetMinWidth();
+				}
+				break;
+			case rbi_ToolBar:
+				if ((Panes[i].hChild = mh_Toolbar) != NULL)
+				{
+					SIZE sz = {0,0};
+					SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+					sz.cx += (gpSet->isHideCaptionAlways() ? gpSet->nToolbarAddSpace : 0);
+					if (gpSet->isMultiShowButtons)
+						Panes[i].iPaneMinWidth = sz.cx;
+				}
+				break;
 			}
-			else
+			iAllWidth += Panes[i].iPaneMinWidth;
+		}
+
+		// Check what panes are fit
+		if (iAllWidth > client.right)
+		{
+			// Firstly we hide find-pane
+			if (Panes[1].iPaneMinWidth > 0)
 			{
-				SetWindowPos(mh_Tabbar, NULL, 0,0, 0,0, SWP_NOSIZE);
+				iAllWidth -= Panes[1].iPaneMinWidth;
+				Panes[1].iPaneMinWidth = 0;
+			}
+			// If that is not enough - hide toolbar
+			if (iAllWidth > client.right)
+			{
+				Panes[2].iPaneMinWidth = 0;
 			}
 		}
-		#endif
 
-		//if (gpSet->nTabsLocation == 1)
-		//	m_Margins = MakeRect(0,0,0,mn_TabHeight);
-		//else
-		//	m_Margins = MakeRect(0,mn_TabHeight,0,0);
-		//gpSet->UpdateMargins(m_Margins);
-
-
-		if (lbWideEnough && nBarIndex != 1)
+		// Run through and hide don't fit panes
+		for (size_t i = 1; i < countof(Panes); i++)
 		{
-			SendMessage(mh_Rebar, RB_MOVEBAND, nBarIndex, 1);
-			nBarIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, 2, 0);
-			_ASSERTE(nBarIndex == 1);
+			if (!Panes[i].hChild)
+				continue;
+
+			INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, Panes[i].iPaneID, 0);
+			if (nPaneIndex < 0)
+				continue;
+
+			if (IsWindowVisible(Panes[i].hChild))
+			{
+				if (Panes[i].iPaneMinWidth == 0)
+				{
+					SendMessage(mh_Rebar, RB_SHOWBAND, nPaneIndex, 0);
+					bRebarChanged = true;
+				}
+			}
+			else if (Panes[i].iPaneMinWidth > 0)
+			{
+				Panes[i].bNeedShow = true;
+			}
 		}
 
-		if (lbNeedShow)
+		// Fix probably tangled order
+		INT_PTR iAfter = 0;
+		for (size_t i = 0; i < countof(Panes); i++)
 		{
-			SendMessage(mh_Rebar, RB_SHOWBAND, nBarIndex, 1);
+			if (Panes[i].iPaneMinWidth <= 0)
+				continue;
+			INT_PTR nIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, Panes[i].iPaneID, 0);
+			if (nIndex < 0)
+				continue;
+			if (nIndex > iAfter)
+			{
+				SendMessage(mh_Rebar, RB_MOVEBAND, nIndex, iAfter);
+				bRebarChanged = true;
+			}
+			iAfter++;
+		}
+
+		// Show panes was hidden
+		for (size_t i = 0; i < countof(Panes); i++)
+		{
+			if (!Panes[i].bNeedShow)
+				continue;
+			INT_PTR nIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, Panes[i].iPaneID, 0);
+			SendMessage(mh_Rebar, RB_SHOWBAND, nIndex, TRUE);
+			bRebarChanged = true;
+		}
+
+		// If the toolbar is visible, and rebar was changed...
+		if (bRebarChanged && (Panes[2].iPaneMinWidth > 0))
+		{
+			UpdateToolbarPos();
 		}
 	}
-	//else if (gpSet->isTabFrame)
-	//{
-	//	MoveWindow(mh_Tabbar, 0, 0, client.right, client.bottom, 1);
-	//}
 	else
 	{
-		MoveWindow(mh_Tabbar, 0, 0, client.right, mn_TabHeight, 1);
+		_ASSERTE((mh_Rebar!=NULL) && "ReBar was not created!");
 	}
-
-	UpdateToolbarPos();
 }
 
 void CTabPanelWin::UpdateToolbarPos()
@@ -1007,20 +1010,21 @@ void CTabPanelWin::UpdateToolbarPos()
 		{
 			if (sz.cx != mn_LastToolbarWidth)
 			{
-				REBARBANDINFO rbBand= {80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
-				rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILDSIZE;
-				// Set values unique to the band with the toolbar.
-				rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
-				rbBand.cyMinChild = sz.cy;
-				// Add the band that has the toolbar.
-				SendMessage(mh_Rebar, RB_SETBANDINFO, 1, (LPARAM)&rbBand);
+				INT_PTR nBarIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_ToolBar, 0);
+				if (nBarIndex >= 0)
+				{
+					REBARBANDINFO rbBand= {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+					rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILDSIZE;
+					// Update band options.
+					rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
+					rbBand.cyMinChild = sz.cy;
+					SendMessage(mh_Rebar, RB_SETBANDINFO, nBarIndex, (LPARAM)&rbBand);
+				}
 			}
 		}
 		else
 		{
-			RECT rcClient;
-			GetWindowRect(mh_Tabbar, &rcClient);
-			MapWindowPoints(NULL, ghWnd, (LPPOINT)&rcClient, 2);
+			_ASSERTE((mh_Rebar!=NULL) && "ReBar was not created!");
 		}
 	}
 }
@@ -1103,11 +1107,7 @@ void CTabPanelWin::OnCaptionHiddenChanged(bool bCaptionHidden)
 	SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_APPCLOSE, lbHideBtn);
 	SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0);
 
-	//if (abUpdatePos)
-	{
-		//-- было		//UpdateToolbarPos();
-		RepositionInt();
-	}
+	RepositionInt();
 }
 
 void CTabPanelWin::OnWindowStateChanged(ConEmuWindowMode newMode)
@@ -1149,12 +1149,6 @@ void CTabPanelWin::OnConsoleActivatedInt(int nConNumber)
 			tbi.iImage = BID_DUMMYBTN_IDX;
 		}
 
-		//if (!bRedraw)
-		//{
-		//	bRedraw = true;
-		//	SendMessage(mh_Toolbar, WM_SETREDRAW, FALSE, 0);
-		//}
-
 		SendMessage(mh_Toolbar, TB_SETBUTTONINFO, TID_ACTIVE_NUMBER, (LPARAM)&tbi);
 
 		if (bNeedShow)
@@ -1168,43 +1162,136 @@ void CTabPanelWin::OnConsoleActivatedInt(int nConNumber)
 			UpdateToolbarPos();
 		}
 	}
-
-	//UpdateToolConsoles(true);
-	////nConNumber = gpConEmu->ActiveConNum()+1; -- сюда пришел уже правильный номер!
-	//if (nConNumber>=1 && nConNumber<=MAX_CONSOLE_COUNT)
-	//{
-	//	SendMessage(mh_Toolbar, TB_CHECKBUTTON, nConNumber, 1);
-	//}
-	//else
-	//{
-	//	for (int i = 1; i <= MAX_CONSOLE_COUNT; i++)
-	//		SendMessage(mh_Toolbar, TB_CHECKBUTTON, i, 0);
-	//}
 }
 
-void CTabPanelWin::ShowToolbar(bool bShow)
+void CTabPanelWin::ShowTabsPane(bool bShow)
+{
+	if (bShow)
+	{
+		if (CreateTabbar())
+		{
+			RECT rcWnd = GetRect();
+
+			REBARBANDINFO rbBand = {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+
+			rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE;
+			rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
+
+			#if 0
+			rbBand.fMask |= RBBIM_COLORS;
+			rbBand.clrFore = RGB(255,255,255);
+			rbBand.clrBack = RGB(0,0,0);
+			#endif
+
+			rbBand.wID        = rbi_TabBar;
+			rbBand.hwndChild  = mh_Tabbar;
+			rbBand.cxMinChild = 100;
+			rbBand.cx = /*rbBand.cxIdeal =*/ rcWnd.right - 20; // - sz.cx - 80 - iFindPanelWidth;
+			rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = mn_TabHeight; // sz.cy;
+
+			// Tabs are always on the first place
+			if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)0, (LPARAM)&rbBand))
+			{
+				DisplayLastError(_T("Can't initialize rebar (tabbar)"));
+			}
+		}
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Deletion is not supported yet");
+	}
+}
+
+void CTabPanelWin::ShowSearchPane(bool bShow)
+{
+	if (bShow && gpSet->isMultiShowSearch)
+	{
+		if (!IsSearchShownInt(false))
+		{
+			REBARBANDINFO rbBand = {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+
+			HWND hFindPane = NULL;
+			if (!mp_Find)
+				mp_Find = new CFindPanel(gpConEmu);
+
+			int iPaneHeight;
+			SIZE sz = {0,0};
+			if (mh_Toolbar)
+			{
+				SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+				iPaneHeight = sz.cy;
+			}
+			else
+			{
+				iPaneHeight = QueryTabbarHeight() - 4;
+			}
+
+			hFindPane = mp_Find->CreatePane(mh_Rebar, iPaneHeight);
+
+			if (hFindPane)
+			{
+				rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE;
+				rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
+
+				#if 0
+				rbBand.fMask |= RBBIM_COLORS;
+				rbBand.clrFore = RGB(255,255,255);
+				rbBand.clrBack = RGB(0,255,0);
+				#endif
+
+				rbBand.wID        = rbi_FindBar;
+				rbBand.hwndChild  = hFindPane;
+				rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mp_Find->GetMinWidth();
+				rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = iPaneHeight + mn_ThemeHeightDiff;
+			}
+
+			// Insert before toolbar
+			INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_ToolBar, 0);
+			if (nPaneIndex < 0) nPaneIndex = -1;
+
+			if (!hFindPane || !SendMessage(mh_Rebar, RB_INSERTBAND, nPaneIndex, (LPARAM)&rbBand))
+			{
+				DisplayLastError(_T("Can't initialize rebar (searchbar)"));
+			}
+		}
+	}
+	else
+	{
+		_ASSERTEX(!bShow);
+		INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_FindBar, 0);
+		if (nPaneIndex >= 0)
+		{
+			SendMessage(mh_Rebar, RB_DELETEBAND, nPaneIndex, 0);
+			SafeDelete(mp_Find);
+		}
+	}
+}
+
+void CTabPanelWin::ShowToolsPane(bool bShow)
 {
 	if (bShow)
 	{
 		if (!IsToolbarCreated() && (CreateToolbar() != NULL))
 		{
-			REBARBANDINFO rbBand = {80}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
+			REBARBANDINFO rbBand = {REBARBANDINFO_SIZE}; // не используем size, т.к. приходит "новый" размер из висты и в XP обламываемся
 
-			rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE | RBBIM_COLORS;
+			rbBand.fMask  = RBBIM_SIZE | RBBIM_CHILD | RBBIM_CHILDSIZE | RBBIM_ID | RBBIM_STYLE;
 			rbBand.fStyle = RBBS_CHILDEDGE | RBBS_FIXEDSIZE | RBBS_VARIABLEHEIGHT;
-			rbBand.clrBack = GetSysColor(COLOR_BTNFACE);
-			rbBand.clrFore = GetSysColor(COLOR_BTNTEXT);
+
+			#if 0
+			rbBand.fMask |= RBBIM_COLORS;
+			rbBand.clrFore = RGB(255,255,255);
+			rbBand.clrBack = RGB(0,0,255);
+			#endif
 
 			SIZE sz = {0,0};
 			SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
 
-			// Set values unique to the band with the toolbar.
-			rbBand.wID        = 2;
+			rbBand.wID        = rbi_ToolBar;
 			rbBand.hwndChild  = mh_Toolbar;
 			rbBand.cx = rbBand.cxMinChild = rbBand.cxIdeal = mn_LastToolbarWidth = sz.cx;
 			rbBand.cyChild = rbBand.cyMinChild = rbBand.cyMaxChild = sz.cy + mn_ThemeHeightDiff;
 
-			// Add the band that has the toolbar.
 			if (!SendMessage(mh_Rebar, RB_INSERTBAND, (WPARAM)-1, (LPARAM)&rbBand))
 			{
 				DisplayLastError(_T("Can't initialize rebar (toolbar)"));
@@ -1213,7 +1300,14 @@ void CTabPanelWin::ShowToolbar(bool bShow)
 	}
 	else
 	{
-		_ASSERTEX(bShow);
+		_ASSERTEX(!bShow);
+		INT_PTR nPaneIndex = SendMessage(mh_Rebar, RB_IDTOINDEX, rbi_ToolBar, 0);
+		if (nPaneIndex >= 0)
+		{
+			SendMessage(mh_Rebar, RB_DELETEBAND, nPaneIndex, 0);
+			DestroyWindow(mh_Toolbar);
+			mh_Toolbar = NULL;
+		}
 	}
 }
 
