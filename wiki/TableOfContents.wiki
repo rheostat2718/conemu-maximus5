@@ -19,6 +19,7 @@
       * [ConEmuHk Inject ConEmuHk]
       * [ConsoleApplication ConsoleApplication]
       * [RealConsole RealConsole]
+      * [StatusBar StatusBar]
       * [TerminalVsShell Terminal vs shell]
       * [VirtualConsole VirtualConsole]
       * [WinApi WinApi]
