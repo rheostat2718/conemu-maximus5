@@ -379,14 +379,17 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 			// Thats why only for zoomed modes (need to detect "monitor"), however, this may be buggy too?
 			if ((WindowMode == wmMaximized) || (WindowMode == wmFullScreen))
 			{
+				// We need RESTORED(NORMAL) rect to be able to find monitor where the window must be maximized/fullscreened
 				if (mrc_StoredNormalRect.right > mrc_StoredNormalRect.left && mrc_StoredNormalRect.bottom > mrc_StoredNormalRect.top)
 				{
+					// Will be CalcRect(CER_MAXIMIZED/CER_FULLSCREEN,...) below
 					rcMain = mrc_StoredNormalRect;
 					nGetStyle = 3;
 				}
 				else
 				{
 					GetWindowPlacement(ghWnd, &wpl);
+					// Will be CalcRect(CER_MAXIMIZED/CER_FULLSCREEN,...) below
 					rcMain = wpl.rcNormalPosition;
 					nGetStyle = 4;
 				}
@@ -397,8 +400,9 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 				nGetStyle = 5;
 			}
 
-			_ASSERTE(gpConEmu->isIconic() == (rcMain.left <= -32000 && rcMain.top <= -32000));
+			_ASSERTE((gpConEmu->isIconic() == (rcMain.left <= -32000 && rcMain.top <= -32000)) || (changeFromWindowMode != wmNotChanging));
 
+			// If rcMain still has invalid pos (got from iconic window placement)
 			if (rcMain.left <= -32000 && rcMain.top <= -32000)
 			{
 				// -- when we call "DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam)"
@@ -2030,6 +2034,24 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 	DEBUGTEST(WINDOWPOS ps1 = *p);
 
+	// If monitor jump was triggered by OS but not ConEmu internals
+	if (!mp_ConEmu->mb_IgnoreSizeChange
+		&& !(p->flags & (SWP_NOSIZE|SWP_NOMOVE))
+		&& !IsWindowModeChanging()
+		&& CDpiAware::IsPerMonitorDpi())
+	{
+		// We need to refresh "current monitor dpi" before resizing
+		// to avoid improper console size calls
+		DpiValue dpi;
+		if (CDpiAware::QueryDpi(ghWnd, &dpi) > 0)
+		{
+			if (gpSetCls->QueryDpi() != dpi.Ydpi)
+			{
+				OnDpiChanged(dpi.Xdpi, dpi.Ydpi, NULL, false);
+			}
+		}
+	}
+
 	// Иначе могут не вызваться события WM_SIZE/WM_MOVE
 	result = DefWindowProc(hWnd, uMsg, wParam, lParam);
 
@@ -2920,6 +2942,11 @@ ConEmuWindowMode CConEmuSize::GetChangeFromWindowMode()
 	return changeFromWindowMode;
 }
 
+bool CConEmuSize::IsWindowModeChanging()
+{
+	return (changeFromWindowMode != wmNotChanging) || m_JumpMonitor.bInJump;
+}
+
 LPCWSTR CConEmuSize::FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, size_t cchBufMax)
 {
 	switch (Tile)
@@ -3022,6 +3049,8 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 
 		HMONITOR hMon = NULL;
 
+		changeFromWindowMode = wmNormal;
+
 		// When window is snapped to the right edge, and user press Win+Right
 		// Same with left edge and Win+Left
 		// ConEmu must jump to next monitor and set tile to Left
@@ -3108,12 +3137,11 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 
 			// Сразу меняем, чтобы DefaultRect не слетел...
 			m_TileMode = Tile;
-			changeFromWindowMode = wmNormal;
 
 			SetWindowPos(ghWnd, NULL, rcNewWnd.left, rcNewWnd.top, rcNewWnd.right-rcNewWnd.left, rcNewWnd.bottom-rcNewWnd.top, SWP_NOZORDER);
-
-			changeFromWindowMode = wmNotChanging;
 		}
+
+		changeFromWindowMode = wmNotChanging;
 
 		if (gpSetCls->isAdvLogging)
 		{
@@ -4334,7 +4362,8 @@ void CConEmuSize::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, b
 
 	if (bResizeWindow)
 	{
-		if (IsSizePosFree())
+		bool bNormal = IsSizePosFree() && !isZoomed() && !isFullScreen();
+		if (bNormal)
 		{
 			RECT rcNew = GetDefaultRect();
 			// If Windows DWM sends new preferred RECT?
