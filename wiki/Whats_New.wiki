@@ -6,6 +6,27 @@ Votes and awards (vote for !ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 141101==
+  * Was failed with creating new xml config if empty xml file with BOM was exists.
+  * Fix hung up after changing dpi with GuiMacro from command line.
+  * Fix messed Far window number in the ‘!ConEmu - tabs list’ (another Far api break).
+  * Predefined palettes `<Solarized>` and `<Solarized Light>` were changed.
+  * Init by default extended colors (16..31) with standard windows palette.
+  * Support new parsing format in the colors edit fields ‘00BBGGRR’ (just for copying from "`*.reg`" files).
+  * Increase max text length in colors edit fields (copy/paste purposes).
+  * Add button ‘Default’ to the ‘Colors’ settings page. It resets colors 16..31 to standard windows palette.
+  * Add radiobutton styles of color formats.
+  * Minor RunQueue optimizations and other internal changes.
+
+
+==Build 141029==
+  * Show menu item hints in the StatusBar instead of tool tips.
+  * Issue 1731: Fix assertion on cancel split window dialog (user/password confirmation).
+  * Fix resize/minimize/restore lags and asserts.
+  * Don't create new console if user cancels new console dialog (split window, user/password confirmation).
+  * Between-monitor jump fixes (per-monitor dpi related).
+
+
 ==Build 141028==
   * Some listboxes in the Settings dialog was not filled properly. ‘EOL’ and ‘Back color’ were messed up.
   * Foreground color for selected text was ignored.
