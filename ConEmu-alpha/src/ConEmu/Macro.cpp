@@ -48,6 +48,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AboutDlg.h"
 #include "Attach.h"
 #include "SetDlgButtons.h"
+#include "SetCmdTask.h"
+#include "SetColorPalette.h"
 
 
 /* ********************************* */
@@ -1171,7 +1173,7 @@ LPWSTR ConEmuMacro::IsConsoleActive(GuiMacro* p, CRealConsole* apRCon, bool abFr
 {
 	LPWSTR pszResult = NULL;
 
-	if (apRCon && apRCon->isActive())
+	if (apRCon && apRCon->isActive(false))
 		pszResult = lstrdup(L"Yes");
 	else
 		pszResult = lstrdup(L"No");
@@ -2103,7 +2105,7 @@ LPWSTR ConEmuMacro::Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 	wchar_t* pszRc = NULL;
 	int nCmd = 0, iPal;
 	LPWSTR pszNewName = NULL;
-	const Settings::ColorPalette* pPal;
+	const ColorPalette* pPal;
 
 	p->GetIntArg(0, nCmd);
 
@@ -2358,7 +2360,8 @@ LPWSTR ConEmuMacro::SetDpi(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	if (!p->GetIntArg(0, nValue))
 		return lstrdup(L"InvalidArg");
 
-	gpConEmu->OnDpiChanged(nValue, nValue, NULL, true);
+	RECT rcCurrent = gpConEmu->CalcRect(CER_MAIN);
+	gpConEmu->OnDpiChanged(nValue, nValue, &rcCurrent, true);
 
 	return lstrdup(L"OK");
 }
@@ -2942,7 +2945,7 @@ LPWSTR ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				if (nParm == 1)
 				{
 					// Прокрутка вперед (циклически)
-					if (gpConEmu->GetVCon(nActive+1))
+					if (CVConGroup::isVConExists(nActive+1))
 					{
 						gpConEmu->ConActivate(nActive+1);
 						pszResult = lstrdup(L"OK");
@@ -2974,7 +2977,7 @@ LPWSTR ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			}
 			break;
 		case ctc_ActivateConsole: // activate console by number, parm=(one-based console index)
-			if (nParm >= 1 && gpConEmu->GetVCon(nParm-1))
+			if ((nParm >= 1) && CVConGroup::isVConExists(nParm-1))
 			{
 				gpConEmu->ConActivate(nParm-1);
 				pszResult = lstrdup(L"OK");

@@ -31,43 +31,67 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
-class CConEmuMain;
-struct CmdArg;
-
-class CFindPanel
+struct FindTextOptions
 {
-protected:
-	CConEmuMain* mp_ConEmu;
-	HWND mh_Pane;
-	HWND mh_Edit;
-	HFONT mh_Font;
-	static ATOM mh_Class;
-	WNDPROC mfn_EditProc;
-	UINT mn_KeyDown;
-	CmdArg* ms_PrevSearch;
+	size_t   cchTextMax;
+	wchar_t* pszText;
+	bool     bMatchCase;
+	bool     bMatchWholeWords;
+	bool     bFreezeConsole;
+	bool     bHighlightAll;
+	bool     bTransparent;
+};
 
-public:
-	CFindPanel(CConEmuMain* apConEmu);
-	~CFindPanel();
 
-	HWND CreatePane(HWND hParent, int nHeight);
-	bool OnCreateFinished();
-	HWND GetHWND();
-	int  GetMinWidth();
-	HWND Activate(bool bActivate);
-	bool IsAvailable(bool bFilled);
+enum CECursorStyle
+{
+	cur_Horz         = 0x00,
+	cur_Vert         = 0x01,
+	cur_Block        = 0x02,
+	cur_Rect         = 0x03,
 
-protected:
-	bool RegisterPaneClass();
-	static LRESULT WINAPI FindPaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static LRESULT WINAPI EditCtrlProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	bool OnCreate(CREATESTRUCT* ps);
-	void OnDestroy();
-	void OnSize();
-	void OnCreateFont();
-	void OnSearch();
-	bool OnKeyboard(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lRc);
-	void StopSearch();
-	void ShowMenu();
-	void ResetSearch();
+	// Used for Min/Max
+	cur_First        = cur_Horz,
+	cur_Last         = cur_Rect,
+};
+
+union CECursorType
+{
+	struct
+	{
+		CECursorStyle  CursorType   : 6;
+		unsigned int   isBlinking   : 1;
+		unsigned int   isColor      : 1;
+		unsigned int   isFixedSize  : 1;
+		unsigned int   FixedSize    : 7;
+		unsigned int   MinSize      : 7;
+		// set to true for use distinct settings for Inactive cursor
+		unsigned int   Used         : 1;
+	};
+
+	DWORD Raw;
+};
+
+enum TabStyle
+{
+	ts_VS2008 = 0,
+	ts_Win8   = 1,
+};
+
+typedef DWORD SettingsLoadedFlags;
+const SettingsLoadedFlags
+	slf_NeedCreateVanilla = 0x0001, // Call gpSet->SaveSettings after initializing
+	slf_AllowFastConfig   = 0x0002,
+	slf_OnStartupLoad     = 0x0004,
+	slf_OnResetReload     = 0x0008,
+	slf_DefaultSettings   = 0x0010,
+	slf_None              = 0x0000
+;
+
+enum AdminTabStyle
+{
+	ats_Empty        = 0,
+	ats_Shield       = 1,
+	ats_ShieldSuffix = 3,
+	ats_Disabled     = 4,
 };

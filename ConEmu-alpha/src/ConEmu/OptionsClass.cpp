@@ -66,6 +66,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "Recreate.h"
 #include "SearchCtrl.h"
+#include "SetColorPalette.h"
+#include "SetCmdTask.h"
 #include "SetDlgLists.h"
 #include "Status.h"
 #include "TabBar.h"
@@ -227,6 +229,7 @@ CSettings::CSettings()
 	#else
 	mp_BgInfo = NULL;
 	#endif
+	m_ColorFormat = eRgbDec; // RRR GGG BBB (как показывать цвета на вкладке Colors)
 	mp_DpiAware = NULL;
 	mp_CurDpi = NULL;
 	mp_DpiDistinct2 = NULL;
@@ -472,13 +475,10 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 		if (gpSet->isSendPrintScrn) nNewValue |= 1<<ID_PRTSC;
 		if (gpSet->isSendCtrlEsc) nNewValue |= 1<<ID_CTRLESC;
 
-		CVirtualConsole* pVCon;
-		for (size_t i = 0;; i++)
+		CVConGuard VCon;
+		for (int i = 0; CVConGroup::GetVCon(i, &VCon, true); i++)
 		{
-			pVCon = gpConEmu->GetVCon(i, true);
-			if (!pVCon)
-				break;
-			nNewValue |= pVCon->RCon()->GetConsoleKeyShortcuts();
+			nNewValue |= VCon->RCon()->GetConsoleKeyShortcuts();
 		}
 
 		*pnConsoleKeyShortcuts = nNewValue;
@@ -1950,7 +1950,7 @@ LRESULT CSettings::OnInitDialog_WndPosSize(HWND hWnd2, bool abInitial)
 	return 0;
 }
 
-void CSettings::InitCursorCtrls(HWND hWnd2, const Settings::AppSettings* pApp)
+void CSettings::InitCursorCtrls(HWND hWnd2, const AppSettings* pApp)
 {
 	checkRadioButton(hWnd2, rCursorH, rCursorR, (rCursorH + pApp->CursorActive.CursorType));
 	checkDlgButton(hWnd2, cbCursorColor, pApp->CursorActive.isColor);
@@ -3182,18 +3182,18 @@ void CSettings::OnInitDialog_StatusItems(HWND hWnd2)
 		SendMessage(hSeltd, LB_SETCURSEL, (iCurSeltd <= iMaxSeltd) ? iCurSeltd : iMaxSeltd, 0);
 }
 
-void CSettings::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/)
+void CSettings::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/, const AppSettings* apDistinct /*= NULL*/)
 {
 	// Обновить палитры
 	gpSet->PaletteSetStdIndexes();
 
 	// Обновить консоли
-	gpConEmu->UpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr);
+	CVConGroup::OnUpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr, apDistinct);
 }
 
 // This is used if user choose palette from dropdown in the Settings dialog
 // OR when GuiMacro Palette was called.
-void CSettings::ChangeCurrentPalette(const Settings::ColorPalette* pPal, bool bChangeDropDown)
+void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropDown)
 {
 	if (!pPal)
 	{
@@ -3265,15 +3265,19 @@ void CSettings::ChangeCurrentPalette(const Settings::ColorPalette* pPal, bool bC
 	gpConEmu->Update(true);
 }
 
-LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
+LRESULT CSettings::OnInitDialog_Color(HWND hWnd2, bool abInitial)
 {
 	#if 0
 	if (gpSetCls->EnableThemeDialogTextureF)
 		gpSetCls->EnableThemeDialogTextureF(hWnd2, 6/*ETDT_ENABLETAB*/);
 	#endif
 
+	checkRadioButton(hWnd2, rbColorRgbDec, rbColorBgrHex, rbColorRgbDec + m_ColorFormat);
+
 	for (int c = c0; c <= MAX_COLOR_EDT_ID; c++)
+	{
 		ColorSetEdit(hWnd2, c);
+	}
 
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbConClrText), CSetDlgLists::eColorIdxTh, gpSet->AppStd.nTextColorIdx, true);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbConClrBack), CSetDlgLists::eColorIdxTh, gpSet->AppStd.nBackColorIdx, true);
@@ -3297,11 +3301,14 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2)
 	SetDlgItemInt(hWnd2, tFadeHigh, gpSet->mn_FadeHigh, FALSE);
 
 	// Palette
-	const Settings::ColorPalette* pPal;
+	const ColorPalette* pPal;
 
 	// Default colors
-	//memmove(gdwLastColors, gpSet->Colors, sizeof(gdwLastColors));
-	if ((pPal = gpSet->PaletteGet(-1)) != NULL)
+	if (!abInitial && gbLastColorsOk)
+	{
+		// активация уже загруженной вкладки, текущую палитру уже запомнили
+	}
+	else if ((pPal = gpSet->PaletteGet(-1)) != NULL)
 	{
 		memmove(&gLastColors, pPal, sizeof(gLastColors));
 		if (gLastColors.pszName == NULL)
@@ -5205,7 +5212,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-bool CSettings::OnEditChanged_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, Settings::AppSettings* pApp)
+bool CSettings::OnEditChanged_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, AppSettings* pApp)
 {
 	bool bChanged = false;
 	WORD TB = LOWORD(wParam);
@@ -5328,7 +5335,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 		if (gpSet->nCmdOutputCP == -1) gpSet->nCmdOutputCP = 0;
 
-		gpConEmu->UpdateFarSettings();
+		CVConGroup::OnUpdateFarSettings();
 		break;
 	}
 	case lbExtendFontNormalIdx:
@@ -5811,7 +5818,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				// Юзер выбрал в списке другую палитру
 				if ((HIWORD(wParam) == CBN_SELCHANGE) && gbLastColorsOk)  // только если инициализация палитр завершилась
 				{
-					const Settings::ColorPalette* pPal = NULL;
+					const ColorPalette* pPal = NULL;
 
 					if (nIdx == 0)
 						pPal = &gLastColors;
@@ -6795,8 +6802,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Status(hWnd2, bInitial);
 			break;
 		case IDD_SPG_COLORS:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Color(hWnd2);
+			gpSetCls->OnInitDialog_Color(hWnd2, bInitial);
 			break;
 		case IDD_SPG_TRANSPARENT:
 			if (bInitial)
@@ -7247,7 +7253,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 
 		if (bForceReload || !bSkipEditSet)
 		{
-			const Settings::ColorPalette* pPal;
+			const ColorPalette* pPal;
 
 			if ((pPal = gpSet->PaletteGet(-1)) != NULL)
 			{
@@ -7290,7 +7296,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 
 		int nApp = 0;
 		wchar_t szItem[1024];
-		const Settings::AppSettings* pApp = NULL;
+		const AppSettings* pApp = NULL;
 		while ((pApp = gpSet->GetAppSettings(nApp)) && pApp->AppNames)
 		{
 			_wsprintf(szItem, SKIPLEN(countof(szItem)) L"%i\t%s\t", nApp+1,
@@ -7329,7 +7335,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 	case UM_FILL_CONTROLS:
 		if ((((HWND)wParam) == hWnd2) && lParam) // arg check
 		{
-			const Settings::AppSettings* pApp = (const Settings::AppSettings*)lParam;
+			const AppSettings* pApp = (const AppSettings*)lParam;
 
 			checkRadioButton(hWnd2, rbAppDistinctElevatedOn, rbAppDistinctElevatedIgnore,
 				(pApp->Elevated == 1) ? rbAppDistinctElevatedOn :
@@ -7385,7 +7391,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			WORD nID = (WORD)(lParam & 0xFFFF);
 			bool bAllowed = false;
 
-			const Settings::AppSettings* pApp = NULL;
+			const AppSettings* pApp = NULL;
 			int iCur = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
 			if (iCur >= 0)
 				pApp = gpSet->GetAppSettings(iCur);
@@ -7430,7 +7436,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 				WORD CB = LOWORD(wParam);
 
 				int iCur = bSkipSelChange ? -1 : (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
-				Settings::AppSettings* pApp = (iCur < 0) ? NULL : gpSet->GetAppSettingsPtr(iCur);
+				AppSettings* pApp = (iCur < 0) ? NULL : gpSet->GetAppSettingsPtr(iCur);
 				_ASSERTE((iCur<0) || (pApp && pApp->AppNames));
 
 				switch (CB)
@@ -7451,7 +7457,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 				case cbAppDistinctAdd:
 					{
 						int iCount = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCOUNT, 0,0);
-						Settings::AppSettings* pNew = gpSet->GetAppSettingsPtr(iCount, TRUE);
+						AppSettings* pNew = gpSet->GetAppSettingsPtr(iCount, TRUE);
 						UNREFERENCED_PARAMETER(pNew);
 
 						bool lbOld = bSkipSelChange; bSkipSelChange = true;
@@ -7472,7 +7478,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 						if (iCur < 0)
 							break;
 
-						const Settings::AppSettings* p = gpSet->GetAppSettingsPtr(iCur);
+						const AppSettings* p = gpSet->GetAppSettingsPtr(iCur);
 						if (!p)
 							break;
 
@@ -7547,6 +7553,10 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 					{
 						pApp->OverridePalette = bChecked;
 						bRedraw = true;
+						// Обновить палитры
+						gpSet->PaletteSetStdIndexes();
+						// Обновить консоли (считаем, что меняется только TextAttr, Popup не трогать
+						gpSetCls->UpdateTextColorSettings(TRUE, FALSE, pApp);
 					}
 					break;
 
@@ -7765,7 +7775,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			{
 				WORD ID = LOWORD(wParam);
 				int iCur = bSkipSelChange ? -1 : (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
-				Settings::AppSettings* pApp = (iCur < 0) ? NULL : gpSet->GetAppSettingsPtr(iCur);
+				AppSettings* pApp = (iCur < 0) ? NULL : gpSet->GetAppSettingsPtr(iCur);
 				_ASSERTE((iCur<0) || (pApp && pApp->AppNames));
 
 				if (pApp)
@@ -7775,7 +7785,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 					case tAppDistinctName:
 						if (!bSkipEditChange)
 						{
-							Settings::AppSettings* pApp = gpSet->GetAppSettingsPtr(iCur);
+							AppSettings* pApp = gpSet->GetAppSettingsPtr(iCur);
 							if (!pApp || !pApp->AppNames)
 							{
 								_ASSERTE(pApp && pApp->AppNames);
@@ -7832,7 +7842,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 					if (bSkipSelChange)
 						break; // WM_COMMAND
 
-					const Settings::AppSettings* pApp = NULL;
+					const AppSettings* pApp = NULL;
 					//while ((pApp = gpSet->GetAppSettings(nApp)) && pApp->AppNames)
 					int iCur = (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
 					if (iCur >= 0)
@@ -7861,7 +7871,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 				else
 				{
 					int iCur = bSkipSelChange ? -1 : (int)SendDlgItemMessage(hWnd2, lbAppDistinct, LB_GETCURSEL, 0,0);
-					Settings::AppSettings* pApp = (iCur < 0) ? NULL : gpSet->GetAppSettingsPtr(iCur);
+					AppSettings* pApp = (iCur < 0) ? NULL : gpSet->GetAppSettingsPtr(iCur);
 					_ASSERTE((iCur<0) || (pApp && pApp->AppNames));
 
 					if (pApp)
@@ -7901,7 +7911,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 											pApp->SetPaletteName((nIdx == 0) ? L"" : pszText);
 
 											_ASSERTE(iCur>=0 && iCur<gpSet->AppCount /*&& gpSet->AppColors*/);
-											const Settings::ColorPalette* pPal = gpSet->PaletteGet(iPal);
+											const ColorPalette* pPal = gpSet->PaletteGet(iPal);
 											if (pPal)
 											{
 												//memmove(gpSet->AppColors[iCur]->Colors, pPal->Colors, sizeof(pPal->Colors));
@@ -7916,7 +7926,9 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 												pApp->isExtendColors = pPal->isExtendColors;
 												pApp->nExtendColorIdx = pPal->nExtendColorIdx;
 												if (bTextAttr || bPopupAttr)
-													gpSetCls->UpdateTextColorSettings(bTextAttr, bPopupAttr);
+												{
+													gpSetCls->UpdateTextColorSettings(bTextAttr, bPopupAttr, pApp);
+												}
 												bRedraw = true;
 											}
 											else

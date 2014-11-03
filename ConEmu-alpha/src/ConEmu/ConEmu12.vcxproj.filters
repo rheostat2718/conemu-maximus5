@@ -213,7 +213,7 @@
     <ClCompile Include="DpiAware.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CmdTasks.cpp">
+    <ClCompile Include="SetCmdTask.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuSize.cpp">
@@ -280,6 +280,18 @@
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\common\WUser.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FindPanel.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RConFiles.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetAppSettings.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetColorPalette.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -543,7 +555,7 @@
     <ClInclude Include="..\common\StartupEnv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CmdTasks.h">
+    <ClInclude Include="SetCmdTask.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuSize.h">
@@ -622,6 +634,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\WUser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FindPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RConFiles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetAppSettings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetColorPalette.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

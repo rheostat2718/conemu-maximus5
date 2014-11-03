@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "OptionsFast.h"
 #include "Recreate.h"
+#include "SetCmdTask.h"
 #include "SetDlgButtons.h"
 #include "SetDlgLists.h"
 #include "Status.h"
@@ -644,8 +645,16 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			OnBtn_DebugActivityRadio(hDlg, CB, uCheck);
 			break;
 
+		case rbColorRgbDec:
+		case rbColorRgbHex:
+		case rbColorBgrHex:
+			OnBtn_ColorFormat(hDlg, CB, uCheck);
+			break;
 		case cbExtendColors:
 			OnBtn_ExtendColors(hDlg, CB, uCheck);
+			break;
+		case cbColorResetExt:
+			OnBtn_ColorResetExt(hDlg, CB, uCheck);
 			break;
 		case cbColorSchemeSave:
 		case cbColorSchemeDelete:
@@ -895,7 +904,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 }
 
 // rCursorH ... cbInactiveCursorIgnoreSize
-void CSetDlgButtons::OnButtonClicked_Cursor(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnButtonClicked_Cursor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	switch (CB)
 	{
@@ -1001,7 +1010,7 @@ LRESULT CSetDlgButtons::OnButtonClicked(HWND hDlg, WPARAM wParam, LPARAM lParam)
 /* *********************************************************** */
 
 // rCursorH || rCursorV || rCursorB || rCursorR
-void CSetDlgButtons::OnBtn_CursorX(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_CursorX(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==rCursorH || CB==rCursorV || CB==rCursorB || CB==rCursorR);
 
@@ -1011,7 +1020,7 @@ void CSetDlgButtons::OnBtn_CursorX(HWND hDlg, WORD CB, BYTE uCheck, Settings::Ap
 
 
 // cbCursorColor
-void CSetDlgButtons::OnBtn_CursorColor(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_CursorColor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbCursorColor);
 
@@ -1021,7 +1030,7 @@ void CSetDlgButtons::OnBtn_CursorColor(HWND hDlg, WORD CB, BYTE uCheck, Settings
 
 
 // cbCursorBlink
-void CSetDlgButtons::OnBtn_CursorBlink(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_CursorBlink(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbCursorBlink);
 
@@ -1031,7 +1040,7 @@ void CSetDlgButtons::OnBtn_CursorBlink(HWND hDlg, WORD CB, BYTE uCheck, Settings
 
 
 // cbCursorIgnoreSize
-void CSetDlgButtons::OnBtn_CursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_CursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbCursorIgnoreSize);
 
@@ -1041,7 +1050,7 @@ void CSetDlgButtons::OnBtn_CursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, Set
 
 
 // cbInactiveCursor
-void CSetDlgButtons::OnBtn_InactiveCursor(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_InactiveCursor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbInactiveCursor);
 
@@ -1050,7 +1059,7 @@ void CSetDlgButtons::OnBtn_InactiveCursor(HWND hDlg, WORD CB, BYTE uCheck, Setti
 
 
 // rInactiveCursorH || rInactiveCursorV || rInactiveCursorB || rInactiveCursorR
-void CSetDlgButtons::OnBtn_InactiveCursorX(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_InactiveCursorX(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==rInactiveCursorH || CB==rInactiveCursorV || CB==rInactiveCursorB || CB==rInactiveCursorR);
 
@@ -1060,7 +1069,7 @@ void CSetDlgButtons::OnBtn_InactiveCursorX(HWND hDlg, WORD CB, BYTE uCheck, Sett
 
 
 // cbInactiveCursorColor
-void CSetDlgButtons::OnBtn_InactiveCursorColor(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_InactiveCursorColor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbInactiveCursorColor);
 
@@ -1070,7 +1079,7 @@ void CSetDlgButtons::OnBtn_InactiveCursorColor(HWND hDlg, WORD CB, BYTE uCheck, 
 
 
 // cbInactiveCursorBlink
-void CSetDlgButtons::OnBtn_InactiveCursorBlink(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_InactiveCursorBlink(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbInactiveCursorBlink);
 
@@ -1080,7 +1089,7 @@ void CSetDlgButtons::OnBtn_InactiveCursorBlink(HWND hDlg, WORD CB, BYTE uCheck, 
 
 
 // cbInactiveCursorIgnoreSize
-void CSetDlgButtons::OnBtn_InactiveCursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp)
+void CSetDlgButtons::OnBtn_InactiveCursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
 {
 	_ASSERTE(CB==cbInactiveCursorIgnoreSize);
 
@@ -1722,7 +1731,7 @@ void CSetDlgButtons::OnBtn_LongOutput(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbLongOutput);
 
 	gpSet->AutoBufferHeight = uCheck;
-	gpConEmu->UpdateFarSettings();
+	CVConGroup::OnUpdateFarSettings();
 	EnableWindow(GetDlgItem(hDlg, tLongOutputHeight), gpSet->AutoBufferHeight);
 
 } // cbLongOutput
@@ -2133,7 +2142,7 @@ void CSetDlgButtons::OnBtn_FARuseASCIIsort(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbFARuseASCIIsort);
 
 	gpSet->isFARuseASCIIsort = uCheck;
-	gpConEmu->UpdateFarSettings();
+	CVConGroup::OnUpdateFarSettings();
 
 } // cbFARuseASCIIsort
 
@@ -2144,7 +2153,7 @@ void CSetDlgButtons::OnBtn_ShellNoZoneCheck(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbShellNoZoneCheck);
 
 	gpSet->isShellNoZoneCheck = uCheck;
-	gpConEmu->UpdateFarSettings();
+	CVConGroup::OnUpdateFarSettings();
 
 } // cbShellNoZoneCheck
 
@@ -2592,6 +2601,12 @@ void CSetDlgButtons::OnBtn_CursorOptions(HWND hDlg, WORD CB, BYTE uCheck)
 } // rCursorH ... cbInactiveCursorIgnoreSize
 
 
+static bool ShowHideRealCon(CVirtualConsole* pVCon, LPARAM lParam)
+{
+	pVCon->RCon()->ShowConsole((int)lParam);
+	return true; // continue
+}
+
 // cbVisible
 void CSetDlgButtons::OnBtn_RConVisible(HWND hDlg, WORD CB, BYTE uCheck)
 {
@@ -2602,19 +2617,12 @@ void CSetDlgButtons::OnBtn_RConVisible(HWND hDlg, WORD CB, BYTE uCheck)
 	if (gpSet->isConVisible)
 	{
 		// Если показывать - то только текущую (иначе на экране мешанина консолей будет
-		CVConGuard VCon;
-		if (CVConGroup::GetActiveVCon(&VCon) >= 0)
-			VCon->RCon()->ShowConsole(gpSet->isConVisible);
+		CVConGroup::EnumVCon(evf_Active, ShowHideRealCon, 1);
 	}
 	else
 	{
 		// А если скрывать - то все сразу
-		for (int i=0; i<MAX_CONSOLE_COUNT; i++)
-		{
-			CVirtualConsole *pCon = gpConEmu->GetVCon(i);
-
-			if (pCon) pCon->RCon()->ShowConsole(FALSE);
-		}
+		CVConGroup::EnumVCon(evf_All, ShowHideRealCon, 0);
 	}
 
 	apiSetForegroundWindow(ghOpWnd);
@@ -3454,6 +3462,20 @@ void CSetDlgButtons::OnBtn_DebugActivityRadio(HWND hDlg, WORD CB, BYTE uCheck)
 } // rbActivityDisabled || rbActivityShell || rbActivityInput || rbActivityCmd || rbActivityAnsi
 
 
+// rbColorRgbDec || rbColorRgbHex || rbColorBgrHex
+void CSetDlgButtons::OnBtn_ColorFormat(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==rbColorRgbDec || CB==rbColorRgbHex || CB==rbColorBgrHex);
+
+	gpSetCls->m_ColorFormat = (CSettings::ColorShowFormat)(CB - rbColorRgbDec);
+
+	if (hDlg)
+	{
+		gpSetCls->OnInitDialog_Color(hDlg, false);
+	}
+
+} // rbColorRgbDec || rbColorRgbHex || rbColorBgrHex
+
 // cbExtendColors
 void CSetDlgButtons::OnBtn_ExtendColors(HWND hDlg, WORD CB, BYTE uCheck)
 {
@@ -3477,10 +3499,47 @@ void CSetDlgButtons::OnBtn_ExtendColors(HWND hDlg, WORD CB, BYTE uCheck)
 } // cbExtendColors
 
 
+// cbColorResetExt
+void CSetDlgButtons::OnBtn_ColorResetExt(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbColorResetExt);
+
+	if (MsgBox(L"Reset colors 16..31 to default Windows palette?", MB_ICONQUESTION|MB_YESNO, NULL, ghOpWnd, true) != IDYES)
+		return;
+
+	const COLORREF* pcrColors = gpSet->GetDefColors();
+	if (!pcrColors)
+	{
+		Assert(pcrColors!=NULL);
+		return;
+	}
+
+	for (int i = 0; i < 16; i++)
+	{
+		CSetDlgColors::SetColorById(c16+i, pcrColors[i]);
+		if (hDlg)
+		{
+			CSetDlgColors::ColorSetEdit(hDlg, c16+i);
+			gpSetCls->InvalidateCtrl(GetDlgItem(hDlg, c16+i), TRUE);
+		}
+	}
+
+	gpConEmu->InvalidateAll();
+	gpConEmu->Update(true);
+
+} // cbColorResetExt
+
+
 // cbColorSchemeSave || cbColorSchemeDelete
 void CSetDlgButtons::OnBtn_ColorSchemeSaveDelete(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbColorSchemeSave || CB==cbColorSchemeDelete);
+
+	if (!hDlg)
+	{
+		_ASSERTE(hDlg!=NULL);
+		return;
+	}
 
 	HWND hList = GetDlgItem(hDlg, lbDefaultColors);
 	int nLen = GetWindowTextLength(hList);
@@ -3501,7 +3560,7 @@ void CSetDlgButtons::OnBtn_ColorSchemeSaveDelete(HWND hDlg, WORD CB, BYTE uCheck
 	HWND hCB = GetDlgItem(hDlg, CB);
 	SetWindowLongPtr(hCB, GWL_STYLE, GetWindowLongPtr(hCB, GWL_STYLE) & ~BS_DEFPUSHBUTTON);
 	// Перетряхнуть
-	gpSetCls->OnInitDialog_Color(hDlg);
+	gpSetCls->OnInitDialog_Color(hDlg, false);
 
 } // cbColorSchemeSave || cbColorSchemeDelete
 
@@ -3512,7 +3571,7 @@ void CSetDlgButtons::OnBtn_TrueColorer(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbTrueColorer);
 
 	gpSet->isTrueColorer = uCheck;
-	gpConEmu->UpdateFarSettings();
+	CVConGroup::OnUpdateFarSettings();
 	gpConEmu->Update(true);
 
 } // cbTrueColorer

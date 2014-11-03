@@ -27,47 +27,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#pragma once
+#define HIDE_USE_EXCEPTION_INFO
+#define SHOWDEBUGSTR
 
-#include <windows.h>
+#include "Header.h"
 
-class CConEmuMain;
-struct CmdArg;
+#include "SetColorPalette.h"
 
-class CFindPanel
+void ColorPalette::FreePtr()
 {
-protected:
-	CConEmuMain* mp_ConEmu;
-	HWND mh_Pane;
-	HWND mh_Edit;
-	HFONT mh_Font;
-	static ATOM mh_Class;
-	WNDPROC mfn_EditProc;
-	UINT mn_KeyDown;
-	CmdArg* ms_PrevSearch;
-
-public:
-	CFindPanel(CConEmuMain* apConEmu);
-	~CFindPanel();
-
-	HWND CreatePane(HWND hParent, int nHeight);
-	bool OnCreateFinished();
-	HWND GetHWND();
-	int  GetMinWidth();
-	HWND Activate(bool bActivate);
-	bool IsAvailable(bool bFilled);
-
-protected:
-	bool RegisterPaneClass();
-	static LRESULT WINAPI FindPaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static LRESULT WINAPI EditCtrlProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	bool OnCreate(CREATESTRUCT* ps);
-	void OnDestroy();
-	void OnSize();
-	void OnCreateFont();
-	void OnSearch();
-	bool OnKeyboard(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lRc);
-	void StopSearch();
-	void ShowMenu();
-	void ResetSearch();
-};
+	SafeFree(pszName);
+	ColorPalette* p = this;
+	SafeFree(p);
+}

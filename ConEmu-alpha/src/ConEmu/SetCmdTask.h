@@ -1,4 +1,4 @@
-﻿
+
 /*
 Copyright (c) 2014 Maximus5
 All rights reserved.
@@ -26,48 +26,28 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #pragma once
 
-#include <windows.h>
+struct ConEmuHotKey;
 
-class CConEmuMain;
-struct CmdArg;
-
-class CFindPanel
+struct CommandTasks
 {
-protected:
-	CConEmuMain* mp_ConEmu;
-	HWND mh_Pane;
-	HWND mh_Edit;
-	HFONT mh_Font;
-	static ATOM mh_Class;
-	WNDPROC mfn_EditProc;
-	UINT mn_KeyDown;
-	CmdArg* ms_PrevSearch;
+	size_t   cchNameMax;
+	wchar_t* pszName;
+	size_t   cchGuiArgMax;
+	wchar_t* pszGuiArgs;
+	size_t   cchCmdMax;
+	wchar_t* pszCommands; // "\r\n" separated commands
 
-public:
-	CFindPanel(CConEmuMain* apConEmu);
-	~CFindPanel();
+	ConEmuHotKey HotKey;
 
-	HWND CreatePane(HWND hParent, int nHeight);
-	bool OnCreateFinished();
-	HWND GetHWND();
-	int  GetMinWidth();
-	HWND Activate(bool bActivate);
-	bool IsAvailable(bool bFilled);
+	void FreePtr();
 
-protected:
-	bool RegisterPaneClass();
-	static LRESULT WINAPI FindPaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static LRESULT WINAPI EditCtrlProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	bool OnCreate(CREATESTRUCT* ps);
-	void OnDestroy();
-	void OnSize();
-	void OnCreateFont();
-	void OnSearch();
-	bool OnKeyboard(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lRc);
-	void StopSearch();
-	void ShowMenu();
-	void ResetSearch();
+	void SetName(LPCWSTR asName, int anCmdIndex);
+
+	void SetGuiArg(LPCWSTR asGuiArg);
+
+	void SetCommands(LPCWSTR asCommands);
+
+	void ParseGuiArgs(RConStartArgs* pArgs) const;
 };
