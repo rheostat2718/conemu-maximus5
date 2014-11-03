@@ -39,7 +39,7 @@ class CSetDlgColors
 protected:
 	static const int MAX_COLOR_EDT_ID; // c31
 	static BOOL gbLastColorsOk; // FALSE
-	static Settings::ColorPalette gLastColors; // {}
+	static ColorPalette gLastColors; // {}
 
 	static HBRUSH mh_CtlColorBrush;
 	static COLORREF acrCustClr[16]; // array of custom colors, используется в ChooseColor(...)

@@ -44,7 +44,7 @@ public:
 protected:
 	static bool ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck);
 	static LRESULT OnButtonClicked(HWND hDlg, WPARAM wParam, LPARAM lParam);
-	static void OnButtonClicked_Cursor(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp);
+	static void OnButtonClicked_Cursor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
 
 #ifdef _DEBUG
 protected:
@@ -53,15 +53,15 @@ protected:
 
 protected:
 	// These function may be used for AppStd and AppDistinct
-	static void OnBtn_CursorBlink(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp);
-	static void OnBtn_CursorColor(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp);
-	static void OnBtn_CursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp);
-	static void OnBtn_CursorX(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp);
-	static void OnBtn_InactiveCursor(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp);
-	static void OnBtn_InactiveCursorBlink(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp);
-	static void OnBtn_InactiveCursorColor(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp);
-	static void OnBtn_InactiveCursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp);
-	static void OnBtn_InactiveCursorX(HWND hDlg, WORD CB, BYTE uCheck, Settings::AppSettings* pApp);
+	static void OnBtn_CursorBlink(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
+	static void OnBtn_CursorColor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
+	static void OnBtn_CursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
+	static void OnBtn_CursorX(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
+	static void OnBtn_InactiveCursor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
+	static void OnBtn_InactiveCursorBlink(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
+	static void OnBtn_InactiveCursorColor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
+	static void OnBtn_InactiveCursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
+	static void OnBtn_InactiveCursorX(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
 
 protected:
 	static void OnBtn_CmdTasksAdd(HWND hDlg, WORD CB, BYTE uCheck);
@@ -209,7 +209,9 @@ protected:
 	static void OnBtn_ActivityReset(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ActivitySaveAs(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_DebugActivityRadio(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_ColorFormat(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ExtendColors(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_ColorResetExt(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ColorSchemeSaveDelete(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_TrueColorer(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_FadeInactive(HWND hDlg, WORD CB, BYTE uCheck);

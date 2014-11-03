@@ -31,43 +31,31 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
-class CConEmuMain;
-struct CmdArg;
-
-class CFindPanel
+struct ColorPalette
 {
-protected:
-	CConEmuMain* mp_ConEmu;
-	HWND mh_Pane;
-	HWND mh_Edit;
-	HFONT mh_Font;
-	static ATOM mh_Class;
-	WNDPROC mfn_EditProc;
-	UINT mn_KeyDown;
-	CmdArg* ms_PrevSearch;
+	wchar_t* pszName;
+	bool bPredefined;
 
-public:
-	CFindPanel(CConEmuMain* apConEmu);
-	~CFindPanel();
+	//reg->Load(L"ExtendColors", isExtendColors);
+	bool isExtendColors;
+	//reg->Load(L"ExtendColorIdx", nExtendColorIdx);
+	BYTE nExtendColorIdx; // 0..15
 
-	HWND CreatePane(HWND hParent, int nHeight);
-	bool OnCreateFinished();
-	HWND GetHWND();
-	int  GetMinWidth();
-	HWND Activate(bool bActivate);
-	bool IsAvailable(bool bFilled);
+	//reg->Load(L"TextColorIdx", nTextColorIdx);
+	BYTE nTextColorIdx; // 0..15,16
+	//reg->Load(L"BackColorIdx", nBackColorIdx);
+	BYTE nBackColorIdx; // 0..15,16
+	//reg->Load(L"PopTextColorIdx", nPopTextColorIdx);
+	BYTE nPopTextColorIdx; // 0..15,16
+	//reg->Load(L"PopBackColorIdx", nPopBackColorIdx);
+	BYTE nPopBackColorIdx; // 0..15,16
 
-protected:
-	bool RegisterPaneClass();
-	static LRESULT WINAPI FindPaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static LRESULT WINAPI EditCtrlProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	bool OnCreate(CREATESTRUCT* ps);
-	void OnDestroy();
-	void OnSize();
-	void OnCreateFont();
-	void OnSearch();
-	bool OnKeyboard(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lRc);
-	void StopSearch();
-	void ShowMenu();
-	void ResetSearch();
+	// Loaded
+	COLORREF Colors[0x20];
+
+	// Computed
+	COLORREF ColorsFade[0x20];
+	bool FadeInitialized;
+
+	void FreePtr();
 };

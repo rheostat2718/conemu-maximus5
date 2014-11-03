@@ -221,6 +221,8 @@ class CSettings
 		CBackgroundInfo* mp_BgInfo;
 		#endif
 		CDpiForDialog* mp_DpiAware;
+	protected:
+		enum ColorShowFormat { eRgbDec = 0, eRgbHex, eBgrHex } m_ColorFormat;
 	public:
 		void SetBgImageDarker(u8 newValue, bool bUpdate);
 		#ifndef APPDISTINCTBACKGROUND
@@ -403,7 +405,7 @@ class CSettings
 		LRESULT OnInitDialog_Tabs(HWND hWnd2);
 		LRESULT OnInitDialog_Status(HWND hWnd2, bool abInitial);
 		void OnInitDialog_StatusItems(HWND hWnd2);
-		LRESULT OnInitDialog_Color(HWND hWnd2);
+		LRESULT OnInitDialog_Color(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Transparent(HWND hWnd2);
 		LRESULT OnInitDialog_Tasks(HWND hWnd2, bool abForceReload);
 		LRESULT OnInitDialog_Apps(HWND hWnd2, bool abForceReload);
@@ -415,7 +417,7 @@ class CSettings
 		LRESULT OnInitDialog_Update(HWND hWnd2);
 		LRESULT OnInitDialog_Info(HWND hWnd2);
 		//
-		void InitCursorCtrls(HWND hWnd2, const Settings::AppSettings* pApp);
+		void InitCursorCtrls(HWND hWnd2, const AppSettings* pApp);
 		bool mb_IgnoreCmdGroupEdit, mb_IgnoreCmdGroupList;
 		//LRESULT OnButtonClicked_Apps(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		//UINT mn_AppsEnableControlsMsg;
@@ -429,7 +431,7 @@ class CSettings
 		//LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		//LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		bool OnEditChanged_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, Settings::AppSettings* pApp);
+		bool OnEditChanged_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, AppSettings* pApp);
 		LRESULT OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnListBoxDblClk(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnPage(LPNMHDR phdr);
@@ -445,9 +447,9 @@ class CSettings
 		void CheckSelectionModifiers(HWND hWnd2);
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
-		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
+		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE, const AppSettings* apDistinct = NULL);
 	public:
-		void ChangeCurrentPalette(const Settings::ColorPalette* pPal, bool bChangeDropDown);
+		void ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropDown);
 	private:
 		BOOL mb_IgnoreEditChanged;
 		BOOL mb_IgnoreTtfChange;

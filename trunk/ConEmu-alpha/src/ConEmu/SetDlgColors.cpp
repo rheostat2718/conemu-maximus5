@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmu.h"
 #include "OptionsClass.h"
+#include "SetColorPalette.h"
 #include "SetDlgColors.h"
 #include "Status.h"
 #include "VConGroup.h"
@@ -41,7 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 const int CSetDlgColors::MAX_COLOR_EDT_ID = c31;
 
 BOOL CSetDlgColors::gbLastColorsOk = FALSE;
-Settings::ColorPalette CSetDlgColors::gLastColors = {};
+ColorPalette CSetDlgColors::gLastColors = {};
 
 HBRUSH CSetDlgColors::mh_CtlColorBrush = NULL;
 COLORREF CSetDlgColors::acrCustClr[16] = {}; // array of custom colors, используется в ChooseColor(...)
@@ -119,7 +120,10 @@ bool CSetDlgColors::SetColorById(WORD nID, COLORREF color)
 			gpSet->mb_FadeInitialized = false;
 		}
 		else
+		{
+			_ASSERTE(FALSE && "Invalid cXX was specifed");
 			return false;
+		}
 	}
 
 	return true;
@@ -129,11 +133,23 @@ void CSetDlgColors::ColorSetEdit(HWND hWnd2, WORD c)
 {
 	_ASSERTE(hWnd2!=NULL);
 	WORD tc = (tc0-c0) + c;
-	SendDlgItemMessage(hWnd2, tc, EM_SETLIMITTEXT, 11, 0);
+	// Well, 11 chars are enough for "255 255 255"
+	// But sometimes it is interesting to copy/paste/cut when editing palettes, so x2
+	SendDlgItemMessage(hWnd2, tc, EM_SETLIMITTEXT, 23, 0);
 	COLORREF cr = 0;
 	GetColorById(c, &cr);
 	wchar_t temp[16];
-	_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(cr), getG(cr), getB(cr));
+	switch (gpSetCls->m_ColorFormat)
+	{
+	case CSettings::eRgbHex:
+		_wsprintf(temp, SKIPLEN(countof(temp)) L"#%02x%02x%02x", getR(cr), getG(cr), getB(cr));
+		break;
+	case CSettings::eBgrHex:
+		_wsprintf(temp, SKIPLEN(countof(temp)) L"0x%02x%02x%02x", getB(cr), getG(cr), getR(cr));
+		break;
+	default:
+		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(cr), getG(cr), getB(cr));
+	}
 	SetDlgItemText(hWnd2, tc, temp);
 }
 

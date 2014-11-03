@@ -36,7 +36,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CVirtualConsole;
 class CVConGuard;
 class CTabID;
+struct AppSettings;
 
+// this is NOT a bitmask field!
+// only exact values are allowed!
 enum EnumVConFlags
 {
 	evf_Active  = 1,
@@ -110,6 +113,7 @@ protected:
 protected:
 	friend class CVConGuard;
 	static bool setRef(CVirtualConsole*& rpRef, CVirtualConsole* apVCon);
+	static void setActiveVConAndFlags(CVirtualConsole* apNewVConActive);
 
 public:
 	static void Initialize();
@@ -122,9 +126,7 @@ public:
 	static void OnCreateGroupEnd();
 
 public:
-	static bool isActive(CVirtualConsole* apVCon, bool abAllowGroup = true);
 	static bool isActiveGroupVCon(CVirtualConsole* pVCon);
-	static bool isVisible(CVirtualConsole* apVCon);
 	static bool isValid(CRealConsole* apRCon);
 	static bool isValid(CVirtualConsole* apVCon);
 	static bool isVConExists(int nIdx);
@@ -153,7 +155,7 @@ public:
 
 	static int  GetActiveVCon(CVConGuard* pVCon = NULL, int* pAllCount = NULL);
 	static int  GetVConIndex(CVirtualConsole* apVCon);
-	static bool GetVCon(int nIdx, CVConGuard* pVCon = NULL);
+	static bool GetVCon(int nIdx, CVConGuard* pVCon = NULL, bool bFromCycle = false);
 	static bool GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon = NULL);
 	static bool GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, BOOL* pbWasError, BOOL* pbWasIndeterminate);
 
@@ -163,7 +165,7 @@ public:
 	static void OnAlwaysShowScrollbar(bool abSync = true);
 	static void OnUpdateScrollInfo();
 	static void OnUpdateFarSettings();
-	static void OnUpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE);
+	static void OnUpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE, const AppSettings* apDistinct = NULL);
 	static bool OnCloseQuery(bool* rbMsgConfirmed = NULL);
 	static bool DoCloseAllVCon(bool bMsgConfirmed = false);
 	static void CloseAllButActive(CVirtualConsole* apVCon/*may be null*/, bool abZombies, bool abNoConfirm);

@@ -47,6 +47,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
+#include "SetColorPalette.h"
+#include "SetCmdTask.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
@@ -857,10 +859,9 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 
 void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon, int nCmd)
 {
-	if (!apVCon)
+	CVConGuard guard;
+	if (!guard.Attach(apVCon))
 		return;
-
-	CVConGuard guard(apVCon);
 
 	switch (nCmd)
 	{
@@ -907,13 +908,13 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 		case IDM_RESTART:
 		case IDM_RESTARTAS:
 		case IDM_RESTARTDLG:
-			if (gpConEmu->isActive(apVCon))
+			if (apVCon->isActive(false))
 			{
 				gpConEmu->RecreateAction(cra_RecreateTab/*TRUE*/, (nCmd==IDM_RESTARTDLG) || isPressed(VK_SHIFT), (nCmd==IDM_RESTARTAS) ? crb_On : crb_Undefined);
 			}
 			else
 			{
-				MBoxAssert(gpConEmu->isActive(apVCon));
+				MBoxAssert(apVCon->isActive(false));
 			}
 
 			break;
@@ -1679,7 +1680,6 @@ HMENU CConEmuMenu::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 
 	BOOL lbActiveVCon = FALSE;
 	int nActiveCmd = -1; // DWORD MAKELONG(WORD wLow,WORD wHigh);
-	CVirtualConsole* pVCon = NULL;
 	DWORD nAddFlags = 0;
 
 	if (ahExist)
@@ -1688,12 +1688,13 @@ HMENU CConEmuMenu::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 			;
 	}
 
-	for (int V = 0; (pVCon = gpConEmu->GetVCon(V, true))!=NULL; V++)
+	CVConGuard VCon;
+	for (int V = 0; CVConGroup::GetVCon(V, &VCon, true); V++)
 	{
-		if ((lbActiveVCon = gpConEmu->isActive(pVCon)))
+		if ((lbActiveVCon = VCon->isActive(false)))
 			nActiveCmd = MAKELONG(1, V+1);
 		nAddFlags = 0; //(lbActiveVCon ? MF_DEFAULT : 0);
-		CRealConsole* pRCon = pVCon->RCon();
+		CRealConsole* pRCon = VCon->RCon();
 		if (!pRCon)
 		{
 			wsprintf(szText, L"%i: VConsole", V+1);
@@ -1951,7 +1952,7 @@ HMENU CConEmuMenu::CreateViewMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 	bool  bNew = (ahExist == NULL);
 	HMENU hMenu = bNew ? CreatePopupMenu() : ahExist;
 
-	const Settings::ColorPalette* pPal;
+	const ColorPalette* pPal = NULL;
 
 	int iActiveIndex = apVCon->GetPaletteIndex();
 
@@ -2065,22 +2066,18 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 	if (wParam >= IDM_VCON_FIRST && wParam <= IDM_VCON_LAST)
 	{
 		int nNewV = ((int)HIWORD(wParam))-1;
+		#ifdef _DEBUG
 		int nNewR = ((int)LOWORD(wParam))-1; UNREFERENCED_PARAMETER(nNewR);
+		#endif
 
-		CVirtualConsole* pVCon = gpConEmu->GetVCon(nNewV);
-		if (pVCon)
+		CVConGuard VCon;
+		if (CVConGroup::GetVCon(nNewV, &VCon))
 		{
 			// -- в SysMenu показываются только консоли (редакторов/вьюверов там нет)
-			//CRealConsole* pRCon = pVCon->RCon();
-			//if (pRCon)
-			//{
-			//	//if (pRCon->CanActivateFarWindow(nNewR))
-			//	pRCon->ActivateFarWindow(nNewR);
-			//}
-			if (!gpConEmu->isActive(pVCon))
-				gpConEmu->Activate(pVCon);
-			//else
-			//	UpdateTabs();
+			if (!VCon->isActive(false))
+			{
+				gpConEmu->Activate(VCon.VCon());
+			}
 		}
 		return 0;
 	}
