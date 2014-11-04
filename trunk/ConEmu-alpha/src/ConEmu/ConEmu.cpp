@@ -71,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DragDrop.h"
 #include "FindDlg.h"
 #include "GestureEngine.h"
+#include "HooksUnlocker.h"
 #include "Inside.h"
 #include "LoadImg.h"
 #include "Macro.h"
@@ -4259,7 +4260,7 @@ void CConEmuMain::UnRegisterHotKeys(BOOL abFinal/*=FALSE*/)
 	UnRegisterHooks(abFinal);
 }
 
-void CConEmuMain::UnRegisterHooks(BOOL abFinal/*=FALSE*/)
+void CConEmuMain::UnRegisterHooks(bool abFinal/*=false*/)
 {
 	if (mh_LLKeyHook)
 	{
@@ -8802,6 +8803,9 @@ LRESULT CConEmuMain::OnKeyboardHook(DWORD VkMod)
 	if (!VkMod)
 		return 0;
 
+	// While debugging - low-level keyboard hooks almost lock DevEnv
+	HooksUnlocker;
+
 	CVConGuard VCon;
 	CRealConsole* pRCon = (GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 
@@ -13143,7 +13147,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		} break;
 		case /*0x02E0*/ WM_DPICHANGED:
 		{
-			OnDpiChanged(LOWORD(wParam), HIWORD(wParam), (LPRECT)lParam, true);
+			// Update window DPI, recreate fonts and toolbars
+			OnDpiChanged(LOWORD(wParam), HIWORD(wParam), (LPRECT)lParam, true, dcs_Api);
+			// Call windows defaults?
 			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
 		} break;
 

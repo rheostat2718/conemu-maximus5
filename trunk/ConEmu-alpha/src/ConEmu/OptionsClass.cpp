@@ -306,7 +306,9 @@ int CSettings::QueryDpi()
 	return _dpi.Ydpi;
 }
 
-bool CSettings::OnDpiChanged(int dpiX, int dpiY, LPRECT prcSuggested)
+// Till now prcSuggested is not used
+// However it may be needed for 'Auto sized' fonts
+bool CSettings::RecreateFontByDpi(int dpiX, int dpiY, LPRECT prcSuggested)
 {
 	if ((_dpi.Xdpi == dpiX && _dpi.Ydpi == dpiY) || (dpiY < 72) || (dpiY > 960))
 	{
@@ -4357,6 +4359,7 @@ void CSettings::OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...)
 		nCtrlIds[nCtrls++] = nNext;
 		nNext = va_arg( argptr, int );
 	}
+	va_end(argptr);
 
 
 	for (i = 0; i < nCount; i++)
@@ -8598,13 +8601,13 @@ void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 {
 	int x = ax, y = ay;
 
-	if (!gpConEmu->isFullScreen() && !gpConEmu->isZoomed())
+	if (!gpConEmu->isFullScreen()
+		&& !gpConEmu->isZoomed()
+		&& !gpConEmu->isIconic()
+		&& (gpConEmu->GetTileMode(false) == cwc_Current))
 	{
-		if (!gpConEmu->isIconic())
-		{
-			RECT rc; GetWindowRect(ghWnd, &rc);
-			x = rc.left; y = rc.top;
-		}
+		RECT rc; GetWindowRect(ghWnd, &rc);
+		x = rc.left; y = rc.top;
 	}
 
 	if ((gpConEmu->wndX != x) || (gpConEmu->wndY != y))
