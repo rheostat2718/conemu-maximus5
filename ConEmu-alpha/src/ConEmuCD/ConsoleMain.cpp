@@ -8248,7 +8248,7 @@ BOOL cmd_SetConScrBuf(CESERVER_REQ& in, CESERVER_REQ** out)
 			#endif
 			gpSrv->hInWaitForSetConBufThread = hInEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 			gpSrv->hOutWaitForSetConBufThread = hOutEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-			gpSrv->hWaitForSetConBufThread = hWaitEvent = in.SetConScrBuf.hRequestor ? in.SetConScrBuf.hRequestor : INVALID_HANDLE_VALUE;
+			gpSrv->hWaitForSetConBufThread = hWaitEvent = (in.SetConScrBuf.hRequestor ? in.SetConScrBuf.hRequestor : INVALID_HANDLE_VALUE);
 			nSafeWait = WaitForSingleObject(hInEvent, WAIT_SETCONSCRBUF_MIN_TIMEOUT);
 			if (gpLogSize)
 			{
@@ -9667,13 +9667,6 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 }
 
 #ifdef CRTPRINTF
-WARNING("Можно облегчить... заменить на wvsprintf");
-//void _printf(LPCSTR asFormat, ...)
-//{
-//    va_list argList; va_start(argList, an_StrResId);
-//    char szError[2000]; -- только нужно учесть длину %s
-//    wvsprintf(szError, asFormat, argList);
-//}
 
 void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine)
 {

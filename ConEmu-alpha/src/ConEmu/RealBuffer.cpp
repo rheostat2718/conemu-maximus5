@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "ConEmuPipe.h"
 #include "FindDlg.h"
+#include "HooksUnlocker.h"
 #include "HtmlCopy.h"
 #include "Macro.h"
 #include "Match.h"
@@ -2678,23 +2679,6 @@ bool CRealBuffer::ResetLastMousePos()
 	return bChanged;
 }
 
-bool CRealBuffer::LookupFilePath(LPCWSTR asFileOrPath, wchar_t* pszPath, size_t cchPathMax)
-{
-	_ASSERTE(pszPath!=NULL && asFileOrPath!=NULL && cchPathMax>=MAX_PATH);
-
-	lstrcpyn(pszPath, asFileOrPath, (int)cchPathMax);
-
-	TODO("Проверка наличия собственно полного пути");
-	TODO("попытка склейки с текущим путем в приложении");
-	TODO("попытка поиска файла в подпапках текущего пути");
-	TODO("Коррекция регистра символов, чтобы левота в историю фара не попадала");
-
-	if (FileExists(pszPath))
-		return true;
-
-	return false;
-}
-
 bool CRealBuffer::ProcessFarHyperlink(bool bUpdateScreen)
 {
 	bool bChanged = false;
@@ -2773,6 +2757,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 		return bChanged;
 	}
 
+	HooksUnlocker;
 
 	COORD crEnd = crStart;
 	CmdArg szText;
@@ -2842,8 +2827,24 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 					while ((pszEnd = wcschr(pszText, L'/')) != NULL)
 						*pszEnd = L'\\'; // заменить прямые слеши на обратные
 
-					//lstrcpyn(cmd.szFile, pszText, countof(cmd.szFile));
-					LookupFilePath(pszText/*name from console*/, cmd.szFile/*full path*/, countof(cmd.szFile));
+					CmdArg szWinPath;
+					LPCWSTR pszWinPath = mp_RCon->GetFileFromConsole(pszText, szWinPath);
+					if (pszWinPath)
+					{
+						// May be too long?
+						lstrcpyn(cmd.szFile, pszWinPath, countof(cmd.szFile));
+						// Must be available
+						if (!FileExists(cmd.szFile))
+						{
+							// Not found
+							pszWinPath = NULL;
+						}
+					}
+					// Not found?
+					if (!pszWinPath)
+					{
+						lstrcpyn(cmd.szFile, pszText, countof(cmd.szFile));
+					}
 
 					TODO("Для удобства, если лог открыт в редакторе, или пропустить мышь, или позвать макрос");
 					// Только нужно учесть, что текущий таб может быть редактором, но открыт UserScreen (CtrlO)
@@ -2858,7 +2859,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 					//StoreLastTextRange(etr_None);
 					//UpdateSelection();
 
-					int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(fwt_Editor|fwt_ActivateFound|fwt_PluginRequired, pszFileName, &VCon);
+					int liActivated = gpConEmu->mp_TabBar->ActiveTabByName(fwt_Editor|fwt_ActivateFound|fwt_PluginRequired, cmd.szFile/*pszFileName*/, &VCon);
 
 					if (liActivated == -2)
 					{
@@ -2900,20 +2901,6 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 							{
 								if (!IsFarExe(PointToName(szExe)))
 									bUseExtEditor = true;
-							}
-
-							CmdArg szWinPath;
-							LPCWSTR pszWinPath = mp_RCon->GetFileFromConsole(cmd.szFile, szWinPath);
-							if (pszWinPath)
-							{
-								// May be too long?
-								lstrcpyn(cmd.szFile, pszWinPath, countof(cmd.szFile));
-								// Must be available
-								if (!FileExists(cmd.szFile))
-								{
-									// Not found
-									pszWinPath = NULL;
-								}
 							}
 
 							CVConGuard VCon;
