@@ -508,7 +508,7 @@ void Settings::InitSettings()
 		}
 	}
 
-	isTrueColorer = true; // включим по умочанию, ибо Far3
+	isTrueColorer = true; // включим по умолчанию, ибо Far3
 
 	AppStd.isExtendColors = false;
 	AppStd.nExtendColorIdx = 14;
@@ -2228,6 +2228,7 @@ bool Settings::LoadProgress(SettingsBase* reg, Settings::ConEmuProgressStore* &p
 	reg->Load(L"Duration", p->nDuration);
 
 wrap:
+	pProgress = p;
 	return lbRc;
 }
 

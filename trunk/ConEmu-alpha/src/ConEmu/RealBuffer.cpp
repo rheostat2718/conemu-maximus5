@@ -2208,6 +2208,8 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 		mp_RCon->UpdateScrollInfo();
 	}
 
+	ExecuteFreeResult(pIn);
+
 	return lbChanged;
 }
 
@@ -4294,6 +4296,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	{
 		Assert(pch != NULL);
 		GlobalFree(hUnicode);
+		return false;
 	}
 
 	// Заполнить данными
@@ -4473,7 +4476,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 					&& !wcschr(sPreLineBreak, *(pch - 1))
 					&& !wcschr(sPreLineBreak, *pszNextLine))
 				{
-					// Пытаемся опредлить, новая это строка или просто перенос в Prompt?
+					// Пытаемся определить, новая это строка или просто перенос в Prompt?
 					if ((*(pch - 1) != L' ')
 						|| (((pch - 1) > pchStart) && (*(pch - 2) != L' '))
 						// sh.exe - one cell space pad on right edge
