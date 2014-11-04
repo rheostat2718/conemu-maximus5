@@ -1663,7 +1663,7 @@ wrap:
 	if (bCoInitialized)
 		CoUninitialize();
 	if (pdwLastError) *pdwLastError = hr;
-	// End of Task-sheduler mode
+	// End of Task-scheduler mode
 #endif
 
 	#if defined(__GNUC__)
@@ -2725,6 +2725,7 @@ BOOL PrepareCommandLine(TCHAR*& cmdLine, TCHAR*& cmdNew, bool& isScript, uint& p
 			SplitCommandLine(cmdLine, &params);
 		}
 	}
+	SafeFree(pszExeNameOnly);
 
 	return TRUE;
 }
@@ -2950,7 +2951,7 @@ HRESULT _CreateSeparatorLink(IShellLink **ppsl)
 
 bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 {
-	// Добаляем Tasks, они есть только в Win7+
+	// Добавляем Tasks, они есть только в Win7+
 	if (gnOsVer < 0x601)
 		return false;
 
@@ -2962,7 +2963,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	bool bSucceeded = false;
 
 #ifdef __GNUC__
-	MBoxA(L"Sorry, UpdateWin7TaskList is not availbale in GCC!");
+	MBoxA(L"Sorry, UpdateWin7TaskList is not available in GCC!");
 #else
 	SetCursor(LoadCursor(NULL, IDC_WAIT));
 
@@ -3673,7 +3674,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gn_MainThreadId = GetCurrentThreadId();
 
 	// On Vista and higher ensure our process will be
-	// marked as fully dpi-aware, regardless of mainfest
+	// marked as fully dpi-aware, regardless of manifest
 	if (gnOsVer >= 0x600)
 	{
 		CDpiAware::setProcessDPIAwareness();
@@ -3966,7 +3967,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					}
 
 					RegCloseKey(hk);
-					// сбрость CreateInNewEnvironment для ConMan
+					// сбросить CreateInNewEnvironment для ConMan
 					ResetConman();
 					return nSetupRc;
 				}
@@ -4694,7 +4695,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Actions done
 	if (ExitAfterActionPrm)
 	{
-		DEBUGSTRSTARTUP(L"Exit was requrested");
+		DEBUGSTRSTARTUP(L"Exit was requested");
 		goto wrap;
 	}
 
@@ -4782,7 +4783,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		//gpSet->isUpdConHandle = TRUE;
 
-		// сбрость CreateInNewEnvironment для ConMan
+		// сбросить CreateInNewEnvironment для ConMan
 		ResetConman();
 	}
 
