@@ -7,6 +7,11 @@ Donate (!PayPal) расположена на [http://code.google.com/p/conemu-ma
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 141104==
+  * Issue 1790: Minimize/restore crops console size (ff25dbc regression).
+  * Fix Coverity warnings and leaks (from Michael Lukashov).
+
+
 ==Build 141103==
   * Don't snap-jump by Win+Arrow if About dialog is at foreground.
   * Search for opened tab by full path instead of name only while Ctrl+Click on hyperlink (compiler errors).
