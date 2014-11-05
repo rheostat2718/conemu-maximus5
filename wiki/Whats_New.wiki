@@ -6,6 +6,11 @@ Votes and awards (vote for !ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 141104a==
+  * Issue 1792: RBTray caused console crop (ff25dbc regression).
+  * Use `<Solarized>` palette by default.
+
+
 ==Build 141104==
   * Issue 1790: Minimize/restore crops console size (ff25dbc regression).
   * Fix Coverity warnings and leaks (from Michael Lukashov).
