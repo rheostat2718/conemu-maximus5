@@ -257,11 +257,6 @@ const CONEMUDEFCOLORS DefColors[] =
 		},
 	},
 };
-//const DWORD *dwDefColors = DefColors[0].dwDefColors;
-//DWORD gdwLastColors[0x10] = {0};
-//BOOL  gbLastColorsOk = FALSE;
-
-//#define MAX_COLOR_EDT_ID c31
 
 
 
@@ -473,6 +468,17 @@ void Settings::InitSettings()
 	ConsoleFont.lfWidth = 3;
 	wcscpy_c(ConsoleFont.lfFaceName, gsDefConFont);
 
+	const COLORREF* pcrColors;
+	const COLORREF* pcrStd = DefColors[0].dwDefColors;
+	if ((pcrColors = GetDefColors(L"<Solarized>")) != NULL)
+	{
+		for (uint i = 0x10; i--;)
+		{
+			Colors[i] = pcrColors[i]; // Solarized color palette
+			Colors[i+0x10] = pcrStd[i]; // Windows standard colors
+		}
+	}
+	else
 	{
 		SettingsRegistry RegConColors, RegConDef;
 
@@ -490,17 +496,17 @@ void Settings::InitSettings()
 
 				if (!RegConColors.Load(ColorName, (LPBYTE)&(Colors[i]), sizeof(Colors[0])))
 					if (!RegConDef.Load(ColorName, (LPBYTE)&(Colors[i]), sizeof(Colors[0])))
-						Colors[i] = DefColors[0].dwDefColors[i]; //-V108
+						Colors[i] = pcrStd[i]; //-V108
 
 				if (Colors[i] == 0)
 				{
 					if (!lbBlackFound)
 						lbBlackFound = true;
 					else if (lbBlackFound)
-						Colors[i] = DefColors[0].dwDefColors[i]; //-V108
+						Colors[i] = pcrStd[i]; //-V108
 				}
 
-				Colors[i+0x10] = Colors[i]; // Умолчания
+				Colors[i+0x10] = pcrStd[i]; // Умолчания
 			}
 
 			RegConDef.CloseKey();
@@ -692,9 +698,9 @@ void Settings::InitSettings()
 	isStatusBarFlags = csf_HorzDelim;
 	#if 1
 	// Use solarized palette by default
-	nStatusBarBack = RGB(7,54,66);
-	nStatusBarLight = RGB(253,246,227);
-	nStatusBarDark = RGB(147,161,161);
+	nStatusBarBack = RGB(7,54,66); // 101 123 131
+	nStatusBarLight = RGB(253,246,227); // 253 246 227
+	nStatusBarDark = RGB(147,161,161); // 147 161 161
 	#else
 	// Old palette
 	nStatusBarBack = RGB(64,64,64);
