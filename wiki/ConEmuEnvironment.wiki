@@ -13,6 +13,7 @@
 || `ConEmuHWND` || main !ConEmu window handle || `0x0021094A` ||
 || `ConEmuDrawHWND` || virtual console window handle (child window of !ConEmu), this is canvas for console text painting || `0x000E0F8A` ||
 || `ConEmuBackHWND` || backing for canvas, it may be larger than canvas if padding or scrollbars exists || `0x00040E8A` ||
+|| `ConEmuIsAdmin` || set for those tabs/splits which were started elevated (UAC) || `ADMIN` or not defined ||
 || `ConEmuANSI` || set to `ON` when ‘ANSI X3.64’ is enabled || `ON` or `OFF` ||
 || `ConEmuHooks` || you may temporarily disable injects when running ‘long’ batches or initialization scripts, for example<br>`cmd /k set ConEmuHooks=OFF & "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" -new_console:sV -new_console:t:SDK & set ConEmuHooks=` || `OFF` or `Enabled` ||
 || `ConEmuFakeDT` || that will cheat system and local current time for console processes || [ConEmuEnvironment#Cheating_system_time Examples] ||

@@ -12,6 +12,7 @@
 || `ConEmuHWND` || дескриптор главного окна !ConEmu || `0x0021094A` ||
 || `ConEmuDrawHWND` || дескриптор дескриптор окна виртуальной консоли (дочернее окно !ConEmu), окно отрисовки текста консоли || `0x000E0F8A` ||
 || `ConEmuBackHWND` || подложка для окна отрисовки, может быть больше окна отрисовки при наличии «padding» или «scrollbars» || `0x00040E8A` ||
+|| `ConEmuIsAdmin` || устанавливается для тех табов/сплитов, которые запущены с повышенными полномочиями (UAC) || `ADMIN` или не задана ||
 || `ConEmuANSI` || установлено в `ON` если доступен «ANSI X3.64» || `ON` или `OFF` ||
 || `ConEmuHooks` || можно временно отключить установку inject-ов на время запуска длинных команд или инициализационных скриптов, например<br>`cmd /k set ConEmuHooks=OFF & "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" -new_console:sV -new_console:t:SDK & set ConEmuHooks=` || `OFF` или `Enabled` ||
 || `ConEmuFakeDT` || that will cheat system and local current time for console processes || [ConEmuEnvironment#Cheating_system_time Examples] ||
