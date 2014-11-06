@@ -630,11 +630,16 @@ CConEmuMain::CConEmuMain()
 	SetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS_W, NULL);
 
 
+	// Чтобы знать, может мы уже запущены под UAC админом?
+	mb_IsUacAdmin = IsUserAdmin();
+
+
 	// Добавить в окружение переменную с папкой к ConEmu.exe
 	SetEnvironmentVariable(ENV_CONEMUDIR_VAR_W, ms_ConEmuExeDir);
 	SetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, ms_ConEmuBaseDir);
 	SetEnvironmentVariable(ENV_CONEMU_BUILD_W, ms_ConEmuBuild);
 	SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, L"");
+	SetEnvironmentVariable(ENV_CONEMU_ISADMIN_W, mb_IsUacAdmin ? L"ADMIN" : NULL);
 	// переменная "ConEmuArgs" заполняется в ConEmuApp.cpp:PrepareCommandLine
 
 	wchar_t szDrive[MAX_PATH];
@@ -695,16 +700,6 @@ CConEmuMain::CConEmuMain()
 	ms_PortableTempDir[0] = 0;
 	mh_PortableMountRoot = mh_PortableRoot = NULL;
 	CheckPortableReg();
-
-
-	if (gOSVer.dwMajorVersion >= 6)
-	{
-		mb_IsUacAdmin = IsUserAdmin(); // Чтобы знать, может мы уже запущены под UAC админом?
-	}
-	else
-	{
-		mb_IsUacAdmin = FALSE;
-	}
 
 	//mh_Psapi = NULL;
 	//GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(GetModuleHandle(L"Kernel32.dll"), "GetModuleFileNameExW");
@@ -2992,35 +2987,6 @@ void CConEmuMain::AttachToDialog()
 	if (!mp_AttachDlg)
 		mp_AttachDlg = new CAttachDlg;
 	mp_AttachDlg->AttachDlg();
-}
-
-CRealConsole* CConEmuMain::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID)
-{
-	wchar_t szLogInfo[MAX_PATH];
-
-	_ASSERTE(anServerPID!=0);
-
-	if (gpSetCls->isAdvLogging!=0)
-	{
-		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. SrvPID=%u. AppPID=%u, FileName=", anServerPID, anAppPID);
-		lstrcpyn(szLogInfo+_tcslen(szLogInfo), asAppFileName ? asAppFileName : L"<NULL>", 128);
-		LogString(szLogInfo);
-	}
-
-	CRealConsole* pRCon = CVConGroup::AttachRequestedGui(anServerPID, asAppFileName, anAppPID);
-
-	if (gpSetCls->isAdvLogging!=0)
-	{
-		wchar_t szRc[64];
-		if (pRCon)
-			_wsprintf(szRc, SKIPLEN(countof(szRc)) L"Succeeded. ServerPID=%u", pRCon->GetServerPID());
-		else
-			wcscpy_c(szRc, L"Rejected");
-		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. SrvPID=%u. AppPID=%u. %s", anServerPID, anAppPID, szRc);
-		LogString(szLogInfo);
-	}
-
-	return pRCon;
 }
 
 // Вернуть общее количество процессов по всем консолям
