@@ -3615,7 +3615,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 					// Если длительность удержания кнопки мышки превышает DblClickTime
 					// то можно (и нужно) сразу выполнить копирование
 					_ASSERTE(nPrevTick!=0);
-					DoSelectionFinalize(true, 0);
+					DoSelectionFinalize(true);
 				}
 				else
 				{
@@ -3632,15 +3632,38 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	{
 		BYTE bAction = (messg == WM_RBUTTONUP) ? gpSet->isCTSRBtnAction : gpSet->isCTSMBtnAction; // 0-off, 1-copy, 2-paste, 3-auto
 
-		// Только Copy. Делать Paste при наличии выделения - глупо. Так что только Copy.
-		bool bDoCopy = (bAction == 1) || (bAction == 3);
-		bool bClipOpen = bDoCopy ? MyOpenClipboard(L"Copy&Paste") : false;
-		bool bCopyOk = DoSelectionFinalize(bDoCopy);
+		bool bDoCopyWin = (bAction == 1);
+		bool bDoPaste = (bAction == 3);
+		bool bDoCopy = bDoCopyWin || bDoPaste;
+		bool bClipOpen = bDoCopyWin ? MyOpenClipboard(L"Copy&Paste") : false;
+		HGLOBAL hUnicode = NULL;
+		bool bCopyOk = DoSelectionFinalize(bDoCopy, bDoCopyWin ? cm_CopySel : cm_CopyInt, 0, bDoPaste ? &hUnicode : NULL);
 
-		if (bCopyOk && (bAction == 3))
+		if (bCopyOk && bDoPaste)
 		{
+			LPCWSTR pszText = NULL;
+			if (hUnicode)
+			{
+				pszText = (LPCWSTR)GlobalLock(hUnicode);
+				if (!pszText)
+				{
+					DisplayLastError(L"GlobalLock failed, paste is impossible!");
+					bDoPaste = false;
+				}
+			}
+
 			// Immediately paste into console ('Auto' mode)?
-			mp_RCon->Paste(pm_OneLine);
+			if (bDoPaste)
+			{
+				mp_RCon->Paste(pm_OneLine, pszText);
+			}
+
+			if (hUnicode)
+			{
+				if (pszText)
+					GlobalUnlock(hUnicode);
+				GlobalFree(hUnicode);
+			}
 		}
 
 		if (bClipOpen)
@@ -4084,7 +4107,7 @@ void CRealBuffer::DoSelectionStop()
 	con.m_sel.dwFlags = 0;
 }
 
-bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= NULL*/)
+bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFormat /*= CTSFormatDefault*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= NULL*/, HGLOBAL* phUnicode /*= NULL*/)
 {
 	bool bRc = false;
 
@@ -4128,7 +4151,7 @@ bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFo
 
 		if (!lbProcessed)
 		{
-			bRc = DoSelectionCopyInt(CopyMode, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, nFormat, pszDstFile);
+			bRc = DoSelectionCopyInt(CopyMode, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, nFormat, pszDstFile, phUnicode);
 		}
 	}
 
@@ -4193,7 +4216,7 @@ int CRealBuffer::GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int
 }
 
 // Здесь CopyMode уже не используется, передается для информации
-bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat /*= 0xFF*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= NULL*/)
+bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat /*= CTSFormatDefault*/, LPCWSTR pszDstFile /*= NULL*/, HGLOBAL* phUnicode /*= NULL*/)
 {
 	// Warning!!! Здесь уже нельзя ориентироваться на con.m_sel !!!
 
@@ -4202,7 +4225,9 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	CharAttr* pAttrStartEx = NULL;
 	int nTextWidth = 0, nTextHeight = 0;
 
-	if (nFormat == 0xFF)
+	if ((CopyMode == cm_CopyInt) && phUnicode)
+		nFormat = 0; // Выделен текст для того чтобы сразу его вставить, не трогая Clipboard
+	if (nFormat == CTSFormatDefault)
 		nFormat = gpSet->isCTSHtmlFormat;
 
 	if (m_Type == rbt_Primary)
@@ -4527,6 +4552,14 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 	// Ready
 	GlobalUnlock(hUnicode);
+
+	if ((CopyMode == cm_CopyInt) && phUnicode)
+	{
+		// Был выделен текст для того чтобы сразу его вставить, не трогая Clipboard
+		*phUnicode = hUnicode;
+		return true;
+	}
+
 	// HTML?
 	HGLOBAL hHtml = NULL;
 	if (bUseHtml)
@@ -4656,13 +4689,13 @@ bool CRealBuffer::isStreamSelection()
 }
 
 // true - if clipboard was set successfully
-bool CRealBuffer::DoSelectionFinalize(bool abCopy, WPARAM wParam)
+bool CRealBuffer::DoSelectionFinalize(bool abCopy, CECopyMode CopyMode, WPARAM wParam, HGLOBAL* phUnicode)
 {
 	bool bCopied = false;
 
 	if (abCopy)
 	{
-		bCopied = DoSelectionCopy();
+		bCopied = DoSelectionCopy(CopyMode, CTSFormatDefault, NULL, phUnicode);
 	}
 
 	mp_RCon->mn_SelectModeSkipVk = wParam;
@@ -4690,11 +4723,12 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 		return NULL;
 
 	// If these was not processed by user HotKeys, lets do it...
-	if (VkState.IsEqual('V', cvk_Ctrl) || VkState.IsEqual(VK_INSERT, cvk_Ctrl))
+	// Ctrl+C or Ctrl+Ins must copy current selection to clipboard
+	if (VkState.IsEqual('C', cvk_Ctrl) || VkState.IsEqual(VK_INSERT, cvk_Ctrl))
 	{
 		if (bKeyDown)
 		{
-			DoSelectionFinalize(true, VkState.Vk);
+			DoSelectionFinalize(true, cm_CopySel, VkState.Vk);
 		}
 		return ConEmuSkipHotKey;
 	}
@@ -4716,7 +4750,7 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	{
 		if ((wParam == VK_ESCAPE) || (wParam == VK_RETURN) /*|| (wParam == 'C' || wParam == VK_INSERT)*/)
 		{
-			DoSelectionFinalize(wParam != VK_ESCAPE, wParam);
+			DoSelectionFinalize(wParam != VK_ESCAPE, cm_CopySel, wParam);
 			return true;
 		}
 		else
