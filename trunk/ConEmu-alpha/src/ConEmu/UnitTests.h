@@ -27,33 +27,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#define HIDE_USE_EXCEPTION_INFO
-#define SHOWDEBUGSTR
+#pragma once
 
-#include "Header.h"
-#include "ConEmu.h"
-#include "HooksUnlocker.h"
+#include <windows.h>
 
-LONG CHooksUnlocker::mn_LockCount = 0;
+#ifdef _DEBUG
+void DebugUnitTests();
+#endif
 
-CHooksUnlocker::CHooksUnlocker()
-	: mb_Processed(false)
-{
-	if (!IsDebuggerPresent())
-		return;
-	mb_Processed = true;
-	if (InterlockedIncrement(&mn_LockCount) > 0)
-	{
-		if (gpConEmu) gpConEmu->UnRegisterHooks();
-	}
-}
-
-CHooksUnlocker::~CHooksUnlocker()
-{
-	if (!mb_Processed)
-		return;
-	if (InterlockedDecrement(&mn_LockCount) <= 0)
-	{
-		if (gpConEmu) gpConEmu->RegisterHooks();
-	}
-}
+#if defined(__GNUC__) || defined(_DEBUG)
+void GnuUnitTests();
+#endif

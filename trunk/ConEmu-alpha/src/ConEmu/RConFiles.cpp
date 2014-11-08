@@ -68,14 +68,35 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 
 		// Попытаться просканировать один-два уровеня подпапок
 		bool bFound = FileExistSubDir(pszDir, pszWinPath, 1, szFull);
+
 		if (!bFound)
 		{
+			// git diffs style, but with backslashes (they are converted already)
+			// "a/src/ConEmu.cpp" and "b/src/ConEmu.cpp"
+			if ((pszWinPath[0] == L'a' || pszWinPath[0] == L'b') && (pszWinPath[1] == L'\\'))
+			{
+				LPCWSTR pszSlash = pszWinPath;
+				while (!bFound && ((pszSlash = wcschr(pszSlash, L'\\')) != NULL))
+				{
+					while (*pszSlash == L'\\')
+						pszSlash++;
+					if (!*pszSlash)
+						break;
+					bFound = FileExistSubDir(pszDir, pszSlash, 1, szFull);
+				}
+			}
+		}
+
+		if (!bFound)
+		{
+			// If there is "src" subfolder in the current folder
 			CEStr szSrc = JoinPath(pszDir, L"src");
 			if (DirectoryExists(szSrc))
 			{
 				bFound = FileExistSubDir(szSrc, pszWinPath, 1, szFull);
 			}
 		}
+
 		if (!bFound)
 		{
 			return NULL;

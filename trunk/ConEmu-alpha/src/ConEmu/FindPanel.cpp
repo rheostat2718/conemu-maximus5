@@ -45,6 +45,8 @@ ATOM CFindPanel::mh_Class = NULL;
 #define FindPanelClass L"ConEmuFindPanel"
 #define SearchHint L"Search"
 #define SearchCtrlId 1
+#define SearchCtrlShift 3
+#define SearchCtrlWidthMul 5
 
 static MMap<HWND,CFindPanel*> g_FindMap;
 
@@ -54,6 +56,7 @@ CFindPanel::CFindPanel(CConEmuMain* apConEmu)
 	, mh_Edit(NULL)
 	, mh_Font(NULL)
 	, mn_KeyDown(0)
+	, mn_RebarHeight(0)
 {
 	if (!g_FindMap.Initialized())
 		g_FindMap.Init(16);
@@ -77,9 +80,7 @@ int CFindPanel::GetMinWidth()
 {
 	if (!this || !mh_Pane)
 		return 0;
-	RECT rcPane = {};
-	GetWindowRect(mh_Pane, &rcPane);
-	return klMax(80,(int)(5*(rcPane.bottom - rcPane.top)));
+	return klMax(80,(int)(SearchCtrlWidthMul*mn_RebarHeight));
 }
 
 void CFindPanel::ResetSearch()
@@ -88,7 +89,7 @@ void CFindPanel::ResetSearch()
 	mn_KeyDown = 0;
 }
 
-HWND CFindPanel::CreatePane(HWND hParent, int nHeight)
+HWND CFindPanel::CreatePane(HWND hParent, int nBarHeight)
 {
 	ResetSearch();
 
@@ -101,9 +102,16 @@ HWND CFindPanel::CreatePane(HWND hParent, int nHeight)
 	_ASSERTE(mh_Edit==NULL);
 	mh_Edit = NULL;
 
+	mn_RebarHeight = nBarHeight;
+
+	int nShiftY = gpSetCls->EvalSize(SearchCtrlShift, esf_Vertical|esf_CanUseDpi);
+	int nHeight = nBarHeight - (2 * nShiftY);
+	int nWidth = nBarHeight * SearchCtrlWidthMul;
+
 	mh_Pane = CreateWindowEx(WS_EX_CONTROLPARENT,
 		FindPanelClass, L"",
-		WS_CHILD|WS_VISIBLE, 0,0,0,nHeight, hParent, NULL, NULL, this);
+		WS_CHILD|WS_VISIBLE,
+		0, nShiftY, nWidth, nHeight, hParent, NULL, NULL, this);
 
 	return mh_Pane;
 }
@@ -213,6 +221,16 @@ LRESULT CFindPanel::FindPaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		break;
 
 	case WM_COMMAND:
+		switch (HIWORD(wParam))
+		{
+		case BN_CLICKED:
+			goto wrap;
+		}
+		break;
+
+	case WM_WINDOWPOSCHANGING:
+		if (pPanel)
+			pPanel->OnWindowPosChanging((WINDOWPOS*)lParam);
 		break;
 
 	case WM_SIZE:
@@ -282,35 +300,28 @@ void CFindPanel::OnDestroy()
 	mh_Pane = mh_Edit = NULL;
 }
 
+void CFindPanel::OnWindowPosChanging(WINDOWPOS* p)
+{
+	_ASSERTE(p->hwnd == mh_Pane);
+	RECT rcRebar = {}; GetWindowRect(GetParent(mh_Pane), &rcRebar);
+	int iOptimal = gpSetCls->EvalSize(SearchCtrlShift, esf_Vertical|esf_CanUseDpi);
+	p->y = iOptimal;
+	p->cy = (rcRebar.bottom - rcRebar.top) - 2*iOptimal;
+}
+
 void CFindPanel::OnSize(LPRECT prcEdit)
 {
 	if (!mh_Pane || (!mh_Edit && !prcEdit))
 		return; // Nothing to do
 
 	RECT rcRebar = {}; GetWindowRect(GetParent(mh_Pane), &rcRebar);
-	RECT rcPane = {}; GetWindowRect(mh_Pane, &rcPane);
-
 	RECT rcClient = {}; GetClientRect(mh_Pane, &rcClient);
 	_ASSERTE(rcClient.top==0 && rcClient.left==0 && rcClient.bottom>0 && rcClient.right>0);
-
-	// оптимальный отступ от верхнего края окна
-	int iOptimal = gpSetCls->EvalSize(3, esf_Vertical|esf_CanUseDpi);
-	// Сдвиг панели по вертикали
-	int iShift = rcPane.top - rcRebar.top;
-	// Прикинем отступ контрола редактирования
-	rcClient.top = klMax(0,iOptimal-iShift);
-	// Панель может "кончаться" ниже чем rebar
-	if (rcPane.bottom > rcRebar.bottom)
-		rcClient.bottom -= (rcPane.bottom - rcRebar.bottom);
-	// Расположим симметрично
-	rcClient.bottom -= iOptimal;
-
-	// Правую границу подрезать?
-	//rcClient.right--;
 
 	// Если контрол уже создан - двигаем
 	if (mh_Edit)
 	{
+		mn_RebarHeight = (rcRebar.bottom - rcRebar.top);
 		MoveWindow(mh_Edit, rcClient.left, rcClient.top, rcClient.right-rcClient.left, rcClient.bottom-rcClient.top, TRUE);
 	}
 
@@ -406,8 +417,12 @@ bool CFindPanel::OnKeyboard(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lR
 	switch (uMsg)
 	{
 	case WM_CHAR:
-		if (LOWORD(wParam) == VK_RETURN)
+		switch (LOWORD(wParam))
+		{
+		case VK_RETURN:
+		case VK_ESCAPE:
 			bSkip = true;
+		}
 		break;
 	case WM_SYSCHAR:
 		// Чтобы не пищало
@@ -460,12 +475,18 @@ bool CFindPanel::OnKeyboard(UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT& lR
 		case 'A':
 			gpSet->FindOptions.bHighlightAll = !gpSet->FindOptions.bHighlightAll;
 			break;
+		case VK_F10:
+			mn_KeyDown = LOWORD(wParam);
+			bSkip = true;
+			goto wrap;
 		default:
 			goto wrap;
 		}
 		gpConEmu->DoFindText(isPressed(VK_SHIFT) ? -1 : 1);
 		break;
 	case WM_SYSKEYUP:
+		if (mn_KeyDown == LOWORD(wParam))
+			StopSearch();
 		bSkip = true;
 		lRc = TRUE;
 		goto wrap;
@@ -479,6 +500,8 @@ bool CFindPanel::IsAvailable(bool bFilled)
 {
 	if (!mh_Edit || !IsWindowVisible(mh_Edit) || !IsWindowEnabled(mh_Edit))
 		return false;
+	if (mh_Edit && (GetFocus() == mh_Edit))
+		return true;
 	if (bFilled && (GetWindowTextLength(mh_Edit) <= 0))
 		return false;
 	return true;
