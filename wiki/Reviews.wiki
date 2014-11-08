@@ -8,6 +8,11 @@ I haven't even begun to scratch the surface as !ConEmu is one of those applicati
 *Scott Hanselman*. Read [http://www.hanselman.com/blog/ConEmuTheWindowsTerminalConsolePromptWeveBeenWaitingFor.aspx full article]
 
 ----
+First review I have posted in 28 years being a software dev. This app is awesome! I have been using Console2 for a long time, then just stumbled onto this. Have uninstalled Console2. The amount of features available in ConEmu are impressive. Kudos to the devs!!!
+
+*Nikel*. More comments on [http://www.fosshub.com/ConEmu.html fosshub.com]
+
+----
 I’ve been using ConEmu for several weeks now and I am far from knowing everything about it, but I already can’t imagine my Windows without it! With ConEmu I can use my favorite tools like Git Bash, cmd, Far Manager, and Notepad++ in one application with great tabbing experience supported with shortcuts.
 
 *Rafał Borowiec*. Read full post on [http://blog.codeleak.pl/2014/10/conemu-windows-console-emulator-with.html blog.codeleak.pl]
