@@ -288,6 +288,10 @@ CSettings::CSettings()
 	m_Pages = NULL;
 	mn_PagesCount = 0;
 
+	memset(&tiConFontBalloon, 0, sizeof(tiConFontBalloon));
+	mf_MarkCopyPreviewProc = NULL;
+	mb_IgnoreSelPage = false;
+
 	// Вкладки-диалоги
 	InitVars_Pages();
 }
@@ -3216,28 +3220,11 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 		CSetDlgLists::SelectStringExact(hDlg, lbDefaultColors, pPal->pszName);
 	}
 
-	wchar_t temp[32];
 	uint nCount = countof(pPal->Colors);
 
 	for (uint i = 0; i < nCount; i++)
 	{
 		gpSet->Colors[i] = pPal->Colors[i]; //-V108
-		if (hDlg)
-		{
-			_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(gpSet->Colors[i]), getG(gpSet->Colors[i]), getB(gpSet->Colors[i]));
-			SetDlgItemText(hDlg, 1100 + i, temp);
-			InvalidateCtrl(GetDlgItem(hDlg, c0+i), TRUE);
-		}
-	}
-
-	DWORD nVal;
-
-	if (hDlg)
-	{
-		CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbConClrText), CSetDlgLists::eColorIdxTh, pPal->nTextColorIdx);
-		CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbConClrBack), CSetDlgLists::eColorIdxTh, pPal->nBackColorIdx);
-		CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbConClrPopText), CSetDlgLists::eColorIdxTh, pPal->nPopTextColorIdx);
-		CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbConClrPopBack), CSetDlgLists::eColorIdxTh, pPal->nPopBackColorIdx);
 	}
 
 	BOOL bTextChanged = (gpSet->AppStd.nTextColorIdx != pPal->nTextColorIdx) || (gpSet->AppStd.nBackColorIdx != pPal->nBackColorIdx);
@@ -3253,15 +3240,12 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 		UpdateTextColorSettings(bTextChanged, bPopupChanged);
 	}
 
-	nVal = pPal->nExtendColorIdx;
-	if (hDlg)
-		CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbExtendIdx), CSetDlgLists::eColorIdxSh, nVal, false);
-	gpSet->AppStd.nExtendColorIdx = nVal;
+	gpSet->AppStd.nExtendColorIdx = pPal->nExtendColorIdx;
 	gpSet->AppStd.isExtendColors = pPal->isExtendColors;
-	if (hDlg)
+
+	if (hDlg && (hDlg == GetActivePage()))
 	{
-		checkDlgButton(hDlg, cbExtendColors, pPal->isExtendColors ? BST_CHECKED : BST_UNCHECKED);
-		OnButtonClicked(hDlg, cbExtendColors, 0);
+		OnInitDialog_Color(hDlg, false);
 	}
 
 	gpConEmu->Update(true);
@@ -3279,6 +3263,7 @@ LRESULT CSettings::OnInitDialog_Color(HWND hWnd2, bool abInitial)
 	for (int c = c0; c <= MAX_COLOR_EDT_ID; c++)
 	{
 		ColorSetEdit(hWnd2, c);
+		InvalidateCtrl(GetDlgItem(hWnd2, c), TRUE);
 	}
 
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbConClrText), CSetDlgLists::eColorIdxTh, gpSet->AppStd.nTextColorIdx, true);
@@ -7026,6 +7011,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 				SendMessage(gpSetCls->hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gpSetCls->tiBalloon);
 				SendMessage(gpSetCls->hwndTip, TTM_ACTIVATE, TRUE, 0);
 			}
+			break;
 
 		default:
 		{

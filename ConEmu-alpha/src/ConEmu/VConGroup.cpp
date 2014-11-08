@@ -4369,8 +4369,9 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			//nShift = (gpSetCls->FontWidth() - 1) / 2; if (nShift < 1) nShift = 1;
 
 			// Если активен NTVDM.
-			TODO("Вообще это нужно расширить. Размер может менять и любое консольное приложение.");
-			if (tWhat != CER_CONSOLE_NTVDMOFF && pVCon && pVCon->RCon() && pVCon->RCon()->isNtvdm())
+			if ((tWhat != CER_CONSOLE_NTVDMOFF)
+				&& (tWhat == CER_DC || tWhat == CER_CONSOLE_CUR)
+				&& pVCon && pVCon->RCon() && pVCon->RCon()->isNtvdm())
 			{
 				// NTVDM устанавливает ВЫСОТУ экранного буфера... в 25/28/43/50 строк
 				// путем округления текущей высоты (то есть если до запуска 16bit
@@ -4410,6 +4411,17 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				}
 
 				CConEmuMain::AddMargins(rc, rcShift);
+			}
+
+			// Учесть сплиты
+			if ((tWhat == CER_CONSOLE_ALL) && gp_VActive && isVConExists(0))
+			{
+				SIZE Splits = {};
+				RECT rcMin = CVConGroup::AllTextRect(&Splits, true);
+				if ((Splits.cx > 0) && (gpSet->nSplitWidth > 0))
+					rc.right -= Splits.cx * gpSetCls->EvalSize(gpSet->nSplitWidth, esf_Horizontal|esf_CanUseDpi);
+				if ((Splits.cy > 0) && (gpSet->nSplitHeight > 0))
+					rc.bottom -= Splits.cy * gpSetCls->EvalSize(gpSet->nSplitHeight, esf_Vertical|esf_CanUseDpi);
 			}
 
 			// Если нужен размер консоли в символах сразу делим и выходим

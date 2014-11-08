@@ -60,6 +60,7 @@ CTabPanelBase::CTabPanelBase(CTabBarClass* ap_Owner)
 	mn_prevTab = -1;
 	mn_LBtnDrag = 0;
 	mh_DragCursor = NULL;
+	ZeroStruct(mpt_DragStart);
 }
 
 CTabPanelBase::~CTabPanelBase()
@@ -293,7 +294,7 @@ LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
 		LogString(L"ShowSysmenu called from (TabBar)");
 		gpConEmu->mp_Menu->ShowSysmenu(ptScr.x, ptScr.y/*-32000*/);
 	}
-	else if ((gpConEmu->GetWindowMode() == wmNormal) && gpSet->isCaptionHidden())
+	else if (gpConEmu->GetWindowMode() == wmNormal)
 	{
 		// WM_NC* messages needs screen coords in lParam
 		POINT ptScr; GetCursorPos(&ptScr);
