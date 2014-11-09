@@ -898,7 +898,7 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	}
 
 
-	RECT dirty_box, dirty, wr, tr, cr, xorRect;
+	RECT dirty_box, dirty, wr = {}, tr = {}, cr = {}, xorRect;
 	BOOL fRegionOwner = FALSE;
 	HDC hdc;
 	HRGN hrgn = (HRGN)wParam;
@@ -1284,7 +1284,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	LRESULT l_result;
+	LRESULT l_result = 0;
 
 	// Обработает клики на кнопках Min/Max/Close
 	if (gpConEmu->DrawType() >= fdt_Aero)
