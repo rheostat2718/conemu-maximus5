@@ -948,7 +948,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	RECT rcWnd = mp_ConEmu->GetGuiClientRect();
 	TODO("DoubleView: ?");
 	mp_ConEmu->AutoSizeFont(rcWnd, CER_MAINCLIENT);
-	RECT rcCon = mp_ConEmu->CalcRect(CER_CONSOLE_CUR, rcWnd, CER_MAINCLIENT);
+	RECT rcCon = mp_ConEmu->CalcRect(CER_CONSOLE_CUR, rcWnd, CER_MAINCLIENT, mp_VCon);
 	// Скорректировать sbi на новый, который БУДЕТ установлен после отработки сервером аттача
 	lsbi.dwSize.X = rcCon.right;
 	lsbi.srWindow.Left = 0; lsbi.srWindow.Right = rcCon.right-1;
@@ -6405,6 +6405,9 @@ DWORD CRealConsole::GetServerPID(bool bMainOnly /*= false*/)
 	if (!this)
 		return 0;
 
+	#if 0
+	// During multiple tabs/splits initialization we may get bunch
+	// of RCon-s with mb_InCreateRoot but empty mn_MainSrv_PID
 	if (mb_InCreateRoot && !mn_MainSrv_PID)
 	{
 		_ASSERTE(!mb_InCreateRoot || mn_MainSrv_PID);
@@ -6414,6 +6417,7 @@ DWORD CRealConsole::GetServerPID(bool bMainOnly /*= false*/)
 		//	WaitForSingleObject(mh_CreateRootEvent, 30000); -- низя - DeadLock
 		//}
 	}
+	#endif
 
 	return (mn_AltSrv_PID && !bMainOnly) ? mn_AltSrv_PID : mn_MainSrv_PID;
 }
@@ -9671,7 +9675,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 			{
 				CRealConsole* pRCon = pVCon->RCon();
 
-				size_t cchCmdLen = (bRootCmdRedefined ? _tcslen(pszCmdRedefined) : 0);
+				size_t cchCmdLen = (bRootCmdRedefined && pszCmdRedefined ? _tcslen(pszCmdRedefined) : 0);
 				size_t cbMaxSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_DUPLICATE) + cchCmdLen*sizeof(wchar_t);
 
 				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DUPLICATE, cbMaxSize);
@@ -12088,12 +12092,18 @@ bool CRealConsole::SetProgress(short nState, short nValue, LPCWSTR pszName /*= N
 
 	bool lbOk = false;
 
+	//SetProgress 0
+	//  -- Remove progress
+	//SetProgress 1 <Value>
+	//  -- Set progress value to <Value> (0-100)
+	//SetProgress 2
+	//  -- Set error state in progress
 	//SetProgress 3
-	//  -- Set progress indeterminate state
+	//  -- Set indeterminate state in progress
 	//SetProgress 4 <Name>
 	//  -- Start progress for some long process
 	//SetProgress 5 <Name>
-	//  -- Stop progress started with "3"
+	//  -- Stop progress started with "4"
 
 	switch (nState)
 	{
