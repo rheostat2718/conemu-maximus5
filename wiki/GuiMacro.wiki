@@ -287,6 +287,7 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        Type=0: remove progress
        Type=1: set progress value to <Value> (0-100)
        Type=2: set error state in progress
+       Type=3: set indeterminate state in progress
     Rename(<Type>,["<Title>"])
      - Rename tab (Type=0) or console title (Type=1)
     Scroll(<Type>,<Direction>,<Count=1>)
