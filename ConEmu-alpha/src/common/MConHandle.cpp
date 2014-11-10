@@ -46,13 +46,14 @@ MConHandle::MConHandle(LPCWSTR asName)
 	mpp_OutBuffer = NULL;
 	lstrcpynW(ms_Name, asName, 9);
 	m_logidx = -1;
+	memset(m_log, 0, sizeof(m_log));
 	/*
 	FAR2 последний
 	Conemu последний
 
 	без плагов каких либо
 
-	пропиши одну ассоциацию
+	пропишем одну ассоциацию
 
 	[HKEY_CURRENT_USER\Software\Far2\Associations\Type0]
 	"Mask"="*.ini"

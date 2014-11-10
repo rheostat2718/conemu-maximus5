@@ -1467,7 +1467,7 @@ void CConEmuMenu::ShowMenuHint(LPCWSTR pszText, POINT* ppt)
 
 void CConEmuMenu::ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags)
 {
-	if (nID && (nID != MF_SEPARATOR) && !(nFlags & MF_POPUP))
+	if (nID && !(nFlags & MF_POPUP))
 	{
 		//POINT pt; GetCursorPos(&pt);
 		RECT rcMenuItem = {};
@@ -1501,7 +1501,7 @@ void CConEmuMenu::ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags)
 
 void CConEmuMenu::ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags)
 {
-	if (nID && (nID != MF_SEPARATOR) && !(nFlags & MF_POPUP))
+	if (nID && !(nFlags & MF_POPUP))
 	{
 		CVConGuard VCon;
 		CVirtualConsole* pVCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
@@ -2009,7 +2009,7 @@ HMENU CConEmuMenu::CreateHelpMenuPopup()
 	}
 
 	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_HOMEPAGE, _T("&Visit home page"));
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_DONATE_LINK, _T("&Donate (PayPal)"));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_DONATE_LINK, _T("&Donate ConEmu"));
 
 	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_WHATS_NEW_FILE, _T("Whats &new (local)"));
 	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_WHATS_NEW_WWW, _T("Whats new (&web)"));

@@ -21,7 +21,7 @@ This fork grew up from ConEmu by Zoin.
 Release stages: http://code.google.com/p/conemu-maximus5/wiki/StableVsPreview  
 Wiki: http://code.google.com/p/conemu-maximus5/wiki/ConEmu  
 What's new: http://code.google.com/p/conemu-maximus5/wiki/Whats_New  
-Donate this project: <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3LV8XTRBK9K4E"><img src="https://github.com/Maximus5/ConEmu/wiki/donate.png" alt="Donation" title="Donate ConEmu"/></a> <a href="http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub" target="_blank"><img src="https://github.com/Maximus5/ConEmu/wiki/flattr.png" alt="Flattr this" title="Flattr this" border="0" /></a>
+Donate this project: http://conemu.github.io/donate.html
 
 
 
@@ -65,13 +65,13 @@ are applied. You may easily use several named configurations (for different PCs 
 *  Run ConEmu.exe or ConEmu64.exe.
 
 ### If you ARE a Far Manager user
-* Use of `ConEmuPack.\*.7z` and `ConEmuSetup.\*.exe` are slighly different
+* Use of `ConEmuPack.\*.7z` and `ConEmuSetup.\*.exe` are slightly different
   * `ConEmuPack.\*.7z`: Unpack all files to the folder, containing `far.exe`
   * `ConEmuSetup.\*.exe`: On the `Features` page you must select destination
 	for `Far Manager plugins` to the folder, containing `far.exe`.
 * Import to the registry Far Manager macroses, related to ConEmu. Macro `*.reg`
 	files are located in `ConEmu.Addons` directory. Each macro file (`*.reg`) has
-	description in header. Just doubleclick choosen files in Windows Explorer
+	description in header. Just doubleclick chosen files in Windows Explorer
 	to import them.
 * By default (started without command line params), ConEmu runs `far.exe` from
 	it's home folder, or `cmd.exe` if Far Manager not found.
