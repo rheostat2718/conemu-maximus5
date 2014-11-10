@@ -1,7 +1,7 @@
 ﻿#labels Featured
 
 Вы можете поддержать проект пожертвованием, кнопка
-Donate (!PayPal) расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
+[http://conemu.github.io/donate.html Donate] расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
 
 Проголосуйте за !ConEmu, если не жалко :)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
