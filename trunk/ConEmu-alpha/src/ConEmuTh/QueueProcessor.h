@@ -277,8 +277,9 @@ class CQueueProcessor
 			mh_Queue = NULL; mn_QueueId = 0;
 			mp_Active = mp_SynchRequest = NULL;
 			mh_Alive = NULL; mn_AliveTick = NULL;
+			mb_TerminateRequested = false;
 		};
-		~CQueueProcessor()
+		virtual ~CQueueProcessor()
 		{
 			Terminate(250);
 
@@ -362,7 +363,7 @@ class CQueueProcessor
 	public:
 		// ВНИМАНИЕ!!! Содержимое pItem КОПИРУЕТСЯ во внутренний буфер.
 		// При вызове ProcessItem приходит указатель на новый элемент из внутреннего буфера.
-		// Если нужно передать дополнительный указатель - пользоватся lParam
+		// Если нужно передать дополнительный указатель - пользоваться lParam
 		// Если Synch==true - функция ожидает завершения обработки элемента, а Priority устанавливается в ePriorityHighest
 		// Возврат - при (Synch==true) результат ProcessItem(...)
 		//           при (Synch==false) - S_FALSE, если еще в очереди, иначе - результат ProcessItem(...)
@@ -594,7 +595,7 @@ class CQueueProcessor
 	protected:
 		/* *** Можно переопределить в потомках *** */
 
-		// Если требуется останов всех запросов и выход из нити обрабочика
+		// Если требуется останов всех запросов и выход из нити обработчика
 		virtual bool IsTerminationRequested()
 		{
 			return mb_TerminateRequested;

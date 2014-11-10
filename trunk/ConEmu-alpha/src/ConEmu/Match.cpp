@@ -62,6 +62,9 @@ const wchar_t gszBreak[] = {
 #undef MATCH_SPACINGS
 #define MATCH_SPACINGS L" \t\xB6\xB7\x2192\x25A1\x25D9\x266A"
 const wchar_t gszSpacing[] = MATCH_SPACINGS; // Пробел, таб, остальные для режима "Show white spaces" в редакторе фара
+// more quotation marks
+const wchar_t gszQuotStart[] = L"‘«`\'";
+const wchar_t gszQuotEnd[] = L"’»`\'";
 
 CMatch::CMatch(CRealConsole* apRCon)
 	:m_Type(etr_None)
@@ -334,7 +337,7 @@ int CMatch::Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-ter
 
 bool CMatch::IsFileLineTerminator(LPCWSTR pChar, LPCWSTR pszTermint)
 {
-	// Расчитано на закрывающие : или ) или ] или ,
+	// Рассчитано на закрывающие : или ) или ] или ,
 	if (wcschr(pszTermint, *pChar))
 		return true;
 	// Script.ps1:35 знак:23
@@ -396,8 +399,16 @@ void CMatch::StoreMatchText(LPCWSTR asPrefix, LPCWSTR pszTrimRight)
 
 bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPCWSTR pszSpacing, int& rnLen)
 {
-	while ((anLen > 0) && (wcschr(pszSpacing, asFrom[anLen-1]) || wcschr(pszInvalidChars, asFrom[anLen-1])))
-		anLen--;
+	while (anLen > 0)
+	{
+		wchar_t wc = asFrom[anLen-1];
+		if (wcschr(pszSpacing, asFrom[anLen-1])
+			|| wcschr(pszInvalidChars, asFrom[anLen-1])
+			)
+			anLen--;
+		else
+			break;
+	}
 
 	LPCWSTR pszFile, pszBadChar;
 
@@ -653,6 +664,8 @@ bool CMatch::MatchAny()
 	} iExtFound = ef_NotFound;
 	int iBracket = 0;
 	int iSpaces = 0;
+	int iQuotStart = -1;
+	const wchar_t* pszTest;
 
 	mn_MatchLeft = mn_MatchRight = mn_SrcFrom;
 
@@ -692,6 +705,12 @@ bool CMatch::MatchAny()
 				goto wrap;
 			}
 		}
+	}
+
+	// Starts with quotation?
+	if ((pszTest = wcschr(gszQuotStart, m_SrcLine.ms_Arg[mn_MatchLeft])) != NULL)
+	{
+		iQuotStart = (int)(pszTest - gszQuotStart);
 	}
 
 	// Чтобы корректно флаги обработались (типа наличие расширения и т.п.)
@@ -759,13 +778,6 @@ bool CMatch::MatchAny()
 			&& (isDigit(m_SrcLine.ms_Arg[mn_MatchRight])
 				|| (bDigits && (m_SrcLine.ms_Arg[mn_MatchRight] == L',')))) // FarCtrl.pas(1002,49) Error:
 		{
-			if (bLineNumberFound)
-			{
-				// gcc такие строки тоже может выкинуть
-				// file.cpp:29:29: error
-				mn_MatchRight--;
-				break;
-			}
 			if (!bDigits && (mn_MatchLeft < mn_MatchRight) /*&& (m_SrcLine.ms_Arg[mn_MatchRight-1] == L':')*/)
 			{
 				bDigits = true;
@@ -774,7 +786,22 @@ bool CMatch::MatchAny()
 				{
 					bLineNumberFound = true;
 				}
+				// Skip leading quotation mark?
+				else if ((iQuotStart >= 0)
+					&& IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft+1, mn_MatchRight - mn_MatchLeft - 2, pszBreak, pszSpacing, nNakedFileLen))
+				{
+					mn_MatchLeft++;
+					bLineNumberFound = true;
+				}
 			}
+		}
+		else if (bWasSeparator && bLineNumberFound
+			&& wcschr(L":)] \t", m_SrcLine.ms_Arg[mn_MatchRight]))
+		{
+			//// gcc такие строки тоже может выкинуть
+			//// file.cpp:29:29: error
+			//mn_MatchRight--;
+			break;
 		}
 		else
 		{
@@ -830,7 +857,18 @@ bool CMatch::MatchAny()
 				}
 			}
 
-			// Расчитано на закрывающие : или ) или ] или ,
+			if ((iQuotStart >= 0) && (m_SrcLine.ms_Arg[mn_MatchRight] == gszQuotEnd[iQuotStart]))
+			{
+				if (IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft+1, mn_MatchRight - mn_MatchLeft - 1, pszBreak, pszSpacing, nNakedFileLen))
+				{
+					bNakedFile = true;
+					mn_MatchLeft++;
+					mn_MatchRight--;
+					break;
+				}
+			}
+
+			// Рассчитано на закрывающие : или ) или ] или ,
 			_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L']' && pszTermint[3]==L',' && pszTermint[5]==0);
 			// Script.ps1:35 знак:23
 			if (bDigits && IsFileLineTerminator(m_SrcLine.ms_Arg+mn_MatchRight, pszTermint))
