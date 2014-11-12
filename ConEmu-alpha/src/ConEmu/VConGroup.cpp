@@ -340,7 +340,10 @@ CVConGroup::CVConGroup(CVConGroup *apParent)
 	mrc_Splitter = MakeRect(0,0);
 	mp_Grp1 = mp_Grp2 = NULL; // Ссылки на "дочерние" панели
 	mp_Parent = apParent; // Ссылка на "родительскую" панель
+	mb_ResizeFlag = false;
+	ZeroStruct(mrc_DragSplitter);
 	mp_ActiveGroupVConPtr = NULL;
+	mb_GroupInputFlag = apParent ? apParent->mb_GroupInputFlag : false;
 
 
 	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
@@ -3367,7 +3370,7 @@ void CVConGroup::MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward)
 			}
 			else
 			{
-				if ((i < (countof(gp_VCon))) && gp_VCon[i+1])
+				if ((i < (countof(gp_VCon)-1)) && gp_VCon[i+1])
 				{
 					CVirtualConsole* p = gp_VCon[i+1];
 					gp_VCon[i+1] = gp_VCon[i];
@@ -5305,6 +5308,44 @@ void CVConGroup::setActiveVConAndFlags(CVirtualConsole* apNewVConActive)
 				newFlags |= vf_Visible;
 			else
 				newFlags &= ~vf_Visible;
+
+			VCon->SetFlags(newFlags, (int)i);
+		}
+	}
+}
+
+void CVConGroup::GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd)
+{
+	CVConGuard VCon;
+	bool bGrouped = false;
+
+	if (!VCon.Attach(apVCon))
+		return;
+
+	CVConGroup* pGr = ((CVConGroup*)apVCon->mp_Group);
+	_ASSERTE(pGr);
+	if (pGr && (cmd == gic_Switch))
+		bGrouped = !pGr->mb_GroupInputFlag;
+	else
+		bGrouped = (cmd == gic_Enable);
+
+	// Update flags
+	for (size_t i = 0; i < countof(gp_VCon); i++)
+	{
+		if (VCon.Attach(gp_VCon[i]))
+		{
+			pGr = ((CVConGroup*)apVCon->mp_Group);
+			_ASSERTE(pGr);
+			if (pGr)
+				pGr->mb_GroupInputFlag = bGrouped;
+
+			DEBUGTEST(VConFlags oldFlags = VCon->mn_Flags);
+			VConFlags newFlags = VCon->mn_Flags;
+
+			if (bGrouped)
+				newFlags |= vf_Grouped;
+			else
+				newFlags &= ~vf_Grouped;
 
 			VCon->SetFlags(newFlags, (int)i);
 		}

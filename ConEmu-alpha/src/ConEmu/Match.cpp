@@ -402,9 +402,7 @@ bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPC
 	while (anLen > 0)
 	{
 		wchar_t wc = asFrom[anLen-1];
-		if (wcschr(pszSpacing, asFrom[anLen-1])
-			|| wcschr(pszInvalidChars, asFrom[anLen-1])
-			)
+		if (wcschr(pszSpacing, wc) || wcschr(pszInvalidChars, wc))
 			anLen--;
 		else
 			break;
@@ -651,10 +649,12 @@ bool CMatch::MatchAny()
 	const wchar_t* pszUrlDelim = L"\\\"<>{}[]^`'\r\n" MATCH_SPACINGS;
 	const wchar_t* pszUrlFileDelim = L"\"<>^\r\n" MATCH_SPACINGS;
 	const wchar_t* pszEndBrackets = L">])}";
+	const wchar_t* pszPuctuators = L".,:;…!?";
 	int nColons = 0;
 	bool bUrlMode = false, bMaybeMail = false;
 	SHORT MailX = -1;
 	bool bDigits = false, bLineNumberFound = false, bWasSeparator = false;
+	bool bWasPunctuator = false;
 	bool bNakedFile = false;
 	int nNakedFileLen = 0;
 	enum {
@@ -844,7 +844,10 @@ bool CMatch::MatchAny()
 					iBracket = 0;
 					bWasSeparator = false;
 				}
-				else if (!bLineNumberFound && !bMaybeMail && !bUrlMode && wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight])
+				else if (!bLineNumberFound && !bMaybeMail && wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight])
+					&& !(((mn_MatchRight+3) < mn_SrcLength) // Чтобы не остановиться на файле если есть строка "abc.py (3): ..."
+							&& (m_SrcLine.ms_Arg[mn_MatchRight+1] == L'(')
+							&& isDigit(m_SrcLine.ms_Arg[mn_MatchRight+2]))
 					&& IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen))
 				{
 					// File without digits, just for opening in the editor
@@ -859,14 +862,39 @@ bool CMatch::MatchAny()
 
 			if ((iQuotStart >= 0) && (m_SrcLine.ms_Arg[mn_MatchRight] == gszQuotEnd[iQuotStart]))
 			{
-				if (IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft+1, mn_MatchRight - mn_MatchLeft - 1, pszBreak, pszSpacing, nNakedFileLen))
+				bNakedFile = IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft+1, mn_MatchRight - mn_MatchLeft - 1, pszBreak, pszSpacing, nNakedFileLen);
+				if (bNakedFile || bMaybeMail)
 				{
-					bNakedFile = true;
 					mn_MatchLeft++;
 					mn_MatchRight--;
 					break;
 				}
 			}
+
+			if (bWasPunctuator && !bLineNumberFound)
+			{
+				if (bMaybeMail)
+				{
+					// Если после мейла нашли что-то кроме точки
+					if ((m_SrcLine.ms_Arg[mn_MatchRight-1] != L'.')
+						// или после точки - пробельный символ
+						|| wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight]))
+					{
+						break;
+					}
+				}
+				else if (wcschr(pszSpacing, m_SrcLine.ms_Arg[mn_MatchRight]))
+				{
+					bNakedFile = IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft - 1, pszBreak, pszSpacing, nNakedFileLen);
+					if (bNakedFile)
+					{
+						mn_MatchRight--;
+						break;
+					}
+				}
+			}
+
+			bWasPunctuator = (wcschr(pszPuctuators, m_SrcLine.ms_Arg[mn_MatchRight]) != NULL);
 
 			// Рассчитано на закрывающие : или ) или ] или ,
 			_ASSERTE(pszTermint[0]==L':' && pszTermint[1]==L')' && pszTermint[2]==L']' && pszTermint[3]==L',' && pszTermint[5]==0);
@@ -929,7 +957,7 @@ bool CMatch::MatchAny()
 			break;
 
 		mn_MatchRight++;
-		if (wcschr(bUrlMode ? pszUrlDelim : pszBreak, m_SrcLine.ms_Arg[mn_MatchRight]))
+		if (wcschr(pszBreak, m_SrcLine.ms_Arg[mn_MatchRight]))
 		{
 			if (bMaybeMail)
 				break;
@@ -949,6 +977,8 @@ bool CMatch::MatchAny()
 			{
 				if ((bLineNumberFound) || !IsValidFile(m_SrcLine.ms_Arg+mn_MatchLeft, mn_MatchRight - mn_MatchLeft + 1, pszBreak, pszSpacing, nNakedFileLen))
 				{
+					if (!bLineNumberFound && bMaybeMail)
+						break;
 					MatchTestAlert();
 					goto wrap; // Не оно?
 				}
@@ -1078,11 +1108,6 @@ bool CMatch::MatchAny()
 		goto wrap;
 	}
 
-	if (bUrlMode)
-		m_Type = etr_Url;
-	else
-		m_Type = (bLineNumberFound ? etr_FileRow : etr_File);
-
 	// Ok
 	if (mn_MatchRight >= mn_MatchLeft)
 	{
@@ -1102,6 +1127,11 @@ bool CMatch::MatchAny()
 		}
 		#endif
 	}
+
+	if (bUrlMode)
+		m_Type = etr_Url;
+	else
+		m_Type = (bLineNumberFound ? etr_FileRow : etr_File);
 
 wrap:
 	return bFound;
