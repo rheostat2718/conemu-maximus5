@@ -29,15 +29,13 @@ Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&top
 </wiki:comment>
 
 
-<font size="3">*Disclaimer #1*</font>
+<font size="3">*Disclaimer*</font>
 
 !ConEmu is not a shell, so it does not provide "shell features" like tab-completion, command history and others.
 !ConEmu is advanced console window where you can run any shell of your choice. However, some of these features
-placed in RoadMap. Also you may try [ConEmu_Clink Clink] for bash-style completion in cmd.exe and [http://powertab.codeplex.com/ PowerTab] in powershell.exe.
+placed in RoadMap. Also you may try [ConEmu_Clink Clink] for bash-style completion in cmd.exe
+and [http://github.com/lzybkr/PSReadLine PSReadLine] or [http://powertab.codeplex.com/ PowerTab] in powershell.exe.
 
-<font size="3">*Disclaimer #2*</font>
-
-If you notice lags while executing batches or commands (from cmd/git/bash/etc.) just uncheck option "[ConEmuHk Inject ConEmuHk]".
 
 
 
