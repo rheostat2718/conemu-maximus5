@@ -7,6 +7,21 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 141112==
+  * Issue 1789: Far Thumbnails - current item was not changed if QSearch was active (Far 3 api break). Patch works with Far3bis 4188+ only.
+  * Far Thumbnails - fix arrow move if QSearch is active.
+  * Force using "`%ConEmuDrive%`" instead of "`%SystemDrive%`" when populating default tasks.
+
+
+==Build 141111==
+  * Group keyboard input for visible splits: Apps+G.
+  * Issue 1803: Unable to check quake-style setting ‘Auto-hide on focus lost’.
+  * Fix Coverity warnings (from Michael Lukashov).
+  * Fix broken theme on search control after quake activation.
+  * FileLineDetector: Fix broken "`abc.py (1): ...`".
+  * FileLineDetector: Fix broken mail detection, support stop on punctuations.
+
+
 ==Build 141110==
   * Issue 1802: GuiMacro: Add ‘Pause’ ability. When you press ‘Pause’ RCon is forced into ‘internal selection’ state which cause pausing of most console writing applications.
   * StatusBar text color was broken after ‘Visible region lock’.

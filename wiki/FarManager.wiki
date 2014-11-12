@@ -64,7 +64,7 @@ Through it you can use many plugins from Far 2.x.
 
 =1. Downloads / Installation=
   #. Download Full version from [http://www.farmanager.com/download.php?l=en official site]. Does not matter whatever you use - msi installer or 7z package.
-  #. (Optionally) update binary files with my [https://sourceforge.net/projects/conemu/files/FarManager/ Far3bis]. List of improvements [http://conemu-maximus5.googlecode.com/svn/trunk/Far3bis/unicode_far/bis_changelog here]. In breaf - improvements of plugin manager (!AltShiftF9), optimization of C0 column.
+  #. (Optionally) update binary files with my [http://sourceforge.net/projects/conemu/files/FarManager/Far3bis Far3bis]. List of improvements [http://github.com/Maximus5/Far3bis/wiki/ListOfPatches here]. In breaf - improvements of plugin manager (!AltShiftF9), optimization of C0 column.
 
 After installing (unpacking) Far Manager you have such directory structure (by example of Far 3.x)
 ||.\Far.exe<br>.\!FarEng.hlf<br>.\!FarEng.lng||General Far Manager files - executable, help, language data||
