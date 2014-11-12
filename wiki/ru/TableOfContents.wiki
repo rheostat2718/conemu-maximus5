@@ -19,6 +19,7 @@
       * [ChildGui ChildGui]
       * [ConEmuHk Inject ConEmuHk]
       * [ConsoleApplication ConsoleApplication]
+      * [FileLineDetector FileLineDetector]
       * [RealConsole RealConsole]
       * [StatusBar StatusBar]
       * [TerminalVsShell Terminal vs shell]

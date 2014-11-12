@@ -6,6 +6,16 @@ Votes and awards (vote for !ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 141110==
+  * Issue 1802: GuiMacro: Add ‘Pause’ ability. When you press ‘Pause’ RCon is forced into ‘internal selection’ state which cause pausing of most console writing applications.
+  * StatusBar text color was broken after ‘Visible region lock’.
+  * Old ‘PicViewSlide’ hotkeys were removed.
+  * Donate link was changed.
+  * FileLineDetector: Fix broken "`file.cpp(123) : error...`".
+  * FileLineDetector: Support quotation trimming.
+  * Fix warnings and typos (from Michael Lukashov).
+
+
 ==Build 141109==
   * Issue 1801: FileLineDetector: In addition to a/ b/ support i/ c/ w/ o/ also.
   * Move StatusBar's ‘Visible region lock’ column near to ‘Active console buffer’.
@@ -16,8 +26,8 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 ==Build 141107==
-  * FileLine detector. Fix false detection of "`index 621e2f9..d0abbf9 100644`".
-  * FileLine detector. Support git diffs style: "`a/src/ConEmu.cpp`" and "`b/src/ConEmu.cpp`".
+  * FileLineDetector. Fix false detection of "`index 621e2f9..d0abbf9 100644`".
+  * FileLineDetector. Support git diffs style: "`a/src/ConEmu.cpp`" and "`b/src/ConEmu.cpp`".
   * Splits was not taken into account when resizing window by top/bottom edges.
   * Hotkey Win+Alt+T shows ‘Tasks’ settings page.
   * After palette change selected color option was ignored, was used ‘RRR GGG BBB’.
