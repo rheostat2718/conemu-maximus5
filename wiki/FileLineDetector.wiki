@@ -1,0 +1,33 @@
+﻿=The detector=
+ConEmu has ability to highlight hyperlinks, files and compiler errors (file+line_number).
+Just hover mouse with ‘Ctrl’ pressed.
+May be configured on [SettingsHighlight Highlight] settings page.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuFileLineHL.png" title="ConEmu FileLineDetector">
+
+==Compiler errors==
+Examples:
+
+  * macro.cpp(1820) : error C4716
+  * NewClass.ps1:35 ...
+  * abc.py (3): ...
+
+*Note!* File will not be highlighted if ConEmu can't find it in the [ShellWorkDir shell's current directory].
+
+Action: File will be opened in the [SettingsHighlight specified editor] on the proper line if possible.
+
+==Files==
+File names or full paths produced from ‘dir’, ‘ls’, ‘git status’, ‘git diff’ and so on.
+
+*Note!* File will not be highlighted if ConEmu can't find it in the [ShellWorkDir shell's current directory].
+
+Action: will be opened in the default program ([http://msdn.microsoft.com/en-us/library/windows/desktop/bb762153(v=vs.85).aspx ShellExecute]).
+
+==Hyperlinks==
+Examples:
+
+  * http://www.fosshub.com/ConEmu.html
+  * mailto:user@domain.com
+  * file:///c:\\sources\\abc.html
+
+Action: will be opened in the default program ([http://msdn.microsoft.com/en-us/library/windows/desktop/bb762153(v=vs.85).aspx ShellExecute]).
