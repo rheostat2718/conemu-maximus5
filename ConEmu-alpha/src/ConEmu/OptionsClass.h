@@ -369,6 +369,7 @@ class CSettings
 		LPCWSTR CreateConFontError(LPCWSTR asReqFont=NULL, LPCWSTR asGotFont=NULL);
 		TOOLINFO tiConFontBalloon;
 		DpiValue _dpi;
+		DpiValue _dpi_all;
 		int GetOverallDpi();
 	public:
 		int QueryDpi();
@@ -633,7 +634,6 @@ class CSettings
 		void ClearPages();
 		HWND CreatePage(ConEmuSetupPages* p);
 		CDpiForDialog* mp_DpiDistinct2;
-		DpiValue* mp_CurDpi;
 		void ProcessDpiChange(ConEmuSetupPages* p);
 		TabHwndIndex GetPageId(HWND hPage, ConEmuSetupPages** pp);
 		int GetDialogDpi();
