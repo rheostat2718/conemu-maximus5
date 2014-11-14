@@ -211,8 +211,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,310,8
     CONTROL         "Show buttons (toolbar) in tab bar",cbMultiShowButtons,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,40,148,8
-    CONTROL         "Show search field in tab bar",cbMultiShowSearch,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,40,148,8
+    CONTROL         "Show search field in tab bar",cbMultiShowSearch,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,40,148,8
     GROUPBOX        "Appearance",gbFeatureAppear,4,60,319,40
     CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,73,140,8
@@ -445,9 +444,9 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Standard colors:",gbStandardColors,4,1,319,86
-    AUTORADIOBUTTON "RRR GGG BBB (dec)", rbColorRgbDec, 73, 1, 84, 8, 0, WS_EX_LEFT
-    AUTORADIOBUTTON "#RRGGBB (hex)", rbColorRgbHex, 159, 1, 69, 8, 0, WS_EX_LEFT
-    AUTORADIOBUTTON "0xBBGGRR (hex)", rbColorBgrHex, 231, 1, 71, 8, 0, WS_EX_LEFT
+    CONTROL         "RRR GGG BBB (dec)",rbColorRgbDec,"Button",BS_AUTORADIOBUTTON,73,1,84,8
+    CONTROL         "#RRGGBB (hex)",rbColorRgbHex,"Button",BS_AUTORADIOBUTTON,159,1,69,8
+    CONTROL         "0xBBGGRR (hex)",rbColorBgrHex,"Button",BS_AUTORADIOBUTTON,231,1,71,8
     RTEXT           "0.",IDC_STATIC,7,15,14,8
     LTEXT           "",c0,24,12,12,12,SS_NOTIFY | SS_SUNKEN
     RTEXT           "1/4.",IDC_STATIC,7,28,14,8
@@ -1374,14 +1373,14 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_VISIBLE | WS_CAPT
 CAPTION "Dialog"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,368,187,50,14
+    DEFPUSHBUTTON   "OK",IDOK,362,187,57,14
     ICON            IDI_ICON1,pIconCtrl,7,7,20,20,WS_DISABLED
-    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | WS_TABSTOP,6,33,356,16
-    EDITTEXT        tAboutText,7,50,411,131,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
-    EDITTEXT        tAboutSearch,365,33,53,13,ES_AUTOHSCROLL | ES_WANTRETURN
-    CTEXT           "Console Emulation program (local terminal)",stConEmuAbout,32,7,312,8
-    CTEXT           "http://code.google.com/p/conemu-maximus5",stConEmuUrl,167,189,185,8,SS_NOTIFY
-    CTEXT           "Version status:",stConEmuVersion,32,17,312,8
+    CONTROL         "",tbAboutTabs,"SysTabControl32",TCS_BUTTONS | TCS_MULTILINE | WS_TABSTOP | 0x8,362,33,57,149
+    EDITTEXT        tAboutText,7,33,348,148,ES_MULTILINE | ES_AUTOVSCROLL | ES_NOHIDESEL | ES_READONLY | WS_VSCROLL
+    EDITTEXT        tAboutSearch,362,14,57,13,ES_AUTOHSCROLL | ES_WANTRETURN
+    CTEXT           "Console Emulation program (local terminal)",stConEmuAbout,72,7,272,8
+    CTEXT           "Version status:",stConEmuVersion,72,17,272,8
+    CTEXT           "http://code.google.com/p/conemu-maximus5",stConEmuUrl,117,189,182,8,SS_NOTIFY
 END
 
 IDD_ACTION DIALOGEX 0, 0, 325, 157

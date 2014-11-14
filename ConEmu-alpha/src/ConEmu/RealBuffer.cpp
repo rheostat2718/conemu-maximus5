@@ -460,11 +460,22 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	con.m_sbi.dwCursorPosition = dump.crCursor;
 	con.m_sbi.wAttributes = 7;
 
-	con.m_sbi.srWindow.Right = nX - 1;
-	con.m_sbi.srWindow.Left = 0;
-	con.m_sbi.srWindow.Bottom = min((storedSbi.srWindow.Top + (int)nY - 1),(storedSbi.dwSize.Y - 1));
+	TOPLEFTCOORD NewTopLeft; NewTopLeft.Reset();
+	if (mp_RCon->mp_ABuf && (mp_RCon->mp_ABuf != this))
+		mp_RCon->mp_ABuf->ConsoleScreenBufferInfo(NULL, NULL, &NewTopLeft);
+	SetTopLeft(NewTopLeft.y, NewTopLeft.x, false);
+
+	if (NewTopLeft.isLocked() && NewTopLeft.x >= 0)
+		con.m_sbi.srWindow.Right = klMin((NewTopLeft.x + (int)nX - 1),((int)storedSbi.dwSize.X - 1));
+	else
+		con.m_sbi.srWindow.Right = klMin(((int)nX - 1),((int)storedSbi.dwSize.X - 1));
+	con.m_sbi.srWindow.Left = max(0,con.m_sbi.srWindow.Right - nX + 1);
+
+	if (NewTopLeft.isLocked() && NewTopLeft.y >= 0)
+		con.m_sbi.srWindow.Bottom = min((NewTopLeft.y + (int)nY - 1),(storedSbi.dwSize.Y - 1));
+	else
+		con.m_sbi.srWindow.Bottom = min((storedSbi.srWindow.Top + (int)nY - 1),(storedSbi.dwSize.Y - 1));
 	con.m_sbi.srWindow.Top = max(0,con.m_sbi.srWindow.Bottom - nY + 1);
-	SetTopLeft();
 
 	con.crMaxSize = mp_RCon->mp_RBuf->con.crMaxSize; //MakeCoord(max(dump.crSize.X,nX),max(dump.crSize.Y,nY));
 	con.m_sbi.dwMaximumWindowSize = con.crMaxSize; //dump.crSize;
@@ -4626,8 +4637,8 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 	lbRc = EmptyClipboard();
 	// Установить данные
-	Result = SetClipboardData(CF_UNICODETEXT, hUnicode)
-		&& (!i_CF_HTML || SetClipboardData(i_CF_HTML, hHtml));
+	Result = MySetClipboardData(CF_UNICODETEXT, hUnicode)
+		&& (!i_CF_HTML || MySetClipboardData(i_CF_HTML, hHtml));
 
 	while (!Result)
 	{
@@ -4640,8 +4651,8 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 			break;
 		}
 
-		Result = SetClipboardData(CF_UNICODETEXT, hUnicode)
-			&& (!i_CF_HTML || SetClipboardData(i_CF_HTML, hHtml));
+		Result = MySetClipboardData(CF_UNICODETEXT, hUnicode)
+			&& (!i_CF_HTML || MySetClipboardData(i_CF_HTML, hHtml));
 	}
 
 	MyCloseClipboard();
@@ -6151,7 +6162,7 @@ bool CRealBuffer::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
 
 void CRealBuffer::ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
 {
-	if (!this) return;
+	if (!this || !ci) return;
 
 	*ci = con.m_ci;
 
@@ -6186,11 +6197,14 @@ void CRealBuffer::GetCursorInfo(COORD* pcr, CONSOLE_CURSOR_INFO* pci)
 	}
 }
 
-void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi, SMALL_RECT* psrRealWindow /*= NULL*/, TOPLEFTCOORD* pTopLeft /*= NULL*/)
+void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* psbi, SMALL_RECT* psrRealWindow /*= NULL*/, TOPLEFTCOORD* pTopLeft /*= NULL*/)
 {
 	if (!this) return;
 
-	*sbi = con.m_sbi;
+	if (psbi)
+	{
+		*psbi = con.m_sbi;
+	}
 
 	if (psrRealWindow)
 	{
@@ -6203,14 +6217,16 @@ void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi, SMALL
 	}
 
 	// В режиме выделения - положение курсора ставим сами
-	if (con.m_sel.dwFlags)
+	if (con.m_sel.dwFlags && psbi)
 	{
-		ConsoleCursorPos(&(sbi->dwCursorPosition));
+		ConsoleCursorPos(&(psbi->dwCursorPosition));
 	}
 }
 
 void CRealBuffer::ConsoleCursorPos(COORD *pcr)
 {
+	if (!this || !pcr) return;
+
 	if (con.m_sel.dwFlags)
 	{
 		// В режиме выделения - положение курсора ставим сами
