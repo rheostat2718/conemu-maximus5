@@ -95,6 +95,7 @@ When you run application from existing !ConEmu tab, or starting new tab from !Co
      o - don't enable 'Long console output' when starting command from Far Manager
      P:"<palettename>" - set fixed palette for tab
      r - run as restricted user
+     R - force start hooks server in the parent process
      s[<SplitTab>T][<Percents>](H|V) - run new console in a split
      t:"<tabname>" - rename new created tab
      u - ConEmu choose user dialog
