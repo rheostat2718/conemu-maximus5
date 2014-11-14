@@ -92,6 +92,8 @@ static bool gbVimTermWasChangedBuffer = false;
 	#define FIRST_ANSI_CALL(lpBuf,nNumberOfBytes)
 #endif
 
+BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+
 HANDLE CEAnsi::ghLastAnsiCapable = NULL;
 HANDLE CEAnsi::ghLastAnsiNotCapable = NULL;
 HANDLE CEAnsi::ghAnsiLogFile = NULL;
@@ -1581,7 +1583,7 @@ void CEAnsi::DoProcess(LPCWSTR asCmd, INT_PTR cchLen)
 		STARTUPINFO si = {sizeof(si)};
 		PROCESS_INFORMATION pi = {};
 
-		BOOL bCreated = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+		BOOL bCreated = OnCreateProcessW(NULL, pszCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 		if (bCreated)
 		{
 			WaitForSingleObject(pi.hProcess, INFINITE);
@@ -2702,6 +2704,11 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 			}
 			else if (Code.ArgSZ[2] == L'8' && Code.ArgSZ[3] == L';')
 			{
+				if (lbApply)
+				{
+					ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+					lbApply = FALSE;
+				}
 				DoPrintEnv(Code.ArgSZ+4, Code.cchArgSZ - 4);
 			}
 			else if (Code.ArgSZ[2] == L'9' && Code.ArgSZ[3] == L';')
