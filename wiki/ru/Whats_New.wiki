@@ -7,6 +7,12 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 141115==
+  * Show asterisk insted of minus in the ‘Visible region lock’ StatusBar column.
+  * AutoUpdate: Postpone was not working.
+  * AutoUpdate: Don't show spare close confirmation after ‘Close & Update’ confirmation.
+
+
 ==Build 141114==
   * Scroll position was ignored when starting selection with ‘Freeze console...’ enabled option.
   * Don't reset scroll position on !KeyUp, only !KeyDown are taken into account.
