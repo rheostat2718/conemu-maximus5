@@ -81,8 +81,7 @@ protected:
 	ConEmuUpdateSettings* mp_Set;
 
 	long mn_InShowMsgBox;
-	wchar_t* ms_LastErrorInfo;
-	MSection* mp_LastErrorSC;
+	LPCWSTR ms_LastErrorInfo; // Informational
 
 	wchar_t* mpsz_DeleteIniFile;
 	wchar_t* mpsz_DeletePackageFile;
@@ -120,8 +119,6 @@ public:
 
 	void StartCheckProcedure(BOOL abShowMessages);
 	void StopChecking();
-	void ShowLastError();
-	bool ShowConfirmation();
 
 	static bool LocalUpdate(LPCWSTR asDownloadedPackage);
 	static bool IsUpdatePackage(LPCWSTR asFilePath);
@@ -129,11 +126,12 @@ public:
 	enum UpdateStep
 	{
 		us_NotStarted = 0,
-		us_Check = 1,
-		us_ConfirmDownload = 2,
-		us_Downloading = 3,
-		us_ConfirmUpdate = 4,
-		us_ExitAndUpdate = 5,
+		us_Check,
+		us_ConfirmDownload,
+		us_Downloading,
+		us_ConfirmUpdate,
+		us_PostponeUpdate,
+		us_ExitAndUpdate,
 	};
 	UpdateStep InUpdate();
 
@@ -152,10 +150,13 @@ protected:
 	wchar_t ms_CurVerInfo[100];  // Version + stable/preview/alpha
 	wchar_t ms_DefaultTitle[128];
 	wchar_t* mpsz_ConfirmSource;
-	bool QueryConfirmation(UpdateStep step);
-	bool QueryConfirmationDownload();
-	bool QueryConfirmationUpdate();
-	void QueryConfirmationNoNewVer();
+	static LRESULT QueryConfirmationCallback(LPARAM lParam);
+	static LRESULT RequestExitUpdate(LPARAM);
+	static LRESULT ShowLastError(LPARAM apErrText);
+	int QueryConfirmation(UpdateStep step);
+	int QueryConfirmationDownload();
+	int QueryConfirmationUpdate();
+	int QueryConfirmationNoNewVer();
 	void WaitAllInstances();
 	bool Check7zipInstalled();
 	#if 0
