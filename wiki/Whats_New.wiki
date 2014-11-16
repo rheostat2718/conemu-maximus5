@@ -6,10 +6,20 @@ Votes and awards (vote for !ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 141116==
+  * Issue 1812: Vertical scroll bar has disappeared in latest Win10 build.
+  * Use modified <SolarMe> palette by default (for new configs).
+  * Show error box if Server and GUI has wrong protocol versions. Log errors also.
+  * LogFiles: Add root shell's start/exit logging.
+  * LogFiles: Log ‘CMD's AutoRuns’ strings from registry.
+  * LogFiles: Log Prompt/HookServer starts.
+
+
 ==Build 141115==
   * Show asterisk insted of minus in the ‘Visible region lock’ StatusBar column.
   * AutoUpdate: Postpone was not working.
   * AutoUpdate: Don't show spare close confirmation after ‘Close & Update’ confirmation.
+  * More logging of console buffer changes.
 
 
 ==Build 141114==
