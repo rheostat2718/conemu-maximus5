@@ -21,6 +21,7 @@
 || /!FontFile _fontfilename_ || Loads font from file for !ConEmu process (multiple pairs allowed) ||
 || /!FontDir _fontfolder_ || Loads all fonts from folder (multiple pairs allowed) ||
 || /!BufferHeight _lines_ || Set console buffer height. May be used with cmd.exe, !PowerShell, etc. ||
+|| /Wnd{X|Y|W|H} _value_ || Set window position and size. ||
 || /Palette _Name_ || Choose named color palette. ||
 || /Log | /Log1 | /Log2 || Used to create debug log files ||
 || /Reset || Don't load settings from registry/xml. ||
