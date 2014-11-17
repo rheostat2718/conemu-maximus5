@@ -597,7 +597,8 @@ void OnProcessCreatedDbg(BOOL bRc, DWORD dwErr, LPPROCESS_INFORMATION pProcessIn
 
 BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation)
 {
-	LogFunction(L"createProcess");
+	CEStr fnDescr(lstrmerge(L"createProcess App={", lpApplicationName, L"} Cmd={", lpCommandLine, L"}"));
+	LogFunction(fnDescr);
 
 	MWow64Disable wow;
 	if (!abSkipWowChange)
@@ -606,8 +607,9 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 	// %PATHS% from [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths]
 	// must be already processed in IsNeedCmd >> FileExistsSearch >> SearchAppPaths
 
-#if defined(SHOW_STARTED_PRINT_LITE)
 	DWORD nStartTick = GetTickCount();
+
+#if defined(SHOW_STARTED_PRINT_LITE)
 	if (gnRunMode == RM_SERVER)
 	{
 		_printf("Starting root: ");
@@ -619,9 +621,16 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 
 	BOOL lbRc = CreateProcess(lpApplicationName, lpCommandLine, lpProcessAttributes, lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
 	DWORD dwErr = GetLastError();
+	DWORD nStartDuration = GetTickCount() - nStartTick;
+
+	wchar_t szRunRc[80];
+	if (lbRc)
+		_wsprintf(szRunRc, SKIPCOUNT(szRunRc) L"Succeeded (%u ms) PID=%u", nStartDuration, lpProcessInformation->dwProcessId);
+	else
+		_wsprintf(szRunRc, SKIPCOUNT(szRunRc) L"Failed (%u ms) Code=%u(x%04X)", nStartDuration, dwErr, dwErr);
+	LogFunction(szRunRc);
 
 #if defined(SHOW_STARTED_PRINT_LITE)
-	DWORD nStartDuration = GetTickCount() - nStartTick;
 	if (gnRunMode == RM_SERVER)
 	{
 		if (lbRc)
@@ -1781,14 +1790,23 @@ wrap:
 	// Ассерт может быть если был запрос на аттач, который не удался
 	_ASSERTE(gnExitCode!=STILL_ACTIVE || (iRc==CERR_ATTACHFAILED) || (iRc==CERR_RUNNEWCONSOLE) || gbAsyncRun);
 
-	if (gbPrintRetErrLevel)
+	// Log exit code
+	if (((gnRunMode == RM_SERVER && gpSrv->hRootProcess) ? gpSrv->dwRootProcess : pi.dwProcessId) != 0)
 	{
 		wchar_t szInfo[80];
+		LPCWSTR pszName = (gnRunMode == RM_SERVER && gpSrv->hRootProcess) ? L"Shell" : L"Process";
+		DWORD nPID = (gnRunMode == RM_SERVER && gpSrv->hRootProcess) ? gpSrv->dwRootProcess : pi.dwProcessId;
 		if (gnExitCode >= 0x80000000)
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\nProcess exit code: %u (%i) {x%08X}\n", gnExitCode, (int)gnExitCode, gnExitCode);
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\n%s PID=%u ExitCode=%u (%i) {x%08X}", pszName, nPID, gnExitCode, (int)gnExitCode, gnExitCode);
 		else
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\nProcess exit code: %u {x%08X}\n", gnExitCode, gnExitCode);
-		_wprintf(szInfo);
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\n%s PID=%u ExitCode=%u {x%08X}", pszName, nPID, gnExitCode, gnExitCode);
+		LogFunction(szInfo+1);
+
+		if (gbPrintRetErrLevel)
+		{
+			wcscat_c(szInfo, L"\n");
+			_wprintf(szInfo);
+		}
 	}
 
 	if (iRc && (gbAttachMode & am_Auto))
@@ -1804,6 +1822,7 @@ wrap:
 					&& iRc!=CERR_UNICODE_CHK_FAILED && iRc!=CERR_UNICODE_CHK_OKAY
 					&& iRc!=CERR_GUIMACRO_SUCCEEDED && iRc!=CERR_GUIMACRO_FAILED
 					&& iRc!=CERR_AUTOATTACH_NOT_ALLOWED && iRc!=CERR_ATTACHFAILED
+					&& iRc!=CERR_WRONG_GUI_VERSION
 					&& !(gnRunMode!=RM_SERVER && iRc==CERR_CREATEPROCESS))
 				|| gbAlwaysConfirmExit)
 	  )
@@ -5134,7 +5153,46 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 		// Если уже известен HWND ConEmu (root window)
 		if (gpSrv->hGuiWnd)
-			ReloadGuiSettings(NULL);
+		{
+			DWORD nGuiPID = 0; GetWindowThreadProcessId(gpSrv->hGuiWnd, &nGuiPID);
+			DWORD nWrongValue = 0;
+			SetLastError(0);
+			LGSResult lgsRc = ReloadGuiSettings(NULL, &nWrongValue);
+			if (lgsRc < lgs_Succeeded)
+			{
+				wchar_t szLgsError[200], szLGS[80];
+				_wsprintf(szLGS, SKIPCOUNT(szLGS) L"LGS=%u, Code=%u, GUI PID=%u, Srv PID=%u", lgsRc, GetLastError(), nGuiPID, GetCurrentProcessId());
+				switch (lgsRc)
+				{
+				case lgs_WrongVersion:
+					_wsprintf(szLgsError, SKIPCOUNT(szLgsError) L"Failed to load ConEmu info!\n"
+						L"Found ProtocolVer=%u but Required=%u.\n"
+						L"%s.\n"
+						L"Please update all ConEmu components!",
+						nWrongValue, (DWORD)CESERVER_REQ_VER, szLGS);
+					break;
+				case lgs_WrongSize:
+					_wsprintf(szLgsError, SKIPCOUNT(szLgsError) L"Failed to load ConEmu info!\n"
+						L"Found MapSize=%u but Required=%u."
+						L"%s.\n"
+						L"Please update all ConEmu components!",
+						nWrongValue, (DWORD)sizeof(ConEmuGuiMapping), szLGS);
+					break;
+				default:
+					_wsprintf(szLgsError, SKIPCOUNT(szLgsError) L"Failed to load ConEmu info!\n"
+						L"%s.\n"
+						L"Please update all ConEmu components!",
+						szLGS);
+				}
+				// Add log info
+				LogFunction(szLGS);
+				// Show user message
+				wchar_t szTitle[128];
+				_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC[Srv]: PID=%u", GetCurrentProcessId());
+				MessageBox(NULL, szLgsError, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+				return CERR_WRONG_GUI_VERSION;
+			}
+		}
 	}
 
 	xf_check();
@@ -8299,6 +8357,25 @@ BOOL cmd_CtrlBreakEvent(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_PromptStarted(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+	wchar_t szStarted[MAX_PATH+80];
+
+	if (in.DataSize() >= sizeof(wchar_t))
+	{
+		int iLen = lstrlen(in.PromptStarted.szExeName);
+		if (iLen > MAX_PATH) in.PromptStarted.szExeName[MAX_PATH] = 0;
+		_wsprintf(szStarted, SKIPCOUNT(szStarted) L"Prompt (Hook server) was started, PID=%u {%s}", in.hdr.nSrcPID, in.PromptStarted.szExeName);
+		LogFunction(szStarted);
+	}
+
+	*out = ExecuteNewCmd(CECMD_PROMPTSTARTED, sizeof(CESERVER_REQ_HDR));
+	lbRc = ((*out) != NULL);
+
+	return lbRc;
+}
+
 bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 {
 	bool lbProcessed = false;
@@ -8536,6 +8613,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 			gpSrv->TopLeft = in.ReqConInfo.TopLeft;
 			lbRc = true;
 		} break;
+		case CECMD_PROMPTSTARTED:
+		{
+			lbRc = cmd_PromptStarted(in, out);
+		} break;
 		default:
 		{
 			// Отлов необработанных
@@ -8692,8 +8773,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	// CONSOLE_FULLSCREEN/*1*/ or CONSOLE_FULLSCREEN_HARDWARE/*2*/
 	if (pfnGetConsoleDisplayMode && pfnGetConsoleDisplayMode(&gpSrv->dwDisplayMode))
 	{
-		// Need to be compared to CONSOLE_FULLSCREEN_HARDWARE/*2*/?
-		if (gpSrv->dwDisplayMode)
+		if (gpSrv->dwDisplayMode & CONSOLE_FULLSCREEN_HARDWARE)
 		{
 			// While in hardware fullscreen - srWindow still shows window region
 			// as it can be, if returned in GUI mode (I suppose)
