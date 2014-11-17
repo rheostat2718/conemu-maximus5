@@ -13,6 +13,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * LogFiles: Add root shell's start/exit logging.
   * LogFiles: Log ‘CMD's AutoRuns’ strings from registry.
   * LogFiles: Log Prompt/HookServer starts.
+  * Show actual 4-bit colors in the ExtendedConsole color selection dialog.
 
 
 ==Build 141115==
