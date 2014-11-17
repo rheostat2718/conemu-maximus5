@@ -157,9 +157,12 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 	switch (CB)
 	{
 		case IDOK:
-		case IDCANCEL:
 		case IDCLOSE:
-			_ASSERTE(FALSE && "IDOK/IDCANCEL/IDCLOSE must be processed in wndOpProc");
+			_ASSERTE(FALSE && "IDOK/IDCLOSE must be processed in wndOpProc");
+			break;
+		case IDCANCEL:
+			// That may be triggered in Tasks' commands field (multiline edit)
+			PostMessage(ghOpWnd, WM_CLOSE, 0, 0);
 			break;
 		case rNoneAA:
 		case rStandardAA:
@@ -1482,8 +1485,10 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (!gpConEmu->mp_Inside)
 	{
+		DWORD Mode = gpSet->_WindowMode;
+
 		if (gpSet->isQuakeStyle
-			|| (IsChecked(rNormal, CB, uCheck) == BST_CHECKED))
+			|| (Mode == rNormal))
 		{
 			int newX, newY;
 			wchar_t* psSize;
@@ -1507,14 +1512,24 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 			newY = (int)GetDlgItemInt(hDlg, tWndY, &lbOk, TRUE);
 			if (!lbOk) newY = gpConEmu->wndY;
 
+			// Чтобы GetDefaultRect сработал правильно - сразу обновим значения
+			if (!gpSet->wndCascade)
+			{
+				gpConEmu->wndX = newX;
+				if (!gpSet->isQuakeStyle)
+					gpConEmu->wndY = newY;
+			}
+			gpSet->_wndX = newX;
+			if (!gpSet->isQuakeStyle)
+				gpSet->_wndY = newY;
+			gpConEmu->WndWidth.Set(true, newW.Style, newW.Value);
+			gpConEmu->WndHeight.Set(false, newH.Style, newH.Value);
+			gpSet->wndWidth.Set(true, newW.Style, newW.Value);
+			gpSet->wndHeight.Set(true, newH.Style, newH.Value);
+
 			if (gpSet->isQuakeStyle)
 			{
 				SetFocus(GetDlgItem(hDlg, tWndWidth));
-				// Чтобы GetDefaultRect сработал правильно - сразу обновим значения
-				if (!gpSet->wndCascade)
-					gpConEmu->wndX = newX;
-				gpConEmu->WndWidth.Set(true, newW.Style, newW.Value);
-				gpConEmu->WndHeight.Set(false, newH.Style, newH.Value);
 				RECT rcQuake = gpConEmu->GetDefaultRect();
 				// And size/move!
 				SetWindowPos(ghWnd, NULL, rcQuake.left, rcQuake.top, rcQuake.right-rcQuake.left, rcQuake.bottom-rcQuake.top, SWP_NOZORDER);
@@ -1534,14 +1549,14 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 				SetWindowPos(ghWnd, NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 			}
 		}
-		else if (IsChecked(rMaximized, CB, uCheck) == BST_CHECKED)
+		else if (Mode == rMaximized)
 		{
 			SetFocus(GetDlgItem(hDlg, rMaximized));
 
 			if (!gpConEmu->isZoomed())
 				gpConEmu->SetWindowMode(wmMaximized);
 		}
-		else if (IsChecked(rFullScreen, CB, uCheck) == BST_CHECKED)
+		else if (Mode == rFullScreen)
 		{
 			SetFocus(GetDlgItem(hDlg, rFullScreen));
 
@@ -2585,6 +2600,7 @@ void CSetDlgButtons::OnBtn_ExtendFonts(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbExtendFonts);
 
 	gpSet->AppStd.isExtendFonts = uCheck;
+	CSetDlgLists::EnableDlgItems(hDlg, CSetDlgLists::eExtendFonts, gpSet->AppStd.isExtendFonts);
 	gpConEmu->Update(true);
 
 } // cbExtendFonts

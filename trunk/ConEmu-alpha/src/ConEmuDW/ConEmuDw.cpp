@@ -82,6 +82,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 HMODULE ghOurModule = NULL; // ConEmuDw.dll
 HWND    ghConWnd = NULL; // VirtualCon. инициализируется в CheckBuffers()
+HWND    ghRealConWnd = NULL;
 
 HMODULE ghPluginModule = NULL;
 HookItemPreCallback_t PreWriteCallBack = NULL;
@@ -91,13 +92,14 @@ HookItemPreCallback_t PreWriteCallBack = NULL;
 /* extern для MAssert, Здесь НЕ используется */
 
 #ifdef USE_COMMIT_EVENT
-HWND    ghRealConWnd = NULL;
 bool    gbBatchStarted = false;
 HANDLE  ghBatchEvent = NULL;
 DWORD   gnBatchRegPID = 0;
 #endif
 
+#ifdef USE_COMMIT_EVENT
 CESERVER_CONSOLE_MAPPING_HDR SrvMapping = {};
+#endif
 
 AnnotationHeader* gpTrueColor = NULL;
 HANDLE ghTrueColor = NULL;
@@ -361,12 +363,11 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 		_ASSERTE((hApiCon == hRealCon && hApiCon != hCon) || hRootWnd == NULL);
 		#endif
 
+		ghRealConWnd = GetConEmuHWND(2);
+
 		ghConWnd = hCon;
 		CloseBuffers();
 
-		#ifdef USE_COMMIT_EVENT
-		ghRealConWnd = GetConEmuHWND(2);
-		#endif
 		
 		//TODO: Пока работаем "по-старому", через буфер TrueColor. Переделать, он не оптимален
 		RequestLocalServerParm prm = {sizeof(prm), slsf_RequestTrueColor|slsf_GetCursorEvent|slsf_GetFarCommitEvent};
@@ -1392,6 +1393,10 @@ COLORREF gcrCustomColors[16] = {
 	0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
 	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
 	};
+COLORREF gcrPalette[16] = {
+	0x00000000, 0x00800000, 0x00008000, 0x00808000, 0x00000080, 0x00800080, 0x00008080, 0x00c0c0c0,
+	0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
+	};
 
 struct ColorParam
 {
@@ -1445,7 +1450,7 @@ struct ColorParam
 			{
 				if (nClr < 16)
 				{
-					*cr = Far3Color::GetStdColor(nClr);
+					*cr = Far3Color::GetStdColor(nClr, gcrPalette);
 				}
 			}
 			else
@@ -1464,7 +1469,7 @@ struct ColorParam
 			{
 				if (nClr < 16)
 				{
-					*cr = Far3Color::GetStdColor(nClr);
+					*cr = Far3Color::GetStdColor(nClr, gcrPalette);
 				}
 			}
 			else
@@ -1494,7 +1499,7 @@ struct ColorParam
 				// Используем "Fg" и для Background, т.к. Color2BgIndex делает
 				// дополнительную корректцию, чтобы "текст был читаем", а это
 				// здесь не нужно
-				Far3Color::Color2FgIndex(cr, nIndex);
+				Far3Color::Color2FgIndex(cr, nIndex, gcrPalette);
 				Color = nIndex;
 			}
 			//else
@@ -1535,6 +1540,23 @@ struct ColorParam
 	};
 };
 
+
+// gcrCustomColors
+void ReloadGuiPalette()
+{
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_QUERYPALETTE, sizeof(CESERVER_REQ_HDR));
+	if (pIn)
+	{
+		CESERVER_REQ* pOut = ExecuteGuiCmd(ghRealConWnd, pIn, ghConWnd);
+		if (pOut->DataSize() >= sizeof(CESERVER_PALETTE))
+		{
+			memmove(gcrPalette, pOut->Palette.crPalette, sizeof(gcrPalette));
+			memmove(gcrCustomColors, pOut->Palette.crPalette, sizeof(gcrCustomColors));
+		}
+		ExecuteFreeResult(pOut);
+		ExecuteFreeResult(pIn);
+	}
+}
 
 
 INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1579,7 +1601,6 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 			//SetWindowPos(GetDlgItem(hwndDlg, IDC_TEXT), 0, 0,0,
 			//	rcText.right-rcText.left, rcCheck.bottom-rcText.top-10, SWP_NOMOVE|SWP_NOZORDER);
 		}
-		
 
 		SetFocus(GetDlgItem(hwndDlg, IDOK));
 		
@@ -1691,10 +1712,10 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				if (P->b4bitfore)
 				{
 					WORD nIndex = 0;
-					Far3Color::Color2FgIndex(P->crForeColor, nIndex);
+					Far3Color::Color2FgIndex(P->crForeColor, nIndex, gcrPalette);
 					if (/*nIndex >= 0 &&*/ nIndex < 16)
 					{
-						P->crForeColor = Far3Color::GetStdColor(nIndex);
+						P->crForeColor = Far3Color::GetStdColor(nIndex, gcrPalette);
 						InvalidateRect(GetDlgItem(hwndDlg, IDC_TEXT), NULL, TRUE);
 					}
 					else
@@ -1711,10 +1732,10 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 				{
 					WORD nIndex = 0;
 					// Используем Fg, т.к. он дает "чистый" цвет, без коррекции на "читаемость"
-					Far3Color::Color2FgIndex(P->crBackColor, nIndex);
+					Far3Color::Color2FgIndex(P->crBackColor, nIndex, gcrPalette);
 					if (/*nIndex >= 0 &&*/ nIndex < 16)
 					{
-						P->crBackColor = Far3Color::GetStdColor(nIndex);
+						P->crBackColor = Far3Color::GetStdColor(nIndex, gcrPalette);
 						P->CreateBrush();
 						InvalidateRect(GetDlgItem(hwndDlg, IDC_TEXT), NULL, TRUE);
 					}
@@ -1825,6 +1846,7 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 	//	Parm.Color.ForegroundColor = 7 | SetTransparent(FALSE);
 	//	Parm.Color.BackgroundColor = SetTransparent(FALSE);
 	//}
+	ReloadGuiPalette();
 	Parm.Far2Ref(&Parm.Color, TRUE, &Parm.crForeColor, &Parm.bForeTransparent);
 	Parm.Far2Ref(&Parm.Color, FALSE, &Parm.crBackColor, &Parm.bBackTransparent);
 	if (!AddTransparent)
