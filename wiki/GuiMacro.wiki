@@ -128,10 +128,20 @@ Plugin.SyncCall("4b675d80-1d4a-4ea9-8436-fdc23f2fc14b","shell(\"new_console\",@\
 ==Command line==
 Syntax (doesn't matter `ConEmuC.exe` or `ConEmuC64.exe` you are using):
 {{{
-ConEmuC /GuiMacro[:PID|HWND] <ConEmu GUI macro command>
+ConEmuC /GuiMacro[:PID|HWND][:T<tab>][:S<split>] <GuiMacro command>
 or
-ConEmuC -GuiMacro[:PID|HWND] <ConEmu GUI macro command>
+ConEmuC -GuiMacro[:PID|HWND][:T<tab>][:S<split>] <GuiMacro command>
 }}}
+
+|| *PID* || _‘Process ID’, decimal number_ ||
+|| 0 || Special value means ‘Use active tab/split of the first found !ConEmu window ||
+|| !ConEmu GUI PID || `ConEmu.exe` or `ConEmu64.exe`, macro will be executed in the *active* tab/split ||
+|| Console server PID || `ConEmuC.exe` or `ConEmuC64.exe` started with `/ROOT` argument ||
+|| *HWND* || _Window descriptor, hexadecimal number with `x` prefix_ ||
+|| !ConEmu GUI HWND || Main !ConEmu window, macro will be executed in the *active* tab/split ||
+|| Console server HWND || The hidden real console window ||
+|| *T`<`tab`>`* || Changes affected RealConsole, _‘tab’, decimal 1-based tab index_ ||
+|| *S`<`split`>`* || Changes affected RealConsole, _‘split’, decimal 1-based pane index of selected/active group of panes_ ||
 
 When GUI macro executed, ConEmuC.exe set errorlevel to 0 and write result to !StdOut.
 
@@ -149,14 +159,6 @@ specify exact instance with `PID` or `HWND`.
 
 `PID` must be decimal number. `HWND` must be specified as hexadecimal number (window descriptor) with ‘x’ prefix.
 Exact value you may see in the !ConEmu status bar, in the Windows Task Manager, or find yourself using Windows API.
-
-|| *PID* || _‘Process ID’, decimal number_ ||
-|| 0 || Special value means ‘Use active tab/split of the first found !ConEmu window ||
-|| !ConEmu GUI PID || `ConEmu.exe` or `ConEmu64.exe`, macro will be executed in the *active* tab/split ||
-|| Console server PID || `ConEmuC.exe` or `ConEmuC64.exe` started with `/ROOT` argument ||
-|| *HWND* || _Window descriptor, hexadecimal number with `x` prefix_ ||
-|| !ConEmu GUI HWND || Main !ConEmu window, macro will be executed in the *active* tab/split ||
-|| Console server HWND || The hidden real console window ||
 
 Few examples:
 {{{
@@ -343,7 +345,8 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
      - Cmd=0, Horz=1..99, Vert=0: Duplicate active ‘shell’ split to right, same as Shell("new_console:s50Hn")
        Cmd=0, Horz=0, Vert=1..99: Duplicate active ‘shell’ split to bottom, same as Shell("new_console:s50Vn")
        Cmd=1, Horz=-1..1, Vert=-1..1: Move splitter between panes (aka resize panes)
-       Cmd=2, Horz=-1..1, Vert=-1..1: Put cursor to the nearest pane (preferred direction may be choosed).
+       Cmd=2, Horz=-1..1, Vert=-1..1: Put cursor to the nearest pane (preferred direction may be choosed)
+       Cmd=3, Maximize/restore active pane
     Status(0[,<Parm>])
      - Show/Hide status bar, Parm=1 - Show, Parm=2 - Hide
     Status(1[,"<Text>"])
