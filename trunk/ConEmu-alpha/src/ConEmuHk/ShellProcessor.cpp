@@ -33,20 +33,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(disable: 4091)
 #include <Shlobj.h>
 #pragma warning(default: 4091)
-#include "../ConEmuCD/ExitCodes.h"
-#include "../ConEmu/ShObjIdl_Part.h"
+#include "../common/CmdLine.h"
 #include "../common/common.hpp"
 #include "../common/ConEmuCheck.h"
-#include "SetHook.h"
 #include "../common/execute.h"
-#include "ConEmuHooks.h"
-#include "ShellProcessor.h"
-#include "Injects.h"
-#include "GuiAttach.h"
+#include "../common/WErrGuard.h"
 #include "../common/WObjects.h"
-#include "../common/CmdLine.h"
-#include "DefTermHk.h"
+#include "../ConEmu/ShObjIdl_Part.h"
+#include "../ConEmuCD/ExitCodes.h"
 #include "Ansi.h"
+#include "ConEmuHooks.h"
+#include "DefTermHk.h"
+#include "GuiAttach.h"
+#include "Injects.h"
+#include "SetHook.h"
+#include "ShellProcessor.h"
 
 #ifndef SEE_MASK_NOZONECHECKS
 #define SEE_MASK_NOZONECHECKS 0x800000
@@ -1397,6 +1398,9 @@ int CShellProc::PrepareExecuteParms(
 	if (!ghConEmuWndDC && !isDefaultTerminalEnabled())
 		return 0; // Перехватывать только под ConEmu
 
+	// Just in case of unexpected LastError changes
+	ScopedObject(CLastErrorGuard);
+
 	CmdArg szLnkExe, szLnkArg, szLnkDir;
 	if (asFile && (aCmd == eShellExecute))
 	{
@@ -1479,10 +1483,11 @@ int CShellProc::PrepareExecuteParms(
 	// В некоторых случаях - LongConsoleOutput бессмысленен
 	// ShellExecute(SW_HIDE) или CreateProcess(CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS,SW_HIDE)
 	bool bDetachedOrHidden = false;
+	bool bDontForceInjects = false;
 	if (aCmd == eShellExecute)
 	{
 		if (!anShellFlags && anShowCmd && *anShowCmd == 0)
-			bDetachedOrHidden = true;
+			bDontForceInjects = bDetachedOrHidden = true;
 	}
 	else if (aCmd == eCreateProcess)
 	{
@@ -1491,10 +1496,10 @@ int CShellProc::PrepareExecuteParms(
 		{
 			// Historical (create process detached from parent console)
 			if (anCreateFlags && (*anCreateFlags & (CREATE_NEW_CONSOLE|CREATE_NO_WINDOW|DETACHED_PROCESS)))
-				bDetachedOrHidden = true;
+				bDontForceInjects = bDetachedOrHidden = true;
 			// Detect creating "root" from mintty-like applications
 			else if ((gbAttachGuiClient || gbGuiClientAttached) && anCreateFlags && (*anCreateFlags & (CREATE_BREAKAWAY_FROM_JOB)))
-				bDetachedOrHidden = true;
+				bDontForceInjects = bDetachedOrHidden = true;
 		}
 		// Started with redirected output? For example, from Far cmd line:
 		// edit:<git log
@@ -1510,6 +1515,7 @@ int CShellProc::PrepareExecuteParms(
 				if (!CEAnsi::IsOutputHandle(*lphStdErr))
 					bDetachedOrHidden = true;
 			}
+			#if 0
 			else
 			{
 				// Issue 1763: Multiarc очень странно делает вызовы архиваторов
@@ -1518,6 +1524,7 @@ int CShellProc::PrepareExecuteParms(
 				//if (!CEAnsi::IsOutputHandle(hStdOut))
 				//	bDetachedOrHidden = true;
 			}
+			#endif
 		}
 	}
 	BOOL bLongConsoleOutput = gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput && !bDetachedOrHidden;
@@ -2183,7 +2190,7 @@ int CShellProc::PrepareExecuteParms(
 		// И если просили не ставить хуки (-new_console:i) - тоже
 		mb_NeedInjects = (aCmd == eCreateProcess) && (mn_ImageBits != 16)
 			&& (m_Args.InjectsDisable != crb_On) && !gbPrepareDefaultTerminal
-			&& !bDetachedOrHidden;
+			&& !bDontForceInjects;
 
 		// Параметр -cur_console / -new_console нужно вырезать
 		if (bNewConsoleArg || bCurConsoleArg)

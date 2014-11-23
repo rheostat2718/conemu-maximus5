@@ -214,14 +214,27 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	mh_WndDC = NULL;
 }
 
-void CVirtualConsole::SetFlags(VConFlags flags, int index)
+bool CVirtualConsole::SetFlags(VConFlags Set, VConFlags Mask, int index)
 {
 	if (!this)
-		return;
-	if (flags != mn_Flags)
-		mn_Flags = flags;
-	if (index != mn_Index)
+		return false;
+
+	bool bChanged = false;
+
+	VConFlags NewFlags = ((mn_Flags & ~Mask) | Set);
+
+	if (NewFlags != mn_Flags)
+	{
+		mn_Flags = NewFlags;
+		bChanged = true;
+	}
+
+	if ((index > 0) && (index != mn_Index))
+	{
 		mn_Index = index;
+	}
+
+	return bChanged;
 }
 
 bool CVirtualConsole::Constructor(RConStartArgs *args)
@@ -544,6 +557,8 @@ bool CVirtualConsole::isVisible()
 	if (!this)
 		return false;
 	if (!(mn_Flags & vf_Visible))
+		return false;
+	if ((mn_Flags & vf_Maximized) && !(mn_Flags & vf_Active))
 		return false;
 	return true;
 }

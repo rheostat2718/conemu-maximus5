@@ -379,6 +379,30 @@ bool CTabBarClass::GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndI
 	return lbRc;
 }
 
+void CTabBarClass::HighlightTab(const CTabID* apTab, bool abHighlight)
+{
+	if (!this || !apTab)
+		return;
+
+	struct impl
+	{
+		const CTabID* pTab;
+		bool bHighlight;
+		CTabPanelBase* pRebar;
+		CTabStack* pTabs;
+		int iTab;
+		static LPARAM Execute(LPARAM lParam)
+		{
+			impl* i = (impl*)lParam;
+			if ((i->iTab = i->pTabs->GetIndexByTab(i->pTab)) >= 0)
+				i->pRebar->HighlightTab(i->iTab, i->bHighlight);
+			return 0;
+		};
+	} Impl = {apTab, abHighlight, mp_Rebar, &m_Tabs};
+
+	gpConEmu->CallMainThread(true, impl::Execute, (LPARAM)&Impl);
+}
+
 // Для поиска табов консоли (если показываются редакторы/вьюверы)
 int CTabBarClass::GetFirstLastVConTab(CVirtualConsole* pVCon, bool bFirst, int nFromTab /*= -1*/)
 {
@@ -636,7 +660,7 @@ int  CTabBarClass::UpdateAddTab(HANDLE hUpdate, int& tabIdx, int& nCurTab, bool&
 		m_Tabs.UpdateAppend(hUpdate, tab, FALSE);
 
 		// Физически (WinAPI) добавляет закладку, или меняет (при необходимости) заголовок существующей
-		mp_Rebar->AddTabInt(tab->GetLabel(), tabIdx, (tab->Flags() & fwt_Elevated)==fwt_Elevated, iTabIcon);
+		mp_Rebar->AddTabInt(tab->GetLabel(), tabIdx, tab->Info.Type, iTabIcon);
 
 		// Add current (selected) tab to the top of recent stack
 		if ((tab->Flags() & fwt_CurrentFarWnd) && bVConActive)
@@ -872,7 +896,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		m_Tabs.UpdateAppend(hUpdate, mp_DummyTab, FALSE);
 
 		// Физически (WinAPI) добавляет закладку, или меняет (при необходимости) заголовок существующей
-		mp_Rebar->AddTabInt(gpConEmu->GetDefaultTabLabel(), tabIdx, gpConEmu->mb_IsUacAdmin, -1);
+		mp_Rebar->AddTabInt(gpConEmu->GetDefaultTabLabel(), tabIdx, gpConEmu->mb_IsUacAdmin ? fwt_Elevated : fwt_Any, -1);
 
 		nCurTab = tabIdx;
 		tabIdx++;
@@ -1379,10 +1403,15 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 
 	LPCWSTR pszTabName = pRCon->GetTabTitle(pTab);
 
+	// That will be Far Manager panels or simple consoles (cmd, posh, bash, etc.)
 	if (pTab->Name.Empty() || (pTab->Type() == fwt_Panels))
 	{
 		//_tcscpy(szFormat, _T("%s"));
-		lstrcpyn(szFormat, bIsFar ? gpSet->szTabPanels : gpSet->szTabConsole, countof(szFormat));
+		lstrcpyn(szFormat,
+			bIsFar ? gpSet->szTabPanels
+			: (gpSet->szTabModified[0] && (pTab->Flags() & fwt_ModifiedFarWnd)) ? gpSet->szTabModified
+			: gpSet->szTabConsole,
+			countof(szFormat));
 		nMaxLen = gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
 
 		lstrcpyn(fileName, pszTabName, countof(fileName));

@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "ConEmu.h"
 #include "MyClipboard.h"
+#include "Options.h"
 
 static LONG gnMyClipboardOpened = 0;
 
@@ -100,26 +101,92 @@ HANDLE MySetClipboardData(UINT uFormat, HANDLE hMem)
 
 bool CopyToClipboard(LPCWSTR asText)
 {
-	if (!asText)
+	INT_PTR cch = asText ? lstrlen(asText) : -1;
+	if (cch < 0)
 		return false;
+
 
 	bool bCopied = false;
 
+
 	if (MyOpenClipboard(L"CopyToClipboard"))
 	{
-		DWORD cch = lstrlen(asText);
-		HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (cch + 1) * sizeof(*asText));
-		if (hglbCopy)
+		struct Data
 		{
-			wchar_t* lptstrCopy = (wchar_t*)GlobalLock(hglbCopy);
-			if (lptstrCopy)
-			{
-				_wcscpy_c(lptstrCopy, cch+1, asText);
-				GlobalUnlock(hglbCopy);
+			size_t idx;
+			HGLOBAL Hglbs[4];
+			UINT Formats[4];
 
-				EmptyClipboard();
-				bCopied = (MySetClipboardData(CF_UNICODETEXT, hglbCopy) != NULL);
-			}
+			void AddAnsiOem(LPCWSTR asText, INT_PTR cch, UINT cp)
+			{
+				HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (cch + 1) * sizeof(char));
+				if (!hglbCopy)
+					return;
+				char* lpstrCopy = (char*)GlobalLock(hglbCopy);
+				if (!lpstrCopy)
+				{
+					GlobalFree(hglbCopy);
+					return;
+				}
+
+				int iLen = WideCharToMultiByte(cp, 0, asText, cch+1, lpstrCopy, cch+1, NULL, NULL);
+				GlobalUnlock(hglbCopy);
+				if (iLen < 1)
+				{
+					GlobalFree(hglbCopy);
+				}
+				else
+				{
+					Hglbs[idx] = hglbCopy;
+					Formats[idx] = (cp == CP_ACP) ? CF_TEXT : CF_OEMTEXT;
+					idx++;
+				}
+			};
+
+			void AddData(const void* ptrData, size_t cbDataSize, UINT Format)
+			{
+				HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, cbDataSize);
+				if (!hglbCopy)
+					return;
+				LPVOID lpbCopy = GlobalLock(hglbCopy);
+				if (!lpbCopy)
+				{
+					GlobalFree(hglbCopy);
+					return;
+				}
+
+				memmove(lpbCopy, ptrData, cbDataSize);
+				GlobalUnlock(hglbCopy);
+				Hglbs[idx] = hglbCopy;
+				Formats[idx] = Format;
+				idx++;
+			};
+		} data = {};
+
+		if (gpSet->isCTSForceLocale)
+		{
+			data.AddAnsiOem(asText, cch, CP_ACP);
+			data.AddAnsiOem(asText, cch, CP_OEMCP);
+			_ASSERTE(sizeof(gpSet->isCTSForceLocale)==sizeof(DWORD));
+			data.AddData(&gpSet->isCTSForceLocale, sizeof(gpSet->isCTSForceLocale), CF_LOCALE);
+		}
+
+		// And CF_UNICODE
+		data.AddData(asText, (cch + 1) * sizeof(*asText), CF_UNICODETEXT);
+
+		_ASSERTE(data.idx <= countof(data.Hglbs));
+
+		if (data.idx)
+		{
+			EmptyClipboard();
+		}
+
+		for (size_t f = 0; f < data.idx; f++)
+		{
+			if (MySetClipboardData(data.Formats[f], data.Hglbs[f]) != NULL)
+				bCopied = true;
+			else
+				GlobalFree(data.Hglbs[f]);
 		}
 
 		MyCloseClipboard();

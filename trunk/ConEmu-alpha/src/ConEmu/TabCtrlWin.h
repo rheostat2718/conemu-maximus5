@@ -50,7 +50,7 @@ public:
 
 public:
 	virtual HWND ActivateSearchPaneInt(bool bActivate) override;
-	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) override;
+	virtual void AddTabInt(LPCWSTR text, int i, CEFarWindowType Flags, int iTabIcon) override;
 	virtual void CreateRebar() override;
 	virtual void DestroyRebar() override;
 	virtual void DeleteItemInt(int I) override;
@@ -70,6 +70,7 @@ public:
 	virtual bool GetToolBtnChecked(ToolbarCommandIdx iCmd) override;
 	virtual bool GetToolBtnRect(int nCmd, RECT* rcBtnRect) override;
 	virtual bool GetRebarClientRect(RECT* rc) override;
+	virtual void HighlightTab(int iTab, bool bHighlight) override;
 	virtual void InvalidateBar() override;
 	virtual void OnCaptionHiddenChanged(bool bCaptionHidden) override;
 	virtual void OnConsoleActivatedInt(int nConNumber) override;

@@ -131,6 +131,12 @@ const CONEMUDEFCOLORS DefColors[] =
 		}
 	},
 	{
+		L"<Base16>", {
+			0x00181818, 0x00383838, 0x00d8d8d8, 0x004669a1, 0x005696dc, 0x00282828, 0x00b8b8b8, 0x00e8e8e8,
+			0x00585858, 0x00c2af7c, 0x006cb5a1, 0x00b9c186, 0x004246ab, 0x00af8bba, 0x0088caf7, 0x00f8f8f8
+		}
+	},
+	{
 		L"<Gamma 1 (for use with dark monitors)>", {
 			0x00000000, 0x00960000, 0x0000aa00, 0x00aaaa00, 0x000000aa, 0x00800080, 0x0000aaaa, 0x00c0c0c0,
 			0x00808080, 0x00ff0000, 0x0000ff00, 0x00ffff00, 0x000000ff, 0x00ff00ff, 0x0000ffff, 0x00ffffff
@@ -663,14 +669,10 @@ void Settings::InitSettings()
 	nIconID = IDI_ICON1;
 	isRClickSendKey = 2;
 	sRClickMacro = NULL;
-	//wcscpy_c(szTabConsole, L"<%c> %s `%p`" /*L "%s [%c]" */);
-	//wcscpy_c(szTabEditor, L"<%c.%i>{%s} `%p`" /* L"[%s]" */);
-	//wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] `%p` *" /* L"[%s] *" */);
-	//wcscpy_c(szTabViewer, L"<%c.%i>[%s] `%p`" /* L"{%s}" */);
 	wcscpy_c(szTabConsole, L"<%c> %s");
-	//wcscpy_c(szTabSkipWords, L"Administrator:|Администратор:");
+	wcscpy_c(szTabModified, szTabConsole); wcscat_c(szTabModified, L" *");
 	wchar_t szTabSkipWords[64];
-	lstrcpy(szTabSkipWords, L"Administrator:|Администратор:");
+	wcscpy_c(szTabSkipWords, L"Administrator:|Администратор:");
 	pszTabSkipWords = lstrdup(szTabSkipWords);
 	wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
 	wcscpy_c(szTabEditor, L"<%c.%i>{%s}");
@@ -691,6 +693,10 @@ void Settings::InitSettings()
 	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
 	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
 	isCTSHtmlFormat = 0; // Don't use HTML formatting with copy (by default)
+	isCTSForceLocale = 0; // Try to bypass clipboard locale problems (pasting to old non-unicode apps)
+	#ifdef _DEBUG
+	isCTSForceLocale = 0x0419; // russian locale
+	#endif
 	//vmCTSVkBlockStart = 0; // при желании, пользователь может назначить hotkey запуска выделения
 	//vmCTSVkTextStart = 0;  // при желании, пользователь может назначить hotkey запуска выделения
 	isCTSActMode = 2; // BufferOnly
@@ -754,6 +760,7 @@ void Settings::InitSettings()
 	isTabs = 1; nTabsLocation = 0; isTabIcons = true; isOneTabPerGroup = false;
 	bActivateSplitMouseOver = 2; // Regarding Windows settings (Active window tracking)
 	isTabSelf = true; isTabRecent = true; isTabLazy = true;
+	nTabFlashChanged = 9;
 	nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION; nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
 	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
@@ -2665,6 +2672,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		//LoadVkMod(reg, L"CTS.VkBlockStart", vmCTSVkBlockStart, vmCTSVkBlockStart);
 		reg->Load(L"CTS.SelectText", isCTSSelectText);
 		reg->Load(L"CTS.HtmlFormat", isCTSHtmlFormat);
+		reg->Load(L"CTS.ForceLocale", isCTSForceLocale);
 		//reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition); if (isCTSClickPromptPosition > 2) isCTSClickPromptPosition = 2;
 		//reg->Load(L"CTS.VkText", isCTSVkText);
 		//LoadVkMod(reg, L"CTS.VkTextStart", vmCTSVkTextStart, vmCTSVkTextStart);
@@ -2864,6 +2872,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"ActivateSplitMouseOver", bActivateSplitMouseOver); MinMax(bActivateSplitMouseOver, 2);
 		reg->Load(L"TabSelf", isTabSelf);
 		reg->Load(L"TabLazy", isTabLazy);
+		reg->Load(L"TabFlashChanged", nTabFlashChanged);
 		reg->Load(L"TabRecent", isTabRecent);
 		reg->Load(L"TabDblClick", nTabBarDblClickAction); MinMax(nTabBarDblClickAction, 3);
 		reg->Load(L"TabBtnDblClick", nTabBtnDblClickAction); MinMax(nTabBtnDblClickAction, 4);
@@ -2891,6 +2900,10 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 
 		reg->Load(L"TabConsole", szTabConsole, countof(szTabConsole));
+		if (!reg->Load(L"TabModified", szTabModified, countof(szTabModified)))
+		{
+			lstrcpyn(szTabModified, szTabConsole, countof(szTabModified)-3); wcscat_c(szTabModified, L" *");
+		}
 		reg->Load(L"TabSkipWords", &pszTabSkipWords);
 		wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
 		reg->Load(L"TabPanels", szTabPanels, countof(szTabPanels));
@@ -3612,6 +3625,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		//reg->Save(L"CTS.VkBlockStart", vmCTSVkBlockStart);
 		reg->Save(L"CTS.SelectText", isCTSSelectText);
 		reg->Save(L"CTS.HtmlFormat", isCTSHtmlFormat);
+		reg->Save(L"CTS.ForceLocale", isCTSForceLocale);
 		//reg->Save(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
 		//reg->Save(L"CTS.VkText", isCTSVkText);
 		//reg->Save(L"CTS.VkTextStart", vmCTSVkTextStart);
@@ -3688,6 +3702,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ActivateSplitMouseOver", bActivateSplitMouseOver);
 		reg->Save(L"TabSelf", isTabSelf);
 		reg->Save(L"TabLazy", isTabLazy);
+		reg->Save(L"TabFlashChanged", nTabFlashChanged);
 		reg->Save(L"TabRecent", isTabRecent);
 		reg->Save(L"TabDblClick", nTabBarDblClickAction);
 		reg->Save(L"TabBtnDblClick", nTabBtnDblClickAction);
@@ -3703,6 +3718,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		//reg->Save(L"TabMargins", rcTabMargins);
 		reg->Save(L"ToolbarAddSpace", nToolbarAddSpace);
 		reg->Save(L"TabConsole", szTabConsole);
+		reg->Save(L"TabModified", szTabModified);
 		reg->Save(L"TabSkipWords", pszTabSkipWords);
 		reg->Save(L"TabPanels", szTabPanels);
 		reg->Save(L"TabEditor", szTabEditor);

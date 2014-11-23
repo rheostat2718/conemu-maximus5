@@ -2504,6 +2504,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 						if (LoadDataFromSrv(nCalcCount, pData))
 						{
 							LOGCONSOLECHANGE("ApplyConsoleInfo: InitBuffers&LoadDataFromSrv -> changed");
+							mp_RCon->OnConsoleDataChanged();
 							lbChanged = true;
 						}
 					}
@@ -4654,6 +4655,25 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 		Result = MySetClipboardData(CF_UNICODETEXT, hUnicode)
 			&& (!i_CF_HTML || MySetClipboardData(i_CF_HTML, hHtml));
+	}
+
+	if (gpSet->isCTSForceLocale)
+	{
+		HGLOBAL hLcl = GlobalAlloc(GMEM_MOVEABLE, sizeof(DWORD));
+		if (hLcl)
+		{
+			LPDWORD pLcl = (LPDWORD)GlobalLock(hLcl);
+			if (!pLcl)
+			{
+				GlobalFree(hLcl);
+			}
+			else
+			{
+				*pLcl = gpSet->isCTSForceLocale;
+				GlobalUnlock(hLcl);
+				MySetClipboardData(CF_LOCALE, hLcl);
+			}
+		}
 	}
 
 	MyCloseClipboard();

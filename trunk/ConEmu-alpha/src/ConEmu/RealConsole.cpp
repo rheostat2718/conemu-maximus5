@@ -135,6 +135,8 @@ WARNING("Часто после разблокирования компьютер
 
 #define CHECK_CONHWND_TIMEOUT 500
 
+#define HIGHLIGHT_RUNTIME_MIN 10000
+
 static BOOL gbInSendConEvent = FALSE;
 
 
@@ -194,6 +196,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	tabs.nActiveFarWindow = 0;
 	tabs.nActiveType = fwt_Panels|fwt_CurrentFarWnd;
 	tabs.sTabActivationErr[0] = 0;
+	tabs.nFlashCounter = 0;
+	tabs.mp_ActiveTab = new CTab("RealConsole:mp_ActiveTab",__LINE__);
 
 	#ifdef TAB_REF_PLACE
 	tabs.m_Tabs.SetPlace("RealConsole.cpp:tabs.m_Tabs",0);
@@ -279,6 +283,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
 	mb_SkipFarPidChange = FALSE;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
+	mn_StartTick = mn_RunTime = 0;
+	mb_WasVisibleOnce = false;
 	CloseConfirmReset();
 	mn_LastSetForegroundPID = 0;
 	mb_InPostCloseMacro = false;
@@ -428,6 +434,7 @@ CRealConsole::~CRealConsole()
 
 
 	tabs.mn_tabsCount = 0;
+	SafeDelete(tabs.mp_ActiveTab);
 	tabs.m_Tabs.MarkTabsInvalid(CTabStack::MatchAll, 0);
 	tabs.m_Tabs.ReleaseTabs(FALSE);
 	mp_ConEmu->mp_TabBar->PrintRecentStack();
@@ -1826,12 +1833,69 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 	return lbRc;
 }
 
+// Highlight icon (flashing actually) on modified console contents
+bool CRealConsole::isHighlighted()
+{
+	if (!this || !tabs.bConsoleDataChanged)
+		return false;
+
+	if (mp_VCon->isVisible())
+	{
+		tabs.bConsoleDataChanged = false;
+		tabs.nFlashCounter = 0;
+		return false;
+	}
+
+	if (!gpSet->nTabFlashChanged)
+		return false;
+
+	return tabs.bConsoleDataChanged;
+}
+
+// Вызывается при изменения текста/атрибутов в реальной консоли (mp_RBuf)
+void CRealConsole::OnConsoleDataChanged()
+{
+	// Do not take into account gpSet->nTabFlashChanged
+	// because bConsoleDataChanged may be used in tab template
+	if (!this || mp_VCon->isVisible())
+		return;
+
+	if (!mb_WasVisibleOnce && (GetRunTime() < HIGHLIGHT_RUNTIME_MIN))
+		return;
+
+	if (!tabs.bConsoleDataChanged)
+	{
+		// Highlighting will be updated in ::OnTimerCheck
+		tabs.nFlashCounter = 0;
+		tabs.bConsoleDataChanged = true;
+		// But tab text labels - must be updated specially
+		if (gpSet->szTabModified[0])
+			mp_ConEmu->RequestPostUpdateTabs();
+	}
+}
+
 void CRealConsole::OnTimerCheck()
 {
 	if (!this)
 		return;
 	if (InCreateRoot() || InRecreate())
 		return;
+
+	if (!mb_WasVisibleOnce && mp_VCon->isVisible())
+		mb_WasVisibleOnce = true;
+
+	if (mn_StartTick)
+		GetRunTime();
+
+	//Highlighting
+	if (isHighlighted())
+	{
+		if ((gpSet->nTabFlashChanged < 0) || (tabs.nFlashCounter < gpSet->nTabFlashChanged))
+		{
+			InterlockedIncrement(&tabs.nFlashCounter);
+			mp_ConEmu->mp_TabBar->HighlightTab(tabs.mp_ActiveTab->Tab(), (tabs.nFlashCounter&1)!=0);
+		}
+	}
 
 	//TODO: На проверку пайпов а не хэндла процесса
 	if (!mh_MainSrv)
@@ -1960,7 +2024,7 @@ wrap:
 		pRCon->StopSignal();
 	}
 
-	ShutdownGuiStep(L"Leaving MonitorThread\n");
+	ShutdownGuiStep(L"Leaving MonitorThread");
 	return 0;
 }
 
@@ -3323,6 +3387,8 @@ void CRealConsole::ResetVarsOnStart()
 	mb_InPostCloseMacro = false;
 	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
 	ZeroStruct(m_ServerClosing);
+	mn_StartTick = mn_RunTime = 0;
+	mb_WasVisibleOnce = mp_VCon->isVisible();
 
 	hConWnd = NULL;
 
@@ -3760,6 +3826,8 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	BOOL lbRc = FALSE;
 	DWORD nColors = (nTextColorIdx) | (nBackColorIdx << 8) | (nPopTextColorIdx << 16) | (nPopBackColorIdx << 24);
 
+	_ASSERTE(mn_RunTime==0 && mn_StartTick==0); // еще не должно быть установлено или должно быть сброшено
+
 	int nCurLen = 0;
 	if (lpszCmd == NULL)
 	{
@@ -3877,6 +3945,8 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	if (lbRc)
 	{
+		mn_StartTick = GetTickCount(); mn_RunTime = 0;
+
 		if (m_Args.RunAsAdministrator != crb_On)
 		{
 			ProcessUpdate(&pi.dwProcessId, 1);
@@ -6693,19 +6763,22 @@ void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 {
 	bool bNeedUpdate = (mn_FarPID_PluginDetected != nFarPluginPID);
 
-	#ifdef _DEBUG
-	wchar_t szDbg[100];
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SetFarPluginPID: New=%u, Old=%u\n", nFarPluginPID, mn_FarPID_PluginDetected);
-	#endif
+	wchar_t szLog[100] = L"";
+	_wsprintf(szLog, SKIPCOUNT(szLog) L"SetFarPluginPID: New=%u, Old=%u", nFarPluginPID, mn_FarPID_PluginDetected);
 
 	mn_FarPID_PluginDetected = nFarPluginPID;
 
 	// Для фара могут быть настроены другие параметры фона и прочего...
 	if (bNeedUpdate)
 	{
-		DEBUGSTRFARPID(szDbg);
+		if (mp_Log)
+			LogString(szLog, true);
+		else
+			DEBUGSTRFARPID(szLog);
+
 		if (tabs.RefreshFarPID(nFarPluginPID))
 			mp_ConEmu->mp_TabBar->Update();
+
 		mp_VCon->Update(true);
 	}
 }
@@ -8883,6 +8956,9 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	// Чтобы можно было найти хэндл окна по хэндлу консоли
 	mp_ConEmu->OnActiveConWndStore(hConWnd);
 
+	// Чтобы не мигать "измененными" консолями при старте
+	mb_WasVisibleOnce = true;
+
 	// Чтобы корректно таб для группы показывать
 	CVConGroup::OnConActivated(mp_VCon);
 
@@ -9223,20 +9299,21 @@ bool CRealConsole::_TabsInfo::RefreshFarPID(DWORD nNewPID)
 	int nActiveTab = -1;
 	if (m_Tabs.RefreshFarStatus(nNewPID, ActiveTab, nActiveTab, mn_tabsCount, mb_HasModalWindow))
 	{
-		StoreActiveTab(nActiveTab, ActiveTab.Tab());
+		StoreActiveTab(nActiveTab, ActiveTab);
 		mb_TabsWasChanged = bChanged = true;
 	}
 	return bChanged;
 }
 
-void CRealConsole::_TabsInfo::StoreActiveTab(int anActiveIndex, const CTabID* apActiveTab)
+void CRealConsole::_TabsInfo::StoreActiveTab(int anActiveIndex, CTab& ActiveTab)
 {
-	if (apActiveTab && (anActiveIndex >= 0))
+	if (ActiveTab.Tab() && (anActiveIndex >= 0))
 	{
 		nActiveIndex = anActiveIndex;
-		nActiveFarWindow = apActiveTab->Info.nFarWindowID;
-		_ASSERTE(apActiveTab->Info.Type & fwt_CurrentFarWnd);
-		nActiveType = apActiveTab->Info.Type;
+		nActiveFarWindow = ActiveTab->Info.nFarWindowID;
+		_ASSERTE(ActiveTab->Info.Type & fwt_CurrentFarWnd);
+		nActiveType = ActiveTab->Info.Type;
+		mp_ActiveTab->Init(ActiveTab);
 	}
 	else
 	{
@@ -9244,6 +9321,7 @@ void CRealConsole::_TabsInfo::StoreActiveTab(int anActiveIndex, const CTabID* ap
 		nActiveIndex = 0;
 		nActiveFarWindow = 0;
 		nActiveType = fwt_Panels|fwt_CurrentFarWnd;
+		mp_ActiveTab->Init(NULL);
 	}
 }
 
@@ -9420,7 +9498,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID)
 
 	tabs.mn_tabsCount = anTabsCount;
 	tabs.mb_HasModalWindow = bHasModal;
-	tabs.StoreActiveTab(nActiveIndex, ActiveTab.Tab());
+	tabs.StoreActiveTab(nActiveIndex, ActiveTab);
 
 	if (tabs.m_Tabs.UpdateEnd(hUpdate, GetFarPID(true)))
 		bTabsChanged = true;
@@ -10000,6 +10078,25 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	// Go
 	if (!tabs.m_Tabs.GetTabByIndex(iGetTabIdx, rTab))
 		return false;
+
+	// Refresh its highlighted state
+	if ((rTab->Info.Type & fwt_CurrentFarWnd) && isHighlighted() && (tabs.nFlashCounter & 1))
+		rTab->Info.Type |= fwt_Highlighted;
+	else if (rTab->Info.Type & fwt_Highlighted)
+		rTab->Info.Type &= ~fwt_Highlighted;
+
+	// Refresh modified state of simple consoles (not the tabs of Far Manager)
+	if ((rTab->Info.Type & fwt_CurrentFarWnd) && !isFar())
+	{
+		if (tabs.bConsoleDataChanged)
+			rTab->Info.Type |= fwt_ModifiedFarWnd;
+		else
+			rTab->Info.Type &= ~fwt_ModifiedFarWnd;
+	}
+
+	// Update active tab info
+	if (rTab->Info.Type & fwt_CurrentFarWnd)
+		tabs.StoreActiveTab(iGetTabIdx, rTab);
 
 #if 0
 	if ((tabIdx == 0) && (*tabs.ms_RenameFirstTab))
@@ -11641,12 +11738,15 @@ void CRealConsole::OnTitleChanged()
 			// thats why we are not storing it in (common) member variable
 			nNewProgress = m_Progress.ConsoleProgress;
 
-			// Если в заголовке нет процентов (они есть только в консоли)
-			// добавить их в наш заголовок
+			// Подготовим строку с процентами
 			wchar_t szPercents[5];
-			_ltow(nConProgr, szPercents, 10);
-			lstrcatW(szPercents, L"%");
+			if ((nConProgr == 0) && (m_Progress.AppProgressState == 3))
+				wcscpy_c(szPercents, L"%%");
+			else
+				_wsprintf(szPercents, SKIPCOUNT(szPercents) L"%i%%", nConProgr);
 
+			// И если в заголовке нет процентов, добавить их в наш заголовок
+			// (проценты есть только в консоли или заданы через Guimacro)
 			if (!wcsstr(TitleCmp, szPercents))
 			{
 				TitleFull[0] = L'{'; TitleFull[1] = 0;
@@ -12510,6 +12610,18 @@ DWORD CRealConsole::GuiWndPID()
 bool CRealConsole::isGuiForceConView()
 {
 	return m_ChildGui.bGuiForceConView;
+}
+bool CRealConsole::isGuiExternMode()
+{
+	return m_ChildGui.bGuiExternMode;
+}
+bool CRealConsole::isGuiEagerFocus()
+{
+	if (!GuiWnd())
+		return false;
+	if (isGuiForceConView() || isGuiExternMode())
+		return false;
+	return true;
 }
 
 // При движении окна ConEmu - нужно подергать дочерние окошки
@@ -13882,12 +13994,19 @@ DWORD CRealConsole::PostMacroThread(LPVOID lpParameter)
 		if (pipe.Init(_T("CRealConsole::PostMacroThread"), TRUE))
 		{
 			pArg->pRCon->mp_ConEmu->DebugStep(_T("PostMacroThread: Waiting for result (10 sec)"));
-			pipe.Execute(pArg->nCmdID, pArg->Data, pArg->nCmdSize);
+			pArg->pRCon->LogString("... executing PipeCommand (thread)", true);
+			BOOL lbSent = pipe.Execute(pArg->nCmdID, pArg->Data, pArg->nCmdSize);
+			pArg->pRCon->LogString(lbSent ? L"... PipeCommand was sent (thread)" : L"... PipeCommand sending was failed (thread)", true);
 			pArg->pRCon->mp_ConEmu->DebugStep(NULL);
+		}
+		else
+		{
+			pArg->pRCon->LogString("Far pipe was not opened, Macro was skipped (thread)", true);
 		}
 	}
 	else
 	{
+		pArg->pRCon->LogString("... reentering PostMacro (thread)", true);
 		pArg->pRCon->PostMacro(pArg->szMacro, FALSE/*теперь - точно Sync*/);
 	}
 	free(pArg);
@@ -14007,7 +14126,10 @@ bool CRealConsole::IsFarLua()
 void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 {
 	if (!this || !asMacro || !*asMacro)
+	{
+		mp_ConEmu->LogString(L"Null Far macro was skipped", true);
 		return;
+	}
 
 	if (*asMacro == GUI_MACRO_PREFIX/*L'#'*/)
 	{
@@ -14015,7 +14137,13 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		if (asMacro[1])
 		{
 			LPWSTR pszGui = lstrdup(asMacro+1);
+			if (m_UseLogs)
+			{
+				CEStr lsLog(lstrmerge(L"CRealConsole::PostMacro: ", asMacro));
+				LogString(lsLog, true);
+			}
 			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(pszGui, this);
+			LogString(pszRc ? pszRc : L"<NULL>", true);
 			TODO("Показать результат в статусной строке?");
 			SafeFree(pszGui);
 			SafeFree(pszRc);
@@ -14028,6 +14156,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	if (!nPID)
 	{
 		_ASSERTE(FALSE && "Far with plugin was not found, Macro was skipped");
+		LogString("Far with plugin was not found, Macro was skipped", true);
 		return;
 	}
 
@@ -14035,6 +14164,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	if (!pInfo)
 	{
 		_ASSERTE(pInfo!=NULL);
+		LogString("Far mapping info was not found, Macro was skipped", true);
 		return;
 	}
 
@@ -14054,6 +14184,13 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		}
 	}
 
+	if (m_UseLogs)
+	{
+		wchar_t szPID[32]; _wsprintf(szPID, SKIPCOUNT(szPID) L"(FarPID=%u): ", nPID);
+		CEStr lsLog(lstrmerge(L"CRealConsole::PostMacro", szPID, asMacro));
+		LogString(lsLog, true);
+	}
+
 	if (abAsync)
 	{
 		if (mb_InCloseConsole)
@@ -14071,6 +14208,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 			{
 				// Должен быть NULL, если нет - значит завис предыдущий макрос
 				_ASSERTE(mh_PostMacroThread==NULL && "Terminating mh_PostMacroThread");
+				LogString(L"Terminating mh_PostMacroThread (hung)", true);
 				TerminateThread(mh_PostMacroThread, 100);
 				CloseHandle(mh_PostMacroThread);
 			}
@@ -14082,6 +14220,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		pArg->pRCon = this;
 		pArg->bPipeCommand = FALSE;
 		_wcscpy_c(pArg->szMacro, nLen+1, asMacro);
+		LogString("... executing macro asynchronously", true);
 		mh_PostMacroThread = CreateThread(NULL, 0, PostMacroThread, pArg, 0, &mn_PostMacroThreadID);
 		if (mh_PostMacroThread == NULL)
 		{
@@ -14093,7 +14232,9 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	}
 
 	if (mb_InCloseConsole)
+	{
 		ShutdownGuiStep(L"PostMacro, calling pipe");
+	}
 
 #ifdef _DEBUG
 	DEBUGSTRMACRO(asMacro); DEBUGSTRMACRO(L"\n");
@@ -14102,14 +14243,21 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 
 	if (pipe.Init(_T("CRealConsole::PostMacro"), TRUE))
 	{
-		//DWORD cbWritten=0;
+		LogString("... executing Macro synchronously", true);
 		mp_ConEmu->DebugStep(_T("Macro: Waiting for result (10 sec)"));
-		pipe.Execute(CMD_POSTMACRO, asMacro, (_tcslen(asMacro)+1)*2);
+		BOOL lbSent = pipe.Execute(CMD_POSTMACRO, asMacro, (_tcslen(asMacro)+1)*2);
+		LogString(lbSent ? L"... Macro was sent" : L"... Macro sending was failed", true);
 		mp_ConEmu->DebugStep(NULL);
+	}
+	else
+	{
+		LogString("Far pipe was not opened, Macro was skipped", true);
 	}
 
 	if (mb_InCloseConsole)
+	{
 		ShutdownGuiStep(L"PostMacro, done");
+	}
 }
 
 void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= false*/)
@@ -14253,6 +14401,14 @@ bool CRealConsole::InCreateRoot()
 bool CRealConsole::InRecreate()
 {
 	return (this && mb_ProcessRestarted);
+}
+
+DWORD CRealConsole::GetRunTime()
+{
+	if (!this || !mn_StartTick)
+		return 0;
+	mn_RunTime = (GetTickCount() - mn_StartTick);
+	return mn_RunTime;
 }
 
 // Можно ли к этой консоли прицепить GUI приложение

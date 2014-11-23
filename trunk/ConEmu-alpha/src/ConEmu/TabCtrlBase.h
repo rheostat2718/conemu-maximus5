@@ -65,7 +65,7 @@ public:
 
 public:
 	virtual HWND ActivateSearchPaneInt(bool bActivate) = 0;
-	virtual void AddTabInt(LPCWSTR text, int i, bool bAdmin, int iTabIcon) = 0;
+	virtual void AddTabInt(LPCWSTR text, int i, CEFarWindowType Flags, int iTabIcon) = 0;
 	virtual void CreateRebar() = 0;
 	virtual void DestroyRebar() = 0;
 	virtual void DeleteItemInt(int I) = 0;
@@ -85,6 +85,7 @@ public:
 	virtual bool GetToolBtnChecked(ToolbarCommandIdx iCmd) = 0;
 	virtual bool GetToolBtnRect(int nCmd, RECT* rcBtnRect) = 0;
 	virtual bool GetRebarClientRect(RECT* rc) = 0;
+	virtual void HighlightTab(int iTab, bool bHighlight) = 0;
 	virtual void InvalidateBar() = 0;
 	virtual void OnCaptionHiddenChanged(bool bCaptionHidden) = 0;
 	virtual void OnConsoleActivatedInt(int nConNumber) = 0;
