@@ -51,7 +51,6 @@ typedef DWORD VConFlags;
 const VConFlags
 	vf_Active    = 0x0001,
 	vf_Visible   = 0x0002,
-	vf_Minimized = 0x0004,
 	vf_Maximized = 0x0008,
 	vf_Grouped   = 0x0010,
 	vf_None      = 0
@@ -73,7 +72,7 @@ class CVirtualConsole :
 	protected:
 		VConFlags      mn_Flags;
 		int            mn_Index; // !!! Debug, Informational !!!
-		void SetFlags(VConFlags flags, int index);
+		bool SetFlags(VConFlags Set, VConFlags Mask, int index = -1);
 
 	protected:
 		CVirtualConsole(CConEmuMain* pOwner, int index);

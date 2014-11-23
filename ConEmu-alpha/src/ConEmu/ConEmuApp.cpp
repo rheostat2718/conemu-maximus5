@@ -481,12 +481,6 @@ LPCWSTR GetWindowModeName(ConEmuWindowMode wm)
 
 void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
 {
-#ifdef _DEBUG
-	static int nDbg = 0;
-	if (!nDbg)
-		nDbg = IsDebuggerPresent() ? 1 : 2;
-	if (nDbg != 1)
-		return;
 	wchar_t szFull[512];
 	msprintf(szFull, countof(szFull), L"%u:ConEmuG:PID=%u:TID=%u: ",
 		GetTickCount(), GetCurrentProcessId(), GetCurrentThreadId());
@@ -495,7 +489,15 @@ void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int
 		int nLen = lstrlen(szFull);
 		msprintf(szFull+nLen, countof(szFull)-nLen, asInfo, nParm1, nParm2, nParm3, nParm4);
 	}
-	lstrcat(szFull, L"\n");
+
+	LogString(szFull);
+
+#ifdef _DEBUG
+	static int nDbg = 0;
+	if (!nDbg)
+		nDbg = IsDebuggerPresent() ? 1 : 2;
+	if (nDbg != 1)
+		return;
 	DEBUGSTRSHUTSTEP(szFull);
 #endif
 }
@@ -551,12 +553,60 @@ BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2)
 	return lb;
 }
 
+bool GetDlgItemSigned(HWND hDlg, WORD nID, int& nValue, int nMin /*= 0*/, int nMax /*= 0*/)
+{
+	BOOL lbOk = FALSE;
+	int n = (int)GetDlgItemInt(hDlg, nID, &lbOk, TRUE);
+	if (!lbOk)
+		return false;
+	if (nMin || nMax)
+	{
+		if (nValue < nMin)
+			return false;
+		if (nMax && nValue > nMax)
+			return false;
+	}
+	nValue = n;
+	return true;
+}
+
+bool GetDlgItemUnsigned(HWND hDlg, WORD nID, DWORD& nValue, DWORD nMin /*= 0*/, DWORD nMax /*= 0*/)
+{
+	BOOL lbOk = FALSE;
+	DWORD n = GetDlgItemInt(hDlg, nID, &lbOk, FALSE);
+	if (!lbOk)
+		return false;
+	if (nMin || nMax)
+	{
+		if (nValue < nMin)
+			return false;
+		if (nMax && nValue > nMax)
+			return false;
+	}
+	nValue = n;
+	return true;
+}
+
 wchar_t* GetDlgItemTextPtr(HWND hDlg, WORD nID)
 {
 	wchar_t* pszText = NULL;
 	size_t cchMax = 0;
 	MyGetDlgItemText(hDlg, nID, cchMax, pszText);
 	return pszText;
+}
+
+template <size_t size>
+int MyGetDlgItemText(HWND hDlg, WORD nID, wchar_t (&rszText)[size])
+{
+	CEStr szText;
+	size_t cchMax = 0;
+	int nLen = MyGetDlgItemText(hDlg, nID, cchMax, szText.ms_Arg);
+	if (!pszText)
+		return false;
+	if (lstrcmp(rszText, szText.ms_Arg) == 0)
+		return false;
+	lstrcpyn(rszText, szText.ms_Arg, size);
+	return true;
 }
 
 size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*, bool bEscapes*/ /*= false*/)
@@ -589,16 +639,6 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*
 		{
 			pszText[0] = 0;
 			GetWindowText(hEdit, pszText, nLen+1);
-
-			//if (bEscapes)
-			//{
-			//	wchar_t* pszDst = EscapeString(false, pszText);
-			//	if (pszDst)
-			//	{
-			//		_wcscpy_c(pszText, cchMax, pszDst);
-			//		free(pszDst);
-			//	}
-			//}
 		}
 	}
 	else

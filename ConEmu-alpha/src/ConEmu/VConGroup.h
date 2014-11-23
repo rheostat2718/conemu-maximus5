@@ -70,6 +70,7 @@ protected:
 	RECT mrc_DragSplitter;
 	bool mb_ResizeFlag; // взводится в true для корня, когда в группе что-то меняется
 	bool mb_GroupInputFlag; // Одновременный ввод во все сплиты (не гарантируется для ChildGui)
+	bool mb_PaneMaximized; // Активный сплит группы отображается "развернутым"
 	void* mp_ActiveGroupVConPtr; // указатель (CVirtualConsole*) на последнюю активную консоль в этой группе
 
 	void SetResizeFlags();
@@ -192,8 +193,13 @@ public:
 	static void GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd);
 
 	static bool Activate(CVirtualConsole* apVCon);
-	static bool ActivateNextPane(CVirtualConsole* apVCon, int nHorz = 0, int nVert = 0);
 	static void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
+
+	static bool ActivateNextPane(CVirtualConsole* apVCon, int nHorz = 0, int nVert = 0);
+	static bool PaneActivateNext(bool abNext);
+	static void PaneMaximizeRestore(CVirtualConsole* apVCon);
+	static void ReSizePanes(RECT mainClient);
+	static bool ReSizeSplitter(CVirtualConsole* apVCon, int iHorz = 0, int iVert = 0);
 
 	static void OnUpdateGuiInfoMapping(ConEmuGuiMapping* apGuiInfo);
 	static void OnPanelViewSettingsChanged();
@@ -205,7 +211,6 @@ public:
 	static void OnConActivated(CVirtualConsole* pVCon);
 	static bool ConActivate(int nCon);
 	static bool ConActivateNext(bool abNext);
-	static bool PaneActivateNext(bool abNext);
 	static DWORD CheckProcesses();
 	static CRealConsole* AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
 	static BOOL AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet);
@@ -225,8 +230,6 @@ public:
 	static void SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN or CER_MAINCLIENT*/, COORD size, bool bSetRedraw /*= false*/);
 	static void SyncAllConsoles2Window(RECT rcWnd, enum ConEmuRect tFrom = CER_MAIN, bool bSetRedraw = false);
 	static void OnConsoleResize(bool abSizingToDo);
-	static void ReSizePanes(RECT mainClient);
-	static bool ReSizeSplitter(CVirtualConsole* apVCon, int iHorz = 0, int iVert = 0);
 
 	static LRESULT OnMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static RConStartArgs::SplitType isSplitterDragging();

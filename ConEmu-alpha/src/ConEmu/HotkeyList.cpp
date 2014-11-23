@@ -113,7 +113,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		-- Добавить chk_Local недостаточно, нужно еще и gActiveOnlyHotKeys обработать
 	*/
 	Add(vkSetFocusSwitch, chk_Local,  NULL,   L"SwitchGuiFocus",        CConEmuCtrl::key_SwitchGuiFocus)
-		;
+		->SetHotKey('Z',VK_LWIN);
 	Add(vkSetFocusGui,    chk_Local,  NULL,   L"SetFocusGui",           CConEmuCtrl::key_SwitchGuiFocus)
 		;
 	Add(vkSetFocusChild,  chk_Local,  NULL,   L"SetFocusChild",         CConEmuCtrl::key_SwitchGuiFocus)
@@ -129,6 +129,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey('O',VK_CONTROL,VK_SHIFT);
 	Add(vkSplitNewConH,   chk_User,  NULL,    L"Multi.NewSplitH",       CConEmuCtrl::key_GuiMacro, false, L"Split(0,50,0)")
 		->SetHotKey('E',VK_CONTROL,VK_SHIFT);
+	Add(vkMaximizePane,  chk_User,  NULL,     L"Multi.SplitMaximize",   CConEmuCtrl::key_GuiMacro, false, L"Split(3)") // Maximize/restore active split
+		->SetHotKey(VK_RETURN, VK_APPS);
 	Add(vkSplitSizeVup,   chk_User,  NULL,    L"Multi.SplitSizeVU",     CConEmuCtrl::key_GuiMacro, false, L"Split(1,0,-1)")
 		->SetHotKey(VK_UP,VK_APPS,VK_SHIFT);
 	Add(vkSplitSizeVdown, chk_User,  NULL,    L"Multi.SplitSizeVD",     CConEmuCtrl::key_GuiMacro, false, L"Split(1,0,1)")
@@ -178,17 +180,17 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		;
 	Add(vkMultiGroup,     chk_User,  NULL,    L"Multi.GroupInput",      CConEmuCtrl::key_GuiMacro, false, L"GroupInput")
 		->SetHotKey('G', VK_APPS);
-	Add(vkMultiClose,     chk_User,  NULL,    L"Multi.Close",           CConEmuCtrl::key_MultiClose)
-		->SetHotKey(VK_DELETE,VK_LWIN);
+	Add(vkMultiClose,     chk_User,  NULL,    L"Multi.Close",           CConEmuCtrl::key_GuiMacro, false, L"Close(0)")
+		->SetHotKey(VK_DELETE,VK_LWIN); // Close active console
 	Add(vkCloseTab,       chk_User,  NULL,    L"CloseTabKey",           CConEmuCtrl::key_GuiMacro, false, L"Close(6)")
-		->SetHotKey(VK_DELETE,VK_LWIN,VK_MENU);
+		->SetHotKey(VK_DELETE,VK_LWIN,VK_MENU); // Close tab (may be editor/viewer too)
 	Add(vkCloseGroup,     chk_User,  NULL,    L"CloseGroupKey",         CConEmuCtrl::key_GuiMacro, false, L"Close(4)")
-		;
+		->SetHotKey(VK_DELETE,VK_LWIN,VK_CONTROL); // Close active group
 	Add(vkCloseGroupPrc,  chk_User,  NULL,    L"CloseGroupPrcKey",      CConEmuCtrl::key_GuiMacro, false, L"Close(7)")
 		;
 	Add(vkCloseAllCon,    chk_User,  NULL,    L"CloseAllConKey",        CConEmuCtrl::key_GuiMacro, false, L"Close(8)")
 		;
-	Add(vkCloseZombies,    chk_User,  NULL,   L"CloseZombiesKey",      CConEmuCtrl::key_GuiMacro, false, L"Close(9)")
+	Add(vkCloseZombies,    chk_User,  NULL,   L"CloseZombiesKey",       CConEmuCtrl::key_GuiMacro, false, L"Close(9)")
 		;
 	Add(vkCloseExceptCon, chk_User,  NULL,    L"CloseExceptConKey",     CConEmuCtrl::key_GuiMacro, false, L"Close(5)")
 		;
@@ -196,8 +198,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_DELETE,VK_LWIN,VK_SHIFT);
 	Add(vkDuplicateRoot,  chk_User,  NULL,    L"DuplicateRootKey",      CConEmuCtrl::key_DuplicateRoot)
 		->SetHotKey('S',VK_LWIN);
-	Add(vkCloseConEmu,    chk_User,  NULL,    L"CloseConEmuKey",        /*sort of AltF4 for GUI apps*/CConEmuCtrl::key_GuiMacro, false, L"Close(2)")
-		->SetHotKey(VK_F4,VK_LWIN);
+	Add(vkCloseConEmu,    chk_User,  NULL,    L"CloseConEmuKey",        CConEmuCtrl::key_GuiMacro, false, L"Close(2)")
+		->SetHotKey(VK_F4,VK_LWIN); // sort of AltF4 for GUI apps
 	Add(vkRenameTab,      chk_User,  NULL,    L"Multi.Rename",          CConEmuCtrl::key_RenameTab, true/*OnKeyUp*/)
 		->SetHotKey('R',VK_APPS);
 	Add(vkMoveTabLeft,    chk_User,  NULL,    L"Multi.MoveLeft",        CConEmuCtrl::key_MoveTabLeft)

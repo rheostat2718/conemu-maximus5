@@ -333,6 +333,8 @@ class CRealConsole
 		HWND    GuiWnd();  // HWND Gui приложения
 		DWORD   GuiWndPID();  // HWND Gui приложения
 		bool    isGuiForceConView(); // mb_GuiForceConView
+		bool    isGuiExternMode(); // bGuiExternMode
+		bool    isGuiEagerFocus(); // ставить фокус в ChildGui при попадании оного в ConEmu
 		void    GuiNotifyChildWindow();
 		void    GuiWndFocusStore();
 		void    GuiWndFocusRestore(bool bForce = false);
@@ -433,6 +435,7 @@ class CRealConsole
 		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false);
 		void OnScroll(UINT messg, WPARAM wParam, int x, int y, bool abFromTouch = false);
 		void OnFocus(BOOL abFocused);
+		void OnConsoleDataChanged();
 
 		void StopSignal();
 		void StopThread(BOOL abRecreating=FALSE);
@@ -566,6 +569,7 @@ class CRealConsole
 		bool isFilePanel(bool abPluginAllowed = false, bool abSkipEditViewCheck = false);
 		bool isEditor();
 		bool isEditorModified();
+		bool isHighlighted();
 		bool isViewer();
 		bool isVisible();
 		bool isNtvdm();
@@ -783,14 +787,17 @@ class CRealConsole
 		struct _TabsInfo
 		{
 			CTabStack m_Tabs;
+			CTab* mp_ActiveTab;
 			int  mn_tabsCount; // Число текущих табов. Может отличаться (в меньшую сторону) от m_Tabs.GetCount()
 			bool mb_TabsWasChanged;
 			bool mb_HasModalWindow; // Far Manager modal editor/viewer
 			CEFarWindowType nActiveType;
 			int  nActiveIndex;
 			int  nActiveFarWindow;
+			bool bConsoleDataChanged;
+			LONG nFlashCounter;
 			wchar_t sTabActivationErr[128];
-			void StoreActiveTab(int anActiveIndex, const CTabID* apActiveTab);
+			void StoreActiveTab(int anActiveIndex, CTab& ActiveTab);
 			bool RefreshFarPID(DWORD nNewPID);
 		} tabs;
 		void CheckPanelTitle();
@@ -819,6 +826,10 @@ class CRealConsole
 		BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int& nNewWidth, int& nNewHeight, BOOL* pbBufferHeight=NULL);
 		int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
 		DWORD mn_InRecreate; // Tick, когда начали пересоздание
+		DWORD mn_StartTick; // для определения GetRunTime()
+		DWORD mn_RunTime; // для информации
+		DWORD GetRunTime();
+		bool mb_WasVisibleOnce;
 		BOOL mb_ProcessRestarted;
 		BOOL mb_InCloseConsole;
 		DWORD mn_CloseConfirmedTick;

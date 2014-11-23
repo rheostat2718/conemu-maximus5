@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2014 Maximus5
+Copyright (c) 2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,24 +26,27 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #pragma once
 
-#define GUI_MACRO_VERSION 2
+#include "common.hpp"
 
-struct CESERVER_REQ_GUIMACRO;
+// Use it as:
+// ScopedObject(CLastErrorGuard)();
 
-namespace ConEmuMacro
+class CLastErrorGuard
 {
-	// Общая функция, для обработки любого известного макроса
-	LPWSTR ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin = false, CESERVER_REQ_GUIMACRO* Opt = NULL);
-	// Конвертация из "старого" в "новый" формат
-	// Старые макросы хранились как "Verbatim" но без префикса
-	LPWSTR ConvertMacro(LPCWSTR asMacro, BYTE FromVersion, bool bShowErrorTip = true);
-	// Some functions must be executed in main thread
-	// but they may be called from console
-	LRESULT ExecuteMacroSync(WPARAM wParam, LPARAM lParam);
-
-	#ifdef _DEBUG
-	void UnitTests();
-	#endif
+protected:
+	DWORD mn_LastError;
+public:
+	CLastErrorGuard()
+	{
+		mn_LastError = GetLastError();
+		// RtlGetLastNtStatus?
+	};
+	~CLastErrorGuard()
+	{
+		SetLastError(mn_LastError);
+		// RtlNtStatusToDosError?
+	}
 };
