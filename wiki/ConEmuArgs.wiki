@@ -50,7 +50,7 @@ ConEmu.exe /tsa /min /icon "cmd.exe" /cmd cmd /c dir c:\ /s
 
 3. Start four cmd tabs in a grid 2x2 (*Win+R* or *shortcut* syntax)
 {{{
-ConEmu.exe /cmdlist >cmd -cur_console:n ||| cmd -cur_console:s1TVn ||| cmd -cur_console:s1THn ||| cmd -cur_console:s2THn
+ConEmu.exe /cmdlist cmd -cur_console:fn ||| cmd -cur_console:s1TVn ||| cmd -cur_console:s1THn ||| cmd -cur_console:s2THn
 }}}
 
 4.	Starts with four tabs: Far Manager, CMD, !PowerShell and Bash.
