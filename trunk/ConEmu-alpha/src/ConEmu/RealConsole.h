@@ -789,6 +789,7 @@ class CRealConsole
 			CTabStack m_Tabs;
 			CTab* mp_ActiveTab;
 			int  mn_tabsCount; // Число текущих табов. Может отличаться (в меньшую сторону) от m_Tabs.GetCount()
+			bool mb_WasInitialized; // Информационно, чтобы ассертов не было
 			bool mb_TabsWasChanged;
 			bool mb_HasModalWindow; // Far Manager modal editor/viewer
 			CEFarWindowType nActiveType;
@@ -827,6 +828,7 @@ class CRealConsole
 		int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
 		DWORD mn_InRecreate; // Tick, когда начали пересоздание
 		DWORD mn_StartTick; // для определения GetRunTime()
+		DWORD mn_DeactivateTick; // чтобы не мигать сразу после "cmd -new_console" из промпта
 		DWORD mn_RunTime; // для информации
 		DWORD GetRunTime();
 		bool mb_WasVisibleOnce;
