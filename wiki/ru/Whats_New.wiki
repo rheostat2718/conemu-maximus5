@@ -7,6 +7,18 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 141125==
+  * Issue 1821: Don't force "start /min ..." to be new ConEmu tab.
+  * Issue 1822: Option to disable forcing "start" to be new ConEmu tab.
+  * Don't block row/col highlight updating if mouse is inside VCon even if ConEmu is not a foreground window.
+  * Let switch and update row/col highlight simultaneously for all panes in group.
+  * Don't flash tab created in background.
+  * Don't flash just deactivated tab.
+  * Shorten color scheme name <Default Windows scheme>.
+  * Move ‘Schemes’ drop down to the top of ‘Colors’ settings page.
+  * Redesign ‘Fast configuration’ dialog.
+
+
 ==Build 141123==
   * Add `<Base16>` color scheme.
   * LogFiles: Log Far plugin PID changes.
