@@ -1,4 +1,6 @@
-﻿=List of environment variables set by !ConEmu=
+﻿<wiki:toc max_depth="3" />
+
+=List of environment variables set by !ConEmu=
 || *Name* || *Example* || *Description* ||
 || `ConEmuDir` || `C:\ConEmu` || folder, containing !ConEmu.exe ||
 || `ConEmuDrive` || `C:` || drive letter with colon, containing ConEmu.exe ||
@@ -19,10 +21,12 @@
 || [ConEmuEnvironment#Cheating_system_time ConEmuFakeDT] || `2014-12-31` || will cheat system and local current time for console processes ||
 || [GuiMacro#Far3-pre-Lua ConEmuMacroResult] || _vary_ || may be set only by !ConEmu's Far Manager plugin after executing [GuiMacro GUI Macro] ||
 
-Also, there is an option ‘Add %!ConEmuBaseDir% to %PATH%’ on settings page ‘!ComSpec’. It is turned on by default
-and allows to easily run executables and scripts from `%ConEmuBaseDir%` folder. For example:
+=PATH modifications=
+[SettingsComspec Settings page ComSpec] has an options ‘Add %!ConEmuDir% to %PATH%’ and ‘Add %!ConEmuBaseDir% to %PATH%’.
+
+They are turned on by default and allows to easily run executables and scripts and macros from ConEmu's folders. For example:
 {{{
-ConEmuC /EXPORT PATH
+ConEmuC -GuiMacro Progress 3
 
 or
 
