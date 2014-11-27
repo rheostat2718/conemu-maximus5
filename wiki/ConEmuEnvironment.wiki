@@ -16,8 +16,8 @@
 || `ConEmuIsAdmin` ||  `ADMIN` or not defined || set for those tabs/splits which were started elevated (UAC) ||
 || `ConEmuANSI` || `ON` or `OFF` || set to `ON` when ‘ANSI X3.64’ is enabled ||
 || `ConEmuHooks` || `Enabled` or set of `OFF`,`NOARG`,`NOSTART` || you may temporarily disable injects when running ‘long’ batches or initialization scripts, for example<br>`cmd /k set ConEmuHooks=OFF & "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" -new_console:sV -new_console:t:SDK & set ConEmuHooks=` ||
-|| `[ConEmuEnvironment#Cheating_system_time ConEmuFakeDT]` || `[ConEmuEnvironment#Cheating_system_time 2014-12-31]` || will cheat system and local current time for console processes ||
-|| `[GuiMacro ConEmuMacroResult]` || _vary_ || may be set only by !ConEmu's Far Manager plugin after executing [GuiMacro GUI Macro] ||
+|| [ConEmuEnvironment#Cheating_system_time ConEmuFakeDT] || [ConEmuEnvironment#Cheating_system_time 2014-12-31] || will cheat system and local current time for console processes ||
+|| [GuiMacro ConEmuMacroResult] || _vary_ || may be set only by !ConEmu's Far Manager plugin after executing [GuiMacro GUI Macro] ||
 
 Also, there is an option ‘Add %!ConEmuBaseDir% to %PATH%’ on settings page ‘!ComSpec’. It is turned on by default
 and allows to easily run executables and scripts from `%ConEmuBaseDir%` folder. For example:
