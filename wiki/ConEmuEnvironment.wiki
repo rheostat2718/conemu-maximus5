@@ -15,9 +15,9 @@
 || `ConEmuBackHWND` || `0x8HEXDGTS` || backing for canvas, it may be larger than canvas if padding or scrollbars exists ||
 || `ConEmuIsAdmin` ||  `ADMIN` or not defined || set for those tabs/splits which were started elevated (UAC) ||
 || `ConEmuANSI` || `ON` or `OFF` || set to `ON` when ‘ANSI X3.64’ is enabled ||
-|| `ConEmuHooks` || `Enabled` or set of `OFF`,`NOARG`,`NOSTART` || you may temporarily disable injects when running ‘long’ batches or initialization scripts, for example<br>`cmd /k set ConEmuHooks=OFF & "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" -new_console:sV -new_console:t:SDK & set ConEmuHooks=` ||
-|| [ConEmuEnvironment#Cheating_system_time ConEmuFakeDT] || [ConEmuEnvironment#Cheating_system_time 2014-12-31] || will cheat system and local current time for console processes ||
-|| [GuiMacro ConEmuMacroResult] || _vary_ || may be set only by !ConEmu's Far Manager plugin after executing [GuiMacro GUI Macro] ||
+|| [ConEmuEnvironment#Disabling_hooks_temporarily ConEmuHooks] || `Enabled`|`OFF`|`NOARG`|`NOSTART` || you may temporarily disable injects when running ‘long’ batches or initialization scripts ||
+|| [ConEmuEnvironment#Cheating_system_time `ConEmuFakeDT`] || [ConEmuEnvironment#Cheating_system_time 2014-12-31] || will cheat system and local current time for console processes ||
+|| [GuiMacro#Far3-pre-Lua ConEmuMacroResult] || _vary_ || may be set only by !ConEmu's Far Manager plugin after executing [GuiMacro GUI Macro] ||
 
 Also, there is an option ‘Add %!ConEmuBaseDir% to %PATH%’ on settings page ‘!ComSpec’. It is turned on by default
 and allows to easily run executables and scripts from `%ConEmuBaseDir%` folder. For example:
@@ -65,6 +65,12 @@ ConEmuC /export[=CON|ALL] [Var1 [Var2 [...]]]
     * ‘cmd’ - fails partially (required to run smth from active cmd, for example "cmd /k exit", to ‘apply’ changes);
     * ‘bash’ - fails completely (seems, it does not support outside changing of env.vars).
 
+
+=Disabling hooks temporarily=
+You may temporarily disable injects when running ‘long’ batches or initialization scripts.
+{{{
+cmd /k set ConEmuHooks=OFF & "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" -new_console:sV -new_console:t:SDK & set ConEmuHooks=
+}}}
 
 =Cheating system time=
 Environment variable "ConEmuFakeDT". That will cheat system and local current time for console processes.
