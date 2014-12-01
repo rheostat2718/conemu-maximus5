@@ -3858,6 +3858,7 @@ int DoStoreCWD(LPCWSTR asCmdArg)
 			goto wrap;
 	}
 
+	// Sends CECMD_STORECURDIR into RConServer
 	SendCurrentDirectory(ghConWnd, szDir);
 	iRc = 0;
 wrap:
@@ -6402,7 +6403,7 @@ void LogString(LPCWSTR asText)
 	gpLogSize->LogString(asText, true, pszThread);
 }
 
-void LogSize(COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel)
+void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel)
 {
 	if (!gpLogSize) return;
 
@@ -6849,6 +6850,7 @@ BOOL cmd_PostConMsg(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		// Чтобы при закрытии не _мелькало_ "Press Enter to Close console"
 		gbInShutdown = TRUE;
+		LogString(L"WM_CLOSE posted to console window, termination was requested");
 	}
 
 	// Info & Log
@@ -7160,24 +7162,9 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 
-	if (gpSrv /*->pConsole*/)
+	if (gpSrv)
 	{
-		//gpSrv->pConsole->hdr.bConsoleActive = in.dwData[0];
-		//gpSrv->pConsole->hdr.bThawRefreshThread = in.dwData[1];
-
-		//if (gpLogSize)
-		//{
-		//	char szInfo[128];
-		//	_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: cmd_OnActivation(active=%u, speed=%s)", in.dwData[0], in.dwData[1] ? "high" : "low");
-		//	LogString(szInfo);
-		//}
-
-		////gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
-		//UpdateConsoleMapHeader();
-
-		//// Если консоль активировали - то принудительно перечитать ее содержимое
-		//if (gpSrv->pConsole->hdr.bConsoleActive)
-
+		LogString(L"CECMD_ONACTIVATION received, state update pending");
 
 		// Принудить RefreshThread перечитать статус активности консоли
 		gpSrv->nLastConsoleActiveTick = 0;
@@ -7196,9 +7183,10 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 		else
 		{
 			// Warning: If refresh thread is in an AltServerStop
-			// transaction, ReloadFullConsoleInfo will deadlock.
-			//ReloadFullConsoleInfo(TRUE);
+			// transaction, ReloadFullConsoleInfo with (TRUE) will deadlock.
 			ReloadFullConsoleInfo(FALSE);
+			// Force refresh thread to cycle
+			SetEvent(gpSrv->hRefreshEvent);
 		}
 	}
 
@@ -8819,6 +8807,9 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	// CONSOLE_FULLSCREEN/*1*/ or CONSOLE_FULLSCREEN_HARDWARE/*2*/
 	if (pfnGetConsoleDisplayMode && pfnGetConsoleDisplayMode(&gpSrv->dwDisplayMode))
 	{
+		// The bug of Windows 10 b9879
+		if ((gnOsVer == 0x0604) && (gOSVer.dwBuildNumber == 9879))
+			gpSrv->dwDisplayMode = 0;
 		if (gpSrv->dwDisplayMode & CONSOLE_FULLSCREEN_HARDWARE)
 		{
 			// While in hardware fullscreen - srWindow still shows window region
@@ -8826,6 +8817,13 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 			//_ASSERTE(!csbi.srWindow.Left && !csbi.srWindow.Top);
 			csbi.dwSize.X = csbi.srWindow.Right+1-csbi.srWindow.Left;
 			csbi.dwSize.Y = csbi.srWindow.Bottom+1+csbi.srWindow.Top;
+			// Log that change
+			if (gpLogSize)
+			{
+				char szLabel[80];
+				_wsprintfA(szLabel, SKIPCOUNT(szLabel) "CONSOLE_FULLSCREEN_HARDWARE{x%08X}", gpSrv->dwDisplayMode);
+				LogSize(&csbi.dwSize, 0, szLabel);
+			}
 		}
 	}
 

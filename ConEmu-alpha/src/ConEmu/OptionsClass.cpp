@@ -3068,7 +3068,7 @@ LRESULT CSettings::OnInitDialog_Keys(HWND hWnd2, bool abInitial)
 	return 0;
 }
 
-LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
+LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2, bool abInitial)
 {
 	checkRadioButton(hWnd2, rbTabsAlways, rbTabsNone, (gpSet->isTabs == 2) ? rbTabsAuto : gpSet->isTabs ? rbTabsAlways : rbTabsNone);
 
@@ -3091,7 +3091,10 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	SetDlgItemText(hWnd2, tTabFontFace, gpSet->sTabFontFace);
 
 	if (CSetDlgFonts::EnumFontsFinished())  // Если шрифты уже считаны
-		OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0); // можно скопировать список с вкладки [thi_Main]
+	{
+		if (abInitial)
+			OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0); // можно скопировать список с вкладки [thi_Main]
+	}
 
 	DWORD nVal = gpSet->nTabFontHeight;
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tTabFontHeight), CSetDlgLists::eFSizesSmall, nVal, true);
@@ -3104,7 +3107,7 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2)
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tTabBtnDblClickAction), CSetDlgLists::eTabBtnDblClickActions, gpSet->nTabBtnDblClickAction);
 
 	SetDlgItemText(hWnd2, tTabConsole, gpSet->szTabConsole);
-	SetDlgItemText(hWnd2, tTabInactiveModified, gpSet->szTabModified);
+	SetDlgItemText(hWnd2, tTabModifiedSuffix, gpSet->szTabModifiedSuffix);
 	SetDlgItemInt(hWnd2, tTabFlashCounter, gpSet->nTabFlashChanged, TRUE);
 
 	SetDlgItemText(hWnd2, tTabSkipWords, gpSet->pszTabSkipWords ? gpSet->pszTabSkipWords : L"");
@@ -4465,10 +4468,25 @@ LRESULT CSettings::OnInitDialog_Update(HWND hWnd2)
 
 	int nPackage = p->UpdateDownloadSetup(); // 1-exe, 2-7zip
 	checkRadioButton(hWnd2, rbUpdateUseExe, rbUpdateUseArc, (nPackage==1) ? rbUpdateUseExe : rbUpdateUseArc);
-	SetDlgItemText(hWnd2, tUpdateExeCmdLine, p->UpdateExeCmdLine());
+	wchar_t szCPU[4] = L"";
+	SetDlgItemText(hWnd2, tUpdateExeCmdLine, p->UpdateExeCmdLine(szCPU));
 	SetDlgItemText(hWnd2, tUpdateArcCmdLine, p->UpdateArcCmdLine());
 	SetDlgItemText(hWnd2, tUpdatePostUpdateCmd, p->szUpdatePostUpdateCmd);
 	EnableDlgItem(hWnd2, (nPackage==1) ? tUpdateArcCmdLine : tUpdateExeCmdLine, FALSE);
+	// Show used or preferred installer bitness
+	CEStr szFormat, szTitle; INT_PTR iLen;
+	if ((iLen = GetString(hWnd2, rbUpdateUseExe, &szFormat.ms_Arg)) > 0)
+	{
+		if (wcsstr(szFormat.ms_Arg, L"%s") != NULL)
+		{
+			wchar_t* psz = szTitle.GetBuffer(iLen+4);
+			if (psz)
+			{
+				_wsprintf(psz, SKIPLEN(iLen+4) szFormat.ms_Arg, (nPackage == 1) ? szCPU : WIN3264TEST(L"x86",L"x64"));
+				SetDlgItemText(hWnd2, rbUpdateUseExe, szTitle);
+			}
+		}
+	}
 
 	checkDlgButton(hWnd2, cbUpdateLeavePackages, p->isUpdateLeavePackages);
 	SetDlgItemText(hWnd2, tUpdateDownloadPath, p->szUpdateDownloadPath);
@@ -4791,7 +4809,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 	case tTabConsole:
-	case tTabInactiveModified:
+	case tTabModifiedSuffix:
 	case tTabPanels:
 	case tTabViewer:
 	case tTabEditor:
@@ -4808,8 +4826,8 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			{
 				if (TB == tTabConsole)
 					wcscpy_c(gpSet->szTabConsole, temp);
-				else if (TB == tTabInactiveModified)
-					wcscpy_c(gpSet->szTabModified, temp);
+				else if (TB == tTabModifiedSuffix)
+					lstrcpyn(gpSet->szTabModifiedSuffix, temp, countof(gpSet->szTabModifiedSuffix));
 				else if (TB == tTabPanels)
 					wcscpy_c(gpSet->szTabPanels, temp);
 				else if (TB == tTabViewer)
@@ -4837,6 +4855,12 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	} // case tTabLenMax:
+
+	case tTabFlashCounter:
+	{
+		GetDlgItemSigned(hWnd2, tTabFlashCounter, gpSet->nTabFlashChanged, -1, 0);
+		break;
+	} // case tTabFlashCounter:
 
 	case tAdminSuffix:
 	{
@@ -6803,8 +6827,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSetCls->OnInitDialog_Control(hWnd2, bInitial);
 			break;
 		case IDD_SPG_TABS:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Tabs(hWnd2);
+			gpSetCls->OnInitDialog_Tabs(hWnd2, bInitial);
 			break;
 		case IDD_SPG_STATUSBAR:
 			gpSetCls->OnInitDialog_Status(hWnd2, bInitial);

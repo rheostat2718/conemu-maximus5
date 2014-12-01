@@ -1056,7 +1056,7 @@
 #define stTabConsole                    2735
 #define stTabTemplateGroup              2736
 #define stTabTemplateDescr              2737
-#define tTabInactiveModified            2738
+#define tTabModifiedSuffix              2738
 #define tTabFlashCounter                2739
 #define cbProcessCmdStart               2740
 #define stStorageLocation               2741
@@ -1064,6 +1064,9 @@
 #define stUseKeyboardHooksFast          2743
 #define stInjectConEmuHkFast            2744
 #define gbFastConfig                    2745
+#define gbFeatureInConsole              2746
+#define gbFeatureDebug                  2747
+#define gbFeatureRetard                 2748
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1072,7 +1075,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2746
+#define _APS_NEXT_CONTROL_VALUE         2749
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
