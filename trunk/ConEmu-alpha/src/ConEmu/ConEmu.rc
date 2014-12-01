@@ -407,7 +407,7 @@ BEGIN
     CONTROL         "Never",rbDefaultTerminalConfNever,"Button",BS_AUTORADIOBUTTON,141,130,62,8
     CONTROL         "Register on OS startup",cbDefaultTerminalStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,28,96,8
     CONTROL         "Leave in TSA",cbDefaultTerminalTSA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,111,28,70,8
-    CONTROL         "Agressive mode",cbDefTermAgressive,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,188,28,96,8
+    CONTROL         "Aggressive mode",cbDefTermAgressive,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,188,28,96,8
     GROUPBOX        "Confirm close (Press Enter or Esc to close console)",gbDefaultTermConfClose,9,116,308,31
     CONTROL         "Use existing ConEmu window if available",cbDefaultTerminalUseExisting,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,101,305,8
@@ -651,33 +651,35 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Miscellaneous options",gbFeatureMisc,4,1,319,56
-    CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,89,8
-    CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,13,89,8
-    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,13,74,8
-    PUSHBUTTON      "...",bRealConsoleSettings,306,12,13,11
-    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,87,8
-    CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,41,87,8
-    CONTROL         "Focus in child windows",cbFocusInChildWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,27,87,8
-    CONTROL         "Retard inactive panes",cbRetardInactivePanes,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,41,87,8
-    CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,128,27,89,8
-    GROUPBOX        "In-console options",IDC_STATIC,4,62,319,71
-    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,75,110,8
-    CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,74,76,8
-    PUSHBUTTON      "...",bDosBoxSettings,212,72,13,11
-    CONTROL         "Use Clink in prompt",cbUseClink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,74,75,8
-    PUSHBUTTON      "...",cbClinkWebPage,306,72,13,11
-    CONTROL         "ANSI X3.64 / xterm 256 colors",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,90,110,8
+    GROUPBOX        "Miscellaneous options",gbFeatureMisc,4,1,319,27
+    CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,110,8
+    CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,13,99,8
+    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,157,74,8
+    PUSHBUTTON      "...",bRealConsoleSettings,306,156,13,11
+    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,157,99,8
+    CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,47,110,8
+    CONTROL         "Focus in child windows",cbFocusInChildWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,13,87,8
+    CONTROL         "Retard inactive panes",cbRetardInactivePanes,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,47,99,8
+    CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,128,97,99,8
+    GROUPBOX        "In-console options",gbFeatureInConsole,4,69,319,71
+    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,82,110,8
+    CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,81,76,8
+    PUSHBUTTON      "...",bDosBoxSettings,212,79,13,11
+    CONTROL         "Use Clink in prompt",cbUseClink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,81,75,8
+    PUSHBUTTON      "...",cbClinkWebPage,306,79,13,11
+    CONTROL         "ANSI X3.64 / xterm 256 colors",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,97,110,8
     CONTROL         "Process '-new_console' and '-cur_console' switches",cbProcessNewConArg,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,118,187,8
-    CONTROL         "Log console output (*)",cbAnsiLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,104,110,8
-    EDITTEXT        tAnsiLogPath,128,102,191,12,ES_AUTOHSCROLL
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,125,187,8
+    CONTROL         "Log console output (*)",cbAnsiLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,111,110,8
+    EDITTEXT        tAnsiLogPath,128,109,191,12,ES_AUTOHSCROLL
     CONTROL         "Exception handler (debug)",cbConsoleExceptionHandler,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,90,102,8
-    CONTROL         "Portable registry",cbPortableRegistry,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,90,71,8
-    PUSHBUTTON      "...",bPortableRegistrySettings,306,89,13,11,WS_DISABLED
-    CONTROL         "Suppress bells",cbSuppressBells,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,231,136,87,8
-    CONTROL         "Process 'start'",cbProcessCmdStart,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,118,88,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,157,110,8
+    CONTROL         "Portable registry",cbPortableRegistry,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,97,71,8
+    PUSHBUTTON      "...",bPortableRegistrySettings,306,96,13,11,WS_DISABLED
+    CONTROL         "Suppress bells",cbSuppressBells,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,231,213,87,8
+    CONTROL         "Process 'start'",cbProcessCmdStart,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,125,88,8
+    GROUPBOX        "Debugging options",gbFeatureDebug,4,144,319,28
+    GROUPBOX        "CPU consuming",gbFeatureRetard,4,34,319,29
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235
@@ -946,8 +948,8 @@ BEGIN
     RTEXT           "Invisible tab activity flash count:",IDC_STATIC,9,148,223,8
     LTEXT           "Tab font:",stTabFontFace,10,79,40,8
     LTEXT           "Tab double click actions",stTabDblClkActions,10,202,76,8
-    RTEXT           "Modified inactive:",IDC_STATIC,161,132,71,8
-    EDITTEXT        tTabInactiveModified,237,130,81,12,ES_AUTOHSCROLL
+    RTEXT           "Modified suffix:",IDC_STATIC,161,132,71,8
+    EDITTEXT        tTabModifiedSuffix,237,130,81,12,ES_AUTOHSCROLL
     EDITTEXT        tTabFlashCounter,237,146,81,12,ES_AUTOHSCROLL
 END
 
@@ -1198,7 +1200,7 @@ BEGIN
     EDITTEXT        tUpdateProxyUser,169,39,54,13,ES_AUTOHSCROLL | WS_DISABLED
     RTEXT           "Password",stUpdateProxyPassword,225,41,34,8,WS_DISABLED
     EDITTEXT        tUpdateProxyPassword,263,39,54,13,ES_PASSWORD | ES_AUTOHSCROLL | WS_DISABLED
-    CONTROL         "Installer (ConEmuSetup.exe)",rbUpdateUseExe,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,12,99,151,10
+    CONTROL         "Installer (ConEmuSetup.exe /p:%s)",rbUpdateUseExe,"Button",BS_AUTORADIOBUTTON | WS_DISABLED,12,99,151,10
     CONTROL         "7-Zip archieve (ConEmu.7z), WinRar or 7-Zip required",rbUpdateUseArc,
                     "Button",BS_AUTORADIOBUTTON | WS_DISABLED,12,128,226,10
     GROUPBOX        "Download path",IDC_STATIC,5,59,319,28
@@ -1228,8 +1230,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,79,295,10
     CONTROL         "Inject ConEmuHk.dll into all processes started in ConEmu tabs",cbInjectConEmuHkFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,109,295,10
-    CONTROL         "Enable automatic updates",cbEnableAutoUpdateFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,140,109,10
+    CONTROL         "Enable automatic updates",cbEnableAutoUpdateFast,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,140,109,10
     CONTROL         "‘Stable’",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,128,140,46,10
     CONTROL         "‘Preview’",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,178,140,50,10
     CONTROL         "‘Developer’ builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,232,140,71,10

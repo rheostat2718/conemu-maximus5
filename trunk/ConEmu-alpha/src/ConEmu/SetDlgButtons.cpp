@@ -856,6 +856,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbDefaultTerminal:
 		case cbDefaultTerminalStartup:
 		case cbDefaultTerminalTSA:
+		case cbDefTermAgressive:
 		case cbDefaultTerminalNoInjects:
 		case cbDefaultTerminalUseExisting:
 		case rbDefaultTerminalConfAuto:
@@ -902,7 +903,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			break;
 
 		default:
-			_ASSERTE(FALSE && "Button click was not processed");
+			Assert(FALSE && "Button click was not processed");
 			bProcessed = false;
 	}
 

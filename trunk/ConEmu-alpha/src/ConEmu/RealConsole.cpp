@@ -1873,6 +1873,10 @@ void CRealConsole::OnConsoleDataChanged()
 	DWORD nInvisibleTime = mn_DeactivateTick ? (GetTickCount() - mn_DeactivateTick) : 0;
 	if (nInvisibleTime < HIGHLIGHT_INVISIBLE_MIN)
 		return;
+	// Don't flash in Far while it is showing progress
+	// That is useless because tab/caption/task-progress is changed during operation
+	if ((m_Progress.Progress >= 0) && isFar())
+		return;
 
 	if (!tabs.bConsoleDataChanged)
 	{
@@ -1880,7 +1884,7 @@ void CRealConsole::OnConsoleDataChanged()
 		tabs.nFlashCounter = 0;
 		tabs.bConsoleDataChanged = true;
 		// But tab text labels - must be updated specially
-		if (gpSet->szTabModified[0])
+		if (gpSet->szTabModifiedSuffix[0])
 			mp_ConEmu->RequestPostUpdateTabs();
 	}
 }
@@ -3185,7 +3189,8 @@ DWORD CRealConsole::ConHostSearch(bool bFinal)
 		}
 		else if (CreatedHost.size() > 1)
 		{
-			_ASSERTE(FALSE && "More than one created conhost.exe was found!");
+			//_ASSERTE(FALSE && "More than one created conhost.exe was found!");
+			LogString(L"More than one created conhost.exe was found!");
 			Sleep(250); // Попробовать еще раз? Может кто-то левый проехал...
 			continue;
 		}
@@ -10105,13 +10110,17 @@ bool CRealConsole::GetTab(int tabIdx, /*OUT*/ CTab& rTab)
 	else if (rTab->Info.Type & fwt_Highlighted)
 		rTab->Info.Type &= ~fwt_Highlighted;
 
-	// Refresh modified state of simple consoles (not the tabs of Far Manager)
-	if ((rTab->Info.Type & fwt_CurrentFarWnd) && !isFar())
+	// Refresh modified state of simple consoles (not the Editor tabs of Far Manager)
+	if ((rTab->Info.Type & fwt_CurrentFarWnd) && (rTab->Type() != fwt_Editor))
 	{
 		if (tabs.bConsoleDataChanged)
 			rTab->Info.Type |= fwt_ModifiedFarWnd;
 		else
 			rTab->Info.Type &= ~fwt_ModifiedFarWnd;
+	}
+	else if (rTab->Type() != fwt_Editor)
+	{
+		rTab->Info.Type &= ~fwt_ModifiedFarWnd;
 	}
 
 	// Update active tab info
@@ -12088,10 +12097,17 @@ void CRealConsole::logProgress(LPCWSTR asFormat, int V1, int V2)
 
 void CRealConsole::setProgress(short value)
 {
-	DEBUGTEST(if (m_Progress.Progress != value))
+	if (m_Progress.Progress != value)
 	{
 		logProgress(L"RCon::setProgress(%i)", value);
 		m_Progress.Progress = value;
+
+		// Don't flash in Far while it is showing progress
+		// That is useless because tab/caption/task-progress is changed during operation
+		if (!tabs.bConsoleDataChanged && isFar())
+		{
+			mn_DeactivateTick = GetTickCount();
+		}
 	}
 }
 

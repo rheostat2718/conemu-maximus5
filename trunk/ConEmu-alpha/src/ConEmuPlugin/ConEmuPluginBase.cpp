@@ -409,7 +409,7 @@ void CPluginBase::PostMacro(const wchar_t* asMacro, INPUT_RECORD* apRec, bool ab
 	//  Если курсор на другой панели, то RClick сразу по пассивной
 	//  не вызывает отрисовку :(
 
-#if 1
+#if 0
 	//111002 - попробуем просто gbUngetDummyMouseEvent
 	//InterlockedIncrement(&gnDummyMouseEventFromMacro);
 	gnDummyMouseEventFromMacro = TRUE;
@@ -3461,13 +3461,13 @@ bool CPluginBase::ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout
 		InterlockedIncrement(&gnAllowDummyMouseEvent);
 		ExecuteSynchro();
 
-		if (!gbUngetDummyMouseEvent && gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED))
+		if (!gbUngetDummyMouseEvent && (gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)))
 		{
 			// Страховка от зависаний
 			nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, min(1000,max(250,nTimeout)));
 			if (nWait == WAIT_TIMEOUT)
 			{
-				if (!gbUngetDummyMouseEvent && gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED))
+				if (!gbUngetDummyMouseEvent && (gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)))
 				{
 					gbUngetDummyMouseEvent = TRUE;
 					// попытаться еще раз
