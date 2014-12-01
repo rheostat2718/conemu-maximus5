@@ -1,31 +1,43 @@
-﻿=Список переменных окружения устанавливаемых в !ConEmu=
-|| *Имя* || *Описание* || *Пример* ||
-|| `ConEmuDir` || папка, содержащая !ConEmu.exe || `C:\ConEmu` ||
-|| `ConEmuDrive` || диск с двоеточием, содержащий ConEmu.exe || `C:` ||
-|| `ConEmuBaseDir` || папка, содержащая ConEmuC.exe || `C:\ConEmu\ConEmu` ||
-|| `ConEmuWorkDir` || рабочая папка, где был запущен ваш shell || `C:\Users` ||
-|| `ConEmuWorkDrive` || диск с двоеточием, где был запущен ваш shell || `C:` ||
-|| `ConEmuArgs` || аргументы, с которыми был запущен !ConEmu.exe || ||
-|| `ConEmuConfig` || имя активной конфигурации, читайте про ключ `/config` || ||
-|| `ConEmuBuild` || текущий билд !ConEmu || `121202` ||
-|| `ConEmuPID` || PID (ИД процесса) !ConEmu GUI || `1234` ||
-|| `ConEmuHWND` || дескриптор главного окна !ConEmu || `0x0021094A` ||
-|| `ConEmuDrawHWND` || дескриптор дескриптор окна виртуальной консоли (дочернее окно !ConEmu), окно отрисовки текста консоли || `0x000E0F8A` ||
-|| `ConEmuBackHWND` || подложка для окна отрисовки, может быть больше окна отрисовки при наличии «padding» или «scrollbars» || `0x00040E8A` ||
-|| `ConEmuIsAdmin` || устанавливается для тех табов/сплитов, которые запущены с повышенными полномочиями (UAC) || `ADMIN` или не задана ||
-|| `ConEmuANSI` || установлено в `ON` если доступен «ANSI X3.64» || `ON` или `OFF` ||
-|| `ConEmuHooks` || можно временно отключить установку inject-ов на время запуска длинных команд или инициализационных скриптов, например<br>`cmd /k set ConEmuHooks=OFF & "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" -new_console:sV -new_console:t:SDK & set ConEmuHooks=` || `OFF` или `Enabled` ||
-|| `ConEmuFakeDT` || that will cheat system and local current time for console processes || [ConEmuEnvironment#Cheating_system_time Examples] ||
+﻿<wiki:toc max_depth="3" />
 
-Also, there is an option «Add %!ConEmuBaseDir% to %PATH%» on settings page «!ComSpec». It is turned on by default
-and allows to easily run executables and scripts from `%ConEmuBaseDir%` folder. For example:
+=Список переменных окружения устанавливаемых в !ConEmu=
+|| *Имя* || *Пример* || *Описание* ||
+|| !ConEmuDir || `C:\ConEmu` || папка, содержащая !ConEmu.exe ||
+|| !ConEmuDrive || `C:` || диск с двоеточием, содержащий ConEmu.exe ||
+|| !ConEmuBaseDir || `C:\ConEmu\ConEmu` || папка, содержащая ConEmuC.exe ||
+|| !ConEmuWorkDir || `C:\Users` || рабочая папка, где был запущен ваш shell ||
+|| !ConEmuWorkDrive || `C:` || диск с двоеточием, где был запущен ваш shell ||
+|| !ConEmuArgs || _вариант_ || аргументы, с которыми был запущен !ConEmu.exe ||
+|| !ConEmuConfig || _вариант_ || имя активной конфигурации, читайте про ключ `/config` ||
+|| !ConEmuBuild || `141126c` || текущий билд !ConEmu ||
+|| ConEmuPID || _число_ || PID (ИД процесса) !ConEmu GUI ||
+|| ConEmuServerPID || _number_ || PID (ИД процесса) ConEmuC сервера ||
+|| ConEmuHWND || `0x8HEXDGTS` || дескриптор главного окна !ConEmu ||
+|| ConEmuDrawHWND || `0x8HEXDGTS` || дескриптор дескриптор окна виртуальной консоли (дочернее окно !ConEmu), окно отрисовки текста консоли ||
+|| ConEmuBackHWND || `0x8HEXDGTS` || подложка для окна отрисовки, может быть больше окна отрисовки при наличии «padding» или «scrollbars» ||
+|| !ConEmuIsAdmin || `ADMIN` или не задана || устанавливается для тех табов/сплитов, которые запущены с повышенными полномочиями (UAC) ||
+|| ConEmuANSI || `ON` или `OFF` || установлено в `ON` если доступен «ANSI X3.64» ||
+|| [ConEmuEnvironment#Disabling_hooks_temporarily ConEmuHooks] || `Enabled`|`OFF`|`NOARG`|`NOSTART` || можно временно отключить установку inject-ов на время запуска длинных команд или инициализационных скриптов ||
+|| [ConEmuEnvironment#Cheating_system_time ConEmuFakeDT] || `2014-12-31` || that will cheat system and local current time for console processes ||
+|| [GuiMacro#Far3-pre-Lua ConEmuMacroResult] || _вариант_ || устанавливается из плагина !ConEmu's Far Manager после выполнения [GuiMacro GUI Macro] ||
+
+=Изменения PATH=
+[SettingsComspec Settings page ComSpec] has an options ‘Add %!ConEmuDir% to %PATH%’ and ‘Add %!ConEmuBaseDir% to %PATH%’.
+
+They are turned on by default and allows to easily run executables and scripts and macros from ConEmu's folders. For example:
 {{{
-ConEmuC /EXPORT PATH
+ConEmuC -GuiMacro Progress 3
 
 or
 
 csudo dism.exe /online /enable-feature /featurename:NetFX3 /All /Source:D:\sources\sxs /LimitAccess
 }}}
+
+
+=Debug purposed variables=
+|| *Name* || *Description* || *Example* ||
+|| `ConEmuSleepIndicator` || turning on monitoring feature of ‘Sleep in background’, when `ConEmuSleepIndicator=NUM` !ConEmu will turn off !NumLock when going sleep and turn on !NumLock when full active back || `NUM` or `OFF` ||
+|| `ConEmuReportExe` || show message box like ‘hi.exe loaded’ when `hi.exe` started inside ConEmu tab; option ‘Inject ConEmuHk’ must be enabled || `hi.exe` ||
 
 
 =Export variables=
@@ -57,6 +69,18 @@ ConEmuC /export[=CON|ALL] [Var1 [Var2 [...]]]
     * «cmd» - fails partially (required to run smth from active cmd, for example "cmd /k exit", to «apply» changes);
     * «bash» - fails completely (seems, it does not support outside changing of env.vars).
 
+
+=Disabling hooks temporarily=
+You may temporarily disable injects when running ‘long’ batches or initialization scripts:
+{{{
+cmd /k set ConEmuHooks=OFF & "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" -new_console:sV -new_console:t:SDK & set ConEmuHooks=
+}}}
+Actually, `ConEmuHooks` may be set of ‘`OFF`’,‘`NOARG`’,‘`NOSTART`’ or simple ‘`Enabled`’. So if you want temporarily disable
+processing of `-new_console` and `start` (which both are forcing command into the new [Tabs ConEmu tab])
+you may set the following:
+{{{
+set ConEmuHooks=NOARG,NOSTART
+}}}
 
 =Cheating system time=
 Environment variable "ConEmuFakeDT". That will cheat system and local current time for console processes.
