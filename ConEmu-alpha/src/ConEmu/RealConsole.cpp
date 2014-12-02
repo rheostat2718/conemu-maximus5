@@ -2466,15 +2466,13 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 							mn_LastFarReadTick = nCurTick ? nCurTick : 1;
 							bAlive = true; // живой
 						}
-
-#ifdef _DEBUG
+						#ifdef _DEBUG
 						else
 						{
 							mn_LastFarReadTick = nCurTick - FAR_ALIVE_TIMEOUT - 1;
 							bAlive = false; // занят
 						}
-
-#endif
+						#endif
 					}
 					else
 					{
@@ -2499,8 +2497,8 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				if (bActive)
 				{
 					WARNING("Тут нужно бы сравнивать с переменной, хранящейся в mp_ConEmu, а не в этом instance RCon!");
-#ifdef _DEBUG
 
+					#ifdef _DEBUG
 					if (!IsDebuggerPresent())
 					{
 						bool lbIsAliveDbg = isAlive();
@@ -2510,8 +2508,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 							_ASSERTE(lbIsAliveDbg == bAlive);
 						}
 					}
-
-#endif
+					#endif
 
 					if (bLastAlive != bAlive || !bLastAliveActive)
 					{
@@ -2612,6 +2609,18 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				// Если возможны панели - найти их в консоли,
 				// заодно оттуда позовется CheckProgressInConsole
 				mp_RBuf->FindPanels();
+			}
+
+			// Far Manager? Refresh its working directories if they are in tabs
+			if (mn_FarPID_PluginDetected)
+			{
+				// Tab templates are case insensitive yet
+				LPCWSTR pszTabTempl = gpSet->szTabPanels;
+				if ((wcsstr(pszTabTempl, L"%d") || wcsstr(pszTabTempl, L"%D"))
+					&& ReloadFarWorkDir())
+				{
+					mp_ConEmu->mp_TabBar->Update();
+				}
 			}
 
 			if (m_Progress.ConsoleProgress >= 0
@@ -13302,6 +13311,30 @@ LPCWSTR CRealConsole::GetFileFromConsole(LPCWSTR asSrc, CmdArg& szFull)
 	return mp_Files->GetFileFromConsole(asSrc, szFull);
 }
 
+// Returns true on changes
+bool CRealConsole::ReloadFarWorkDir()
+{
+	DWORD nFarPID = GetFarPID(true);
+	if (!nFarPID != NULL)
+		return false;
+
+	bool bChanged = false;
+	MSectionLock CS; CS.Lock(&ms_FarInfoCS, TRUE);
+	const CEFAR_INFO_MAPPING* pInfo = m__FarInfo.Ptr();
+	if (pInfo)
+	{
+		if (pInfo->nPanelDirIdx != m_FarInfo.nPanelDirIdx)
+		{
+			wcscpy_c(m_FarInfo.sActiveDir, pInfo->sActiveDir);
+			wcscpy_c(m_FarInfo.sPassiveDir, pInfo->sPassiveDir);
+			m_FarInfo.nPanelDirIdx = pInfo->nPanelDirIdx;
+			bChanged = true;
+		}
+	}
+
+	return bChanged;
+}
+
 LPCWSTR CRealConsole::GetConsoleCurDir(CmdArg& szDir)
 {
 	if (!this)
@@ -13310,28 +13343,15 @@ LPCWSTR CRealConsole::GetConsoleCurDir(CmdArg& szDir)
 		return NULL;
 	}
 
-	// Issue 1703: Пока с актуальностью папки проблема, лучше перезапросить плагин, без вызовов API, просто вернуть текущие
+	// Пути берем из мэппинга текущего плагина
 	DWORD nFarPID = GetFarPID(true);
-	if (nFarPID != NULL)
+	if (nFarPID)
 	{
-		CConEmuPipe pipe(nFarPID, 500);
-
-		if (pipe.Init(_T("CRealConsole::GetConsoleCurDir"), TRUE))
+		ReloadFarWorkDir();
+		if (m_FarInfo.sActiveDir[0])
 		{
-			if (!pipe.Execute(CECMD_STORECURDIR))
-			{
-				LogString("pipe.Execute(CECMD_STORECURDIR) failed");
-			}
-			else
-			{
-				DWORD nDataSize = 0;
-				CESERVER_REQ_STORECURDIR* pCurDir = (CESERVER_REQ_STORECURDIR*)pipe.GetPtr(&nDataSize);
-				if (pCurDir && (nDataSize > sizeof(*pCurDir)) && (pCurDir->iActiveCch > 1))
-				{
-					szDir.Set(pCurDir->szDir);
-					goto wrap;
-				}
-			}
+			szDir.Set(m_FarInfo.sActiveDir);
+			goto wrap;
 		}
 	}
 
@@ -13394,6 +13414,7 @@ void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 
 	CS.Unlock();
 
+	// Tab templates are case insensitive yet
 	LPCWSTR pszTabTempl = isFar() ? gpSet->szTabPanels : gpSet->szTabConsole;
 	if (wcsstr(pszTabTempl, L"%d") || wcsstr(pszTabTempl, L"%D"))
 	{
