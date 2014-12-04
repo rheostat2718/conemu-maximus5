@@ -310,7 +310,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_DefaultBufferHeight = gpSetCls->bForceBufferHeight ? gpSetCls->nForceBufferHeight : gpSet->DefaultBufferHeight;
 
 	mp_RBuf = new CRealBuffer(this);
-	_ASSERTE(mp_RBuf!=NULL);
 	mp_EBuf = NULL;
 	mp_SBuf = NULL;
 	SetActiveBuffer(mp_RBuf, false);
@@ -367,6 +366,12 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	lstrcpy(ms_TempPanel, L"{Temporary panel");
 	lstrcpy(ms_TempPanelRus, L"{Временная панель");
 	//lstrcpy(ms_NameTitle, L"Name");
+
+	if (!mp_RBuf)
+	{
+		_ASSERTE(mp_RBuf);
+		return false;
+	}
 
 	PreInit(); // просто инициализировать переменные размеров...
 
@@ -1718,17 +1723,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 	}
 	else if (piRec->EventType == KEY_EVENT)
 	{
-		// github#19: don't post Enter/Space KeyUp events to the console input buffer
-		if (!piRec->Event.KeyEvent.bKeyDown && (piRec->Event.KeyEvent.uChar.UnicodeChar <= L' ')
-			&& !isFar())
-		{
-			switch (piRec->Event.KeyEvent.wVirtualKeyCode)
-			{
-			case VK_RETURN:
-			case VK_SPACE:
-				return false;
-			}
-		}
+		// github#19: Code moved to ../ConEmuCD/Queue.cpp
 
 		#if 0
 		if (piRec->Event.KeyEvent.uChar.UnicodeChar == 3/*'^C'*/
@@ -4790,7 +4785,10 @@ void CRealConsole::DoFindText(int nDirection)
 			SetActiveBuffer(rbt_Primary);
 		}
 	}
-	mp_ABuf->MarkFindText(nDirection, gpSet->FindOptions.pszText, gpSet->FindOptions.bMatchCase, gpSet->FindOptions.bMatchWholeWords);
+	if (mp_ABuf)
+	{
+		mp_ABuf->MarkFindText(nDirection, gpSet->FindOptions.pszText, gpSet->FindOptions.bMatchCase, gpSet->FindOptions.bMatchWholeWords);
+	}
 }
 
 void CRealConsole::DoEndFindText()
@@ -6556,6 +6554,12 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 		mn_ActiveLayout = 0;
 		// Сброс
 		ConHostSetPID(0);
+	}
+	else if (gpSetCls->isAdvLogging)
+	{
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"ServerPID=%u was set for VCon%i", anMainSrvPID, mp_VCon->Index()+1);
+		gpConEmu->LogString(szInfo);
 	}
 
 	DEBUGTEST(isServerAlive());
