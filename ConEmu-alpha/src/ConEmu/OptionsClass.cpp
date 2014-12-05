@@ -212,11 +212,12 @@ CSettings::CSettings()
 		sDefaultConFontName[0] = 0;
 	}
 	QueryPerformanceFrequency((LARGE_INTEGER *)&mn_Freq);
-	memset(mn_Counter, 0, sizeof(*mn_Counter)*(tPerfInterval-gbPerformance));
-	memset(mn_CounterMax, 0, sizeof(*mn_CounterMax)*(tPerfInterval-gbPerformance));
+	memset(mn_Counter, 0, sizeof(mn_Counter));
+	memset(mn_CounterMax, 0, sizeof(mn_CounterMax));
 	memset(mn_FPS, 0, sizeof(mn_FPS)); mn_FPS_CUR_FRAME = 0;
 	memset(mn_RFPS, 0, sizeof(mn_RFPS)); mn_RFPS_CUR_FRAME = 0;
-	memset(mn_CounterTick, 0, sizeof(*mn_CounterTick)*(tPerfInterval-gbPerformance));
+	memset(mn_CounterTick, 0, sizeof(mn_CounterTick));
+	memset(mn_KbdDelays, 0, sizeof(mn_KbdDelays)); mn_KbdDelayCounter = 0; mn_KBD_CUR_FRAME = -1;
 	//hBgBitmap = NULL; bgBmp = MakeCoord(0,0); hBgDc = NULL;
 	#ifndef APPDISTINCTBACKGROUND
 	mb_BgLastFade = false;
@@ -8766,11 +8767,13 @@ void CSettings::PostUpdateCounters(bool bPosted)
 
 	if (mn_Freq!=0)
 	{
-		for (INT_PTR nID = tPerfFPS; nID <= tPerfInterval; nID++)
+		_ASSERTE(tPerfFPS == 0);
+
+		for (INT_PTR nID = tPerfFPS; nID < tPerfLast; nID++)
 		{
 			wchar_t sTemp[64];
 
-			i64 v = 0;
+			i64 v = 0, v2 = 0, v3 = 0;
 
 			if (nID == tPerfFPS || nID == tPerfInterval)
 			{
@@ -8786,26 +8789,60 @@ void CSettings::PostUpdateCounters(bool bPosted)
 					pFPS = mn_RFPS; nCount = countof(mn_RFPS);
 				}
 
-				i64 tmin = 0, tmax = 0;
-				tmin = pFPS[0];
+				i64 tmin, tmax;
+				i64 imin = 0, imax = 0;
+				tmax = tmin = pFPS[0];
 
 				for (UINT i = 0; i < nCount; i++)
 				{
-					if (pFPS[i] < tmin) tmin = pFPS[i]; //-V108
+					i64 vi = pFPS[i]; //-V108
+					if (!vi) continue;
 
-					if (pFPS[i] > tmax) tmax = pFPS[i]; //-V108
+					if (vi < tmin) { tmin = vi; imin = i; }
+					if (vi > tmax) { tmax = vi; imax = i; }
 				}
 
-				if (tmax > tmin)
-					v = ((__int64)200)* mn_Freq / (tmax - tmin);
+				if ((tmax > tmin) && mn_Freq > 0)
+				{
+					_ASSERTE(imin!=imax);
+					i64 iSamples = imax - imin;
+					if (iSamples < 0)
+						iSamples += nCount;
+					v = iSamples * 10 * mn_Freq / (tmax - tmin);
+				}
+			}
+			else if (nID == tPerfKeyboard)
+			{
+				v = v2 = mn_KbdDelays[0]; v3 = 0;
+
+				size_t nCount = max(0, min(mn_KBD_CUR_FRAME, (int)countof(mn_KbdDelays)));
+				for (size_t i = 0; i < nCount; i++)
+				{
+					i64 vi = mn_KbdDelays[i];
+					// Skip too large values, they may be false detected
+					if (vi <= 0 || vi >= 5000) continue;
+
+					if (vi < v)
+						v = vi;
+					if (vi > v2 && vi < 5000)
+						v2 = vi;
+					v3 += vi; // avg
+				}
+
+				if (nCount > 0)
+					v3 = v3 / nCount;
 			}
 			else
 			{
-				v = (10000*(__int64)mn_CounterMax[nID-tPerfFPS])/mn_Freq;
+				v = (10000*(__int64)mn_CounterMax[nID])/mn_Freq;
 			}
 
-			// WinApi не умеет float/double
-			_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"%u.%u", (int)(v/10), (int)(v%10));
+			// WinApi's wsprintf can't do float/double, so we use integer arithmetics for FPS and others
+
+			if (nID == tPerfKeyboard)
+				_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"%u/%u/%u", (int)v, (int)v3, (int)v2);
+			else
+				_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"%u.%u", (int)(v/10), (int)(v%10));
 
 			switch (nID)
 			{
@@ -8819,6 +8856,10 @@ void CSettings::PostUpdateCounters(bool bPosted)
 				wcscat_c(szTotal, L"   Blt:"); break;
 			case tPerfInterval:
 				wcscat_c(szTotal, L"   RPS:"); break;
+			case tPerfKeyboard:
+				wcscat_c(szTotal, L"   KBD:"); break;
+			default:
+				wcscat_c(szTotal, L"   ???:");
 			}
 			wcscat_c(szTotal, sTemp);
 		} // if (mn_Freq!=0)
@@ -8832,6 +8873,8 @@ void CSettings::PostUpdateCounters(bool bPosted)
 
 void CSettings::Performance(UINT nID, BOOL bEnd)
 {
+	_ASSERTE(gbPerformance > tPerfLast);
+
 	if (nID == gbPerformance)  //groupbox ctrl id
 	{
 		if (!isMainThread())
@@ -8852,12 +8895,13 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 		return;
 	}
 
-	if (nID<tPerfFPS || nID>tPerfInterval)
+	if (nID >= tPerfLast)
 		return;
+
+	i64 tick2 = 0, t;
 
 	if (nID == tPerfFPS)
 	{
-		i64 tick2 = 0;
 		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
 		mn_FPS[mn_FPS_CUR_FRAME] = tick2;
 		mn_FPS_CUR_FRAME++;
@@ -8872,7 +8916,6 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 
 	if (nID == tPerfInterval)
 	{
-		i64 tick2 = 0;
 		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
 		mn_RFPS[mn_RFPS_CUR_FRAME] = tick2;
 		mn_RFPS_CUR_FRAME++;
@@ -8886,25 +8929,53 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 		return;
 	}
 
+	if (nID == tPerfKeyboard)
+	{
+		QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
+
+		if (bEnd == (BOOL)-1)
+		{
+			// After tab switch for example (RCon changed);
+			mn_KbdDelayCounter = 0;
+		}
+		else if (!bEnd)
+		{
+			// Must be called when user press something on the keyboard
+			if (!mn_KbdDelayCounter)
+				mn_KbdDelayCounter = tick2;
+		}
+		else if (mn_KbdDelayCounter && mn_Freq)
+		{
+			i64 iPrev = mn_KbdDelayCounter; mn_KbdDelayCounter = 0;
+			// let eval ms the delay of console output is refreshed
+			t = (tick2 - iPrev) * 1000 / mn_Freq;
+			int idx = (InterlockedIncrement(&mn_KBD_CUR_FRAME) & (countof(mn_KbdDelays)-1));
+			mn_KbdDelays[idx] = t;
+			if (mn_KBD_CUR_FRAME < 0) mn_KBD_CUR_FRAME = countof(mn_KbdDelays)-1;
+		}
+
+		return;
+	}
+
 	if (!bEnd)
 	{
-		QueryPerformanceCounter((LARGE_INTEGER *)&(mn_Counter[nID-tPerfFPS]));
+		QueryPerformanceCounter((LARGE_INTEGER *)&(mn_Counter[nID]));
 		return;
 	}
-	else if (!mn_Counter[nID-tPerfFPS] || !mn_Freq)
+	else if (!mn_Counter[nID] || !mn_Freq)
 	{
 		return;
 	}
 
-	i64 tick2;
 	QueryPerformanceCounter((LARGE_INTEGER *)&tick2);
-	i64 t = (tick2-mn_Counter[nID-tPerfFPS]);
+	t = (tick2-mn_Counter[nID]);
 
-	if (mn_CounterMax[nID-tPerfFPS]<t ||
-	        (GetTickCount()-mn_CounterTick[nID-tPerfFPS])>COUNTER_REFRESH)
+	if ((t >= 0)
+		&& ((mn_CounterMax[nID] < t)
+	        || ((GetTickCount() - mn_CounterTick[nID]) > COUNTER_REFRESH)))
 	{
-		mn_CounterMax[nID-tPerfFPS] = t;
-		mn_CounterTick[nID-tPerfFPS] = GetTickCount();
+		mn_CounterMax[nID] = t;
+		mn_CounterTick[nID] = GetTickCount();
 
 		if (ghOpWnd)
 			PostUpdateCounters(false);
