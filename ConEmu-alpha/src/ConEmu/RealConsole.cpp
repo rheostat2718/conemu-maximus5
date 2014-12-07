@@ -1976,7 +1976,12 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 
 	if (pRCon->mb_NeedStartProcess)
 	{
-		_ASSERTE(pRCon->mh_MainSrv==NULL);
+		#ifdef _DEBUG
+		if (pRCon->mh_MainSrv)
+		{
+			_ASSERTE(pRCon->mh_MainSrv==NULL);
+		}
+		#endif
 
 		HANDLE hWait[] = {pRCon->mh_TermEvent, pRCon->mh_StartExecuted};
 		DWORD nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, INFINITE);
@@ -12014,6 +12019,19 @@ bool CRealConsole::isNtvdm()
 	}
 
 	return false;
+}
+
+bool CRealConsole::isFixAndCenter(COORD* lpcrConSize /*= NULL*/)
+{
+	if (!isNtvdm())
+		return false;
+
+	if (lpcrConSize)
+	{
+		*lpcrConSize = mp_RBuf->GetDefaultNtvdmHeight();
+	}
+
+	return true;
 }
 
 const RConStartArgs& CRealConsole::GetArgs()

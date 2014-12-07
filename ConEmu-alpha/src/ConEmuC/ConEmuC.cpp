@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 	#ifdef _DEBUG
 	UnitTests();
 	#endif
-	
+
 
 	hConEmu = LoadLibrary(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
 	dwErr = GetLastError();
@@ -123,7 +123,8 @@ int main(int argc, char** argv)
 		           WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"),
 		           dwErr);
 		WriteConsoleA(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
-		return CERR_CONEMUHK_NOTFOUND;
+		iRc = CERR_CONEMUHK_NOTFOUND;
+		goto wrap;
 	}
 
 	// Загрузить функи из ConEmuHk
@@ -137,9 +138,10 @@ int main(int argc, char** argv)
 		           "Procedure \"%s\"  not found in library \"%s\"",
 		           lfConsoleMain2 ? "HandlerRoutine" : "ConsoleMain2",
 		           WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
-		WriteConsoleW(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
+		WriteConsoleA(GetStdHandle(STD_ERROR_HANDLE), szErrInfo, lstrlenA(szErrInfo), &dwOut, NULL);
 		FreeLibrary(hConEmu);
-		return CERR_CONSOLEMAIN_NOTFOUND;
+		iRc = CERR_CONSOLEMAIN_NOTFOUND;
+		goto wrap;
 	}
 
 	// Main dll entry point for Server & ComSpec
@@ -147,6 +149,7 @@ int main(int argc, char** argv)
 	// Exiting
 	gfHandlerRoutine = NULL;
 	//FreeLibrary(hConEmu); -- Shutdown Server/Comspec уже выполнен
+wrap:
 	ExitProcess(iRc);
 	return iRc;
 }
