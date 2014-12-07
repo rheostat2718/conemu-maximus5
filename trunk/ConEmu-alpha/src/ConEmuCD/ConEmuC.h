@@ -690,7 +690,7 @@ namespace InputLogger
 {
 	static const int BUFFER_INFO_SIZE = RELEASEDEBUGTEST(0x1000,0x1000);   // Must be a power of 2
 	struct Event {
-		DEBUGTEST(DWORD time;)
+		DWORD time;
 		enum Source {
 			evt_Empty,
 			evt_ReadInputQueue,
@@ -704,6 +704,13 @@ namespace InputLogger
 			evt_WriteInputQueue2,
 			evt_InputQueueFlush,
 			evt_Overflow,
+			evt_SpeedHigh,
+			evt_SpeedLow,
+			evt_WaitConSize,
+			evt_WaitConEmpty,
+			evt_WriteConInput,
+			evt_ConSbiChanged,
+			evt_ConDataChanged,
 		} what;
 		LONG val;
 		INPUT_RECORD ir;
@@ -719,8 +726,9 @@ namespace InputLogger
 		LONG i = (_InterlockedIncrement(&g_evtidx) & (BUFFER_INFO_SIZE - 1));
 		// Write a message at this index
 		g_evt[i].what = what;
-		DEBUGTEST(g_evt[i].time = GetTickCount();)
+		g_evt[i].time = GetTickCount();
 		g_evt[i].val = val;
+		g_evt[i].ir.EventType = 0;
 	}
 
 	inline void Log(Event::Source what, const INPUT_RECORD& ir, LONG val = 0)
@@ -730,9 +738,20 @@ namespace InputLogger
 		LONG i = (_InterlockedIncrement(&g_evtidx) & (BUFFER_INFO_SIZE - 1));
 		// Write a message at this index
 		g_evt[i].what = what;
-		DEBUGTEST(g_evt[i].time = GetTickCount();)
+		g_evt[i].time = GetTickCount();
 		// Fill info
 		g_evt[i].val = val;
-		g_evt[i].ir = ir;
+		if (ir.EventType == KEY_EVENT)
+		{
+			ZeroStruct(g_evt[i].ir);
+			g_evt[i].ir.EventType = ir.EventType;
+			g_evt[i].ir.Event.KeyEvent.bKeyDown = ir.Event.KeyEvent.bKeyDown;
+			g_evt[i].ir.Event.KeyEvent.wRepeatCount = ir.Event.KeyEvent.wRepeatCount;
+			g_evt[i].ir.Event.KeyEvent.dwControlKeyState = ir.Event.KeyEvent.dwControlKeyState;
+		}
+		else
+		{
+			g_evt[i].ir = ir;
+		}
 	}
 }

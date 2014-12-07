@@ -3786,6 +3786,8 @@ static int ReadConsoleInfo()
 
 		if (memcmp(&gpSrv->sbi, &lsbi, sizeof(gpSrv->sbi)))
 		{
+			InputLogger::Log(InputLogger::Event::evt_ConSbiChanged);
+
 			_ASSERTE(lsbi.srWindow.Left == 0);
 			/*
 			//Issue 373: при запуске wmic устанавливается ШИРИНА буфера в 1500 символов
@@ -4083,6 +4085,7 @@ static BOOL ReadConsoleData()
 
 	if (memcmp(gpSrv->pConsole->data, gpSrv->pConsoleDataCopy, nCurSize))
 	{
+		InputLogger::Log(InputLogger::Event::evt_ConDataChanged);
 		memmove(gpSrv->pConsole->data, gpSrv->pConsoleDataCopy, nCurSize);
 		gpSrv->pConsole->bDataChanged = TRUE; // TRUE уже может быть с прошлого раза, не сбрасывать в FALSE
 		lbChanged = TRUE;
@@ -4337,6 +4340,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	BOOL bNewActive = (BOOL)-1, bNewFellInSleep = FALSE;
 	BOOL ActiveSleepInBg = (gpSrv->guiSettings.Flags & CECF_SleepInBackg);
 	BOOL bOurConActive = (BOOL)-1, bOneConActive = (BOOL)-1;
+	bool bLowSpeed = false;
 	BOOL bOnlyCursorChanged;
 	BOOL bSetRefreshDoneEvent;
 	DWORD nWaitCursor = 99;
@@ -4720,11 +4724,14 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			bConsoleActive = bNewActive;
 			bFellInSleep = bNewFellInSleep;
 
+			bLowSpeed = (!bNewActive || bNewFellInSleep);
+			InputLogger::Log(bLowSpeed ? InputLogger::Event::evt_SpeedLow : InputLogger::Event::evt_SpeedHigh);
+
 			if (gpLogSize)
 			{
 				char szInfo[128];
 				_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: RefreshThread: Sleep changed, speed(%s)",
-					(!bNewActive || bNewFellInSleep) ? "low" : "high");
+					bLowSpeed ? "low" : "high");
 				LogString(szInfo);
 			}
 		}

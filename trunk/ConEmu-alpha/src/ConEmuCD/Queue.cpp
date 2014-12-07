@@ -146,17 +146,15 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 			}
 		}
 
-#ifdef _DEBUG
-
+		#ifdef _DEBUG
 		if (r.EventType == KEY_EVENT && r.Event.KeyEvent.bKeyDown &&
 		        r.Event.KeyEvent.wVirtualKeyCode == VK_F11)
 		{
 			DEBUGSTR(L"  ---  F11 recieved\n");
 		}
+		#endif
 
-#endif
-#ifdef _DEBUG
-
+		#ifdef _DEBUG
 		if (r.EventType == MOUSE_EVENT)
 		{
 			static DWORD nLastEventTick = 0;
@@ -171,8 +169,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 			DEBUGLOGINPUT(szDbg);
 			nLastEventTick = GetTickCount();
 		}
-
-#endif
+		#endif
 
 		// Запомнить, когда была последняя активность пользователя
 		if (r.EventType == KEY_EVENT
@@ -386,7 +383,10 @@ BOOL WaitConsoleReady(BOOL abReqEmpty)
 {
 	// Если сейчас идет ресайз - нежелательно помещение в буфер событий
 	if (gpSrv->bInSyncResize)
+	{
+		InputLogger::Log(InputLogger::Event::evt_WaitConSize);
 		WaitForSingleObject(gpSrv->hAllowInputEvent, MAX_SYNCSETSIZE_WAIT);
+	}
 
 	// если убить ожидание очистки очереди - перестает действовать 'Right selection fix'!
 
@@ -397,6 +397,8 @@ BOOL WaitConsoleReady(BOOL abReqEmpty)
 
 	if (abReqEmpty)
 	{
+		InputLogger::Log(InputLogger::Event::evt_WaitConEmpty);
+
 		//#ifdef USE_INPUT_SEMAPHORE
 		//// Нет смысла использовать вместе с семафором ввода
 		//_ASSERTE(FALSE);
@@ -673,6 +675,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	SetLastError(0);
 #endif
 
+	InputLogger::Log(InputLogger::Event::evt_WriteConInput, nCount);
 
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE); // тут был ghConIn
 	// Strange VIM reaction on xterm-keypresses

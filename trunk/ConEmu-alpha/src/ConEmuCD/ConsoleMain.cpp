@@ -5247,17 +5247,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 	if (gnRunMode == RM_COMSPEC)
 	{
 		// Может просили открыть новую консоль?
-		int nArgLen = lstrlenA("-new_console");
-		LPCWSTR pwszCopy = (wchar_t*)wcsstr(lsCmdLine, L"-new_console");
-
-		// Если после -new_console идет пробел, или это вообще конец строки
-		// 111211 - после -new_console: допускаются параметры
-		if (pwszCopy
-			// Must be started with space or double-quote or be the start of the string
-			&& ((pwszCopy == lsCmdLine) || ((*(pwszCopy-1) == L' ') || (*(pwszCopy-1) == L'"')))
-			// And check the end of parameter
-			&& ((pwszCopy[nArgLen] == 0) || wcschr(L" :", pwszCopy[nArgLen])
-				|| ((pwszCopy[nArgLen] == L'"') || (pwszCopy[nArgLen+1] == 0))))
+		if (IsNewConsoleArg(lsCmdLine))
 		{
 			if (!ghConWnd)
 			{
@@ -9872,7 +9862,6 @@ bool IsOutputRedirected()
 	}
 
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	DWORD dwWritten = 0;
 
 	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
 	BOOL bIsConsole = GetConsoleScreenBufferInfo(hOut, &sbi);
@@ -9903,8 +9892,8 @@ void _wprintf(LPCWSTR asBuffer)
 	else
 	{
 		UINT  cp = GetConsoleOutputCP();
-		DWORD cchMax = (nAllLen * ((cp==CP_UTF8 || cp==CP_UTF7) ? 3 : 1)) + 1;
-		char* pszOem = (char*)malloc(cchMax);
+		int cchMax = WideCharToMultiByte(cp, 0, asBuffer, -1, NULL, 0, NULL, NULL) + 1;
+		char* pszOem = (cchMax > 1) ? (char*)malloc(cchMax) : NULL;
 		if (pszOem)
 		{
 			int nWrite = WideCharToMultiByte(cp, 0, asBuffer, -1, pszOem, cchMax, NULL, NULL);
