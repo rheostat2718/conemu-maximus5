@@ -839,6 +839,12 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	RECT newCon = mp_ConEmu->CalcRect(abNtvdmOff ? CER_CONSOLE_NTVDMOFF : CER_CONSOLE_CUR, rcClient, CER_MAINCLIENT, mp_VCon);
 	_ASSERTE(newCon.right>=MIN_CON_WIDTH && newCon.bottom>=MIN_CON_HEIGHT);
 
+	if (abNtvdmOff && isNtvdm())
+	{
+		LogString(L"NTVDM was stopped (SyncConsole2Window), clearing CES_NTVDM", true);
+		SetProgramStatus(CES_NTVDM, 0);
+	}
+
 	#if 0
 	if (m_ChildGui.hGuiWnd && !m_ChildGui.bGuiExternMode)
 	{
@@ -6176,7 +6182,10 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 		}
 
 		if (!(mn_ProgramStatus & CES_NTVDM))
+		{
+			LogString(L"NTVDM was detected (sst_App16Start), setting CES_NTVDM", true);
 			mn_ProgramStatus |= CES_NTVDM;
+		}
 
 		// -- в cmdStartStop - mb_IgnoreCmdStop устанавливался всегда, поэтому условие убрал
 		//if (gOSVer.dwMajorVersion>5 || (gOSVer.dwMajorVersion==5 && gOSVer.dwMinorVersion>=1))
@@ -6186,19 +6195,28 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 	}
 	else if (sst == sst_App16Stop)
 	{
+		// This comes from CConEmuMain::WinEventProc(EVENT_CONSOLE_END_APPLICATION)
 		DEBUGSTRPROC(L"16 bit application TERMINATED\n");
-		WARNING("Не сбрасывать CES_NTVDM сразу. Еще не отработал возврат размера консоли!");
 
+		// Не сбрасывать CES_NTVDM сразу (при mn_Comspec4Ntvdm!=0).
+		// Еще не отработал возврат размера консоли!
 		if (mn_Comspec4Ntvdm == 0)
 		{
-			SetProgramStatus(mn_ProgramStatus & ~CES_NTVDM);
+			LogString(L"NTVDM was stopped (sst_App16Stop), clearing CES_NTVDM", true);
+			SetProgramStatus(CES_NTVDM, 0/*Flags*/);
+		}
+		else
+		{
+			LogString(L"NTVDM was stopped (sst_App16Stop), CES_NTVDM was left", true);
 		}
 
 		//2010-02-26 убрал. может прийти с задержкой и только создать проблемы
 		//SyncConsole2Window(); // После выхода из 16bit режима хорошо бы отресайзить консоль по размеру GUI
 		// хорошо бы проверить, что 16бит не осталось в других консолях
 		if (!mp_ConEmu->isNtvdm(TRUE))
+		{
 			SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
+		}
 	}
 }
 
@@ -6751,9 +6769,30 @@ DWORD CRealConsole::GetFarPID(bool abPluginRequired/*=false*/)
 	return mn_FarPID;
 }
 
-void CRealConsole::SetProgramStatus(DWORD nNewProgramStatus)
+void CRealConsole::SetProgramStatus(DWORD nDrop, DWORD nSet)
 {
-	mn_ProgramStatus = nNewProgramStatus;
+	#ifdef _DEBUG
+	bool bWasNtvdm = (mn_ProgramStatus & CES_NTVDM)!=0;
+	DWORD nPrevStatus = mn_ProgramStatus;
+	#endif
+
+	if (nDrop == (DWORD)-1)
+	{
+		mn_ProgramStatus = nSet;
+	}
+	else if (nDrop && nSet)
+		mn_ProgramStatus = (mn_ProgramStatus & ~nDrop) | nSet;
+	else if (nDrop)
+		mn_ProgramStatus = (mn_ProgramStatus & ~nDrop);
+	else if (nSet)
+		mn_ProgramStatus = (mn_ProgramStatus | nSet);
+
+	#ifdef _DEBUG
+	if (bWasNtvdm && !(mn_ProgramStatus & CES_NTVDM))
+	{
+		bWasNtvdm = false; // For debug breakpoint
+	}
+	#endif
 }
 
 void CRealConsole::SetFarStatus(DWORD nNewFarStatus)
@@ -6774,12 +6813,12 @@ void CRealConsole::SetFarPID(DWORD nFarPID)
 	if (nFarPID)
 	{
 		if ((mn_ProgramStatus & (CES_FARACTIVE|CES_FARINSTACK)) != (CES_FARACTIVE|CES_FARINSTACK))
-			SetProgramStatus(mn_ProgramStatus|CES_FARACTIVE|CES_FARINSTACK);
+			SetProgramStatus(0, CES_FARACTIVE|CES_FARINSTACK/*Flags*/);
 	}
 	else
 	{
 		if (mn_ProgramStatus & CES_FARACTIVE)
-			SetProgramStatus(mn_ProgramStatus & ~CES_FARACTIVE);
+			SetProgramStatus(CES_FARACTIVE, 0/*Flags*/);
 	}
 
 	mn_FarPID = nFarPID;
@@ -7134,7 +7173,9 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	DWORD nNewProgramStatus = 0;
 
 	if (bIsFar) // сначала - ставим флаг "InStack", т.к. ниже флаг фара может быть сброшен из-за bIsCmd
+	{
 		nNewProgramStatus |= CES_FARINSTACK;
+	}
 
 	if (bIsCmd && bIsFar)  // Если в консоли запущен cmd.exe/tcc.exe - значит (скорее всего?) фар выполняет команду
 	{
@@ -7142,30 +7183,44 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	}
 
 	if (bIsFar)
+	{
 		nNewProgramStatus |= CES_FARACTIVE;
+	}
 
 	if (bIsFar && bIsNtvdm)
+	{
 		// 100627 -- считаем, что фар не запускает 16бит программные без cmd (%comspec%)
 		bIsNtvdm = false;
+	}
 
-	//#ifdef _DEBUG
-	//else
-	//	nNewProgramStatus = nNewProgramStatus;
-	//#endif
 	if (bIsTelnet)
+	{
 		nNewProgramStatus |= CES_TELNETACTIVE;
+	}
 
 	if (bIsNtvdm)  // определяется выше как "(mn_ProgramStatus & CES_NTVDM) == CES_NTVDM"
+	{
+		if (!(mn_ProgramStatus & CES_NTVDM))
+			LogString(L"NTVDM.EXE was detected, setting CES_NTVDM", true);
 		nNewProgramStatus |= CES_NTVDM;
+	}
+	else if (mn_ProgramStatus & CES_NTVDM)
+	{
+		LogString(L"NTVDM.EXE was terminated, clearing CES_NTVDM", true);
+	}
 
 	if (mn_ProgramStatus != nNewProgramStatus)
-		SetProgramStatus(nNewProgramStatus);
+	{
+		SetProgramStatus((DWORD)-1, nNewProgramStatus);
+	}
 
 	mn_ProcessCount = (int)m_Processes.size();
 	mn_ProcessClientCount = nClientCount;
 
 	if (dwFarPID && mn_FarPID != dwFarPID)
+	{
 		AllowSetForegroundWindow(dwFarPID);
+	}
 
 	if (!mn_FarPID && mn_FarPID != dwFarPID)
 	{
@@ -8567,17 +8622,16 @@ BOOL CRealConsole::RecreateProcessStart()
 	{
 		mb_ProcessRestarted = TRUE;
 
-		if ((mn_ProgramStatus & CES_NTVDM) == CES_NTVDM)
-		{
-			SetProgramStatus(0); mb_IgnoreCmdStop = FALSE;
+		bool bWasNTVDM = ((mn_ProgramStatus & CES_NTVDM) == CES_NTVDM);
 
+		SetProgramStatus((DWORD)-1, 0);
+		mb_IgnoreCmdStop = FALSE;
+
+		if (bWasNTVDM)
+		{
 			// При пересоздании сбрасывается 16битный режим, нужно отресайзится
 			if (!PreInit())
 				return FALSE;
-		}
-		else
-		{
-			SetProgramStatus(0); mb_IgnoreCmdStop = FALSE;
 		}
 
 		StopThread(TRUE/*abRecreate*/);
