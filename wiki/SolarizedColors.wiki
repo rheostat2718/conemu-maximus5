@@ -1,0 +1,36 @@
+﻿#summary Solarized, git and settings
+
+[http://ethanschoonover.com/solarized Solarized] is an eye-candy color scheme specially designed
+for console and GUI applications.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SolarizedGit.png" title="ConEmu: Solarized Git">
+
+But this scheme has eight monotones and eight accent colors in opposite
+to the Windows standard palette and many others which has twelve accent colors.
+
+That may be a problem for some console applications which suppose that both
+lower and upper color octets has accented colors. Look at screenshot,
+colors 0..15 show Solarized palette, colors 16..31 show standard Windows colors.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/Settings-Colors.png" title="ConEmu: Settings' Colors">
+
+If your application looks weird, some colors are fade or undistinguished there are two ways.
+
+==Setup your application==
+For example, [http://msysgit.github.io/ MsysGit] uses low color octet (dark green actually)
+for displaying branch names, updated (indexed) files, new diffs' lines and may be smth else.
+Just tell git use ‘`green bold`’ insted.
+
+{{{
+git config --global color.diff.new "green bold"
+git config --global color.status.updated "green bold"
+git config --global color.branch.current "green bold"
+}}}
+
+==Use modified color scheme==
+ConEmu has several Solarized schemes. For example `<Solarized Git>` was optimized
+for vanilla [http://msysgit.github.io/ MsysGit], `<Solarized (Luke Maciak)>` has
+accented colors in lower octet, and so on. Just choose the desired scheme from
+dropdown list box.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/Settings-Colors3.png" title="ConEmu: Settings' Colors">

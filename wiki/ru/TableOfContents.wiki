@@ -105,6 +105,7 @@
       * [PowershellPrompt Powershell Prompt]
       * [PromptAtTheBottom Prompt внизу окна]
       * [ShellWorkDir ShellWorkDir]
+      * [SolarizedColors Solarized схема]
       * [SshAgent ssh agent]
       * [TaskBarBug Task bar bug]
       * [TccInsertOverwrite TCC Вставка/Замена]

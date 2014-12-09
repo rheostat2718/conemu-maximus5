@@ -104,6 +104,7 @@
       * [PowershellPrompt Powershell Prompt]
       * [PromptAtTheBottom Prompt at the bottom]
       * [ShellWorkDir ShellWorkDir]
+      * [SolarizedColors Solarized colors]
       * [SshAgent ssh agent]
       * [TaskBarBug Task bar bug]
       * [TccInsertOverwrite TCC Insert/Overwrite]
