@@ -4863,9 +4863,12 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		else if (lstrcmpni(szArg, L"/DEBUGPID=", 10)==0)
 		{
 			//gnRunMode = RM_SERVER; -- не будем ставить, RM_UNDEFINED будет признаком того, что просто хотят дебаггер
-			gbNoCreateProcess = gpSrv->DbgInfo.bDebugProcess = TRUE;
+
+			gbNoCreateProcess = TRUE;
+			gpSrv->DbgInfo.bDebugProcess = TRUE;
+			gpSrv->DbgInfo.bDebugProcessTree = FALSE;
+
 			wchar_t* pszEnd = NULL;
-			//gpSrv->dwRootProcess = _wtol(szArg+10);
 			gpSrv->dwRootProcess = wcstoul(szArg+10, &pszEnd, 10);
 
 			if (gpSrv->dwRootProcess == 0)
@@ -4877,10 +4880,12 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				return CERR_CARGUMENT;
 			}
 
+			// "Comma" is a mark that debug/dump was requested for a bunch of processes
 			if (pszEnd && (*pszEnd == L','))
 			{
+				gpSrv->DbgInfo.bDebugMultiProcess = TRUE;
 				gpSrv->DbgInfo.pDebugAttachProcesses = new MArray<DWORD>;
-				while (pszEnd && (*pszEnd == L','))
+				while (pszEnd && (*pszEnd == L',') && *(pszEnd+1))
 				{
 					DWORD nPID = wcstoul(pszEnd+1, &pszEnd, 10);
 					if (nPID != 0)
@@ -4890,6 +4895,14 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 		}
 		else if (lstrcmpi(szArg, L"/DEBUGEXE")==0 || lstrcmpi(szArg, L"/DEBUGTREE")==0)
 		{
+			//gnRunMode = RM_SERVER; -- не будем ставить, RM_UNDEFINED будет признаком того, что просто хотят дебаггер
+
+			_ASSERTE(gpSrv->DbgInfo.bDebugProcess==FALSE);
+
+			gbNoCreateProcess = TRUE;
+			gpSrv->DbgInfo.bDebugProcess = TRUE;
+			gpSrv->DbgInfo.bDebugProcessTree = (lstrcmpi(szArg, L"/DEBUGTREE")==0);
+
 			wchar_t* pszLine = lstrdup(GetCommandLineW());
 			if (!pszLine || !*pszLine)
 			{
@@ -4897,8 +4910,6 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
 			}
-
-			gpSrv->DbgInfo.bDebugProcessTree = (lstrcmpi(szArg, L"/DEBUGTREE")==0);
 
 			LPWSTR pszDebugCmd = wcsstr(pszLine, szArg);
 
@@ -4914,29 +4925,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				return CERR_CARGUMENT;
 			}
 
-			/*
-			STARTUPINFO si = {sizeof(si)};
-			PROCESS_INFORMATION pi = {};
-
-			if (!CreateProcess(NULL, pszDebugCmd, NULL, NULL, FALSE,
-				NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE|DEBUG_ONLY_THIS_PROCESS,
-				NULL, NULL, &si, &pi))
-			{
-				_printf("Debug of process was requested, but CreateProcess failed\n");
-				_ASSERTE(FALSE);
-				return CERR_CARGUMENT;
-			}
-			*/
-
-			gbNoCreateProcess = gpSrv->DbgInfo.bDebugProcess = TRUE;
 			gpSrv->DbgInfo.pszDebuggingCmdLine = pszDebugCmd;
-			/*
-			gpSrv->hRootProcess = pi.hProcess;
-			gpSrv->hRootThread = pi.hThread;
-			gpSrv->dwRootProcess = pi.dwProcessId;
-			gpSrv->dwRootThread = pi.dwThreadId;
-			gpSrv->dwRootStartTime = GetTickCount();
-			*/
 
 			break;
 		}
@@ -5272,13 +5261,27 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 
 				int iNewConRc = CERR_RUNNEWCONSOLE;
 
-				DWORD nCmdLen = lstrlen(lsCmdLine);
-				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_NEWCMD)+(nCmdLen*sizeof(wchar_t)));
+				// Query current environment
+				CEnvStrings strs(GetEnvironmentStringsW());
+
+				DWORD nCmdLen = lstrlen(lsCmdLine)+1;
+				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_NEWCMD)+((nCmdLen+strs.mcch_Length)*sizeof(wchar_t)));
 				if (pIn)
 				{
 					pIn->NewCmd.hFromConWnd = ghConWnd;
+
+					// ghConWnd may differs from parent process, but ENV_CONEMUDRAW_VAR_W would be inherited
+					wchar_t* pszDcWnd = GetEnvVar(ENV_CONEMUDRAW_VAR_W);
+					if (pszDcWnd && (pszDcWnd[0] == L'0') && (pszDcWnd[1] == L'x'))
+					{
+						wchar_t* pszEnd = NULL;
+						pIn->NewCmd.hFromDcWnd.u = wcstoul(pszDcWnd+2, &pszEnd, 16);
+					}
+					SafeFree(pszDcWnd);
+
 					GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
-					lstrcpyn(pIn->NewCmd.szCommand, lsCmdLine, nCmdLen+1);
+					pIn->NewCmd.SetCommand(lsCmdLine);
+					pIn->NewCmd.SetEnvStrings(strs.ms_Strings, strs.mcch_Length);
 
 					CESERVER_REQ* pOut = ExecuteGuiCmd(hConEmu, pIn, ghConWnd);
 					if (pOut)
@@ -9620,36 +9623,37 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 		if (gbInExitWaitForKey)
 			gbStopExitWaitForKey = TRUE;
 
-		// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется
+		// Our debugger is running?
 		if (gpSrv->DbgInfo.bDebuggerActive)
 		{
-			if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(gpSrv->dwRootProcess);
+			// pfnDebugActiveProcessStop is useless, because
+			// 1. pfnDebugSetProcessKillOnExit was called already
+			// 2. we can debug more than a one process
 
-			gpSrv->DbgInfo.bDebuggerActive = FALSE;
+			//gpSrv->DbgInfo.bDebuggerActive = FALSE;
 		}
 		else
 		{
+			#if 0
+			wchar_t szTitle[128]; wsprintf(szTitle, L"ConEmuC, PID=%u", GetCurrentProcessId());
+			//MessageBox(NULL, L"CTRL_CLOSE_EVENT in ConEmuC", szTitle, MB_SYSTEMMODAL);
+			DWORD nWait = WaitForSingleObject(ghExitQueryEvent, CLOSE_CONSOLE_TIMEOUT);
+			if (nWait == WAIT_OBJECT_0)
+			{
+				#ifdef _DEBUG
+				OutputDebugString(L"All console processes was terminated\n");
+				#endif
+			}
+			else
+			{
+				// Поскольку мы (сервер) сейчас свалимся, то нужно показать
+				// консольное окно, раз в нем остались какие-то процессы
+				EmergencyShow();
+			}
+			#endif
+
 			// trick to let ConsoleMain2() finish correctly
 			ExitThread(1);
-			//return TRUE;
-
-			//#ifdef _DEBUG
-			//wchar_t szTitle[128]; wsprintf(szTitle, L"ConEmuC, PID=%u", GetCurrentProcessId());
-			////MessageBox(NULL, L"CTRL_CLOSE_EVENT in ConEmuC", szTitle, MB_SYSTEMMODAL);
-			//#endif
-			//DWORD nWait = WaitForSingleObject(ghExitQueryEvent, CLOSE_CONSOLE_TIMEOUT);
-			//if (nWait == WAIT_OBJECT_0)
-			//{
-			//	#ifdef _DEBUG
-			//	OutputDebugString(L"All console processes was terminated\n");
-			//	#endif
-			//}
-			//else
-			//{
-			//	// Поскольку мы (сервер) сейчас свалимся, то нужно показать
-			//	// консольное окно, раз в нем остались какие-то процессы
-			//	EmergencyShow();
-			//}
 		}
 	}
 	else if ((dwCtrlType == CTRL_C_EVENT) || (dwCtrlType == CTRL_BREAK_EVENT))

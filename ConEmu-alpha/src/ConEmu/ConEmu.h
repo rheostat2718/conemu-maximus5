@@ -78,18 +78,6 @@ enum ConEmuWindowMode;
 struct CEFindDlg;
 union CESize;
 
-struct MsgSrvStartedArg
-{
-	HWND  hConWnd;
-	DWORD nSrcPID;
-	DWORD dwKeybLayout;
-	DWORD timeStart;
-	DWORD timeRecv;
-	DWORD timeFin;
-	HWND  hWndDc;
-	HWND  hWndBack;
-};
-
 struct ConsoleInfoArg
 {
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
@@ -512,7 +500,6 @@ class CConEmuMain
 		UINT mn_MsgSetWindowMode;
 		UINT mn_MsgUpdateTitle;
 		//UINT mn_MsgAttach;
-		UINT mn_MsgSrvStarted;
 		//UINT mn_MsgVConTerminated;
 		UINT mn_MsgUpdateScrollInfo;
 		UINT mn_MsgUpdateTabs; LONG mn_ReqMsgUpdateTabs; // = RegisterWindowMessage(CONEMUMSG_UPDATETABS);
@@ -677,7 +664,7 @@ class CConEmuMain
 		void setFocus();
 		bool StartDebugLogConsole();
 		bool StartDebugActiveProcess();
-		bool MemoryDumpActiveProcess();
+		bool MemoryDumpActiveProcess(bool abProcessTree = false);
 		void SyncNtvdm();
 		void SwitchKeyboardLayout(DWORD_PTR dwNewKeybLayout);
 		BOOL TrackMouse();

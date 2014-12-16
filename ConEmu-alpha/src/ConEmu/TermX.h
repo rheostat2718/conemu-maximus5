@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,16 +29,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-void SetConEmuEnvVar(HWND hConEmuWnd);
-void SetConEmuEnvVarChild(HWND hDcWnd, HWND hBackWnd);
-void SetConEmuWorkEnvVar(HMODULE hConEmuCD);
+#include <windows.h>
 
-class CEnvStrings
+struct TermX
 {
-public:
-	LPWSTR ms_Strings;
-	size_t mcch_Length;
-public:
-	CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */);
-	~CEnvStrings();
+	static bool GetSubstiture(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16]);
 };

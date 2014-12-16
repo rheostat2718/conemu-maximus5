@@ -736,7 +736,6 @@ void CConEmuMain::RegisterMessages()
 	mn_MsgUpdateCursorInfo = RegisterMessage("UpdateCursorInfo");
 	mn_MsgSetWindowMode = RegisterMessage("SetWindowMode");
 	mn_MsgUpdateTitle = RegisterMessage("UpdateTitle");
-	mn_MsgSrvStarted = RegisterMessage("SrvStarted"); //RegisterWindowMessage(CONEMUMSG_SRVSTARTED);
 	mn_MsgUpdateScrollInfo = RegisterMessage("UpdateScrollInfo");
 	mn_MsgUpdateTabs = RegisterMessage("UpdateTabs"); mn_ReqMsgUpdateTabs = 0; //RegisterWindowMessage(CONEMUMSG_UPDATETABS);
 	mn_MsgOldCmdVer = RegisterMessage("OldCmdVer"); mb_InShowOldCmdVersion = FALSE;
@@ -4546,7 +4545,7 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				//GetModuleFileName(NULL, pIn->NewCmd.szConEmu, countof(pIn->NewCmd.szConEmu));
 				wcscpy_c(pIn->NewCmd.szConEmu, ms_ConEmuExeDir);
 
-				lstrcpyW(pIn->NewCmd.szCommand, lpszCmd ? lpszCmd : L"");
+				pIn->NewCmd.SetCommand(lpszCmd ? lpszCmd : L"");
 
 				// Task? That may have "/dir" switch in task parameters
 				if (lpszCmd && (*lpszCmd == TaskBracketLeft) && !mb_ConEmuWorkDirArg)
@@ -4782,26 +4781,42 @@ bool CConEmuMain::StartDebugActiveProcess()
 	CVConGuard VCon;
 	CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 	if (!pRCon)
+	{
+		MsgBox(L"There is no active VCon", MB_ICONSTOP, gpConEmu->GetDefaultTitle());
 		return false;
+	}
+
 	DWORD dwPID = pRCon->GetActivePID();
 	if (!dwPID)
+	{
+		MsgBox(L"There is no active process", MB_ICONSTOP, gpConEmu->GetDefaultTitle());
 		return false;
+	}
 
 	bool lbRc = pRCon->StartDebugger(sdt_DebugActiveProcess);
 	return lbRc;
 }
 
-bool CConEmuMain::MemoryDumpActiveProcess()
+bool CConEmuMain::MemoryDumpActiveProcess(bool abProcessTree /*= false*/)
 {
 	CVConGuard VCon;
 	CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 	if (!pRCon)
+	{
+		MsgBox(L"There is no active VCon", MB_ICONSTOP, gpConEmu->GetDefaultTitle());
 		return false;
-	DWORD dwPID = pRCon->GetActivePID();
-	if (!dwPID)
-		return false;
+	}
 
-	bool lbRc = pRCon->StartDebugger(sdt_DumpMemory);
+	DWORD dwPID = pRCon->GetActivePID();
+	if (!dwPID && abProcessTree)
+		dwPID = pRCon->GetServerPID();
+	if (!dwPID)
+	{
+		MsgBox(L"There is no active process", MB_ICONSTOP, gpConEmu->GetDefaultTitle());
+		return false;
+	}
+
+	bool lbRc = pRCon->StartDebugger(abProcessTree ? sdt_DumpMemoryTree : sdt_DumpMemory);
 	return lbRc;
 }
 
@@ -13356,48 +13371,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			{
 				this->UpdateTitle();
 				return 0;
-			}
-			else if (messg == this->mn_MsgSrvStarted)
-			{
-				MsgSrvStartedArg *pArg = (MsgSrvStartedArg*)lParam;
-				HWND hWndDC = NULL, hWndBack = NULL;
-				//111002 - вернуть должен HWND окна отрисовки (дочернее окно ConEmu)
-
-				DWORD nServerPID = pArg->nSrcPID;
-				HWND  hWndCon = pArg->hConWnd;
-				DWORD dwKeybLayout = pArg->dwKeybLayout;
-				pArg->timeRecv = timeGetTime();
-
-				DWORD t1, t2, t3; int iFound = -1;
-
-				hWndDC = CVConGroup::DoSrvCreated(nServerPID, hWndCon, dwKeybLayout, t1, t2, t3, iFound, hWndBack);
-
-				pArg->hWndDc = hWndDC;
-				pArg->hWndBack = hWndBack;
-
-				UNREFERENCED_PARAMETER(dwKeybLayout);
-				UNREFERENCED_PARAMETER(hWndCon);
-
-				pArg->timeFin = timeGetTime();
-				if (hWndDC == NULL)
-				{
-					_ASSERTE(hWndDC!=NULL);
-				}
-				else
-				{
-					#ifdef _DEBUG
-					DWORD nRecvDur = pArg->timeRecv - pArg->timeStart;
-					DWORD nProcDur = pArg->timeFin - pArg->timeRecv;
-
-					#define MSGSTARTED_TIMEOUT 10000
-					if ((nRecvDur > MSGSTARTED_TIMEOUT) || (nProcDur > MSGSTARTED_TIMEOUT))
-					{
-						_ASSERTE((nRecvDur <= MSGSTARTED_TIMEOUT) && (nProcDur <= MSGSTARTED_TIMEOUT));
-					}
-					#endif
-				}
-
-				return (LRESULT)hWndDC;
 			}
 			else if (messg == this->mn_MsgUpdateScrollInfo)
 			{
