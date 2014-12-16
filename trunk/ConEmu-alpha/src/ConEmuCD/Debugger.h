@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,7 @@ struct DebuggerInfo
 	LPWSTR pszDebuggingCmdLine;
 	BOOL   bDebuggerActive;
 	BOOL   bDebuggerRequestDump;
+	BOOL   bUserRequestDump;
 	HANDLE hDebugThread;
 	HANDLE hDebugReady;
 	DWORD  dwDebugThreadId;
@@ -53,6 +54,7 @@ struct DebuggerInfo
 	BOOL  bDebugProcess /*= FALSE*/;
 	BOOL  bDebugProcessTree /*= FALSE*/;
 	int   nDebugDumpProcess /*= 0*/; // 1 - ask user, 2 - minidump, 3 - fulldump
+	BOOL  bDebugMultiProcess; // Debugger was asked for multiple processes simultaneously
 	int   nProcessCount;
 	int   nWaitTreeBreaks;
 

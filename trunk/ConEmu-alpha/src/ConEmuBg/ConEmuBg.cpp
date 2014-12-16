@@ -219,14 +219,6 @@ void WINAPI SetStartupInfoW(void *aInfo)
 }
 
 
-void ReportFail(LPCWSTR asInfo)
-{
-	wchar_t szTitle[128];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuBg, PID=%u", GetCurrentProcessId());
-	MessageBox(NULL, asInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
-}
-
-
 struct DrawInfo
 {
 	LPCWSTR  szVolume, szVolumeRoot, szVolumeSize, szVolumeFree;
@@ -275,6 +267,20 @@ wchar_t* gpszXmlFolder = NULL;
 HANDLE ghXmlNotification = NULL;
 const wchar_t* szDefaultXmlName = L"Background.xml";
 
+void ReportFail(LPCWSTR asInfo)
+{
+	wchar_t szTitle[128];
+	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuBg, PID=%u", GetCurrentProcessId());
+
+	wchar_t* pszErr = lstrmerge(asInfo,
+		L"\n" L"Config value: ", gsXmlConfigFile[0] ? gsXmlConfigFile : szDefaultXmlName,
+		L"\n" L"Expanded: ", gpszXmlFile ? gpszXmlFile : L"<NULL>");
+
+	MessageBox(NULL, pszErr, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+
+	free(pszErr);
+}
+
 bool WasXmlLoaded()
 {
 	return (XmlFile.FileData != NULL);
@@ -293,14 +299,15 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 	if (abUpdateName)
 	{
 		bool lbNameOk = false;
-		int nNameLen = lstrlen(szDefaultXmlName);
+		size_t cchMax = MAX_PATH+1;
 		if (!gpszXmlFile)
-			gpszXmlFile = (wchar_t*)malloc((MAX_PATH+1)*sizeof(*gpszXmlFile));
+			gpszXmlFile = (wchar_t*)malloc(cchMax*sizeof(*gpszXmlFile));
 
 		if (gpszXmlFile)
 		{
 			gpszXmlFile[0] = 0;
-			if (*gsXmlConfigFile && wcschr(gsXmlConfigFile, L'\\'))
+			// If config file has full path or environment variable (supposing full path with %FARHOME% or %ConEmuDir%)
+			if (*gsXmlConfigFile && (wcschr(gsXmlConfigFile, L'\\') || wcschr(gsXmlConfigFile, L'%')))
 			{
 				DWORD nRc = ExpandEnvironmentStrings(gsXmlConfigFile, gpszXmlFile, MAX_PATH+1);
 				if (!nRc || nRc > MAX_PATH)
@@ -313,12 +320,17 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 					lbNameOk = true;
 				}
 			}
-			if (!*gpszXmlFile && GetModuleFileName(ghPluginModule, gpszXmlFile, MAX_PATH-nNameLen))
+			if (!lbNameOk && !*gpszXmlFile)
 			{
-				wchar_t* pszSlash = wcsrchr(gpszXmlFile, L'\\');
-				if (pszSlash) pszSlash++; else pszSlash = gpszXmlFile;
-				_wcscpy_c(pszSlash, nNameLen+1, *gsXmlConfigFile ? gsXmlConfigFile : szDefaultXmlName);
-				lbNameOk = true;
+				LPCWSTR pszXmlName = *gsXmlConfigFile ? gsXmlConfigFile : szDefaultXmlName;
+				int nNameLen = lstrlen(pszXmlName);
+				if (GetModuleFileName(ghPluginModule, gpszXmlFile, MAX_PATH-nNameLen))
+				{
+					wchar_t* pszSlash = wcsrchr(gpszXmlFile, L'\\');
+					if (pszSlash) pszSlash++; else pszSlash = gpszXmlFile;
+					_wcscpy_c(pszSlash, cchMax-(pszSlash-gpszXmlFile), pszXmlName);
+					lbNameOk = true;
+				}
 			}
 		}
 		if (!lbNameOk)
@@ -390,8 +402,7 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 
 			if (!inf.nFileSizeLow)
 			{
-				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s file in the plugin folder is empty", szDefaultXmlName);
-				ReportFail(szErr);
+				ReportFail(L"Configuration xml file is empty");
 			}
 			else if (!XmlFile.FileData)
 			{
@@ -412,12 +423,12 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 				LPBYTE ptrData = (LPBYTE)calloc(inf.nFileSizeLow+1, sizeof(*ptrData));
 				if (!ptrData)
 				{
-					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't allocate %u bytes for %s", inf.nFileSizeLow+1, szDefaultXmlName);
+					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't allocate %u bytes for xml configuration", inf.nFileSizeLow+1);
 					ReportFail(szErr);
 				}
 				else if (!ReadFile(hFile, ptrData, inf.nFileSizeLow, &dwRead, NULL) || (dwRead != inf.nFileSizeLow))
 				{
-					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't read %u bytes from %s", inf.nFileSizeLow+1, szDefaultXmlName);
+					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't read %u bytes from xml configuration file", inf.nFileSizeLow);
 					ReportFail(szErr);
 				}
 				else
@@ -441,8 +452,7 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 			// В первый раз - на отсутствие файла ругнемся
 			if (!XmlFile.FileData)
 			{
-				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"%s not found in the plugin folder", szDefaultXmlName);
-				ReportFail(szErr);
+				ReportFail(L"Configuration xml file was not found in the plugin folder");
 			}
 		}
 	}

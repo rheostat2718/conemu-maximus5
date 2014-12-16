@@ -101,6 +101,12 @@ struct RConStartArgs
 	
 	RecreateActionParm aRecreate; // Информационно и для CRecreateDlg
 
+	// Internal for GUI tab creation
+	#ifndef CONEMU_MINIMAL
+	DWORD cchEnvStrings;
+	wchar_t* pszEnvStrings;
+	#endif
+
 	RConStartArgs();
 	~RConStartArgs();
 
@@ -115,6 +121,9 @@ struct RConStartArgs
 	HANDLE CheckUserToken();
 	wchar_t* CreateCommandLine(bool abForTasks = false) const;
 	bool AssignFrom(const struct RConStartArgs* args, bool abConcat = false);
+	bool AssignUserArgs(const struct RConStartArgs* args, bool abConcat = false);
+	bool HasInheritedArgs() const;
+	bool AssignInheritedArgs(const struct RConStartArgs* args, bool abConcat = false);
 #endif
 
 	#if 0

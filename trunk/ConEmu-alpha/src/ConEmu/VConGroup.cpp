@@ -3203,31 +3203,27 @@ void CVConGroup::OnUpdateProcessDisplay(HWND hInfo)
 }
 
 // Возвращает HWND окна отрисовки
-HWND CVConGroup::DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const DWORD dwKeybLayout, DWORD& t1, DWORD& t2, DWORD& t3, int& iFound, HWND& hWndBack)
+HWND CVConGroup::DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const DWORD dwKeybLayout, DWORD& t1, DWORD& t2, int& iFound, CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 {
 	HWND hWndDC = NULL;
 
 	//gpConEmu->WinEventProc(NULL, EVENT_CONSOLE_START_APPLICATION, hWndCon, (LONG)nServerPID, 0, 0, 0);
+	CVConGuard VCon;
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
-		CVirtualConsole* pVCon = gp_VCon[i];
-		CVConGuard guard(pVCon);
-		CRealConsole* pRCon;
-		if (pVCon && ((pRCon = pVCon->RCon()) != NULL) && pRCon->isServerCreated())
+		if (!gp_VCon[i] || !VCon.Attach(gp_VCon[i]))
+			continue;
+		CRealConsole* pRCon = VCon->RCon();
+		if (pRCon && pRCon->isServerCreated())
 		{
 			if (pRCon->GetServerPID() == nServerPID)
 			{
 				iFound = i;
 				t1 = timeGetTime();
 
-				pRCon->OnServerStarted(hWndCon, nServerPID, dwKeybLayout);
+				hWndDC = pRCon->OnServerStarted(hWndCon, nServerPID, dwKeybLayout, pRet);
 
 				t2 = timeGetTime();
-
-				hWndDC = pVCon->GetView();
-				hWndBack = pVCon->GetBack();
-
-				t3 = timeGetTime();
 				break;
 			}
 		}
@@ -3470,7 +3466,7 @@ int CVConGroup::GetConCount(bool bNoDetached /*= false*/)
 	return nCount;
 }
 
-BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet)
+BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pStartStop, CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 {
 	CVConGuard VCon;
 	bool bFound = false;
@@ -3686,6 +3682,31 @@ bool CVConGroup::GetVConBySrvPID(DWORD anServerPID, DWORD anMonitorTID, CVConGua
 	Assert(bFound && "Appropriate RCon was not found");
 
 	return bFound;
+}
+
+bool CVConGroup::GetVConByHWND(HWND hConWnd, HWND hDcWnd, CVConGuard* pVCon /*= NULL*/)
+{
+	struct impl
+	{
+		HWND hConWnd, hDcWnd;
+		CVConGuard* rpVCon;
+		bool bFound;
+		static bool FindCon(CVirtualConsole* pVCon, LPARAM lParam)
+		{
+			impl* i = (impl*)lParam;
+			if ((i->hConWnd && (pVCon->RCon()->ConWnd() == i->hConWnd))
+				|| (i->hDcWnd && (pVCon->GetView() == i->hDcWnd)))
+			{
+				i->bFound = true;
+				if (i->rpVCon)
+					i->rpVCon->Attach(pVCon);
+				return false;
+			}
+			return true;
+		};
+	} Impl = {hConWnd, hDcWnd, pVCon};
+	EnumVCon(evf_All, impl::FindCon, (LPARAM)&Impl);
+	return Impl.bFound;
 }
 
 // Вернуть общее количество процессов по всем консолям

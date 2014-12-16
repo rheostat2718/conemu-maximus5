@@ -68,6 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetColorPalette.h"
 #include "Status.h"
 #include "TabBar.h"
+#include "TermX.h"
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
@@ -859,11 +860,10 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 
 // Вызывается при аттаче (после детача), или после RunAs?
 // sbi передавать не ссылкой, а копией, ибо та же память
-BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET* pRet)
+BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 {
 	DWORD dwErr = 0;
 	HANDLE hProcess = NULL;
-	_ASSERTE(pRet!=NULL);
 	DEBUGTEST(bool bAdmStateChanged = ((rStartStop->bUserIsAdmin!=FALSE) != (m_Args.RunAsAdministrator==crb_On)));
 	m_Args.RunAsAdministrator = rStartStop->bUserIsAdmin ? crb_On : crb_Off;
 
@@ -988,7 +988,9 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 		lsbi.srWindow.Top = 0; lsbi.srWindow.Bottom = rcCon.bottom - 1;
 	}
 
-	mp_RBuf->InitSBI(&lsbi);
+	mp_RBuf->InitSBI(&lsbi, bCurBufHeight);
+
+	_ASSERTE(isBufferHeight() == bCurBufHeight);
 
 	//// Событие "изменения" консоли //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
 	//swprintf_c(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_MainSrv_PID);
@@ -1008,8 +1010,6 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	SetHwnd(ahConWnd);
 	ProcessUpdate(&anConemuC_PID, 1);
 
-	CreateLogFiles();
-
 	// Инициализировать имена пайпов, событий, мэппингов и т.п.
 	InitNames();
 
@@ -1022,34 +1022,62 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	#endif
 
 	// Prepare result
-	pRet->Info.bWasBufferHeight = bCurBufHeight;
-	pRet->Info.hWnd = ghWnd;
-	pRet->Info.hWndDc = mp_VCon->GetView();
-	pRet->Info.hWndBack = mp_VCon->GetBack();
-	pRet->Info.dwPID = GetCurrentProcessId();
-	pRet->Info.nBufferHeight = bCurBufHeight ? lsbi.dwSize.Y : 0;
-	pRet->Info.nWidth = rcCon.right;
-	pRet->Info.nHeight = rcCon.bottom;
-	pRet->Info.dwMainSrvPID = anConemuC_PID;
-	pRet->Info.dwAltSrvPID = 0;
-	pRet->Info.bNeedLangChange = TRUE;
-	TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
-	pRet->Info.NewConsoleLang = mp_ConEmu->GetActiveKeyboardLayout();
-	// Установить шрифт для консоли
-	pRet->Font.cbSize = sizeof(pRet->Font);
-	pRet->Font.inSizeY = gpSet->ConsoleFont.lfHeight;
-	pRet->Font.inSizeX = gpSet->ConsoleFont.lfWidth;
-	lstrcpy(pRet->Font.sFontName, gpSet->ConsoleFont.lfFaceName);
-	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
-	mp_ConEmu->GetAnsiLogInfo(pRet->AnsiLog);
-	// Return GUI info, let it be in one place
-	mp_ConEmu->GetGuiInfo(pRet->GuiMapping);
+	QueryStartStopRet(pRet);
+
 	// Передернуть нить MonitorThread
 	SetMonitorThreadEvent();
 
-	_ASSERTE((pRet->Info.nBufferHeight == 0) || ((int)pRet->Info.nBufferHeight > (rStartStop->sbi.srWindow.Bottom-rStartStop->sbi.srWindow.Top)));
+	_ASSERTE((pRet.Info.nBufferHeight == 0) || ((int)pRet.Info.nBufferHeight > (rStartStop->sbi.srWindow.Bottom-rStartStop->sbi.srWindow.Top)));
 
 	return TRUE;
+}
+
+void CRealConsole::QueryStartStopRet(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
+{
+	BOOL bCurBufHeight = isBufferHeight();
+	pRet.Info.bWasBufferHeight = bCurBufHeight;
+	pRet.Info.hWnd = ghWnd;
+	pRet.Info.hWndDc = mp_VCon->GetView();
+	pRet.Info.hWndBack = mp_VCon->GetBack();
+	pRet.Info.dwPID = GetCurrentProcessId();
+	pRet.Info.nBufferHeight = bCurBufHeight ? mp_ABuf->GetBufferHeight() : 0;
+	pRet.Info.nWidth = TextWidth();
+	pRet.Info.nHeight = TextHeight();
+	pRet.Info.dwMainSrvPID = GetServerPID(true);
+	pRet.Info.dwAltSrvPID = 0;
+
+	pRet.Info.bNeedLangChange = TRUE;
+	TODO("Проверить на x64, не будет ли проблем с 0xFFFFFFFFFFFFFFFFFFFFF");
+	pRet.Info.NewConsoleLang = mp_ConEmu->GetActiveKeyboardLayout();
+
+	// Установить шрифт для консоли
+	pRet.Font.cbSize = sizeof(pRet.Font);
+	pRet.Font.inSizeY = gpSet->ConsoleFont.lfHeight;
+	pRet.Font.inSizeX = gpSet->ConsoleFont.lfWidth;
+	lstrcpy(pRet.Font.sFontName, gpSet->ConsoleFont.lfFaceName);
+
+	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	mp_ConEmu->GetAnsiLogInfo(pRet.AnsiLog);
+
+	// Return GUI info, let it be in one place
+	mp_ConEmu->GetGuiInfo(pRet.GuiMapping);
+
+	// Environment strings (inherited from parent console)
+	_ASSERTE(pRet.cchEnvStrings == 0 && pRet.pszStrings == NULL);
+	if (m_Args.cchEnvStrings && m_Args.pszEnvStrings)
+	{
+		pRet.pszStrings = (wchar_t*)malloc(m_Args.cchEnvStrings*sizeof(wchar_t));
+		if (pRet.pszStrings)
+		{
+			memmove(pRet.pszStrings, m_Args.pszEnvStrings, m_Args.cchEnvStrings*sizeof(wchar_t));
+			pRet.cchEnvStrings = m_Args.cchEnvStrings;
+		}
+	}
+	else
+	{
+		pRet.cchEnvStrings = 0;
+		pRet.pszStrings = NULL;
+	}
 }
 
 #if 0
@@ -3326,10 +3354,35 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 	switch (sdt)
 	{
 	case sdt_DumpMemory:
+	case sdt_DumpMemoryTree:
 		{
 			si.dwFlags |= STARTF_USESHOWWINDOW;
 			si.wShowWindow = SW_SHOWNORMAL;
-			_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%i /DUMP", pszServer, dwPID);
+
+			if (sdt == sdt_DumpMemory)
+			{
+				_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%i /DUMP", pszServer, dwPID);
+			}
+			else
+			{
+				// В режиме "Дамп дерева процессов" нас интересует и дамп текущего процесса ConEmu.exe
+				CEStr lsPID(lstrdup(_itow(GetCurrentProcessId(), szExe, 10)));
+				ConProcess* pPrc = NULL;
+				int nCount = GetProcesses(&pPrc, false/*ClientOnly*/);
+				if (!pPrc || (nCount < 1))
+				{
+					MsgBox(L"GetProcesses fails", MB_OKCANCEL|MB_SYSTEMMODAL, L"StartDebugLogConsole");
+					return false;
+				}
+				for (int i = 0; i < nCount; i++)
+				{
+					lstrmerge(&lsPID.ms_Arg, lsPID.ms_Arg ? L"," : NULL, _itow(pPrc[i].ProcessID, szExe, 10));
+					if (lstrlen(lsPID.ms_Arg) > MAX_PATH)
+						break;
+				}
+				_wsprintf(szExe, SKIPLEN(countof(szExe)) L"\"%s\" /DEBUGPID=%s /DUMP", pszServer, lsPID.ms_Arg);
+				free(pPrc);
+			}
 		} break;
 	case sdt_DebugActiveProcess:
 		{
@@ -3347,14 +3400,14 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 		return false;
 	}
 
-#ifdef _DEBUG
+	#ifdef _DEBUG
 	// Для дампа - сразу, чтобы не тормозить процесс
-	if (sdt != sdt_DumpMemory)
+	if ((sdt != sdt_DumpMemory) && (sdt != sdt_DumpMemoryTree))
 	{
 		if (MsgBox(szExe, MB_OKCANCEL|MB_SYSTEMMODAL, L"StartDebugLogConsole") != IDOK)
 			return false;
 	}
-#endif
+	#endif
 
 	// CreateOrRunAs needs to know how "original" process was started...
 	RConStartArgs Args;
@@ -3819,16 +3872,8 @@ BOOL CRealConsole::StartProcess()
 
 	if (m_Args.RunAsAdministrator != crb_On)
 	{
-		CreateLogFiles();
-		//// Событие "изменения" консоль //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
-		//swprintf_c(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_MainSrv_PID);
-		//mh_CursorChanged = CreateEvent ( NULL, FALSE, FALSE, ms_ConEmuC_Pipe );
 		// Инициализировать имена пайпов, событий, мэппингов и т.п.
 		InitNames();
-		//// Имя пайпа для управления ConEmuC
-		//swprintf_c(ms_ConEmuC_Pipe, CESERVERPIPENAME, L".", mn_MainSrv_PID);
-		//swprintf_c(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_MainSrv_PID);
-		//MCHKHEAP
 	}
 
 wrap:
@@ -5210,6 +5255,7 @@ void CRealConsole::StopSignal()
 		m_Processes.clear();
 		SPRC.Unlock();
 		mn_ProcessCount = 0;
+		mn_ProcessClientCount = 0;
 	}
 
 	mn_TermEventTick = GetTickCount();
@@ -6013,69 +6059,26 @@ void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, con
 	}
 
 	// Эмуляция терминала?
-	static struct xTermKey {
-		UINT vk;
-		wchar_t szKeys[16];
-	} xTermKeys[] = {
-		// From vim "term.c"
-		{VK_UP,		L"\033O*A"},
-		{VK_DOWN,	L"\033O*B"},
-		{VK_RIGHT,	L"\033O*C"},
-		{VK_LEFT,	L"\033O*D"},
-		{VK_F1,		L"\033[11;*~"},
-		{VK_F2,		L"\033[12;*~"},
-		{VK_F3,		L"\033[13;*~"},
-		{VK_F4,		L"\033[14;*~"},
-		{VK_F5,		L"\033[15;*~"},
-		{VK_F6,		L"\033[17;*~"},
-		{VK_F7,		L"\033[18;*~"},
-		{VK_F8,		L"\033[19;*~"},
-		{VK_F9,		L"\033[20;*~"},
-		{VK_F10,	L"\033[21;*~"},
-		{VK_F11,	L"\033[23;*~"},
-		{VK_F12,	L"\033[24;*~"},
-		{VK_INSERT,	L"\033[2;*~"},
-		{VK_HOME,	L"\033[1;*H"},
-		{VK_END,	L"\033[1;*F"},
-		{VK_PRIOR,	L"\033[5;*~"},
-		{VK_NEXT,	L"\033[6;*~"},
-		{VK_DELETE,	L"\033[3;*~"}, // ???
-		{0}
-	};
-	xTermKey x = {0};
+	wchar_t szSubstKeys[16] = L"";
+
 	if (m_Term.Term)
 	{
-		// Processed keys?
+		// Till now, this may be ‘te_xterm’ or ‘te_win32’ only
+		_ASSERTE(m_Term.Term == te_xterm);
 
-		for (int i = 0; xTermKeys[i].vk; i++)
+		if (!isProcessExist(m_Term.nCallTermPID))
 		{
-			if (xTermKeys[i].vk == r.Event.KeyEvent.wVirtualKeyCode)
-			{
-				x = xTermKeys[i];
-				break;
-			}
+			StartStopXTerm(0, false/*te_win32*/);
 		}
-
-		if (x.vk)
+		// Processed xterm keys?
+		else if (TermX::GetSubstiture(r.Event.KeyEvent, szSubstKeys))
 		{
-			if (!isProcessExist(m_Term.nCallTermPID))
+			if (r.Event.KeyEvent.bKeyDown && szSubstKeys[0])
 			{
-				StartStopXTerm(0,false/*te_win32*/);
+				// only key presses are sent to terminal
+				PostString(szSubstKeys, _tcslen(szSubstKeys));
 			}
-			else if (!r.Event.KeyEvent.bKeyDown)
-			{
-				// only key pressed are sent to terminal
-				return;
-			}
-			else
-			{
-				PostString(x.szKeys, _tcslen(x.szKeys));
-				//pszChars = x.szKeys;
-				//r.Event.KeyEvent.wVirtualScanCode = 0;
-				//r.Event.KeyEvent.wVirtualKeyCode = x.szKeys[0]; // VK_ESCAPE?
-				//r.Event.KeyEvent.uChar.UnicodeChar = x.szKeys[0];
-				return;
-			}
+			return;
 		}
 	}
 
@@ -6222,19 +6225,19 @@ void CRealConsole::OnDosAppStartStop(enum StartStopType sst, DWORD anPID)
 
 // Это приходит из ConEmuC.exe::ServerInitGuiTab (CECMD_SRVSTARTSTOP)
 // здесь сервер только "запускается" и еще не готов принимать команды
-void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout)
+HWND CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout, CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 {
 	if (!this)
 	{
 		_ASSERTE(this);
-		return;
+		return NULL;
 	}
 	if ((ahConWnd == NULL) || (hConWnd && (ahConWnd != hConWnd)) || (anServerPID != mn_MainSrv_PID))
 	{
 		MBoxAssert(ahConWnd!=NULL);
 		MBoxAssert((hConWnd==NULL) || (ahConWnd==hConWnd));
 		MBoxAssert(anServerPID==mn_MainSrv_PID);
-		return;
+		return NULL;
 	}
 
 	// Окошко консоли скорее всего еще не инициализировано
@@ -6246,6 +6249,11 @@ void CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 
 	// Само разберется
 	OnConsoleKeyboardLayout(dwKeybLayout);
+
+	// Return required info
+	QueryStartStopRet(pRet);
+
+	return mp_VCon->GetView();
 }
 
 //void CRealConsole::OnWinEvent(DWORD anEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
@@ -6397,6 +6405,16 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
 	if (isDetached())
 	{
 		return 1; // Чтобы GUI не захлопнулся
+	}
+
+	// Сервер еще не отработал запуск?
+	if (!mn_ProcessCount && mh_MainSrv)
+	{
+		DWORD nWait = WaitForSingleObject(mh_MainSrv, 0);
+		if (nWait == WAIT_TIMEOUT)
+		{
+			return 1; // Чтобы GUI не закрылся
+		}
 	}
 
 	// Если хотят узнать только количество процессов
@@ -6593,6 +6611,8 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"ServerPID=%u was set for VCon%i", anMainSrvPID, mp_VCon->Index()+1);
 		gpConEmu->LogString(szInfo);
+		// RCon logging
+		CreateLogFiles();
 	}
 
 	DEBUGTEST(isServerAlive());
@@ -8138,7 +8158,10 @@ void CRealConsole::OnFocus(BOOL abFocused)
 
 void CRealConsole::CreateLogFiles()
 {
-	if (!m_UseLogs) return;
+	if (!m_UseLogs || !mn_MainSrv_PID)
+	{
+		return;
+	}
 
 	if (!mp_Log)
 	{

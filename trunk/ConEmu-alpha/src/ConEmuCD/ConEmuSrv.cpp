@@ -1519,12 +1519,14 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		}
 	}
 
-	// Остановить отладчик, иначе отлаживаемый процесс тоже схлопнется
+	// Our debugger is running?
 	if (gpSrv->DbgInfo.bDebuggerActive)
 	{
-		if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(gpSrv->dwRootProcess);
+		// pfnDebugActiveProcessStop is useless, because
+		// 1. pfnDebugSetProcessKillOnExit was called already
+		// 2. we can debug more than a one process
 
-		gpSrv->DbgInfo.bDebuggerActive = FALSE;
+		//gpSrv->DbgInfo.bDebuggerActive = FALSE;
 	}
 
 
@@ -2410,6 +2412,7 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 	{
 		gpSrv->ConnectInfo.nStartTick = GetTickCount();
 
+		ExecuteFreeResult(pOut);
 		pOut = ExecuteCmd(szServerPipe, pIn, EXECUTE_CONNECT_GUI_CALL_TIMEOUT, ghConWnd);
 		gpSrv->ConnectInfo.bCallRc = (pOut->DataSize() >= sizeof(CESERVER_REQ_STARTSTOPRET));
 
@@ -2467,6 +2470,20 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 
 	_ASSERTE(pStartStopRet->GuiMapping.cbSize == sizeof(pStartStopRet->GuiMapping));
 
+	// Environment initialization
+	if (pStartStopRet->cchEnvStrings && pStartStopRet->szStrings[0])
+	{
+		// There is also SetEnvironmentStrings but not documented
+		LPCWSTR pszName = pStartStopRet->szStrings;
+		while (*pszName)
+		{
+			LPCWSTR pszValue = pszName + lstrlen(pszName) + 1;
+			SetEnvironmentVariable(pszName, pszValue);
+			pszName = pszValue + lstrlen(pszValue) + 1;
+		}
+	}
+
+	// Also calls SetConEmuEnvVar
 	SetConEmuWindows(pStartStopRet->Info.hWnd, pStartStopRet->Info.hWndDc, pStartStopRet->Info.hWndBack);
 	_ASSERTE(gnConEmuPID == pStartStopRet->Info.dwPID);
 	gnConEmuPID = pStartStopRet->Info.dwPID;

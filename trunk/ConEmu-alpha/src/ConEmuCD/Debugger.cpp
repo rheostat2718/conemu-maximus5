@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013 Maximus5
+Copyright (c) 2013-2014 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ShlObj.h>
 #pragma warning(default: 4091)
 #include "../ConEmu/version.h"
+#include "../common/CmdArg.h"
 #include "../common/MMap.h"
 #include "../common/TokenHelper.h"
 #include "../common/WFiles.h"
@@ -58,7 +59,9 @@ DWORD WINAPI DebugThread(LPVOID lpvParam);
 void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR asConfirmText = NULL, BOOL bTreeBreak = FALSE);
 void GenerateTreeDebugBreak(DWORD nExcludePID);
 
-#define CE_TREE_TEMPLATE WIN3264TEST(L"ConEmuC",L"ConEmuC64") L": DebuggerPID=%u RootPID=%u Count=%i"
+#define CE_CONEMUC_NAME_W WIN3264TEST(L"ConEmuC[32]",L"ConEmuC[64]")
+#define CE_CONEMUC_NAME_A WIN3264TEST("ConEmuC[32]","ConEmuC[64]")
+#define CE_TREE_TEMPLATE CE_CONEMUC_NAME_W L": DebuggerPID=%u RootPID=%u Count=%i"
 
 
 void PrintDebugInfo()
@@ -71,12 +74,43 @@ void UpdateDebuggerTitle()
 {
 	if (!gpSrv->DbgInfo.bDebugProcessTree)
 		return;
+
 	wchar_t szTitle[100];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) CE_TREE_TEMPLATE,
+	LPCWSTR pszTemplate = CE_TREE_TEMPLATE;
+	if (GetConsoleTitle(szTitle, sizeof(szTitle)))
+	{
+		// Заголовок уже установлен, возможно из другого процесса,
+		// при одновременном дампе/отладке нескольких процессов разных битностей
+		if ((wcsncmp(szTitle, pszTemplate, 8) == 0) && wcsstr(szTitle, L"DebuggerPID"))
+			return;
+	}
+
+	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) pszTemplate,
 		GetCurrentProcessId(), gpSrv->dwRootProcess, gpSrv->DbgInfo.nProcessCount);
 	SetTitle(szTitle);
 }
 
+int ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL*/)
+{
+	if (gpSrv->DbgInfo.nDebugDumpProcess == 2 || gpSrv->DbgInfo.nDebugDumpProcess == 3)
+		return gpSrv->DbgInfo.nDebugDumpProcess;
+
+	// ANSI is used because of asConfirmText created as ANSI
+	char szTitleA[64];
+	_wsprintfA(szTitleA, SKIPLEN(countof(szTitleA)) CE_CONEMUC_NAME_A " Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
+
+	int nBtn = MessageBoxA(NULL, asConfirmText ? asConfirmText : "Create minidump (<No> - fulldump)?", szTitleA, MB_YESNOCANCEL|MB_SYSTEMMODAL);
+
+	switch (nBtn)
+	{
+	case IDYES:
+		return 2; // mini dump
+	case IDNO:
+		return 3; // full dump
+	default:
+		return 0;
+	}
+}
 
 int RunDebugger()
 {
@@ -119,25 +153,10 @@ int RunDebugger()
 	PrintVersion();
 	#ifdef SHOW_DEBUG_STARTED_MSGBOX
 	wchar_t szInfo[128];
-	StringCchPrintf(szInfo, countof(szInfo), L"Attaching debugger...\nConEmuC PID = %u\nDebug PID = %u",
+	StringCchPrintf(szInfo, countof(szInfo), L"Attaching debugger...\n" CE_CONEMUC_NAME_W " PID = %u\nDebug PID = %u",
 	                GetCurrentProcessId(), gpSrv->dwRootProcess);
-	MessageBox(GetConEmuHWND(2), szInfo, L"ConEmuC.Debugger", 0);
+	MessageBox(GetConEmuHWND(2), szInfo, CE_CONEMUC_NAME_W L".Debugger", 0);
 	#endif
-
-	//if (!DebugActiveProcess(gpSrv->dwRootProcess))
-	//{
-	//	DWORD dwErr = GetLastError();
-	//	_printf("Can't start debugger! ErrCode=0x%08X\n", dwErr);
-	//	return CERR_CANTSTARTDEBUGGER;
-	//}
-	//// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
-	//// к закрытию "отлаживаемой" программы
-	//pfnDebugActiveProcessStop = (FDebugActiveProcessStop)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugActiveProcessStop");
-	//pfnDebugSetProcessKillOnExit = (FDebugSetProcessKillOnExit)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugSetProcessKillOnExit");
-	//if (pfnDebugSetProcessKillOnExit)
-	//	pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/);
-	//gpSrv->DbgInfo.bDebuggerActive = TRUE;
-	//PrintDebugInfo();
 
 	if (gpSrv->DbgInfo.pszDebuggingCmdLine == NULL)
 	{
@@ -150,8 +169,31 @@ int RunDebugger()
 		_ASSERTE(!gpSrv->DbgInfo.bDebuggerActive);
 	}
 
+	gpszRunCmd = (wchar_t*)calloc(1,sizeof(*gpszRunCmd));
+	if (!gpszRunCmd)
+	{
+		_printf("Can't allocate 1 wchar!\n");
+		return CERR_NOTENOUGHMEM1;
+	}
+
 	_ASSERTE(((gpSrv->hRootProcess!=NULL) || (gpSrv->DbgInfo.pszDebuggingCmdLine!=NULL)) && "Process handle must be opened");
 
+	// Если просили сделать дамп нескольких процессов - нужно сразу уточнить его тип
+	if (gpSrv->DbgInfo.bDebugMultiProcess && (gpSrv->DbgInfo.nDebugDumpProcess == 1))
+	{
+		// 2 - minidump, 3 - fulldump
+		int nConfirmDumpType = ConfirmDumpType(gpSrv->dwRootProcess, NULL);
+		if (nConfirmDumpType < 2)
+		{
+			// Отмена
+			return CERR_CANTSTARTDEBUGGER;
+		}
+		gpSrv->DbgInfo.nDebugDumpProcess = nConfirmDumpType;
+	}
+
+	// gpSrv->DbgInfo.bDebuggerActive must be set in DebugThread
+
+	// Run DebugThread
 	gpSrv->DbgInfo.hDebugReady = CreateEvent(NULL, FALSE, FALSE, NULL);
 	// Перенес обработку отладочных событий в отдельную нить, чтобы случайно не заблокироваться с главной
 	gpSrv->DbgInfo.hDebugThread = CreateThread(NULL, 0, DebugThread, NULL, 0, &gpSrv->DbgInfo.dwDebugThreadId);
@@ -165,16 +207,7 @@ int RunDebugger()
 		return nExit;
 	}
 
-	gpszRunCmd = (wchar_t*)calloc(1,2);
-
-	if (!gpszRunCmd)
-	{
-		_printf("Can't allocate 1 wchar!\n");
-		return CERR_NOTENOUGHMEM1;
-	}
-
-	gpszRunCmd[0] = 0;
-	gpSrv->DbgInfo.bDebuggerActive = TRUE;
+	// gpSrv->DbgInfo.bDebuggerActive was set in DebugThread
 
 	// And wait for debugger thread completion
 	_ASSERTE(gnRunMode == RM_UNDEFINED);
@@ -187,7 +220,7 @@ int RunDebugger()
 
 HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
 {
-	_ASSERTE(gpSrv->DbgInfo.bDebuggerActive);
+	_ASSERTE(gpSrv->DbgInfo.bDebugProcess);
 
 	HANDLE hProcess = NULL;
 	DWORD  nErrCode = 0;
@@ -237,7 +270,7 @@ HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
 			if (nPID != gpSrv->dwRootProcess)
 			{
 				// Запомнить дескриптор
-				_ASSERTE(pi.nPID == nPID); // уже должен быть
+				_ASSERTE(pi.nPID == nPID || pi.nPID == 0); // уже должен быть
 				pi.nPID = nPID;
 				pi.hProcess = hProcess;
 				gpSrv->DbgInfo.pDebugTreeProcesses->Set(nPID, pi);
@@ -336,9 +369,26 @@ void AttachConHost(DWORD nConHostPID)
 DWORD WINAPI DebugThread(LPVOID lpvParam)
 {
 	DWORD nWait = WAIT_TIMEOUT;
-	//DWORD nExternalExitCode = -1;
 	wchar_t szInfo[1024];
+	wchar_t szPID[20];
+	int iAttachedCount = 0;
+	CEStr szOtherBitPids, szOtherDebugCmd;
 
+	// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
+	// к закрытию "отлаживаемой" программы
+	pfnDebugActiveProcessStop = (FDebugActiveProcessStop)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugActiveProcessStop");
+	pfnDebugSetProcessKillOnExit = (FDebugSetProcessKillOnExit)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugSetProcessKillOnExit");
+
+	// Affect GetProcessHandleForDebug
+	gpSrv->DbgInfo.bDebuggerActive = TRUE;
+
+	// If dump was requested
+	if (gpSrv->DbgInfo.nDebugDumpProcess)
+	{
+		gpSrv->DbgInfo.bUserRequestDump = TRUE;
+	}
+
+	// "/DEBUGEXE" or "/DEBUGTREE"
 	if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
 	{
 		STARTUPINFO si = {sizeof(si)};
@@ -362,9 +412,8 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 				_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
 
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't start debugging process. ErrCode=0x%08X\n", dwErr);
-			lstrcpyn(szInfo+lstrlen(szInfo), gpSrv->DbgInfo.pszDebuggingCmdLine, 400);
-			wcscat_c(szInfo, L"\n");
-			_wprintf(szInfo);
+			CEStr lsInfo(lstrmerge(szInfo, gpSrv->DbgInfo.pszDebuggingCmdLine, L"\n"));
+			_wprintf(lsInfo);
 			return CERR_CANTSTARTDEBUGGER;
 		}
 
@@ -373,18 +422,22 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		gpSrv->dwRootProcess = pi.dwProcessId;
 		gpSrv->dwRootThread = pi.dwThreadId;
 		gpSrv->dwRootStartTime = GetTickCount();
+
+		// Let's know that at least one process is debugging
+		iAttachedCount++;
 	}
 
 
 	/* ************************* */
-	int iDbgIdx = 0, iAttachedCount = 0;
+	int iDbgIdx = 0;
+	bool bSetKillOnExit = true;
+
 	while (true)
 	{
 		HANDLE hDbgProcess = NULL;
 		DWORD  nDbgProcessID = 0;
 
-		bool bFirstPID = ((iDbgIdx++) == 0);
-		if (bFirstPID)
+		if ((iDbgIdx++) == 0)
 		{
 			hDbgProcess = gpSrv->hRootProcess;
 			nDbgProcessID = gpSrv->dwRootProcess;
@@ -403,7 +456,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 				continue;
 			}
 		}
-	
+
 
 		_ASSERTE(hDbgProcess!=NULL && "Process handle must be opened");
 
@@ -414,84 +467,29 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 			int nBits = GetProcessBits(nDbgProcessID, hDbgProcess);
 			if ((nBits == 32 || nBits == 64) && (nBits != WIN3264TEST(32,64)))
 			{
+				// If /DEBUGEXE or /DEBUGTREE was used
 				if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
 				{
 					_printf("Bitness of ConEmuC and debugging program does not match\n");
-					if (bFirstPID)
-						return CERR_CANTSTARTDEBUGGER;
-					else
-						continue;
-				}
-
-				wchar_t szExe[MAX_PATH+16];
-				wchar_t szCmdLine[MAX_PATH*2];
-				if (GetModuleFileName(NULL, szExe, countof(szExe)-16))
-				{
-					wchar_t* pszName = (wchar_t*)PointToName(szExe);
-					_wcscpy_c(pszName, 16, (nBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe");
-					_wsprintf(szCmdLine, SKIPLEN(countof(szCmdLine))
-						L"\"%s\" /DEBUGPID=%u %s", szExe, nDbgProcessID,
-						(gpSrv->DbgInfo.nDebugDumpProcess == 1) ? L"/DUMP" :
-						(gpSrv->DbgInfo.nDebugDumpProcess == 2) ? L"/MINIDUMP" :
-						(gpSrv->DbgInfo.nDebugDumpProcess == 3) ? L"/FULLDUMP" : L"");
-
-					STARTUPINFO si = {sizeof(si)};
-					PROCESS_INFORMATION pi = {};
-					if (CreateProcess(NULL, szCmdLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
-					{
-						// Ждать НЕ будем, сразу на выход
-
-						//HANDLE hEvents[2] = {pi.hProcess, ghExitQueryEvent};
-						//nWait = WaitForMultipleObjects(countof(hEvents), hEvents, FALSE, INFINITE);
-						//if (nWait == WAIT_OBJECT_0)
-						//{
-						//	//GetExitCodeProcess(pi.hProcess, &nExternalExitCode);
-						//	nExternalExitCode = 0;
-						//}
-
-						//CloseHandle(pi.hProcess);
-						//CloseHandle(pi.hThread);
-
-						//if (nExternalExitCode == 0)
-						//{
-						//	goto done;
-						//}
-
-						// Может там еще процессы в списке на дамп?
-						continue;
-					}
-					else
-					{
-						DWORD dwErr = GetLastError();
-						_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't start external debugger '%s'. ErrCode=0x%08X\n",
-							szCmdLine, dwErr);
-						_wprintf(szInfo);
-						if (bFirstPID)
-							return CERR_CANTSTARTDEBUGGER;
-						else
-							continue;
-					}
-				}
-
-
-				wchar_t szProc[64]; szProc[0] = 0;
-				PROCESSENTRY32 pi = {sizeof(pi)};
-				if (GetProcessInfo(nDbgProcessID, &pi))
-					_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
-
-				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Bits are incompatible. Can't debug '%s' PID=%i\n",
-					szProc[0] ? szProc : L"not found", nDbgProcessID);
-				_wprintf(szInfo);
-				if (bFirstPID)
-					return CERR_CANTSTARTDEBUGGER;
-				else
 					continue;
+				}
+
+				// Добавить процесс в список для запуска альтернативного дебаггера соотвествующей битности
+				// Force trailing "," even if only one PID specified ( --> bDebugMultiProcess = TRUE)
+				lstrmerge(&szOtherBitPids.ms_Arg, _itow(nDbgProcessID, szPID, 10), L",");
+
+				// Может там еще процессы в списке на дамп?
+				continue;
 			}
 		}
 
 		if (gpSrv->DbgInfo.pszDebuggingCmdLine == NULL)
 		{
-			if (!DebugActiveProcess(nDbgProcessID))
+			if (DebugActiveProcess(nDbgProcessID))
+			{
+				iAttachedCount++;
+			}
+			else
 			{
 				DWORD dwErr = GetLastError();
 
@@ -503,31 +501,99 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't attach debugger to '%s' PID=%i. ErrCode=0x%08X\n",
 					szProc[0] ? szProc : L"not found", nDbgProcessID, dwErr);
 				_wprintf(szInfo);
-				return CERR_CANTSTARTDEBUGGER;
+
+				// Может другие подцепить получится?
+				continue;
 			}
 		}
 
-		iAttachedCount++;
+		// To avoid debugged processes killing
+		if (bSetKillOnExit && pfnDebugSetProcessKillOnExit)
+		{
+			// affects all current and future debuggees connected to the calling thread
+			if (pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/))
+			{
+				bSetKillOnExit = false;
+			}
+		}
 	}
 
+	// Different bitness, need to start appropriate debugger
+	if (szOtherBitPids.ms_Arg && *szOtherBitPids.ms_Arg)
+	{
+		wchar_t szExe[MAX_PATH+5], *pszName;
+		if (!GetModuleFileName(NULL, szExe, MAX_PATH))
+		{
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GetModuleFileName(NULL) failed. ErrCode=0x%08X\n", GetLastError());
+			_wprintf(szInfo);
+		}
+		else if (!(pszName = (wchar_t*)PointToName(szExe)))
+		{
+			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GetModuleFileName(NULL) returns invalid path\n%s\n", szExe);
+			_wprintf(szInfo);
+		}
+		else
+		{
+			*pszName = 0;
+			// Reverted to current bitness
+			wcscat_c(szExe, WIN3264TEST(L"ConEmuC64.exe", L"ConEmuC.exe"));
+
+			szOtherDebugCmd.Attach(lstrmerge(L"\"", szExe, L"\" "
+				L"/DEBUGPID=", szOtherBitPids.ms_Arg,
+				(gpSrv->DbgInfo.nDebugDumpProcess == 1) ? L" /DUMP" :
+				(gpSrv->DbgInfo.nDebugDumpProcess == 2) ? L" /MINIDUMP" :
+				(gpSrv->DbgInfo.nDebugDumpProcess == 3) ? L" /FULLDUMP" : L""));
+
+			STARTUPINFO si = {sizeof(si)};
+			PROCESS_INFORMATION pi = {};
+			if (CreateProcess(NULL, szOtherDebugCmd.ms_Arg, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
+			{
+				// Ждать не будем
+			}
+			else
+			{
+				DWORD dwErr = GetLastError();
+				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't start external debugger, ErrCode=0x%08X\n", dwErr);
+				CEStr lsInfo(lstrmerge(szInfo, szOtherDebugCmd, L"\n"));
+				_wprintf(lsInfo);
+			}
+		}
+	}
+
+	//_ASSERTE(FALSE && "Continue to dump");
+
+	// If neither /DEBUG[EXE|TREE] nor /DEBUGPID was not succeeded
 	if (iAttachedCount == 0)
 	{
+		gpSrv->DbgInfo.bDebuggerActive = FALSE;
 		return CERR_CANTSTARTDEBUGGER;
 	}
+	else if (iAttachedCount > 1)
+	{
+		_ASSERTE(gpSrv->DbgInfo.bDebugMultiProcess && "Already must be set from arguments parser");
+		gpSrv->DbgInfo.bDebugMultiProcess = TRUE;
+	}
+
+	if (gpSrv->DbgInfo.bUserRequestDump)
+	{
+		gpSrv->DbgInfo.nWaitTreeBreaks = iAttachedCount;
+	}
+
 	/* **************** */
 
-	// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
-	// к закрытию "отлаживаемой" программы
-	pfnDebugActiveProcessStop = (FDebugActiveProcessStop)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugActiveProcessStop");
-	pfnDebugSetProcessKillOnExit = (FDebugSetProcessKillOnExit)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugSetProcessKillOnExit");
+	// To avoid debugged processes killing (JIC, must be called already)
+	if (bSetKillOnExit && pfnDebugSetProcessKillOnExit)
+	{
+		// affects all current and future debuggees connected to the calling thread
+		if (pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/))
+		{
+			bSetKillOnExit = false;
+		}
+	}
 
-	if (pfnDebugSetProcessKillOnExit)
-		pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/);
-
-	gpSrv->DbgInfo.bDebuggerActive = TRUE;
 	PrintDebugInfo();
 	SetEvent(gpSrv->DbgInfo.hDebugReady);
-	
+
 
 	while (nWait == WAIT_TIMEOUT)
 	{
@@ -550,6 +616,26 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	return 0;
 }
 
+bool IsDumpMulti()
+{
+	if (gpSrv->DbgInfo.bDebugProcessTree || gpSrv->DbgInfo.bDebugMultiProcess)
+		return true;
+	return false;
+}
+
+wchar_t* FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull)
+{
+	//TODO: Добавить в DmpFile имя без пути? <exename>-<ver>-<pid>-<yymmddhhmmss>.[m]dmp
+	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
+	SYSTEMTIME lt = {}; GetLocalTime(&lt);
+	_wsprintf(DmpFile, SKIPLEN(cchDmpMax) L"%s-%02u%02u%02u%s-%u-%02u%02u%02u%02u%02u%02u.%s",
+		bTrap ? L"Trap" : L"CEDump",
+		MVV_1, MVV_2, MVV_3, szMinor, dwProcessId,
+		lt.wYear%100, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond,
+		bFull ? L"dmp" : L"mdmp");
+	return DmpFile;
+}
+
 bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchMaxDmpFile)
 {
 	bool bRc = false;
@@ -557,10 +643,10 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 	HMODULE hCOMDLG32 = NULL;
 	typedef BOOL (WINAPI* GetSaveFileName_t)(LPOPENFILENAMEW lpofn);
 	GetSaveFileName_t _GetSaveFileName = NULL;
+	bool bDumpMulti = IsDumpMulti();
 
-	if (!gpSrv->DbgInfo.bDebugProcessTree)
+	if (!bDumpMulti)
 	{
-		
 		if (!hCOMDLG32)
 			hCOMDLG32 = LoadLibraryW(L"COMDLG32.dll");
 		if (hCOMDLG32 && !_GetSaveFileName)
@@ -592,7 +678,7 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 		}
 	}
 
-	if (gpSrv->DbgInfo.bDebugProcessTree || !_GetSaveFileName)
+	if (bDumpMulti || !_GetSaveFileName)
 	{
 		HRESULT dwErr = SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0/*SHGFP_TYPE_CURRENT*/, dmpfile);
 		if (FAILED(dwErr))
@@ -610,15 +696,13 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 		{
 			if (*dmpfile && dmpfile[lstrlen(dmpfile)-1] != L'\\')
 				_wcscat_c(dmpfile, cchMaxDmpFile, L"\\");
-			
+
 			_wcscat_c(dmpfile, cchMaxDmpFile, L"ConEmuTrap");
 			CreateDirectory(dmpfile, NULL);
 
 			INT_PTR nLen = lstrlen(dmpfile);
-			wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
-			_wsprintf(dmpfile+nLen, SKIPLEN(cchMaxDmpFile-nLen) L"\\Trap-%02u%02u%02u%s-%u.%s",
-				MVV_1, MVV_2, MVV_3,szMinor, dwProcessId,
-				bFull ? L"dmp" : L"mdmp");
+			dmpfile[nLen++] = L'\\'; dmpfile[nLen] = 0;
+			FormatDumpName(dmpfile+nLen, cchMaxDmpFile-nLen, dwProcessId, gpSrv->DbgInfo.bDebuggerRequestDump, bFull);
 
 			bRc = true;
 		}
@@ -630,35 +714,21 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 // gpSrv->dwRootProcess
 void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR asConfirmText /*= NULL*/, BOOL bTreeBreak /*= FALSE*/)
 {
-	MINIDUMP_TYPE dumpType = MiniDumpNormal;
-	
-	char szTitleA[64];
-	_wsprintfA(szTitleA, SKIPLEN(countof(szTitleA)) "ConEmuC Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
-	wchar_t szTitle[64];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
-
-	int nBtn = 0;
-	
-	if (gpSrv->DbgInfo.nDebugDumpProcess == 2 || gpSrv->DbgInfo.nDebugDumpProcess == 3)
-		nBtn = (gpSrv->DbgInfo.nDebugDumpProcess == 2) ? IDYES : IDNO;
-	else
-		nBtn = MessageBoxA(NULL, asConfirmText ? asConfirmText : "Create minidump (<No> - fulldump)?", szTitleA, MB_YESNOCANCEL|MB_SYSTEMMODAL);
-
-	switch (nBtn)
+	// 2 - minidump, 3 - fulldump
+	int nConfirmDumpType = ConfirmDumpType(dwProcessId, asConfirmText);
+	if (nConfirmDumpType < 2)
 	{
-	case IDYES:
-		break;
-	case IDNO:
-		dumpType = MiniDumpWithFullMemory;
-		break;
-	default:
+		// Отмена
 		return;
 	}
 
+	MINIDUMP_TYPE dumpType = (nConfirmDumpType == 2) ? MiniDumpNormal : MiniDumpWithFullMemory;
+
 	// Т.к. в режиме "ProcessTree" мы пишем пачку дампов - спрашивать тип дампа будем один раз.
-	if (gpSrv->DbgInfo.bDebugProcessTree && (gpSrv->DbgInfo.nDebugDumpProcess <= 1))
+	if (IsDumpMulti() // several processes were attached
+		&& (gpSrv->DbgInfo.nDebugDumpProcess <= 1)) // 2 - minidump, 3 - fulldump
 	{
-		gpSrv->DbgInfo.nDebugDumpProcess = (nBtn == IDNO) ? 3 : 2;
+		gpSrv->DbgInfo.nDebugDumpProcess = nConfirmDumpType;
 	}
 
 	if (bTreeBreak)
@@ -671,7 +741,11 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 	//HMODULE hDbghelp = NULL;
 	wchar_t szErrInfo[MAX_PATH*2];
 
-	wchar_t dmpfile[MAX_PATH]; dmpfile[0] = 0;
+	wchar_t szTitle[64];
+	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) CE_CONEMUC_NAME_W L" Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
+
+	wchar_t dmpfile[MAX_PATH] = L""; dmpfile[0] = 0;
+	FormatDumpName(dmpfile, countof(dmpfile), dwProcessId, false, (dumpType == MiniDumpWithFullMemory));
 
 	typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
 	        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
@@ -684,7 +758,7 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 		{
 			CloseHandle(hDmpFile); hDmpFile = NULL;
 		}
-		
+
 		hDmpFile = CreateFileW(dmpfile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH, NULL);
 
 		if (hDmpFile == INVALID_HANDLE_VALUE)
@@ -763,7 +837,8 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 			}
 			else
 			{
-				_printf("\nMiniDumpWriteDump succeeded\n");
+				int iLeft = (gpSrv->DbgInfo.nWaitTreeBreaks > 0) ? (gpSrv->DbgInfo.nWaitTreeBreaks - 1) : 0;
+				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"\nMiniDumpWriteDump succeeded, %i left\n", iLeft);
 				bDumpSucceeded = true;
 			}
 
@@ -777,38 +852,18 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 		CloseHandle(hDmpFile);
 	}
 
-	//if (hDbghelp)
-	//{
-	//	FreeLibrary(hDbghelp);
-	//}
-
-	//if (hCOMDLG32)
-	//{
-	//	FreeLibrary(hCOMDLG32);
-	//}
 
 	// В Win2k еще не было функции "отцепиться от процесса"
-	if (bDumpSucceeded && gpSrv->DbgInfo.nDebugDumpProcess && !gpSrv->DbgInfo.bDebugProcessTree && (gnOsVer >= 0x0501))
+	if ((gnOsVer >= 0x0501)
+		&& bDumpSucceeded && gpSrv->DbgInfo.bUserRequestDump
+		// И все дампы были созданы
+		&& (gpSrv->DbgInfo.nWaitTreeBreaks <= 1)
+		// И это не ключи /DEBUGEXE или /DEBUGTREE
+		&& !gpSrv->DbgInfo.pszDebuggingCmdLine
+		)
 	{
-		// Дело сделали, закрываемся
+		// По завершении создания дампов - выйти
 		SetTerminateEvent(ste_WriteMiniDump);
-
-		//if (pfnGetConsoleProcessList)
-		//{
-		//	DWORD nCurCount = 0;
-		//	DWORD nConsolePids[128] = {};
-		//	nCurCount = pfnGetConsoleProcessList(nConsolePids, countof(nConsolePids));
-
-		//	// Но только если в консоли кроме нас никого нет
-		//	if (nCurCount == 0)
-		//	{
-		//		PostMessage(ghConWnd, WM_CLOSE, 0, 0);
-		//	}
-		//	else
-		//	{
-		//		SetTerminateEvent();
-		//	}
-		//}
 	}
 }
 
@@ -827,7 +882,7 @@ void ProcessDebugEvent()
 	//typedef BOOL (WINAPI* GetSaveFileName_t)(LPOPENFILENAMEW lpofn);
 	//GetSaveFileName_t _GetSaveFileName = NULL;
 	DWORD dwContinueStatus = DBG_EXCEPTION_NOT_HANDLED;
-	
+
 
 	if (lbEvent)
 	{
@@ -859,13 +914,13 @@ void ProcessDebugEvent()
 					bFirstExitThreadEvent = true;
 					if (gpSrv->DbgInfo.nDebugDumpProcess == 0)
 					{
-						_printf("ConEmuC: Press Ctrl+Break to create minidump of debugging process\n");
+						_printf(CE_CONEMUC_NAME_A ": Press Ctrl+Break to create minidump of debugging process\n");
 					}
-					else
-					{
-						// Сразу сделать дамп и выйти
-						HandlerRoutine(CTRL_BREAK_EVENT);
-					}
+					//else // -- wrong way, HandlerRoutine will/may fails on first attach
+					//{
+					//	// Сразу сделать дамп и выйти
+					//	HandlerRoutine(CTRL_BREAK_EVENT);
+					//}
 				}
 
 				if (evt.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT)
@@ -896,6 +951,7 @@ void ProcessDebugEvent()
 
 				break;
 			}
+
 			case LOAD_DLL_DEBUG_EVENT:
 			case UNLOAD_DLL_DEBUG_EVENT:
 			{
@@ -973,24 +1029,13 @@ void ProcessDebugEvent()
 				_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText)) "{%i.%i} %s%s%s\n", evt.dwProcessId,evt.dwThreadId, pszName, szBase, szFile);
 				_printf(szDbgText);
 				break;
-			}
+			} // LOAD_DLL_DEBUG_EVENT, UNLOAD_DLL_DEBUG_EVENT
+
 			case EXCEPTION_DEBUG_EVENT:
 				//1 Reports an exception debugging event. The value of u.Exception specifies an EXCEPTION_DEBUG_INFO structure.
 			{
 				lbNonContinuable = (evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE)==EXCEPTION_NONCONTINUABLE;
 
-				//static bool bAttachEventRecieved = false;
-				//if (!bAttachEventRecieved)
-				//{
-				//	bAttachEventRecieved = true;
-				//	StringCchPrintfA(szDbgText, countof(szDbgText),"{%i.%i} Debugger attached successfully. (0x%08X address 0x%08X flags 0x%08X%s)\n",
-				//		evt.dwProcessId,evt.dwThreadId,
-				//		evt.u.Exception.ExceptionRecord.ExceptionCode,
-				//		evt.u.Exception.ExceptionRecord.ExceptionAddress,
-				//		evt.u.Exception.ExceptionRecord.ExceptionFlags,
-				//		(evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE) ? "(EXCEPTION_NONCONTINUABLE)" : "");
-				//}
-				//else
 				switch (evt.u.Exception.ExceptionRecord.ExceptionCode)
 				{
 					case EXCEPTION_ACCESS_VIOLATION: // The thread tried to read from or write to a virtual address for which it does not have the appropriate access.
@@ -1025,50 +1070,52 @@ void ProcessDebugEvent()
 					default:
 					{
 						char szName[32]; LPCSTR pszName; pszName = szName;
-#define EXCASE(s) case s: pszName = #s; break
+						#define EXCASE(s) case s: pszName = #s; break
 
-							switch(evt.u.Exception.ExceptionRecord.ExceptionCode)
-							{
-									EXCASE(EXCEPTION_ARRAY_BOUNDS_EXCEEDED); // The thread tried to access an array element that is out of bounds and the underlying hardware supports bounds checking.
-									EXCASE(EXCEPTION_BREAKPOINT); // A breakpoint was encountered.
-									EXCASE(EXCEPTION_DATATYPE_MISALIGNMENT); // The thread tried to read or write data that is misaligned on hardware that does not provide alignment. For example, 16-bit values must be aligned on 2-byte boundaries; 32-bit values on 4-byte boundaries, and so on.
-									EXCASE(EXCEPTION_FLT_DENORMAL_OPERAND); // One of the operands in a floating-point operation is denormal. A denormal value is one that is too small to represent as a standard floating-point value.
-									EXCASE(EXCEPTION_FLT_DIVIDE_BY_ZERO); // The thread tried to divide a floating-point value by a floating-point divisor of zero.
-									EXCASE(EXCEPTION_FLT_INEXACT_RESULT); // The result of a floating-point operation cannot be represented exactly as a decimal fraction.
-									EXCASE(EXCEPTION_FLT_INVALID_OPERATION); // This exception represents any floating-point exception not included in this list.
-									EXCASE(EXCEPTION_FLT_OVERFLOW); // The exponent of a floating-point operation is greater than the magnitude allowed by the corresponding type.
-									EXCASE(EXCEPTION_FLT_STACK_CHECK); // The stack overflowed or underflowed as the result of a floating-point operation.
-									EXCASE(EXCEPTION_FLT_UNDERFLOW); // The exponent of a floating-point operation is less than the magnitude allowed by the corresponding type.
-									EXCASE(EXCEPTION_ILLEGAL_INSTRUCTION); // The thread tried to execute an invalid instruction.
-									EXCASE(EXCEPTION_IN_PAGE_ERROR); // The thread tried to access a page that was not present, and the system was unable to load the page. For example, this exception might occur if a network connection is lost while running a program over the network.
-									EXCASE(EXCEPTION_INT_DIVIDE_BY_ZERO); // The thread tried to divide an integer value by an integer divisor of zero.
-									EXCASE(EXCEPTION_INT_OVERFLOW); // The result of an integer operation caused a carry out of the most significant bit of the result.
-									EXCASE(EXCEPTION_INVALID_DISPOSITION); // An exception handler returned an invalid disposition to the exception dispatcher. Programmers using a high-level language such as C should never encounter this exception.
-									EXCASE(EXCEPTION_NONCONTINUABLE_EXCEPTION); // The thread tried to continue execution after a noncontinuable exception occurred.
-									EXCASE(EXCEPTION_PRIV_INSTRUCTION); // The thread tried to execute an instruction whose operation is not allowed in the current machine mode.
-									EXCASE(EXCEPTION_SINGLE_STEP); // A trace trap or other single-instruction mechanism signaled that one instruction has been executed.
-									EXCASE(EXCEPTION_STACK_OVERFLOW); // The thread used up its stack.
-								default:
-									_wsprintfA(szName, SKIPLEN(countof(szName))
-									           "Exception 0x%08X", evt.u.Exception.ExceptionRecord.ExceptionCode);
-							}
-
-							_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText))
-							           "{%i.%i} %s at " WIN3264TEST("0x%08X","0x%08X%08X") " flags 0x%08X%s FC=%u\n",
-							           evt.dwProcessId,evt.dwThreadId,
-							           pszName,
-							           WIN3264WSPRINT((DWORD_PTR)evt.u.Exception.ExceptionRecord.ExceptionAddress),
-							           evt.u.Exception.ExceptionRecord.ExceptionFlags,
-							           (evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE)
-							           ? "(EXCEPTION_NONCONTINUABLE)" : "",
-							           evt.u.Exception.dwFirstChance);
-							_printf(szDbgText);
+						switch(evt.u.Exception.ExceptionRecord.ExceptionCode)
+						{
+								EXCASE(EXCEPTION_ARRAY_BOUNDS_EXCEEDED); // The thread tried to access an array element that is out of bounds and the underlying hardware supports bounds checking.
+								EXCASE(EXCEPTION_BREAKPOINT); // A breakpoint was encountered.
+								EXCASE(EXCEPTION_DATATYPE_MISALIGNMENT); // The thread tried to read or write data that is misaligned on hardware that does not provide alignment. For example, 16-bit values must be aligned on 2-byte boundaries; 32-bit values on 4-byte boundaries, and so on.
+								EXCASE(EXCEPTION_FLT_DENORMAL_OPERAND); // One of the operands in a floating-point operation is denormal. A denormal value is one that is too small to represent as a standard floating-point value.
+								EXCASE(EXCEPTION_FLT_DIVIDE_BY_ZERO); // The thread tried to divide a floating-point value by a floating-point divisor of zero.
+								EXCASE(EXCEPTION_FLT_INEXACT_RESULT); // The result of a floating-point operation cannot be represented exactly as a decimal fraction.
+								EXCASE(EXCEPTION_FLT_INVALID_OPERATION); // This exception represents any floating-point exception not included in this list.
+								EXCASE(EXCEPTION_FLT_OVERFLOW); // The exponent of a floating-point operation is greater than the magnitude allowed by the corresponding type.
+								EXCASE(EXCEPTION_FLT_STACK_CHECK); // The stack overflowed or underflowed as the result of a floating-point operation.
+								EXCASE(EXCEPTION_FLT_UNDERFLOW); // The exponent of a floating-point operation is less than the magnitude allowed by the corresponding type.
+								EXCASE(EXCEPTION_ILLEGAL_INSTRUCTION); // The thread tried to execute an invalid instruction.
+								EXCASE(EXCEPTION_IN_PAGE_ERROR); // The thread tried to access a page that was not present, and the system was unable to load the page. For example, this exception might occur if a network connection is lost while running a program over the network.
+								EXCASE(EXCEPTION_INT_DIVIDE_BY_ZERO); // The thread tried to divide an integer value by an integer divisor of zero.
+								EXCASE(EXCEPTION_INT_OVERFLOW); // The result of an integer operation caused a carry out of the most significant bit of the result.
+								EXCASE(EXCEPTION_INVALID_DISPOSITION); // An exception handler returned an invalid disposition to the exception dispatcher. Programmers using a high-level language such as C should never encounter this exception.
+								EXCASE(EXCEPTION_NONCONTINUABLE_EXCEPTION); // The thread tried to continue execution after a noncontinuable exception occurred.
+								EXCASE(EXCEPTION_PRIV_INSTRUCTION); // The thread tried to execute an instruction whose operation is not allowed in the current machine mode.
+								EXCASE(EXCEPTION_SINGLE_STEP); // A trace trap or other single-instruction mechanism signaled that one instruction has been executed.
+								EXCASE(EXCEPTION_STACK_OVERFLOW); // The thread used up its stack.
+							default:
+								_wsprintfA(szName, SKIPLEN(countof(szName))
+									        "Exception 0x%08X", evt.u.Exception.ExceptionRecord.ExceptionCode);
 						}
+
+						_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText))
+							        "{%i.%i} %s at " WIN3264TEST("0x%08X","0x%08X%08X") " flags 0x%08X%s FC=%u\n",
+							        evt.dwProcessId,evt.dwThreadId,
+							        pszName,
+							        WIN3264WSPRINT((DWORD_PTR)evt.u.Exception.ExceptionRecord.ExceptionAddress),
+							        evt.u.Exception.ExceptionRecord.ExceptionFlags,
+							        (evt.u.Exception.ExceptionRecord.ExceptionFlags&EXCEPTION_NONCONTINUABLE)
+							        ? "(EXCEPTION_NONCONTINUABLE)" : "",
+							        evt.u.Exception.dwFirstChance);
+						_printf(szDbgText);
+					}
 				}
 
 				BOOL bDumpOnBreakPoint = gpSrv->DbgInfo.bDebuggerRequestDump;
 
-				if (gpSrv->DbgInfo.bDebugProcessTree
+				// Если просили цеплять к отладчику создаваемые дочерние процессы
+				// или сделать дампы пачки процессов сразу
+				if (IsDumpMulti()
 					&& (!lbNonContinuable && (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT)))
 				{
 					// Когда отладчик цепляется к процессу в первый раз - возникает EXCEPTION_BREAKPOINT
@@ -1080,6 +1127,8 @@ void ProcessDebugEvent()
 						{
 							pi.bWasBreak = TRUE;
 							gpSrv->DbgInfo.pDebugTreeProcesses->Set(evt.dwProcessId, pi);
+							if (gpSrv->DbgInfo.bUserRequestDump)
+								bDumpOnBreakPoint = TRUE;
 						}
 						else
 						{
@@ -1091,7 +1140,7 @@ void ProcessDebugEvent()
 				if (gpSrv->DbgInfo.bDebuggerRequestDump
 					|| (!lbNonContinuable && !gpSrv->DbgInfo.bDebugProcessTree
 						&& (evt.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_BREAKPOINT))
-					|| (gpSrv->DbgInfo.bDebugProcessTree
+					|| (IsDumpMulti()
 						&& ((evt.u.Exception.ExceptionRecord.ExceptionCode>=0xC0000000)
 							|| (bDumpOnBreakPoint && (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT))))
 					)
@@ -1130,11 +1179,11 @@ void ProcessDebugEvent()
 					}
 					StringCchCatA(szConfirm, countof(szConfirm), "\nCreate minidump (<No> - fulldump)?");
 
-					//GenerateTreeDebugBreak
+					//bGenerateTreeBreak -> GenerateTreeDebugBreak(evt.dwProcessId)
 
 					WriteMiniDump(evt.dwProcessId, evt.dwThreadId, &evt.u.Exception.ExceptionRecord, szConfirm, bGenerateTreeBreak);
 
-					if (gpSrv->DbgInfo.bDebugProcessTree && (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT))
+					if (IsDumpMulti() && (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT))
 					{
 						if (gpSrv->DbgInfo.nWaitTreeBreaks > 0)
 							gpSrv->DbgInfo.nWaitTreeBreaks--;
@@ -1145,8 +1194,10 @@ void ProcessDebugEvent()
 				{
 					dwContinueStatus = DBG_CONTINUE;
 				}
-			}
-			break;
+
+				break;
+			} // EXCEPTION_DEBUG_EVENT
+
 			case OUTPUT_DEBUG_STRING_EVENT:
 				//8 Reports an output-debugging-string debugging event. The value of u.DebugString specifies an OUTPUT_DEBUG_STRING_INFO structure.
 			{
@@ -1209,16 +1260,17 @@ void ProcessDebugEvent()
 						_printf("\n");
 				}
 				#endif
-				
+
 				dwContinueStatus = DBG_CONTINUE;
-			}
-			break;
-		}
+
+				break;
+			} // OUTPUT_DEBUG_STRING_EVENT
+		} //switch (evt.dwDebugEventCode)
 
 		// Продолжить отлаживаемый процесс
 		ContinueDebugEvent(evt.dwProcessId, evt.dwThreadId, dwContinueStatus);
 	}
-	
+
 	//if (hCOMDLG32)
 	//	FreeLibrary(hCOMDLG32);
 }
@@ -1230,7 +1282,7 @@ void GenerateMiniDumpFromCtrlBreak()
 	DebugBreakProcess_t DebugBreakProcess_f = (DebugBreakProcess_t)(hKernel ? GetProcAddress(hKernel, "DebugBreakProcess") : NULL);
 	if (DebugBreakProcess_f)
 	{
-		_printf("ConEmuC: Sending DebugBreak event to process\n");
+		_printf(CE_CONEMUC_NAME_A ": Sending DebugBreak event to process\n");
 		gpSrv->DbgInfo.bDebuggerRequestDump = TRUE;
 		DWORD dwErr = 0;
 		_ASSERTE(gpSrv->hRootProcess!=NULL);
@@ -1238,14 +1290,14 @@ void GenerateMiniDumpFromCtrlBreak()
 		{
 			dwErr = GetLastError();
 			//_ASSERTE(FALSE && dwErr==0);
-			_printf("ConEmuC: Sending DebugBreak event failed, Code=x%X, WriteMiniDump on the fly\n", dwErr);
+			_printf(CE_CONEMUC_NAME_A ": Sending DebugBreak event failed, Code=x%X, WriteMiniDump on the fly\n", dwErr);
 			gpSrv->DbgInfo.bDebuggerRequestDump = FALSE;
 			WriteMiniDump(gpSrv->dwRootProcess, gpSrv->dwRootThread, NULL);
 		}
 	}
 	else
 	{
-		_printf("ConEmuC: DebugBreakProcess not found in kernel32.dll\n");
+		_printf(CE_CONEMUC_NAME_A ": DebugBreakProcess not found in kernel32.dll\n");
 	}
 }
 
@@ -1259,7 +1311,7 @@ void GenerateTreeDebugBreak(DWORD nExcludePID)
 	DebugBreakProcess_t DebugBreakProcess_f = (DebugBreakProcess_t)(hKernel ? GetProcAddress(hKernel, "DebugBreakProcess") : NULL);
 	if (DebugBreakProcess_f)
 	{
-		_printf("ConEmuC: Sending DebugBreak event to processes:");
+		_printf(CE_CONEMUC_NAME_A ": Sending DebugBreak event to processes:");
 
 		DWORD nPID = 0; HANDLE hProcess = NULL;
 
@@ -1298,6 +1350,6 @@ void GenerateTreeDebugBreak(DWORD nExcludePID)
 	}
 	else
 	{
-		_printf("ConEmuC: DebugBreakProcess not found in kernel32.dll\n");
+		_printf(CE_CONEMUC_NAME_A ": DebugBreakProcess not found in kernel32.dll\n");
 	}
 }
