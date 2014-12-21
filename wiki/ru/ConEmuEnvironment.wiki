@@ -59,6 +59,7 @@ ConEmuC /export[=CON|ALL] [Var1 [Var2 [...]]]
   VarN        - may contains one trailing/middle asterisk (sort of filemask support).
   /export     - export to all processes of current console and ConEmu GUI
   /export=CON - export to all processes of current console only
+  /export=GUI - export to ConEmu GUI only
   /export=ALL - export to all processes of opened tabs and ConEmu GUI
 }}}
 

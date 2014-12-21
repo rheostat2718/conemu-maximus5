@@ -7,7 +7,7 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
-==Build 141219==
+==Build 141221==
   * Issue 1846: Script is not supported here (5909d9f regression).
   * Split options set in the ‘Create new console’ dialog not take precedence of any specified in the Task itself (first task's command actually).
   * CmdInit.cmd: Print Windows version while initializing.

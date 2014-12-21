@@ -1,0 +1,2 @@
+﻿
+[ConEmuEnvironment#Export_variables How to export environment variables].
