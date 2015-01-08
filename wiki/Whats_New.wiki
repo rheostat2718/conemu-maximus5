@@ -14,6 +14,9 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
   * DefaultTasks. Use registry's ‘App Paths’ while searching for exe files.
   * Let Git bash use git.ico and try to find it using registry.
   * In some cases ConEmuHk was not properly deinitialized within cygwin/msys.
+  * Turn on ‘Activate split on mouse hover’ for new config by default.
+  * "ConEmuC /export" was unexpectedly exporting to all tabs.
+  * Change finalization sequence of ConEmuHk.
 
 
 ==Build 141217==

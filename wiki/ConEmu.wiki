@@ -29,7 +29,7 @@ Please, vote for Far Manager on [http://forum.ru-board.com/topic.cgi?forum=5&top
 </wiki:comment>
 
 
-<font size="3">*Disclaimer*</font>
+==Disclaimer==
 
 !ConEmu is not a shell, so it does not provide "shell features" like tab-completion, command history and others.
 !ConEmu is advanced console window where you can run any shell of your choice. However, some of these features
@@ -46,7 +46,7 @@ and [http://github.com/lzybkr/PSReadLine PSReadLine] or [http://powertab.codeple
 <a href="https://code.google.com/p/conemu-maximus5/wiki/Source?tm=4"><img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmu2014.png" title="Any help is appreciated"/></a><a href="http://conemu.github.io/donate.html"><img src="https://www.paypalobjects.com/en_GB/i/btn/btn_donate_SM.gif" alt="Donation" title="Donate ConEmu"/></a> <a href="http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub" target="_blank"><img src="http://api.flattr.com/button/flattr-badge-large.png" alt="Flattr this" title="Flattr this" border="0" /></a>
 </td></tr></table>
 
-<font size="3">*History*</font>
+==History==
 
 This project grew up from [http://xs.nm.ru/ ConEmu by Zoin].
 
