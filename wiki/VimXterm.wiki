@@ -1,8 +1,10 @@
-﻿#How to eanble 256-color Vim syntax highlight in ConEmu
+﻿#Summary How to eanble 256-color console Vim syntax highlight in ConEmu
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuVimXterm.png" title="256-colors vim in ConEmu">
 
 [http://stackoverflow.com/a/14434531/1405560 StackOverflow answer]
 
-  * And ‘vim’ must be named ‘vim.exe’;
+  * Vim's executable must be named ‘vim.exe’;
   * Check options ‘Inject ConEmuHk’ and ‘ANSI X3.64 / xterm 256 colors’ on [SettingsFeatures Features] page;
   * Check option ‘TrueMod (24bit color) support’ on [SettingsColors Colors] page;
   * Edit your ‘vimrc’ file, sample lines are here. Of course, you need some 256-color vim scheme, it is zenburn in the last line of this example.

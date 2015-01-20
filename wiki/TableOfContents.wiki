@@ -108,6 +108,7 @@
       * [SshAgent ssh agent]
       * [TaskBarBug Task bar bug]
       * [TccInsertOverwrite TCC Insert/Overwrite]
+      * [VimXterm Vim 256-color]
       * [WindowsEnvironment Environment variables]
     * [Issues Feedback]
       * [BadIssue Bad issues]

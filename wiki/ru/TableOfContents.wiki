@@ -109,6 +109,7 @@
       * [SshAgent ssh agent]
       * [TaskBarBug Task bar bug]
       * [TccInsertOverwrite TCC Вставка/Замена]
+      * [VimXterm Vim 256-color]
       * [WindowsEnvironment Переменные окружения]
     * [Issues Обратная связь]
       * [BadIssue Bad issues]
