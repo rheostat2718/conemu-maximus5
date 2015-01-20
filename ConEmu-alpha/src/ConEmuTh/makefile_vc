@@ -78,7 +78,7 @@ LINK_DEBUG=/DEBUG /pdb:"$(PDB)" /map:"$(MAP)"
 !endif
 
 !ifdef AMD64
-CPP_PROJ_NO=/nologo /c /MT /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !else
@@ -87,7 +87,7 @@ LINK_MACHINE = /MACHINE:X64
 CPP_ALIGN=/Zp1
 !endif
 # /I"$(COMMON)"
-CPP_PROJ_NO=/nologo /c /MT /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 /D_WINDLL $(USERCPP)
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 /D_WINDLL $(USERCPP)
 ULOUT=-Tpd -Re
 LINK_MACHINE = /MACHINE:X86
 !endif
@@ -96,7 +96,7 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 #!ifdef EXCLUDECRT
 #!undef COMMONLIB
 #!endif
-LIBS = version.lib libcmt.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib
+LIBS = $(CRTLIB) version.lib libcmt.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib
 
 !ifdef _BIN_PATH_
 !ifndef _CL_PATH_
@@ -147,12 +147,10 @@ ALL: dirs $(INSTALL) $(DLLFULLNAME) clean $(SUBMODULES)
 
 $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !ifndef __MAKE__
-	echo $(LINK_FLAGS)
 	@$(LNK) @<<
 	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 <<
 !else
-	echo $(LINK_FLAGS)
 	@$(LNK) $(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 !endif
 !ifdef DOCS
@@ -196,6 +194,8 @@ dirs:
 	@if not exist "$(INTDIR)\$(NULL)" mkdir "$(INTDIR)"
 	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
 	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
+	@echo cl flags: $(CFLAGS)
+	@echo link flags: $(LINK_FLAGS) $(LIBS)
 
 .PHONY: clean
 clean:

@@ -27,6 +27,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
+#define SHOWDEBUGSTR
+
 #include <windows.h>
 #include "defines.h"
 #include "MAssert.h"
@@ -37,6 +39,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WObjects.h"
 #include "CmdLine.h"
 
+#define DEBUGSTRPARSE(s) DEBUGSTR(s)
+
 // Restricted in ConEmuHk!
 #ifdef MCHKHEAP
 #undef MCHKHEAP
@@ -46,8 +50,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __GNUC__
 #define SecureZeroMemory(p,s) memset(p,0,s)
 #endif
-
-#define DefaultSplitValue 500
 
 #ifdef _DEBUG
 
@@ -1093,6 +1095,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						// s[<SplitTab>T][<Percents>](H|V)
 						// Пример: "s3T30H" - разбить 3-ий таб. будет создан новый Pane справа, шириной 30% от 3-го таба.
 						{
+							SplitType newSplit = eSplitNone;
 							UINT nTab = 0 /*active*/, nValue = /*пополам*/DefaultSplitValue/10;
 							bool bDisableSplit = false;
 							while (*pszEnd)
@@ -1106,18 +1109,18 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 									pszEnd = pszDigits;
 									if (*pszDigits == L'T')
 									{
-                                    	nTab = n;
-                                	}
-                                    else if ((*pszDigits == L'H') || (*pszDigits == L'V'))
-                                    {
-                                    	nValue = n;
-                                    	eSplit = (*pszDigits == L'H') ? eSplitHorz : eSplitVert;
-                                    }
-                                    else
-                                    {
-                                    	break;
-                                    }
-                                    pszEnd++;
+										nTab = n;
+									}
+									else if ((*pszDigits == L'H') || (*pszDigits == L'V'))
+									{
+										nValue = n;
+										newSplit = (*pszDigits == L'H') ? eSplitHorz : eSplitVert;
+									}
+									else
+									{
+										break;
+									}
+									pszEnd++;
 								}
 								else if (*pszEnd == L'T')
 								{
@@ -1126,9 +1129,9 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 								}
 								else if ((*pszEnd == L'H') || (*pszEnd == L'V'))
 								{
-	                            	nValue = DefaultSplitValue/10;
-	                            	eSplit = (*pszEnd == L'H') ? eSplitHorz : eSplitVert;
-	                            	pszEnd++;
+									nValue = DefaultSplitValue/10;
+									newSplit = (*pszEnd == L'H') ? eSplitHorz : eSplitVert;
+									pszEnd++;
 								}
 								else if (*pszEnd == L'N')
 								{
@@ -1142,14 +1145,17 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 								}
 							}
 
-							if (bDisableSplit)
+							if (eSplit != eSplitNone)
+							{
+								DEBUGSTRPARSE(L"Split option was skipped because of it's already set");
+							}
+							else if (bDisableSplit)
 							{
 								eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 							}
 							else
 							{
-								if (!eSplit)
-									eSplit = eSplitHorz;
+								eSplit = newSplit ? newSplit : eSplitHorz;
 								// Для удобства, пользователь задает размер НОВОЙ части
 								nSplitValue = 1000-max(1,min(nValue*10,999)); // проценты
 								_ASSERTE(nSplitValue>=1 && nSplitValue<1000);

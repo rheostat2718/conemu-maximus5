@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2014 Maximus5
+Copyright (c) 2012-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuHooks.h"
 #include "../common/ConsoleAnnotation.h"
 #include "ExtConsole.h"
+#include "../common/MConHandle.h"
 #include "../common/MSectionSimple.h"
 #include "../common/WConsole.h"
 #include "../ConEmu/version.h"
@@ -94,8 +95,10 @@ static bool gbVimTermWasChangedBuffer = false;
 
 BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 
+// These handles must be registered and released in OnCloseHandle.
 HANDLE CEAnsi::ghLastAnsiCapable = NULL;
 HANDLE CEAnsi::ghLastAnsiNotCapable = NULL;
+HANDLE CEAnsi::ghLastConOut = NULL;
 HANDLE CEAnsi::ghAnsiLogFile = NULL;
 MSectionSimple* CEAnsi::gcsAnsiLogFile = NULL;
 
@@ -133,12 +136,17 @@ void CEAnsi::InitAnsiLog(LPCWSTR asFilePath)
 	}
 }
 
-void CEAnsi::DoneAnsiLog()
+void CEAnsi::DoneAnsiLog(bool bFinal)
 {
-	HANDLE h;
-	if (ghAnsiLogFile)
+	if (!ghAnsiLogFile)
+		return;
+	if (!bFinal)
 	{
-		h = ghAnsiLogFile;
+		FlushFileBuffers(ghAnsiLogFile);
+	}
+	else
+	{
+		HANDLE h = ghAnsiLogFile;
 		ghAnsiLogFile = NULL;
 		CloseHandle(h);
 		SafeDelete(gcsAnsiLogFile);
@@ -257,9 +265,13 @@ bool CEAnsi::IsOutputHandle(HANDLE hFile, DWORD* pMode /*= NULL*/)
 	if (!hFile)
 		return false;
 
+	if (hFile == ghLastConOut)
+		return true;
+
 	if (hFile == ghLastAnsiCapable)
 		return true;
-	else if (hFile == ghLastAnsiNotCapable)
+
+	if (hFile == ghLastAnsiNotCapable)
 		return false;
 
 	bool  bOk = false;
@@ -738,6 +750,32 @@ BOOL WINAPI CEAnsi::OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SM
 	return lbRc;
 }
 
+HANDLE WINAPI CEAnsi::OnCreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
+{
+	typedef HANDLE (WINAPI* OnCreateFileW_t)(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile);
+	ORIGINALFAST(CreateFileW);
+	//BOOL bMainThread = FALSE; // поток не важен
+	HANDLE h;
+
+	h = F(CreateFileW)(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+
+	// Just a check for "string" validity
+	if (lpFileName && (((DWORD_PTR)lpFileName) & ~0xFFFF)
+		// CON output is opening with following flags
+		&& (dwDesiredAccess & GENERIC_WRITE)
+		&& ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) == (FILE_SHARE_READ|FILE_SHARE_WRITE))
+		)
+	{
+		DEBUGTEST(HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE));
+		if (lstrcmpi(lpFileName, L"CON") == 0)
+		{
+			ghLastConOut = h;
+		}
+	}
+
+	return h;
+}
+
 BOOL WINAPI CEAnsi::OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
 	typedef BOOL (WINAPI* OnWriteFile_t)(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
@@ -826,12 +864,21 @@ BOOL WINAPI CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer,
 			_ASSERTEX(newLen==len);
 			buf[newLen] = 0; // ASCII-Z, хотя, если функцию WriteConsoleW зовет приложение - "\0" может и не быть...
 
+			HANDLE hWrite;
+			MConHandle hConOut(L"CONOUT$");
+			if (hConsoleOutput == ghLastConOut)
+				hWrite = hConOut;
+			else
+				hWrite = hConsoleOutput;
+
 			DWORD nWideWritten = 0;
-			lbRc = OnWriteConsoleW(hConsoleOutput, buf, len, &nWideWritten, NULL);
+			lbRc = OnWriteConsoleW(hWrite, buf, len, &nWideWritten, NULL);
 
 			// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
 			if (lpNumberOfCharsWritten)
+			{
 				*lpNumberOfCharsWritten = (nWideWritten == len) ? nNumberOfCharsToWrite : nWideWritten;
+			}
 		}
 		goto fin;
 	}
@@ -2337,7 +2384,9 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 2:
-					TODO("Check standard");
+					// Faint, decreased intensity (ISO 6429)
+				case 22:
+					// Normal (neither bold nor faint).
 					gDisplayParm.BrightOrBold = FALSE;
 					gDisplayParm.WasSet = TRUE;
 					break;
@@ -2345,15 +2394,31 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					gDisplayParm.ItalicOrInverse = TRUE;
 					gDisplayParm.WasSet = TRUE;
 					break;
-				case 4:
-				case 5:
+				case 23:
+					// Not italicized (ISO 6429)
+					gDisplayParm.ItalicOrInverse = FALSE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 4: // Underlined
+				case 5: // Blink
 					TODO("Check standard");
 					gDisplayParm.BackOrUnderline = TRUE;
+					gDisplayParm.WasSet = TRUE;
+					break;
+				case 24:
+					// Not underlined
+					gDisplayParm.BackOrUnderline = FALSE;
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 7:
 					// Reverse video
 					TODO("Check standard");
+					break;
+				case 27:
+					// Positive (not inverse)
+					break;
+				case 25:
+					// Steady (not blinking)
 					break;
 				case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
 					gDisplayParm.TextColor = (Code.ArgV[i] - 30);

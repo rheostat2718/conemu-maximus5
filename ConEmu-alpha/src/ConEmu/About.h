@@ -84,6 +84,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"/SaveCfgFile <file> - Save configuration to the specified xml file.\r\n" \
 	L"/SetDefTerm - Set ConEmu as default terminal, use with \"/Exit\" switch.\r\n" \
 	L"/Exit - Don't create ConEmu window, exit after actions.\r\n" \
+	L"/GuiMacro - Execute some GuiMacro after ConEmu window creation.\r\n" \
 	/* L"/Attach [PID] - intercept console of specified process\n" */ \
 	L"/cmd <commandline>|@<taskfile>|{taskname} - Command line to start. This must be the last used switch.\r\n" \
 	L"\r\n" \
@@ -219,6 +220,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    close all active processes of the active group (7)\r\n" \
 	L"    close all tabs (8), no confirm (8,1)\r\n" \
 	L"    close all zombies (9), no confirm (9,1)\r\n" \
+	L"Context([<Tab>[,<Split>]])\r\n" \
+	L"  - Change macro execution context\r\n" \
+	L"    Tab: 1-based tab index\r\n" \
+	L"    Split: 1-based split index\r\n" \
 	L"Copy(<What>[,<Format>[,\"<File>\"]])\r\n" \
 	L"  - Copy active console contents\r\n" \
 	L"    What==0: current selection\r\n" \

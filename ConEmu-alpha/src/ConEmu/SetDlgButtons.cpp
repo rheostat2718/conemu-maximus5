@@ -809,6 +809,12 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		/* *** Update settings *** */
 
 		/* *** Command groups *** */
+		case cbCmdGrpDefaultNew:
+		case cbCmdGrpDefaultCmd:
+		case cbCmdGrpTaskbar:
+		case cbCmdGrpToolbar:
+			OnBtn_CmdTasksFlags(hDlg, CB, uCheck);
+			break;
 		case cbCmdTasksAdd:
 			OnBtn_CmdTasksAdd(hDlg, CB, uCheck);
 			break;
@@ -849,6 +855,8 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbCmdTaskbarUpdate:
 			OnBtn_CmdTaskbarUpdate(hDlg, CB, uCheck);
 			break;
+		case stCmdGroupCommands:
+			break; // если нужен тултип для StaticText - нужен стиль SS_NOTIFY, а тогда нужно этот ID просто пропустить, чтобы ассерта не было
 		/* *** Command groups *** */
 
 
@@ -1103,6 +1111,78 @@ void CSetDlgButtons::OnBtn_InactiveCursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCh
 	pApp->CursorInactive.isFixedSize = uCheck;
 
 } // cbInactiveCursorIgnoreSize
+
+
+// cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd, cbCmdGrpTaskbar, cbCmdGrpToolbar
+void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	// Only visual mode is supported
+	if (!hDlg)
+		return;
+
+	int iCur = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCURSEL, 0,0);
+	if (iCur < 0)
+		return;
+
+	CommandTasks* p = (CommandTasks*)gpSet->CmdTaskGet(iCur);
+	if (!p)
+		return;
+
+	bool bDistinct = false;
+	CETASKFLAGS flag = CETF_NONE;
+
+	switch (CB)
+	{
+	case cbCmdGrpDefaultNew:
+		flag = CETF_NEW_DEFAULT;
+		if (IsChecked(hDlg, CB))
+		{
+			bDistinct = true;
+			p->Flags |= flag;
+		}
+		else
+		{
+			p->Flags &= ~flag;
+		}
+		break;
+	case cbCmdGrpDefaultCmd:
+		flag = CETF_CMD_DEFAULT;
+		if (IsChecked(hDlg, CB))
+		{
+			bDistinct = true;
+			p->Flags |= flag;
+		}
+		else
+		{
+			p->Flags &= ~flag;
+		}
+		break;
+	case cbCmdGrpTaskbar:
+		if (IsChecked(hDlg, CB))
+			p->Flags &= ~CETF_NO_TASKBAR;
+		else
+			p->Flags |= CETF_NO_TASKBAR;
+		break;
+	case cbCmdGrpToolbar:
+		if (IsChecked(hDlg, CB))
+			p->Flags |= CETF_ADD_TOOLBAR;
+		else
+			p->Flags &= ~CETF_ADD_TOOLBAR;
+		break;
+	}
+
+	if (bDistinct)
+	{
+		int nGroup = 0;
+		CommandTasks* pGrp = NULL;
+		while ((pGrp = (CommandTasks*)gpSet->CmdTaskGet(nGroup++)))
+		{
+			if (pGrp != p)
+				pGrp->Flags &= ~flag;
+		}
+	}
+
+} // cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd, cbCmdGrpTaskbar, cbCmdGrpToolbar
 
 
 // cbCmdTasksAdd

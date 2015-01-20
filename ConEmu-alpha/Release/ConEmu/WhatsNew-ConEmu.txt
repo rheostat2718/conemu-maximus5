@@ -12,6 +12,61 @@ Votes and awards (vote for ConEmu, if you please)
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+2015.1.19
+[*] Issue 1864: ExportEnvVar. Drop variable instead of setting it to empty string.
+[*] Don't show both small and large icons in the confirmation/about dialogs.
+[*] Internal. GuiMacro "Context" was not returned result as expected.
+    BTW, usage example: print("abc"); Split(2); Context(); print("def")
+[*] Minor change in 16x16 icon, add 256x256 icon, update icons in setupper.
+[*] Allow ‘Debug active process’ while ChildGui is stopped by ConEmuReportExe on loading.
+[*] Remove GetVersionEx warnings (internal).
+[*] Debug purposes switch: ConEmuC -OsVerInfo. Sets errorlevel to OsVer. Ex.: Win7 -> 1537 (0x601)
+[*] Link ConEmuHk[64].dll and ConEmuCD[64].dll statically with msvcrt.dll.
+[*] Issue 1865: Fix weird hungs in LdrpAcquireLoaderLock (cmd.exe).
+[*] Emulate AnsiCon environment variables.
+    "ANSICON" = "WxH (wxh)", where W,H size of the buffer, w,h - window.
+    "ANSICON_DEF" = "BF", (B)ackground and (F)oreground color indexes (hex).
+    "ANSICON_VER" = "170", does not exist in the environment block.
+[*] Support some more ANSI SGR codes (22, 23, 24).
+    "ESC [ 22 m" - Unset BrightOrBold
+    "ESC [ 23 m" - Unset ItalicOrInverse
+    "ESC [ 24 m" - Unset BackOrUnderline
+[*] Issue 1865: Allow ANSI escape sequences when redirecting to device CON.
+
+
+2015.1.11
+[*] New ConEmu icon.
+[*] HighDpi fixes (if primary mon is 192dpi and secondary is 96dpi).
+    * Search icon size on secondary monitor was huge.
+    * Settings dialog controls were sized too large.
+[*] DefTerm. Aggressive mode was not be able to disabled actually.
+[*] GuiMacro. Allow to execute some GuiMacro after ConEmu window creation.
+    Example: ConEmu -Detached -GuiMacro "Task(""{cmd}""); Settings"
+[*] Issue 1861: GuiMacro. Context([<Tab>[,<Split>]]).
+[*] Don't try to start clink if cmd is started just for single command execution.
+[*] Fix incorrect buffer address passed when getting AutoRun reg key value.
+[*] Small improvements for build settings in VS12 project.
+
+
+2014.12.21
+[*] Issue 1846: Script is not supported here (5909d9f regression).
+[*] Split options set in the ‘Create new console’ dialog not take precedence of any specified in the Task itself (first task's command actually).
+[*] CmdInit.cmd: Print Windows version while initializing.
+[*] Add "ConEmuC /EXPORT=GUI [Var1 [Var2 [...]]]" for exporting vars to ConEmu GUI only.
+[*] DefaultTasks. Use registry's ‘App Paths’ while searching for exe files.
+[*] Let Git bash use git.ico and try to find it using registry.
+[*] In some cases ConEmuHk was not properly deinitialized within cygwin/msys.
+[*] Turn on ‘Activate split on mouse hover’ for new config by default.
+[*] "ConEmuC /export" was unexpectedly exporting to all tabs.
+[*] Change finalization sequence of ConEmuHk.
+
+
+2014.12.17
+[*] Reorder create console hotkeys.
+[*] Now it's possible to choose ‘Default task for new console (Win+W)’ and ‘Default shell (Win+X)’.
+[*] Let's choose which tasks add to Windows 7 jump lists (check box ‘Taskbar jump lists’).
+
+
 2014.12.16
 [*] Issue 1705: In some cases ConEmuBg config xml file was not loaded properly.
 [*] Prefill MemoryDump Save as dialog with default dump file name.

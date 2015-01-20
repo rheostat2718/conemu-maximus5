@@ -184,6 +184,7 @@ extern HHOOK ghGuiClientRetHook;
 //extern void StopVimTerm();
 
 CEStartupEnv* gpStartEnv = NULL;
+BOOL    gbConEmuCProcess = FALSE;
 DWORD   gnSelfPID = 0;
 BOOL    gbSelfIsRootConsoleProcess = FALSE;
 BOOL    gbForceStartPipeServer = FALSE;
@@ -492,6 +493,9 @@ wrap:
 		#endif
 		bLastAnsi = bAnsi;
 		SetEnvironmentVariable(ENV_CONEMUANSI_VAR_W, bAnsi ? L"ON" : L"OFF");
+
+		// Set AnsiCon compatible variables too
+		CheckAnsiConVar(NULL);
 	}
 	bAnsiLog = ((gpConInfo != NULL) && (gpConInfo->AnsiLog.Enabled && *gpConInfo->AnsiLog.Path));
 	if (bAnsiLog)
@@ -743,57 +747,12 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 {
 	//DLOG0("DllStart",0);
 
-	wchar_t *szModule = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
-	if (!GetModuleFileName(NULL, szModule, MAX_PATH+1))
-		_wcscpy_c(szModule, MAX_PATH+1, L"GetModuleFileName failed");
-	const wchar_t* pszName = PointToName(szModule);
-	wchar_t szMsg[128];
-
-	// Process exe name must be known
-	_ASSERTEX(pszName);
-
-	// For reporting purposes. Users may define env.var and run program.
-	// When ConEmuHk.dll loaded in that process - it'll show msg box
-	// Example (for cmd.exe prompt):
-	// set ConEmuReportExe=sh.exe
-	// sh.exe --login -i
-	if (pszName && GetEnvironmentVariableW(ENV_CONEMUREPORTEXE_VAR_W, szMsg, countof(szMsg)) && *szMsg)
-	{
-		if (lstrcmpi(szMsg, pszName) == 0)
-		{
-			gbShowExeMsgBox = true;
-		}
-	}
-
-	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
-		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
-		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
-		{
-			#ifndef SLEEP_EXE_UNTIL_DEBUGGER
-			gbShowExeMsgBox = true;
-			#else
-			while (!IsDebuggerPresent())
-			{
-				Sleep(250);
-			}
-			#endif
-		}
-	#endif
-
-
 	// *******************  begin  *********************
 
 	print_timings(L"DllStart: InitializeHookedModules");
 	InitializeHookedModules();
 
 	//HANDLE hStartedEvent = (HANDLE)apParm;
-
-
-	if (gbShowExeMsgBox)
-	{
-		ShowStartedMsgBox(L" loaded!", pszName);
-	}
 
 
 	#ifdef _DEBUG
@@ -805,109 +764,6 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	}
 	#endif
 
-	lstrcpyn(gsExeName, pszName, countof(gsExeName)-5);
-	if (!wcschr(gsExeName, L'.'))
-	{
-		// Must be extension?
-		_ASSERTEX(wcschr(pszName,L'.')!=NULL);
-		wcscat_c(gsExeName, L".exe");
-	}
-
-	if (lstrcmpi(gsExeName, L"powershell.exe") == 0)
-	{
-		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-		if (CEAnsi::IsOutputHandle(hStdOut))
-		{
-			gbPowerShellMonitorProgress = true;
-			MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
-			if (apiGetConsoleScreenBufferInfoEx(hStdOut, &csbi))
-			{
-				gnConsolePopupColors = csbi.wPopupAttributes;
-			}
-			else
-			{
-				WARNING("Получить Popup атрибуты из мэппинга");
-				//gnConsolePopupColors = ...;
-				gnConsolePopupColors = 0;
-			}
-		}
-	}
-	else if ((lstrcmpi(gsExeName, L"far.exe") == 0) || (lstrcmpi(gsExeName, L"far64.exe") == 0) || (lstrcmpi(gsExeName, L"far32.exe") == 0))
-	{
-		gbIsFarProcess = true;
-	}
-	else if (lstrcmpi(gsExeName, L"cmd.exe") == 0)
-	{
-		gbIsCmdProcess = true;
-		#if 0
-		CreateThread(NULL, 0, DummyLibLoaderCmdThread, NULL, 0, &gnDummyLibLoaderCmdThreadTID);
-		#endif
-	}
-	else if (lstrcmpi(gsExeName, L"node.exe") == 0)
-	{
-		gbIsNodeJSProcess = true;
-	}
-	else if ((lstrcmpi(gsExeName, L"sh.exe") == 0)
-		|| (lstrcmpi(gsExeName, L"bash.exe") == 0)
-		|| (lstrcmpi(gsExeName, L"isatty.exe") == 0)
-		)
-	{
-		//_ASSERTEX(FALSE && "settings gbIsBashProcess");
-		gbIsBashProcess = true;
-
-		TODO("Start redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
-		#if 0
-		if (lstrcmpi(gsExeName, L"isatty.exe") == 0)
-			StartPTY();
-		#endif
-	}
-	else if (lstrcmpi(gsExeName, L"ssh.exe") == 0)
-	{
-		gbIsSshProcess = true;
-		#if 0
-		ghDebugSshLibs = CreateEvent(NULL, FALSE, FALSE, NULL);
-		ghDebugSshLibsRc = CreateEvent(NULL, FALSE, FALSE, NULL);
-		ghDebugSshLibsCan = CreateEvent(NULL, FALSE, FALSE, NULL);
-		CreateThread(NULL, 0, DummyLibLoaderThread, NULL, 0, &gnDummyLibLoaderThreadTID);
-		#endif
-	}
-	else if (lstrcmpi(gsExeName, L"hiew32.exe") == 0)
-	{
-		gbIsHiewProcess = true;
-	}
-	else if (lstrcmpi(gsExeName, L"dosbox.exe") == 0)
-	{
-		gbDosBoxProcess = true;
-	}
-	else if (lstrcmpi(gsExeName, L"vim.exe") == 0)
-	{
-		gbIsVimProcess = true;
-		//CEAnsi::StartVimTerm(true);
-	}
-	else if (lstrcmpni(gsExeName, L"mintty", 6) == 0) // Without extension? Or may be "minttyXXX.exe"?
-	{
-		gbIsMinTtyProcess = true;
-	}
-	else if (lstrcmpi(gsExeName, L"notepad.exe") == 0)
-	{
-		//_ASSERTE(FALSE && "Notepad.exe started!");
-	}
-	else if (IsVsNetHostExe(pszName)) // "*.vshost.exe", "*" may be long, so we use pszName instead of limited gsExeName
-	{
-		gbIsNetVsHost = true;
-	}
-	else if ((lstrcmpi(gsExeName, L"devenv.exe") == 0) || (lstrcmpi(gsExeName, L"WDExpress.exe") == 0))
-	{
-		gbIsVStudio = true;
-	}
-
-	if (gbIsNetVsHost
-		|| (lstrcmpi(gsExeName, L"chrome.exe") == 0)
-		|| (lstrcmpi(gsExeName, L"firefox.exe") == 0)
-		|| (lstrcmpi(gsExeName, L"link.exe") == 0))
-	{
-		gbSkipVirtualAllocErr = true;
-	}
 
 	// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
 	// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
@@ -1216,7 +1072,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		#ifdef _DEBUG
 		//wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
 		//GetModuleFileName(NULL, szModule, countof(szModule));
-		_ASSERTE((gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0) || gbAttachGuiClient || gbPrepareDefaultTerminal || (gbIsNetVsHost && ghConWnd));
+		_ASSERTE((gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(gsExeName, L"DosBox.exe")==0) || gbAttachGuiClient || gbPrepareDefaultTerminal || (gbIsNetVsHost && ghConWnd));
 		//if (!lstrcmpi(pszName, L"far.exe") || !lstrcmpi(pszName, L"mingw32-make.exe"))
 		//if (!lstrcmpi(pszName, L"as.exe"))
 		//	MessageBoxW(NULL, L"as.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
@@ -1280,8 +1136,6 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	#endif
 	*/
 
-	SafeFree(szModule);
-
 	//if (hStartedEvent)
 	//	SetEvent(hStartedEvent);
 
@@ -1311,6 +1165,166 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//DLOGEND();
 
 	return 0;
+}
+
+void InitExeName()
+{
+	wchar_t szMsg[MAX_PATH+1];
+	if (!GetModuleFileName(NULL, szMsg, countof(szMsg)))
+		wcscpy_c(szMsg, L"GetModuleFileName failed");
+	const wchar_t* pszName = PointToName(szMsg);
+
+	// Process exe name must be known
+	_ASSERTEX(pszName);
+
+	lstrcpyn(gsExeName, pszName, countof(gsExeName)-5);
+	if (!wcschr(gsExeName, L'.'))
+	{
+		// Must be extension?
+		_ASSERTEX(wcschr(pszName,L'.')!=NULL);
+		wcscat_c(gsExeName, L".exe");
+	}
+	pszName = gsExeName;
+
+	// For reporting purposes. Users may define env.var and run program.
+	// When ConEmuHk.dll loaded in that process - it'll show msg box
+	// Example (for cmd.exe prompt):
+	// set ConEmuReportExe=sh.exe
+	// sh.exe --login -i
+	if (pszName && GetEnvironmentVariableW(ENV_CONEMUREPORTEXE_VAR_W, szMsg, countof(szMsg)) && *szMsg)
+	{
+		if (lstrcmpi(szMsg, pszName) == 0)
+		{
+			gbShowExeMsgBox = true;
+		}
+	}
+
+	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
+		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
+		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
+		{
+			#ifndef SLEEP_EXE_UNTIL_DEBUGGER
+			gbShowExeMsgBox = true;
+			#else
+			while (!IsDebuggerPresent())
+			{
+				Sleep(250);
+			}
+			#endif
+		}
+	#endif
+
+
+	if (gbShowExeMsgBox)
+	{
+		ShowStartedMsgBox(L" loaded!", pszName);
+	}
+
+
+	if ((lstrcmpi(gsExeName, L"ConEmuC.exe") == 0) || (lstrcmpi(gsExeName, L"ConEmuC64.exe") == 0))
+	{
+		gbConEmuCProcess = true;
+	}
+	else if (lstrcmpi(gsExeName, L"powershell.exe") == 0)
+	{
+		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		if (CEAnsi::IsOutputHandle(hStdOut))
+		{
+			gbPowerShellMonitorProgress = true;
+			MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
+			if (apiGetConsoleScreenBufferInfoEx(hStdOut, &csbi))
+			{
+				gnConsolePopupColors = csbi.wPopupAttributes;
+			}
+			else
+			{
+				WARNING("Получить Popup атрибуты из мэппинга");
+				//gnConsolePopupColors = ...;
+				gnConsolePopupColors = 0;
+			}
+		}
+	}
+	else if ((lstrcmpi(gsExeName, L"far.exe") == 0) || (lstrcmpi(gsExeName, L"far64.exe") == 0) || (lstrcmpi(gsExeName, L"far32.exe") == 0))
+	{
+		gbIsFarProcess = true;
+	}
+	else if (lstrcmpi(gsExeName, L"cmd.exe") == 0)
+	{
+		gbIsCmdProcess = true;
+		#if 0
+		CreateThread(NULL, 0, DummyLibLoaderCmdThread, NULL, 0, &gnDummyLibLoaderCmdThreadTID);
+		#endif
+	}
+	else if (lstrcmpi(gsExeName, L"node.exe") == 0)
+	{
+		gbIsNodeJSProcess = true;
+	}
+	else if ((lstrcmpi(gsExeName, L"sh.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"bash.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"isatty.exe") == 0)
+		)
+	{
+		//_ASSERTEX(FALSE && "settings gbIsBashProcess");
+		gbIsBashProcess = true;
+
+		TODO("Start redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
+		#if 0
+		if (lstrcmpi(gsExeName, L"isatty.exe") == 0)
+			StartPTY();
+		#endif
+	}
+	else if (lstrcmpi(gsExeName, L"ssh.exe") == 0)
+	{
+		gbIsSshProcess = true;
+		#if 0
+		ghDebugSshLibs = CreateEvent(NULL, FALSE, FALSE, NULL);
+		ghDebugSshLibsRc = CreateEvent(NULL, FALSE, FALSE, NULL);
+		ghDebugSshLibsCan = CreateEvent(NULL, FALSE, FALSE, NULL);
+		CreateThread(NULL, 0, DummyLibLoaderThread, NULL, 0, &gnDummyLibLoaderThreadTID);
+		#endif
+	}
+	else if (lstrcmpi(gsExeName, L"less.exe") == 0)
+	{
+		gbIsLessProcess = true;
+	}
+	else if (lstrcmpi(gsExeName, L"hiew32.exe") == 0)
+	{
+		gbIsHiewProcess = true;
+	}
+	else if (lstrcmpi(gsExeName, L"dosbox.exe") == 0)
+	{
+		gbDosBoxProcess = true;
+	}
+	else if (lstrcmpi(gsExeName, L"vim.exe") == 0)
+	{
+		gbIsVimProcess = true;
+		//CEAnsi::StartVimTerm(true);
+	}
+	else if (lstrcmpni(gsExeName, L"mintty", 6) == 0) // Without extension? Or may be "minttyXXX.exe"?
+	{
+		gbIsMinTtyProcess = true;
+	}
+	else if (lstrcmpi(gsExeName, L"notepad.exe") == 0)
+	{
+		//_ASSERTE(FALSE && "Notepad.exe started!");
+	}
+	else if (IsVsNetHostExe(pszName)) // "*.vshost.exe", "*" may be long, so we use pszName instead of limited gsExeName
+	{
+		gbIsNetVsHost = true;
+	}
+	else if ((lstrcmpi(gsExeName, L"devenv.exe") == 0) || (lstrcmpi(gsExeName, L"WDExpress.exe") == 0))
+	{
+		gbIsVStudio = true;
+	}
+
+	if (gbIsNetVsHost
+		|| (lstrcmpi(gsExeName, L"chrome.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"firefox.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"link.exe") == 0))
+	{
+		gbSkipVirtualAllocErr = true;
+	}
 }
 
 #ifdef HOOK_USE_DLLTHREAD
@@ -1375,35 +1389,41 @@ void FlushMouseEvents()
 	}
 }
 
-void DllStop()
+void DoDllStop(bool bFinal)
 {
 	//DLOG0("DllStop",0);
+	print_timings(L"DllStop");
+	bool bUnload = (bFinal && !gbHooksWasSet);
 
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
 		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg);
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 	#endif
 
-	if (gbIsVimProcess)
+	if (gnDllState < ds_DllStop)
+		gnDllState = ds_DllStop;
+
+	static bool bVimStopped = false;
+	if (gbIsVimProcess && !bVimStopped)
 	{
+		bVimStopped = true;
 		CEAnsi::StopVimTerm();
 	}
 
-	CEAnsi::DoneAnsiLog();
+	CEAnsi::DoneAnsiLog(bUnload);
 
 	TODO("Stop redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");
 	#ifdef _DEBUG
-	StopPTY();
+	if (bUnload)
+	{
+		StopPTY();
+	}
 	#endif
 
 	if (gpDefTerm)
 	{
 		gpDefTerm->StopHookers();
 	}
-
-	print_timings(L"DllStop");
-	//gbDllStopCalled = TRUE; -- в конце
-
 
 	// Issue 689: Progress stuck at 100%
 	if (gbPowerShellMonitorProgress && (gnPowerShellProgressValue != -1))
@@ -1441,7 +1461,7 @@ void DllStop()
 	}
 
 
-#ifdef USE_PIPE_SERVER
+	#ifdef USE_PIPE_SERVER
 	if (gpHookServer)
 	{
 		DLOG0("StopPipeServer",0);
@@ -1452,19 +1472,21 @@ void DllStop()
 		gpHookServer = NULL;
 		DLOGEND();
 	}
-#endif
+	#endif
 
 	#ifdef _DEBUG
 	if (ghGuiClientRetHook)
 	{
 		DLOG0("unhookWindowsHookEx",0);
 		print_timings(L"unhookWindowsHookEx");
-		UnhookWindowsHookEx(ghGuiClientRetHook);
+		HHOOK hh = ghGuiClientRetHook;
+		ghGuiClientRetHook = NULL;
+		UnhookWindowsHookEx(hh);
 		DLOGEND();
 	}
 	#endif
 
-	if (/*!gbSkipInjects &&*/ gbHooksWasSet)
+	if (gbHooksWasSet && bFinal)
 	{
 		DLOG0("ShutdownHooks",0);
 		print_timings(L"ShutdownHooks");
@@ -1478,16 +1500,18 @@ void DllStop()
 
 	// Do not send CECMD_CMDSTARTSTOP(sst_AppStop) to server
 	// when that is 'DefTerm' process - avoid termination lagging
-	if (gbSelfIsRootConsoleProcess && !gpDefTerm)
+	static bool bSentStopped = false;
+	if (gbSelfIsRootConsoleProcess && !gpDefTerm && !bSentStopped)
 	{
 		// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
 		DLOG0("SendStopped",0);
 		print_timings(L"SendStopped");
+		bSentStopped = true;
 		SendStopped();
 		DLOGEND();
 	}
 
-	if (gpConMap)
+	if (gpConMap && bUnload)
 	{
 		DLOG0("gpConMap->CloseMap",0);
 		print_timings(L"gpConMap->CloseMap");
@@ -1498,7 +1522,7 @@ void DllStop()
 		DLOGEND();
 	}
 
-	if (gpAppMap)
+	if (gpAppMap && bUnload)
 	{
 		DLOG0("gpAppMap->CloseMap",0);
 		print_timings(L"gpAppMap->CloseMap");
@@ -1509,6 +1533,7 @@ void DllStop()
 	}
 
 	// CommonShutdown
+	if (bUnload)
 	{
 		DLOG0("CommonShutdown",0);
 		//#ifndef TESTLINK
@@ -1519,6 +1544,7 @@ void DllStop()
 
 
 	// FinalizeHookedModules
+	if (bUnload)
 	{
 		DLOG0("FinalizeHookedModules",0);
 		print_timings(L"FinalizeHookedModules");
@@ -1526,9 +1552,10 @@ void DllStop()
 		DLOGEND();
 	}
 
-#ifndef _DEBUG
-	HeapDeinitialize();
-#endif
+	if (bUnload)
+	{
+		HeapDeinitialize();
+	}
 
 	#ifdef _DEBUG
 		#ifdef UseDebugExceptionFilter
@@ -1544,12 +1571,308 @@ void DllStop()
 	//DLOGEND();
 }
 
+BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
+{
+	BOOL lbAllow = TRUE;
+	DLOG0("DllMain.DLL_PROCESS_ATTACH",ul_reason_for_call);
+
+	#ifdef USEHOOKLOG
+	QueryPerformanceFrequency(&HookLogger::g_freq);
+	#endif
+
+	gnDllState = ds_DllProcessAttach;
+	#ifdef _DEBUG
+	HANDLE hProcHeap = GetProcessHeap();
+	#endif
+	HeapInitialize();
+
+	DLOG1("DllMain.LoadStartupEnv",ul_reason_for_call);
+	/* *** DEBUG PURPOSES */
+	gpStartEnv = LoadStartupEnv::Create();
+	DLOGEND1();
+	//if (gpStartEnv && gpStartEnv->hIn.hStd && !(gpStartEnv->hIn.nMode & 0x80000000))
+	//{
+	//	if ((gpStartEnv->hIn.nMode & 0xF0) == 0xE0)
+	//	{
+	//		_ASSERTE(FALSE && "ENABLE_MOUSE_INPUT was disabled! Enabling...");
+	//		SetConsoleMode(gpStartEnv->hIn.hStd, gpStartEnv->hIn.nMode|ENABLE_MOUSE_INPUT);
+	//	}
+	//}
+	/* *** DEBUG PURPOSES */
+
+	DLOG1_("DllMain.Console",ul_reason_for_call);
+	ghOurModule = (HMODULE)hModule;
+	ghConWnd = GetConsoleWindow();
+	if (ghConWnd)
+		GetConsoleTitle(gsInitConTitle, countof(gsInitConTitle));
+	gnSelfPID = GetCurrentProcessId();
+	ghWorkingModule = (u64)hModule;
+	gfGetRealConsoleWindow = GetConsoleWindow;
+	DLOGEND1();
+
+
+	InitExeName();
+
+
+	DLOG1_("DllMain.RootEvents",ul_reason_for_call);
+
+	bool bCurrentThreadIsMain = false;
+	wchar_t szEvtName[64];
+	if (gbConEmuCProcess)
+	{
+		bCurrentThreadIsMain = true;
+	}
+	else
+	{
+		msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, gnSelfPID);
+		gEvtProcessRoot.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+		if (gEvtProcessRoot.hProcessFlag)
+		{
+			gEvtProcessRoot.nWait = WaitForSingleObject(gEvtProcessRoot.hProcessFlag, 0);
+			gEvtProcessRoot.nErrCode = GetLastError();
+			gbSelfIsRootConsoleProcess = (gEvtProcessRoot.nWait == WAIT_OBJECT_0);
+		}
+		else
+			gEvtProcessRoot.nErrCode = GetLastError();
+		//SafeCloseHandle(gEvtProcessRoot.hProcessFlag);
+
+		msprintf(szEvtName, countof(szEvtName), CECONEMUROOTTHREAD, gnSelfPID);
+		gEvtThreadRoot.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+		if (gEvtThreadRoot.hProcessFlag)
+		{
+			gEvtThreadRoot.nWait = WaitForSingleObject(gEvtThreadRoot.hProcessFlag, 0);
+			gEvtThreadRoot.nErrCode = GetLastError();
+			bCurrentThreadIsMain = (gEvtThreadRoot.nWait == WAIT_OBJECT_0);
+		}
+		else
+			gEvtThreadRoot.nErrCode = GetLastError();
+		//SafeCloseHandle(gEvtThreadRoot.hProcessFlag);
+	}
+
+	// When calling Attach (Win+G) from ConEmu GUI
+	gbForceStartPipeServer = (!bCurrentThreadIsMain);
+
+	if (!gbSelfIsRootConsoleProcess && !gbConEmuCProcess)
+	{
+		msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOK, gnSelfPID);
+		gEvtDefTerm.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+		if (gEvtDefTerm.hProcessFlag)
+		{
+			gEvtDefTerm.nWait = WaitForSingleObject(gEvtDefTerm.hProcessFlag, 0);
+			gEvtDefTerm.nErrCode = GetLastError();
+			gbPrepareDefaultTerminal = (gEvtDefTerm.nWait == WAIT_OBJECT_0);
+			//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
+			// Если ждут, что мы отметимся...
+			if (gbPrepareDefaultTerminal)
+			{
+				msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOKOK, gnSelfPID);
+				gEvtDefTermOk.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
+				if (gEvtDefTermOk.hProcessFlag)
+					SetEvent(gEvtDefTermOk.hProcessFlag);
+				gEvtDefTermOk.nErrCode = GetLastError();
+			}
+		}
+		else
+			gEvtDefTerm.nErrCode = GetLastError();
+		//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
+	}
+	DLOGEND1();
+
+
+
+	DLOG1_("DllMain.MainThreadId",ul_reason_for_call);
+	GetMainThreadId(bCurrentThreadIsMain); // Инициализировать gnHookMainThreadId
+	// In some cases we need to know thread IDs was started 'normally'
+	gStartedThreads.Init(128,true);
+	gStartedThreads.Set(gnHookMainThreadId,true);
+	if (!bCurrentThreadIsMain)
+		gStartedThreads.Set(GetCurrentThreadId(),true);
+	DLOGEND1();
+
+	DLOG1_("DllMain.InQueue",ul_reason_for_call);
+	//gcchLastWriteConsoleMax = 4096;
+	//gpszLastWriteConsole = (wchar_t*)calloc(gcchLastWriteConsoleMax,sizeof(*gpszLastWriteConsole));
+	gInQueue.Initialize(512, NULL);
+	DLOGEND1();
+
+	DLOG1_("DllMain.Misc",ul_reason_for_call);
+	#ifdef _DEBUG
+	gAllowAssertThread = am_Pipe;
+	#endif
+
+	#ifdef _DEBUG
+		#ifdef UseDebugExceptionFilter
+			gfnPrevFilter = SetUnhandledExceptionFilter(HkExceptionFilter);
+		#endif
+	#endif
+
+	#ifdef SHOW_STARTED_MSGBOX
+	if (!IsDebuggerPresent())
+	{
+		::MessageBox(ghConEmuWnd, L"ConEmuHk*.dll loaded", L"ConEmu hooks", MB_SYSTEMMODAL);
+	}
+	#endif
+	#ifdef _DEBUG
+	DWORD dwConMode = -1;
+	GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwConMode);
+	#endif
+	DLOGEND1();
+
+	//_ASSERTE(ghHeap == NULL);
+	//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
+
+
+	DLOG1_("DllMain.DllStart",ul_reason_for_call);
+	#ifdef HOOK_USE_DLLTHREAD
+	_ASSERTEX(FALSE && "Hooks starting in background thread?");
+	//HANDLE hEvents[2];
+	//hEvents[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
+	//hEvents[1] =
+	ghStartThread = CreateThread(NULL, 0, DllStart, NULL/*(LPVOID)(hEvents[0])*/, 0, &gnStartThreadID);
+	if (ghStartThread == NULL)
+	{
+		//_ASSERTE(ghStartThread!=NULL);
+		wchar_t szMsg[128]; DWORD nErrCode = GetLastError();
+		msprintf(szMsg, countof(szMsg),
+			L"Failed to start DllStart thread!\nErrCode=0x%08X\nPID=%u",
+			nErrCode, GetCurrentProcessId());
+		GuiMessageBox(ghConEmuWnd, szMsg, L"ConEmu hooks", 0);
+	}
+	else
+	{
+		DWORD nThreadWait = WaitForSingleObject(ghStartThread, 5000);
+		DllThreadClose();
+	}
+	//DWORD nThreadWait = WaitForMultipleObjects(hEvents, countof(hEvents), FALSE, INFINITE);
+	//CloseHandle(hEvents[0]);
+	#else
+	if (DllStart(NULL) != 0)
+	{
+		if (gbPrepareDefaultTerminal)
+		{
+			_ASSERTEX(gbPrepareDefaultTerminal && "Failed to set up default terminal");
+			lbAllow = FALSE;
+			goto wrap;
+		}
+	}
+	#endif
+	DLOGEND1();
+
+	if (gbIsSshProcess && bCurrentThreadIsMain && (GetCurrentThreadId() == gnHookMainThreadId))
+	{
+		// Original complain was about git/ssh (crashed with third-party PGHook.dll)
+		// Cygwin version of ssh almost completely fails with FixSshThreads
+		// Different forking technologies?
+		HMODULE hMsys = GetModuleHandle(L"msys-1.0.dll");
+		if (hMsys != NULL)
+		{
+			FixSshThreads(0);
+		}
+	}
+
+	DLOGEND();
+wrap:
+	return lbAllow;
+}
+
+BOOL DllMain_ThreadAttach(HANDLE hModule, DWORD  ul_reason_for_call)
+{
+	DLOG0("DllMain.DLL_THREAD_ATTACH",ul_reason_for_call);
+	gnDllThreadCount++;
+	if (gbHooksWasSet)
+		InitHooksRegThread();
+	if (gbIsSshProcess && !gnFixSshThreadsResumeOk && gStartedThreads.Get(GetCurrentThreadId(), NULL))
+		FixSshThreads(1);
+	DLOGEND();
+	return true;
+}
+
+BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
+{
+	DLOG0("DllMain.DLL_THREAD_DETACH",ul_reason_for_call);
+
+	DWORD nTID = GetCurrentThreadId();
+	bool bNeedDllStop = false;
+
+	#ifdef SHOW_SHUTDOWN_STEPS
+	gnDbgPresent = 0;
+	ShutdownStep(L"DLL_THREAD_DETACH");
+	#endif
+
+	if (gbHooksWasSet)
+		DoneHooksRegThread();
+
+	// DLL_PROCESS_DETACH зовется как выяснилось не всегда
+	if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !gbDllDeinitialized)
+	{
+		gnDllState = ds_DllMainThreadDetach;
+		gbDllDeinitialized = bNeedDllStop = true;
+	}
+
+	if (ghHeap)
+	{
+		gStartedThreads.Del(nTID);
+	}
+
+	if (bNeedDllStop)
+	{
+		DLOG1("DllMain.DllStop",ul_reason_for_call);
+		//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
+		DoDllStop(false);
+		DLOGEND1();
+	}
+
+	gnDllThreadCount--;
+	ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", gnDllThreadCount);
+
+	#if 0
+	if (ghDebugSshLibsCan) SetEvent(ghDebugSshLibsCan);
+	#endif
+
+	DLOGEND();
+	return true;
+}
+
+BOOL DllMain_ProcessDetach(HANDLE hModule, DWORD  ul_reason_for_call)
+{
+	BOOL lbAllow = !gbHooksWasSet; // Иначе свалимся, т.к. FreeLibrary перехвачена
+
+	DLOG0("DllMain.DLL_PROCESS_DETACH",ul_reason_for_call);
+
+	ShutdownStep(L"DLL_PROCESS_DETACH");
+	gnDllState = ds_DllProcessDetach;
+
+	// Уже могли дернуть в DLL_THREAD_DETACH, OnExitProcess и т.п.
+	gbDllDeinitialized = true;
+	DLOG1("DllMain.DllStop",ul_reason_for_call);
+	//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
+	DoDllStop(true);
+	DLOGEND1();
+
+	// -- free не нужен, т.к. уже может быть вызван HeapDeinitialize()
+	//free(user);
+	ShutdownStep(L"DLL_PROCESS_DETACH done");
+
+	#ifdef USEHOOKLOG
+	if (bFinal)
+	{
+		DLOGEND();
+		#ifdef USEHOOKLOGANALYZE
+		HookLogger::RunAnalyzer();
+		_ASSERTEX(FALSE && "Hooks terminated");
+		#endif
+	}
+	#endif
+
+	return lbAllow;
+}
+
 #if defined(__GNUC__)
 extern "C"
 #endif
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-	BOOL lbAllow = TRUE;
+	BOOL lbAllow;
 
 #if defined(_DEBUG) && !defined(_WIN64)
 	// pThreadInfo[9] -> GetCurrentThreadId();
@@ -1559,284 +1882,20 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	switch(ul_reason_for_call)
 	{
 		case DLL_PROCESS_ATTACH:
-		{
-			DLOG0("DllMain.DLL_PROCESS_ATTACH",ul_reason_for_call);
-
-			#ifdef USEHOOKLOG
-			QueryPerformanceFrequency(&HookLogger::g_freq);
-			#endif
-
-			gnDllState = ds_DllProcessAttach;
-			#ifdef _DEBUG
-			HANDLE hProcHeap = GetProcessHeap();
-			#endif
-			HeapInitialize();
-
-			DLOG1("DllMain.LoadStartupEnv",ul_reason_for_call);
-			/* *** DEBUG PURPOSES */
-			gpStartEnv = LoadStartupEnv::Create();
-			DLOGEND1();
-			//if (gpStartEnv && gpStartEnv->hIn.hStd && !(gpStartEnv->hIn.nMode & 0x80000000))
-			//{
-			//	if ((gpStartEnv->hIn.nMode & 0xF0) == 0xE0)
-			//	{
-			//		_ASSERTE(FALSE && "ENABLE_MOUSE_INPUT was disabled! Enabling...");
-			//		SetConsoleMode(gpStartEnv->hIn.hStd, gpStartEnv->hIn.nMode|ENABLE_MOUSE_INPUT);
-			//	}
-			//}
-			/* *** DEBUG PURPOSES */
-
-			DLOG1_("DllMain.Console",ul_reason_for_call);
-			ghOurModule = (HMODULE)hModule;
-			ghConWnd = GetConsoleWindow();
-			if (ghConWnd)
-				GetConsoleTitle(gsInitConTitle, countof(gsInitConTitle));
-			gnSelfPID = GetCurrentProcessId();
-			ghWorkingModule = (u64)hModule;
-			gfGetRealConsoleWindow = GetConsoleWindow;
-			DLOGEND1();
-
-
-
-			DLOG1_("DllMain.RootEvents",ul_reason_for_call);
-			bool bCurrentThreadIsMain = false;
-
-			wchar_t szEvtName[64];
-			msprintf(szEvtName, countof(szEvtName), CECONEMUROOTPROCESS, gnSelfPID);
-			gEvtProcessRoot.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-			if (gEvtProcessRoot.hProcessFlag)
-			{
-				gEvtProcessRoot.nWait = WaitForSingleObject(gEvtProcessRoot.hProcessFlag, 0);
-				gEvtProcessRoot.nErrCode = GetLastError();
-				gbSelfIsRootConsoleProcess = (gEvtProcessRoot.nWait == WAIT_OBJECT_0);
-			}
-			else
-				gEvtProcessRoot.nErrCode = GetLastError();
-			//SafeCloseHandle(gEvtProcessRoot.hProcessFlag);
-
-			msprintf(szEvtName, countof(szEvtName), CECONEMUROOTTHREAD, gnSelfPID);
-			gEvtThreadRoot.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-			if (gEvtThreadRoot.hProcessFlag)
-			{
-				gEvtThreadRoot.nWait = WaitForSingleObject(gEvtThreadRoot.hProcessFlag, 0);
-				gEvtThreadRoot.nErrCode = GetLastError();
-				bCurrentThreadIsMain = (gEvtThreadRoot.nWait == WAIT_OBJECT_0);
-			}
-			else
-				gEvtThreadRoot.nErrCode = GetLastError();
-			//SafeCloseHandle(gEvtThreadRoot.hProcessFlag);
-
-			// When calling Attach (Win+G) from ConEmu GUI
-			gbForceStartPipeServer = (!bCurrentThreadIsMain);
-
-			if (!gbSelfIsRootConsoleProcess)
-			{
-				msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOK, gnSelfPID);
-				gEvtDefTerm.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-				if (gEvtDefTerm.hProcessFlag)
-				{
-					gEvtDefTerm.nWait = WaitForSingleObject(gEvtDefTerm.hProcessFlag, 0);
-					gEvtDefTerm.nErrCode = GetLastError();
-					gbPrepareDefaultTerminal = (gEvtDefTerm.nWait == WAIT_OBJECT_0);
-					//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
-					// Если ждут, что мы отметимся...
-					if (gbPrepareDefaultTerminal)
-					{
-						msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOKOK, gnSelfPID);
-						gEvtDefTermOk.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
-						if (gEvtDefTermOk.hProcessFlag)
-							SetEvent(gEvtDefTermOk.hProcessFlag);
-						gEvtDefTermOk.nErrCode = GetLastError();
-					}
-				}
-				else
-					gEvtDefTerm.nErrCode = GetLastError();
-				//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
-			}
-			DLOGEND1();
-
-
-
-			DLOG1_("DllMain.MainThreadId",ul_reason_for_call);
-			GetMainThreadId(bCurrentThreadIsMain); // Инициализировать gnHookMainThreadId
-			// In some cases we need to know thread IDs was started 'normally'
-			gStartedThreads.Init(128,true);
-			gStartedThreads.Set(gnHookMainThreadId,true);
-			if (!bCurrentThreadIsMain)
-				gStartedThreads.Set(GetCurrentThreadId(),true);
-			DLOGEND1();
-
-			DLOG1_("DllMain.InQueue",ul_reason_for_call);
-			//gcchLastWriteConsoleMax = 4096;
-			//gpszLastWriteConsole = (wchar_t*)calloc(gcchLastWriteConsoleMax,sizeof(*gpszLastWriteConsole));
-			gInQueue.Initialize(512, NULL);
-			DLOGEND1();
-
-			DLOG1_("DllMain.Misc",ul_reason_for_call);
-			#ifdef _DEBUG
-			gAllowAssertThread = am_Pipe;
-			#endif
-
-			#ifdef _DEBUG
-				#ifdef UseDebugExceptionFilter
-					gfnPrevFilter = SetUnhandledExceptionFilter(HkExceptionFilter);
-				#endif
-			#endif
-
-			#ifdef SHOW_STARTED_MSGBOX
-			if (!IsDebuggerPresent())
-			{
-				::MessageBox(ghConEmuWnd, L"ConEmuHk*.dll loaded", L"ConEmu hooks", MB_SYSTEMMODAL);
-			}
-			#endif
-			#ifdef _DEBUG
-			DWORD dwConMode = -1;
-			GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwConMode);
-			#endif
-			DLOGEND1();
-
-			//_ASSERTE(ghHeap == NULL);
-			//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
-
-
-			DLOG1_("DllMain.DllStart",ul_reason_for_call);
-			#ifdef HOOK_USE_DLLTHREAD
-			_ASSERTEX(FALSE && "Hooks starting in background thread?");
-			//HANDLE hEvents[2];
-			//hEvents[0] = CreateEvent(NULL, FALSE, FALSE, NULL);
-			//hEvents[1] =
-			ghStartThread = CreateThread(NULL, 0, DllStart, NULL/*(LPVOID)(hEvents[0])*/, 0, &gnStartThreadID);
-			if (ghStartThread == NULL)
-			{
-				//_ASSERTE(ghStartThread!=NULL);
-				wchar_t szMsg[128]; DWORD nErrCode = GetLastError();
-				msprintf(szMsg, countof(szMsg),
-					L"Failed to start DllStart thread!\nErrCode=0x%08X\nPID=%u",
-					nErrCode, GetCurrentProcessId());
-				GuiMessageBox(ghConEmuWnd, szMsg, L"ConEmu hooks", 0);
-			}
-			else
-			{
-				DWORD nThreadWait = WaitForSingleObject(ghStartThread, 5000);
-				DllThreadClose();
-			}
-			//DWORD nThreadWait = WaitForMultipleObjects(hEvents, countof(hEvents), FALSE, INFINITE);
-			//CloseHandle(hEvents[0]);
-			#else
-			if (DllStart(NULL) != 0)
-			{
-				if (gbPrepareDefaultTerminal)
-				{
-					_ASSERTEX(gbPrepareDefaultTerminal && "Failed to set up default terminal");
-					lbAllow = FALSE;
-				}
-			}
-			#endif
-			DLOGEND1();
-
-			if (gbIsSshProcess && bCurrentThreadIsMain && (GetCurrentThreadId() == gnHookMainThreadId))
-			{
-				// Original complain was about git/ssh (crashed with third-party PGHook.dll)
-				// Cygwin version of ssh almost completely fails with FixSshThreads
-				// Different forking technologies?
-				HMODULE hMsys = GetModuleHandle(L"msys-1.0.dll");
-				if (hMsys != NULL)
-				{
-					FixSshThreads(0);
-				}
-			}
-
-			DLOGEND();
-		}
-		break; // DLL_PROCESS_ATTACH
-
+			lbAllow = DllMain_ProcessAttach(hModule, ul_reason_for_call);
+			break;
 		case DLL_THREAD_ATTACH:
-		{
-			DLOG0("DllMain.DLL_THREAD_ATTACH",ul_reason_for_call);
-			gnDllThreadCount++;
-			if (gbHooksWasSet)
-				InitHooksRegThread();
-			if (gbIsSshProcess && !gnFixSshThreadsResumeOk && gStartedThreads.Get(GetCurrentThreadId(), NULL))
-				FixSshThreads(1);
-			DLOGEND();
-		}
-		break; // DLL_THREAD_ATTACH
-
+			lbAllow = DllMain_ThreadAttach(hModule, ul_reason_for_call);
+			break;
 		case DLL_THREAD_DETACH:
-		{
-			DLOG0("DllMain.DLL_THREAD_DETACH",ul_reason_for_call);
-
-			DWORD nTID = GetCurrentThreadId();
-			bool bNeedDllStop = false;
-
-			#ifdef SHOW_SHUTDOWN_STEPS
-			gnDbgPresent = 0;
-			ShutdownStep(L"DLL_THREAD_DETACH");
-			#endif
-
-			if (gbHooksWasSet)
-				DoneHooksRegThread();
-			// DLL_PROCESS_DETACH зовется как выяснилось не всегда
-			if (gnHookMainThreadId && (nTID == gnHookMainThreadId) && !gbDllDeinitialized)
-			{
-				gbDllDeinitialized = bNeedDllStop = true;
-			}
-
-			if (ghHeap)
-			{
-				gStartedThreads.Del(nTID);
-			}
-
-			if (bNeedDllStop)
-			{
-				DLOG1("DllMain.DllStop",ul_reason_for_call);
-				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
-				DllStop();
-				DLOGEND1();
-			}
-
-			gnDllThreadCount--;
-			ShutdownStep(L"DLL_THREAD_DETACH done, left=%i", gnDllThreadCount);
-
-			#if 0
-			if (ghDebugSshLibsCan) SetEvent(ghDebugSshLibsCan);
-			#endif
-
-			DLOGEND();
-		}
-		break; // DLL_THREAD_DETACH
-
+			lbAllow = DllMain_ThreadDetach(hModule, ul_reason_for_call);
+			break;
 		case DLL_PROCESS_DETACH:
-		{
-			DLOG0("DllMain.DLL_PROCESS_DETACH",ul_reason_for_call);
-
-			ShutdownStep(L"DLL_PROCESS_DETACH");
-			gnDllState = ds_DllProcessDetach;
-			if (gbHooksWasSet)
-				lbAllow = FALSE; // Иначе свалимся, т.к. FreeLibrary перехвачена
-			// Уже могли дернуть в DLL_THREAD_DETACH
-			if (!gbDllDeinitialized)
-			{
-				gbDllDeinitialized = true;
-				DLOG1("DllMain.DllStop",ul_reason_for_call);
-				//WARNING!!! OutputDebugString must NOT be used from ConEmuHk::DllMain(DLL_PROCESS_DETACH). See Issue 465
-				DllStop();
-				DLOGEND1();
-			}
-			// -- free не нужен, т.к. уже вызван HeapDeinitialize()
-			//free(user);
-			ShutdownStep(L"DLL_PROCESS_DETACH done");
-
-			#ifdef USEHOOKLOG
-			DLOGEND();
-			#ifdef USEHOOKLOGANALYZE
-			HookLogger::RunAnalyzer();
-			_ASSERTEX(FALSE && "Hooks terminated");
-			#endif
-			#endif
-		}
-		break; // DLL_PROCESS_DETACH
-	}
+			lbAllow = DllMain_ProcessDetach(hModule, ul_reason_for_call);
+			break;
+		default:
+			lbAllow = FALSE;
+	};
 
 	return lbAllow;
 }
@@ -1988,6 +2047,12 @@ WARNING("Попробовать SendStarted пыполнять не из DllMain
 
 void SendStarted()
 {
+	// Don't do anything while loading into ConEmuC.exe/ConEmuC64.exe
+	if (gbConEmuCProcess)
+	{
+		return;
+	}
+
 	// When SendStarted is called in DefTerm mode (gbPrepareDefaultTerminal)
 	// for '*.vshost.exe' process, there is neither console nor server process yet
 	// So, server will not receive CECMD_CMDSTARTSTOP(sst_AppStart) message
@@ -2065,8 +2130,10 @@ void SendStarted()
 
 void SendStopped()
 {
-	if (gbNonGuiMode || !gnServerPID)
+	if (gbNonGuiMode || !gnServerPID || gbConEmuCProcess)
+	{
 		return;
+	}
 
 	// To avoid cmd-execute lagging - send Start/Stop info only for root(!) process
 	_ASSERTEX(gbSelfIsRootConsoleProcess);

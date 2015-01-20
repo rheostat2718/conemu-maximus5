@@ -199,6 +199,7 @@ void PreReadConsoleInput(HANDLE hConIn, bool abUnicode, bool abPeek);
 
 /* ************ Globals for cmd.exe/clink ************ */
 bool     gbIsCmdProcess = false;
+static bool IsInteractive();
 //size_t   gcchLastWriteConsoleMax = 0;
 //wchar_t *gpszLastWriteConsole = NULL;
 //HMODULE  ghClinkDll = NULL;
@@ -225,6 +226,7 @@ bool     gbIsNodeJSProcess = false;
 /* ************ Globals for cygwin/msys ************ */
 bool gbIsBashProcess = false;
 bool gbIsSshProcess = false;
+bool gbIsLessProcess = false;
 /* ************ Globals for cygwin/msys ************ */
 
 /* ************ Globals for ViM ************ */
@@ -252,15 +254,6 @@ bool gbSkipVirtualAllocErr = false;
 DWORD gnTimeEnvVarLastCheck = 0;
 wchar_t gszTimeEnvVarSave[32] = L"";
 /* ************ Hooking time functions ************ */
-
-
-/* ************ From Entry.cpp ************ */
-#if defined(__GNUC__)
-extern "C"
-#endif
-// Вызывается из OnTerminateProcess и OnTerminateThread
-BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserved);
-/* ************ From Entry.cpp ************ */
 
 
 struct ReadConsoleInfo gReadConsoleInfo = {};
@@ -343,6 +336,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 UINT WINAPI OnWinExec(LPCSTR lpCmdLine, UINT uCmdShow);
 BOOL WINAPI OnSetCurrentDirectoryA(LPCSTR lpPathName);
 BOOL WINAPI OnSetCurrentDirectoryW(LPCWSTR lpPathName);
+VOID WINAPI OnExitProcess(UINT uExitCode);
 BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode);
 BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode);
 
@@ -496,6 +490,7 @@ bool InitHooksCommon()
 		{(void*)OnWriteConsoleInputW,	"WriteConsoleInputW",	kernel32},
 		/* ANSI Escape Sequences SUPPORT */
 		//#ifdef HOOK_ANSI_SEQUENCES
+		{(void*)CEAnsi::OnCreateFileW,	"CreateFileW",  		kernel32},
 		{(void*)CEAnsi::OnWriteFile,	"WriteFile",  			kernel32},
 		{(void*)CEAnsi::OnWriteConsoleA,"WriteConsoleA",  		kernel32},
 		{(void*)CEAnsi::OnWriteConsoleW,"WriteConsoleW",  		kernel32},
@@ -521,6 +516,7 @@ bool InitHooksCommon()
 		{(void*)OnSetConsoleKeyShortcuts, "SetConsoleKeyShortcuts", kernel32},
 		#endif
 		/* ************************ */
+		{(void*)OnExitProcess,			"ExitProcess",			kernel32},
 		{(void*)OnTerminateProcess,		"TerminateProcess",		kernel32},
 		{(void*)OnTerminateThread,		"TerminateThread",		kernel32},
 		/* ************************ */
@@ -1130,6 +1126,32 @@ void GuiFlashWindow(BOOL bSimple, HWND hWnd, BOOL bInvert, DWORD dwFlags, UINT u
 //wchar_t* str2wcs(const char* psz, UINT anCP);
 //wchar_t* wcs2str(const char* psz, UINT anCP);
 
+// May be called from "C" programs
+VOID WINAPI OnExitProcess(UINT uExitCode)
+{
+	typedef BOOL (WINAPI* OnExitProcess_t)(UINT uExitCode);
+	ORIGINALFAST(ExitProcess);
+
+	#if 0
+	if (gbIsLessProcess)
+	{
+		_ASSERTE(FALSE && "Continue to ExitProcess");
+	}
+	#endif
+
+	// And terminate our threads
+	DoDllStop(false);
+
+	// Issue 1865: Weird hungs in LdrpAcquireLoaderLock(), so call TerminateProcess
+	if (gbIsCmdProcess && !IsInteractive())
+	{
+		TerminateProcess(GetCurrentProcess(), uExitCode);
+		return; // Assume not to get here
+	}
+
+	F(ExitProcess)(uExitCode);
+}
+
 // For example, mintty is terminated ‘abnormally’. It calls TerminateProcess instead of ExitProcess.
 BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 {
@@ -1140,10 +1162,8 @@ BOOL WINAPI OnTerminateProcess(HANDLE hProcess, UINT uExitCode)
 	if (hProcess == GetCurrentProcess())
 	{
 		// We need not to unset hooks (due to process will be force-killed below)
-		extern BOOL gbHooksWasSet;
-		gbHooksWasSet = FALSE;
 		// And terminate our threads
-		DllMain(ghOurModule, DLL_PROCESS_DETACH, NULL);
+		DoDllStop(false);
 	}
 
 	lbRc = F(TerminateProcess)(hProcess, uExitCode);
@@ -1157,9 +1177,17 @@ BOOL WINAPI OnTerminateThread(HANDLE hThread, DWORD dwExitCode)
 	ORIGINALFAST(TerminateThread);
 	BOOL lbRc;
 
+	#if 0
+	if (gbIsLessProcess)
+	{
+		_ASSERTE(FALSE && "Continue to terminate thread");
+	}
+	#endif
+
 	if (hThread == GetCurrentThread())
 	{
-		DllMain(ghOurModule, DLL_THREAD_DETACH, NULL);
+		// And terminate our service threads
+		DoDllStop(false);
 	}
 
 	lbRc = F(TerminateThread)(hThread, dwExitCode);
@@ -1479,21 +1507,24 @@ BOOL WINAPI OnCloseHandle(HANDLE hObject)
 	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
 
-	if (CEAnsi::ghLastAnsiCapable && (CEAnsi::ghLastAnsiCapable == hObject))
+	LPHANDLE hh[] = {
+		&CEAnsi::ghLastAnsiCapable,
+		&CEAnsi::ghLastAnsiNotCapable,
+		&CEAnsi::ghLastConOut,
+		&ghLastConInHandle,
+		&ghLastNotConInHandle,
+		NULL
+	};
+
+	if (hObject)
 	{
-		CEAnsi::ghLastAnsiCapable = NULL;
-	}
-	if (CEAnsi::ghLastAnsiNotCapable && (CEAnsi::ghLastAnsiNotCapable == hObject))
-	{
-		CEAnsi::ghLastAnsiNotCapable = NULL;
-	}
-	if (ghLastConInHandle && (ghLastConInHandle == hObject))
-	{
-		ghLastConInHandle = NULL;
-	}
-	if (ghLastNotConInHandle && (ghLastNotConInHandle == hObject))
-	{
-		ghLastNotConInHandle = NULL;
+		for (INT_PTR i = 0; hh[i]; i++)
+		{
+			if (hh[i] && (*(hh[i]) == hObject))
+			{
+				*(hh[i]) = NULL;
+			}
+		}
 	}
 
 	if (gpAnnotationHeader && (hObject == (HANDLE)gpAnnotationHeader))
@@ -4230,6 +4261,30 @@ bool InitializeClink()
 	//return (gpfnClinkReadLine != NULL);
 }
 
+static bool IsInteractive()
+{
+	const wchar_t* const cmdLine = ::GetCommandLineW();
+	if (!cmdLine)
+	{
+		return true;	// can't know - assume it is
+	}
+
+	const wchar_t* pos = cmdLine;
+	while ((pos = wcschr(pos, L'/')) != NULL)
+	{
+		switch (pos[1])
+		{
+		case L'K': case L'k':
+			return true;	// /k - execute and remain working
+		case L'C': case L'c':
+			return false;	// /c - execute and exit
+		}
+		++pos;
+	}
+
+	return true;
+}
+
 // cmd.exe only!
 LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData)
 {
@@ -4237,7 +4292,6 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 	ORIGINALFASTEX(RegQueryValueExW,NULL);
 	//BOOL bMainThread = TRUE; // Does not care
 	LONG lRc = -1;
-	bool bNeedAppendClink = false;
 
 	if (gbIsCmdProcess && hKey && lpValueName)
 	{
@@ -4259,9 +4313,9 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 				lRc = 0;
 				goto wrap;
 			}
-			if (gbAllowClinkUsage && gszClinkCmdLine && lstrcmpi(lpValueName, L"AutoRun") == 0)
+			if (gbAllowClinkUsage && gszClinkCmdLine && (lstrcmpi(lpValueName, L"AutoRun") == 0)
+				&& IsInteractive())
 			{
-
 				// Is already loaded?
 				HMODULE hClink = GetModuleHandle(WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
 				if (hClink == NULL)
@@ -4301,14 +4355,12 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 								// Not installed via "Autorun"
 								if (!bClinkInstalled)
 								{
-									bNeedAppendClink = true;
-
 									int iLen = lstrlen(gszClinkCmdLine);
 									_wcscpy_c(pszCmd, cchMax, gszClinkCmdLine);
 									_wcscpy_c(pszCmd+iLen, cchMax-iLen, L" & "); // conveyer next command indifferent to %errorlevel%
 
 									cbSize = cbMax - (iLen + 3)*sizeof(*pszCmd);
-									if (F(RegQueryValueExW)(hKey, lpValueName, NULL, NULL, (LPBYTE)pszCmd, &(cbSize = cbMax))
+									if (F(RegQueryValueExW)(hKey, lpValueName, NULL, NULL, (LPBYTE)(pszCmd + iLen + 3), &cbSize)
 										|| (pszCmd[iLen+3] == 0))
 									{
 										pszCmd[iLen] = 0; // There is no self value in registry
@@ -4327,6 +4379,7 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 									if (lpcbData)
 										*lpcbData = cbSize;
 									free(pszCmd);
+									FreeLibrary(hAdvApi);
 									goto wrap;
 								}
 								free(pszCmd);
@@ -6068,6 +6121,35 @@ void CheckVariables()
 	GetConMap(FALSE);
 }
 
+void CheckAnsiConVar(LPCWSTR asName)
+{
+	bool bAnsi = false;
+	CEAnsi::GetFeatures(&bAnsi, NULL);
+
+	if (bAnsi)
+	{
+		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+		if (GetConsoleScreenBufferInfo(hOut, &lsbi))
+		{
+			wchar_t szInfo[40];
+			msprintf(szInfo, countof(szInfo), L"%ux%u (%ux%u)", lsbi.dwSize.X, lsbi.dwSize.Y, lsbi.srWindow.Right-lsbi.srWindow.Left+1, lsbi.srWindow.Bottom-lsbi.srWindow.Top+1);
+			SetEnvironmentVariable(ENV_ANSICON_VAR_W, szInfo);
+
+			static WORD clrDefault = 0xFFFF;
+			if ((clrDefault == 0xFFFF) && LOBYTE(lsbi.wAttributes))
+				clrDefault = LOBYTE(lsbi.wAttributes);
+			msprintf(szInfo, countof(szInfo), L"%X", clrDefault);
+			SetEnvironmentVariable(ENV_ANSICON_DEF_VAR_W, szInfo);
+		}
+	}
+	else
+	{
+		SetEnvironmentVariable(ENV_ANSICON_VAR_W, NULL);
+		SetEnvironmentVariable(ENV_ANSICON_DEF_VAR_W, NULL);
+	}
+}
+
 BOOL WINAPI OnSetEnvironmentVariableA(LPCSTR lpName, LPCSTR lpValue)
 {
 	typedef BOOL (WINAPI* OnSetEnvironmentVariableA_t)(LPCSTR lpName, LPCSTR lpValue);
@@ -6109,20 +6191,40 @@ DWORD WINAPI OnGetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSiz
 	typedef DWORD (WINAPI* OnGetEnvironmentVariableA_t)(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize);
 	ORIGINALFAST(GetEnvironmentVariableA);
 	//BOOL bMainThread = FALSE; // поток не важен
+	DWORD lRc = 0;
 
-	if (lpName && (
-			(lstrcmpiA(lpName, ENV_CONEMUANSI_VAR_A) == 0)
+	if (lpName)
+	{
+		if ((lstrcmpiA(lpName, ENV_CONEMUANSI_VAR_A) == 0)
 			|| (lstrcmpiA(lpName, ENV_CONEMUHWND_VAR_A) == 0)
 			|| (lstrcmpiA(lpName, ENV_CONEMUDIR_VAR_A) == 0)
 			|| (lstrcmpiA(lpName, ENV_CONEMUBASEDIR_VAR_A) == 0)
-		))
-	{
-		CheckVariables();
+			)
+		{
+			CheckVariables();
+		}
+		else if (lstrcmpiA(lpName, ENV_CONEMUANSI_VAR_A) == 0)
+		{
+			CheckAnsiConVar(ENV_CONEMUANSI_VAR_W);
+		}
+		else if (lstrcmpiA(lpName, ENV_ANSICON_DEF_VAR_A) == 0)
+		{
+			CheckAnsiConVar(ENV_ANSICON_DEF_VAR_W);
+		}
+		else if (lstrcmpiA(lpName, ENV_ANSICON_VER_VAR_A) == 0)
+		{
+			if (lpBuffer && ((INT_PTR)nSize > lstrlenA(ENV_ANSICON_VER_VALUE)))
+			{
+				lstrcpynA(lpBuffer, ENV_ANSICON_VER_VALUE, nSize);
+				lRc = lstrlenA(ENV_ANSICON_VER_VALUE);
+			}
+			goto wrap;
+		}
 	}
 
-	BOOL lbRc = F(GetEnvironmentVariableA)(lpName, lpBuffer, nSize);
-
-	return lbRc;
+	lRc = F(GetEnvironmentVariableA)(lpName, lpBuffer, nSize);
+wrap:
+	return lRc;
 }
 
 DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize)
@@ -6130,19 +6232,37 @@ DWORD WINAPI OnGetEnvironmentVariableW(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nS
 	typedef DWORD (WINAPI* OnGetEnvironmentVariableW_t)(LPCWSTR lpName, LPWSTR lpBuffer, DWORD nSize);
 	ORIGINALFAST(GetEnvironmentVariableW);
 	//BOOL bMainThread = FALSE; // поток не важен
+	DWORD lRc = 0;
 
-	if (lpName && (
-			(lstrcmpiW(lpName, ENV_CONEMUANSI_VAR_W) == 0)
+	if (lpName)
+	{
+		if ((lstrcmpiW(lpName, ENV_CONEMUANSI_VAR_W) == 0)
 			|| (lstrcmpiW(lpName, ENV_CONEMUHWND_VAR_W) == 0)
 			|| (lstrcmpiW(lpName, ENV_CONEMUDIR_VAR_W) == 0)
 			|| (lstrcmpiW(lpName, ENV_CONEMUBASEDIR_VAR_W) == 0)
-		))
-	{
-		CheckVariables();
+			)
+		{
+			CheckVariables();
+		}
+		else if ((lstrcmpiW(lpName, ENV_CONEMUANSI_VAR_W) == 0)
+				|| (lstrcmpiW(lpName, ENV_ANSICON_DEF_VAR_W) == 0))
+		{
+			CheckAnsiConVar(lpName);
+		}
+		else if (lstrcmpiW(lpName, ENV_ANSICON_VER_VAR_W) == 0)
+		{
+			if (lpBuffer && ((INT_PTR)nSize > lstrlenA(ENV_ANSICON_VER_VALUE)))
+			{
+				lstrcpynW(lpBuffer, _CRT_WIDE(ENV_ANSICON_VER_VALUE), nSize);
+				lRc = lstrlenA(ENV_ANSICON_VER_VALUE);
+			}
+			goto wrap;
+		}
 	}
 
-	BOOL lbRc = F(GetEnvironmentVariableW)(lpName, lpBuffer, nSize);
-	return lbRc;
+	lRc = F(GetEnvironmentVariableW)(lpName, lpBuffer, nSize);
+wrap:
+	return lRc;
 }
 
 #if 0

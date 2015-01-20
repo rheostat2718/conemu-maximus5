@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCtrl.h"
 #include "DefaultTerm.h"
 #include "DpiAware.h"
+#include "DynDialog.h"
 #include "HotkeyDlg.h"
 #include "Inside.h"
 #include "LoadImg.h"
@@ -231,6 +232,7 @@ CSettings::CSettings()
 	#endif
 	m_ColorFormat = eRgbDec; // RRR GGG BBB (как показывать цвета на вкладке Colors)
 	mp_DpiAware = NULL;
+	mp_DlgDistinct2 = NULL;
 	mp_DpiDistinct2 = NULL;
 	ZeroStruct(mh_Font);
 	mh_Font2 = NULL;
@@ -284,6 +286,7 @@ CSettings::CSettings()
 	// Горячие клавиши
 	InitVars_Hotkeys();
 
+	mp_Dialog = NULL;
 	m_Pages = NULL;
 	mn_PagesCount = 0;
 
@@ -1538,7 +1541,7 @@ LRESULT CSettings::OnInitDialog()
 
 	if (mp_DpiAware)
 	{
-		mp_DpiAware->Attach(ghOpWnd, ghWnd);
+		mp_DpiAware->Attach(ghOpWnd, ghWnd, mp_Dialog);
 	}
 
 	gbLastColorsOk = FALSE;
@@ -2067,8 +2070,7 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreFolders), FALSE/*(CB == rbStartLastTabs)*/);
 						EnableWindow(GetDlgItem(hWnd2, cbStartFarRestoreEditors), FALSE/*(CB == rbStartLastTabs)*/);
 						//
-						EnableWindow(GetDlgItem(hWnd2, stCmdGroupCommands), (CB == rbStartNamedTask) || (CB == rbStartLastTabs));
-						EnableWindow(GetDlgItem(hWnd2, tCmdGroupCommands), (CB == rbStartNamedTask) || (CB == rbStartLastTabs));
+						EnableWindow(GetDlgItem(hWnd2, tStartGroupCommands), (CB == rbStartNamedTask) || (CB == rbStartLastTabs));
 						// Task source
 						pageOpProc_Start(hWnd2, MSG_SHOWTASKCONTENTS, CB, 0);
 						break;
@@ -2185,11 +2187,11 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 						nIdx = -2;
 				}
 				const CommandTasks* pTask = (nIdx >= -1) ? gpSet->CmdTaskGet(nIdx) : NULL;
-				SetDlgItemText(hWnd2, tCmdGroupCommands, pTask ? pTask->pszCommands : L"");
+				SetDlgItemText(hWnd2, tStartGroupCommands, pTask ? pTask->pszCommands : L"");
 			}
 			else
 			{
-				SetDlgItemText(hWnd2, tCmdGroupCommands, L"");
+				SetDlgItemText(hWnd2, tStartGroupCommands, L"");
 			}
 		}
 		break;
@@ -3370,6 +3372,18 @@ LRESULT CSettings::OnInitDialog_Transparent(HWND hWnd2)
 LRESULT CSettings::OnInitDialog_Tasks(HWND hWnd2, bool abForceReload)
 {
 	mb_IgnoreCmdGroupEdit = true;
+
+	wchar_t szKey[128] = L"";
+	const ConEmuHotKey* pDefCmdKey = NULL;
+	if (!gpSet->GetHotkeyById(vkMultiCmd, &pDefCmdKey) || !pDefCmdKey)
+		wcscpy_c(szKey, gsNoHotkey);
+	else
+		pDefCmdKey->GetHotkeyName(szKey, true);
+	CEStr lsLabel(lstrmerge(L"Default shell (", szKey, L")"));
+	SetDlgItemText(hWnd2, cbCmdGrpDefaultCmd, lsLabel);
+
+	// Not implemented yet
+	ShowWindow(GetDlgItem(hWnd2, cbCmdGrpToolbar), SW_HIDE);
 
 	if (abForceReload)
 	{
@@ -5646,6 +5660,12 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 
 			SetDlgItemText(hWnd2, tCmdGroupGuiArg, pCmd->pszGuiArgs ? pCmd->pszGuiArgs : L"");
 			SetDlgItemText(hWnd2, tCmdGroupCommands, pCmd->pszCommands ? pCmd->pszCommands : L"");
+
+			checkDlgButton(hWnd2, cbCmdGrpDefaultNew, (pCmd->Flags & CETF_NEW_DEFAULT) ? BST_CHECKED : BST_UNCHECKED);
+			checkDlgButton(hWnd2, cbCmdGrpDefaultCmd, (pCmd->Flags & CETF_CMD_DEFAULT) ? BST_CHECKED : BST_UNCHECKED);
+			checkDlgButton(hWnd2, cbCmdGrpTaskbar, ((pCmd->Flags & CETF_NO_TASKBAR) == CETF_NONE) ? BST_CHECKED : BST_UNCHECKED);
+			checkDlgButton(hWnd2, cbCmdGrpToolbar, (pCmd->Flags & CETF_ADD_TOOLBAR) ? BST_CHECKED : BST_UNCHECKED);
+
 			lbEnable = TRUE;
 		}
 		else
@@ -6118,7 +6138,11 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 		// Сначала обновить DC, чтобы некрасивостей не было
 		gpConEmu->UpdateWindowChild(NULL);
 
-		if (!gpSetCls->mp_DpiAware && CDpiAware::IsPerMonitorDpi())
+		if (!gpSetCls->mp_DpiAware
+			#ifndef _DEBUG
+			&& CDpiAware::IsPerMonitorDpi()
+			#endif
+			)
 		{
 			gpSetCls->mp_DpiAware = new CDpiForDialog();
 		}
@@ -6126,18 +6150,19 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 		wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating settings dialog, IdPage=%u", IdShowPage);
 		LogString(szLog);
 
-		//2009-05-03. DialogBox создает МОДАЛЬНЫЙ диалог, а нам нужен НЕмодальный
-		HWND hOpt = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SETTINGS), NULL, wndOpProc);
+		SafeDelete(gpSetCls->mp_Dialog);
+		//2009-05-03. Нам нужен НЕмодальный диалог
+		gpSetCls->mp_Dialog = CDynDialog::ShowDialog(IDD_SETTINGS, NULL, wndOpProc, 0/*dwInitParam*/);
 
-		if (!hOpt)
+		if (!gpSetCls->mp_Dialog)
 		{
 			DisplayLastError(L"Can't create settings dialog!");
 			goto wrap;
 		}
 		else
 		{
-			_ASSERTE(ghOpWnd == hOpt);
-			ghOpWnd = hOpt;
+			_ASSERTE(ghOpWnd == gpSetCls->mp_Dialog->mh_Dlg);
+			ghOpWnd = gpSetCls->mp_Dialog->mh_Dlg;
 		}
 	}
 
@@ -6757,7 +6782,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			RECT rcClient; GetWindowRect(hPlace, &rcClient);
 			MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 			if (p->pDpiAware)
-				p->pDpiAware->Attach(hWnd2, ghOpWnd);
+				p->pDpiAware->Attach(hWnd2, ghOpWnd, p->pDialog);
 			MoveWindowRect(hWnd2, rcClient);
 		}
 		else
@@ -7239,8 +7264,11 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 		if ((messg == WM_INITDIALOG) || (messg == mn_ActivateTabMsg))
 		{
 			LogString(L"Creating child dialog IDD_SPG_APPDISTINCT2");
-			hChild = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
-							MAKEINTRESOURCE(IDD_SPG_APPDISTINCT2), hWnd2, pageOpProc_AppsChild, 0);
+			SafeDelete(mp_DlgDistinct2); // JIC
+
+			mp_DlgDistinct2 = CDynDialog::ShowDialog(IDD_SPG_APPDISTINCT2, hWnd2, pageOpProc_AppsChild, 0/*dwInitParam*/);
+			HWND hChild = mp_DlgDistinct2 ? mp_DlgDistinct2->mh_Dlg : NULL;
+
 			if (!hChild)
 			{
 				EnableWindow(hWnd2, FALSE);
@@ -7252,7 +7280,7 @@ INT_PTR CSettings::pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM w
 			if (!mp_DpiDistinct2 && mp_DpiAware)
 			{
 				mp_DpiDistinct2 = new CDpiForDialog();
-				mp_DpiDistinct2->Attach(hChild, hWnd2);
+				mp_DpiDistinct2->Attach(hChild, hWnd2, mp_DlgDistinct2);
 			}
 
 			HWND hHolder = GetDlgItem(hWnd2, tAppDistinctHolder);
@@ -9085,7 +9113,13 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 
 		while ((hChild = FindWindowEx(hChildDlg, hChild, NULL, NULL)) != NULL)
 		{
-			//LONG wID = GetWindowLong(hChild, GWL_ID);
+			#ifdef _DEBUG
+			LONG wID = GetWindowLong(hChild, GWL_ID);
+			if (wID == stCmdGroupCommands)
+			{
+				wID = wID;
+			}
+			#endif
 
 			//if (wID == -1) continue;
 
@@ -10377,12 +10411,29 @@ LPCTSTR CSettings::GetCurCmd(bool *pIsCmdList /*= NULL*/)
 
 LPCTSTR CSettings::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 {
-	LPCWSTR pszCmd = GetCurCmd(pIsCmdList);
-	if (pszCmd)
-		return pszCmd;
+	LPCWSTR pszCmd = NULL;
 
+	// true - если передали "скрипт" (как бы содержимое Task вытянутое в строку)
+	// например: "ConEmu.exe -cmdlist cmd ||| powershell ||| far"
 	if (pIsCmdList)
 		*pIsCmdList = false;
+
+	// User choosed default task?
+	int nGroup = 0;
+	const CommandTasks* pGrp = NULL;
+	while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
+	{
+		if (pGrp->pszName && *pGrp->pszName
+			&& (pGrp->Flags & CETF_NEW_DEFAULT))
+		{
+			ms_DefNewTaskName.Attach(lstrdup(pGrp->pszName));
+			return ms_DefNewTaskName.ms_Arg;
+		}
+	}
+
+	// Old style otherwise
+	if ((pszCmd = GetCurCmd(pIsCmdList)) != NULL)
+		return pszCmd;
 
 	switch (gpSet->nStartType)
 	{
@@ -10492,6 +10543,7 @@ LPCTSTR CSettings::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 	return GetCurCmd(pIsCmdList);
 }
 
+// TODO: Option for default task?
 LPCTSTR CSettings::GetDefaultCmd()
 {
 	_ASSERTE(szDefCmd[0]!=0);
@@ -12766,8 +12818,11 @@ HWND CSettings::CreatePage(ConEmuSetupPages* p)
 	}
 	wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating child dialog ID=%u", p->PageID);
 	LogString(szLog);
-	p->hPage = CreateDialogParam((HINSTANCE)GetModuleHandle(NULL),
-					MAKEINTRESOURCE(p->PageID), ghOpWnd, pageOpProc, (LPARAM)p);
+	SafeDelete(p->pDialog);
+
+	p->pDialog = CDynDialog::ShowDialog(p->PageID, ghOpWnd, pageOpProc, (LPARAM)p);
+	p->hPage = p->pDialog ? p->pDialog->mh_Dlg : NULL;
+
 	return p->hPage;
 }
 
@@ -12868,11 +12923,13 @@ void CSettings::ClearPages()
 
 	if (mp_DpiDistinct2)
 		mp_DpiDistinct2->Detach();
+	SafeDelete(mp_DlgDistinct2);
 
 	for (ConEmuSetupPages *p = m_Pages; p->PageID; p++)
 	{
 		if (p->pDpiAware)
 			p->pDpiAware->Detach();
+		SafeDelete(p->pDialog);
 		p->hPage = NULL;
 		p->DpiChanged = false;
 	}
