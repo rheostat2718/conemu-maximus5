@@ -1,4 +1,4 @@
-﻿#summary How to eanble 256-color console Vim syntax highlight in ConEmu
+﻿==How to enable 256-color console Vim syntax highlight in ConEmu==
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuVimXterm.png" title="256-colors vim in ConEmu">
 
