@@ -1,0 +1,20 @@
+﻿#How to eanble 256-color Vim syntax highlight in ConEmu
+
+[http://stackoverflow.com/a/14434531/1405560 StackOverflow answer]
+
+  * And ‘vim’ must be named ‘vim.exe’;
+  * Check options ‘Inject ConEmuHk’ and ‘ANSI X3.64 / xterm 256 colors’ on [SettingsFeatures Features] page;
+  * Check option ‘TrueMod (24bit color) support’ on [SettingsColors Colors] page;
+  * Edit your ‘vimrc’ file, sample lines are here. Of course, you need some 256-color vim scheme, it is zenburn in the last line of this example.
+
+{{{
+set term=xterm
+set t_Co=256
+let &t_AB="\e[48;5;%dm"
+let &t_AF="\e[38;5;%dm"
+colorscheme zenburn
+}}}
+
+You may also check environment variable [ConEmuEnvironment ConEmuANSI] but I'm not sure how to do that properly.
+
+*Note*. GIT's Vim and ‘Original’ Vim (from gvim73_46.exe) are passed tests. MinGW's Vim fails to switch to using Ansi sequences.
