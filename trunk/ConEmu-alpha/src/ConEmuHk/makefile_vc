@@ -5,8 +5,9 @@ NAME=ConEmuHk
 DIRNAME=$(NAME)
 RELEASEDIR=..\..\Release\ConEmu
 NEEDENTRY=1
-#!undef NEEDDEFLIB
-NEEDDEFLIB = 1
+!undef NEEDDEFLIB
+#NEEDDEFLIB = 1
+USEDDKCRT = 1
 USE_PDB = 1
 NO_OPTIMIZE = 1
 
@@ -62,6 +63,7 @@ $(INTDIR)\GuiAttach.obj \
 $(INTDIR)\Injects.obj \
 $(INTDIR)\InQueue.obj \
 $(INTDIR)\MAssert.obj \
+$(INTDIR)\MConHandle.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSection.obj \
@@ -110,19 +112,19 @@ CPP_OPT=$(CPP_OPT) /DDEBUG /Fd$(PDBNAME) /DCRTPRINTF /DCONEMU_MINIMAL
 !endif
 
 !ifdef AMD64
-COMMONLIB = ../common/libCRT64.lib 
+#COMMONLIB = ../common/libCRT64.lib
 #../common/chkstk64.obj
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(DEF_SEH) /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !elseif defined(IA64)
-COMMONLIB = ../common/libCRTIA64.lib 
+#COMMONLIB = ../common/libCRTIA64.lib
 #../common/chkstkIA64.obj
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(DEF_SEH) /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS $(USERCPP)
 ULOUT=-Tpd+
 LINK_MACHINE = /MACHINE:X64
 !else
-COMMONLIB = ../common/libCRT.lib 
+#COMMONLIB = ../common/libCRT.lib
 #../common/chkstk.obj
 #../pvdCRT.lib
 !ifdef CPP_UNALIGN
@@ -139,7 +141,7 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 #!undef COMMONLIB
 #!endif
 #Wininet.lib
-LIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib version.lib $(USERLIBS)
+LIBS = $(CRTLIB) kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib version.lib Uuid.Lib $(USERLIBS)
 #LIBS = $(COMMONLIB) chkstk.obj $(LIBS)
 
 !ifdef _BIN_PATH_
@@ -310,6 +312,8 @@ $(INTDIR)\Injects.obj: Injects.cpp Console2.h
 $(INTDIR)\InQueue.obj: ../common/InQueue.cpp
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
+
+$(INTDIR)\MConHandle.obj: ../common/MConHandle.cpp ../common/MConHandle.h
 
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
 

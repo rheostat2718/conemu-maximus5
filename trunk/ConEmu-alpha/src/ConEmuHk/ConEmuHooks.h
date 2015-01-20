@@ -74,6 +74,7 @@ void OnConWndChanged(HWND ahNewConWnd);
 bool AttachServerConsole();
 typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 AttachConsole_t GetAttachConsoleProc();
+void CheckAnsiConVar(LPCWSTR asName);
 
 typedef HWND (WINAPI* GetConsoleWindow_T)();
 extern GetConsoleWindow_T gfGetRealConsoleWindow;
@@ -82,7 +83,9 @@ enum ConEmuHkDllState
 {
 	ds_Undefined = 0,
 	ds_DllProcessAttach = 1,
-	ds_DllProcessDetach = 2,
+	ds_DllMainThreadDetach = 2,
+	ds_DllStop = 3,
+	ds_DllProcessDetach = 4,
 };
 extern ConEmuHkDllState gnDllState;
 extern int gnDllThreadCount;
@@ -141,6 +144,7 @@ extern bool gbIsNodeJSProcess;
 /* ************ Globals for cygwin/msys ************ */
 extern bool gbIsBashProcess;
 extern bool gbIsSshProcess;
+extern bool gbIsLessProcess;
 /* ************ Globals for cygwin/msys ************ */
 
 /* ************ Globals for ViM ************ */
@@ -186,6 +190,7 @@ extern "C" {
 };
 #endif
 
+void DoDllStop(bool bFinal);
 
 #ifdef _DEBUG
 	//#define USEHOOKLOG

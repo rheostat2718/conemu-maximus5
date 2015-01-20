@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -146,6 +146,8 @@ class CConEmuMain
 		LPCWSTR WorkDir(LPCWSTR asOverrideCurDir = NULL);
 		bool ChangeWorkDir(LPCWSTR asTempCurDir);
 		wchar_t ms_ComSpecInitial[MAX_PATH];
+		CEStr ms_PostGuiMacro;
+		void SetPostGuiMacro(LPCWSTR asGuiMacro);
 		wchar_t *mps_IconPath;
 		void SetWindowIcon(LPCWSTR asNewIcon);
 		BOOL mb_DosBoxExists;

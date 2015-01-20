@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CBackground;
 class CBackgroundInfo;
 class CDpiForDialog;
+class CDynDialog;
 struct CEHelpPopup;
 struct DebugLogShellActivity;
 struct DpiValue;
@@ -185,6 +186,7 @@ class CSettings
 	private:
 		/* 'Default' command line (if nor Registry, nor /cmd specified) */
 		wchar_t  szDefCmd[MAX_PATH+32];
+		CEStr ms_DefNewTaskName;
 		/* Current command line, specified with "/cmd" or "/cmdlist" switches */
 		wchar_t* pszCurCmd;
 		bool isCurCmdList; // а это если был указан /cmdlist
@@ -639,12 +641,15 @@ class CSettings
 			ConEmuSetupItem* pItems;
 			HWND             hPage;
 			CDpiForDialog*   pDpiAware;
+			CDynDialog*      pDialog;
 		};
+		CDynDialog *mp_Dialog;
 		ConEmuSetupPages *m_Pages;
 		int mn_PagesCount;
 		static void SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost = false);
 		void ClearPages();
 		HWND CreatePage(ConEmuSetupPages* p);
+		CDynDialog*    mp_DlgDistinct2;
 		CDpiForDialog* mp_DpiDistinct2;
 		void ProcessDpiChange(ConEmuSetupPages* p);
 		TabHwndIndex GetPageId(HWND hPage, ConEmuSetupPages** pp);

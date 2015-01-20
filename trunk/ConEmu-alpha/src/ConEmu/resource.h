@@ -47,6 +47,7 @@
 #define IDD_SPG_PASTE                   179
 #define IDD_SPG_CONFIRM                 180
 #define IDD_SPG_HISTORY                 181
+#define IDD_SPG_BACK                    182
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_ATTACHDLG                   212
@@ -59,7 +60,6 @@
 #define IDD_ACTION                      222
 #define IDD_HOTKEY                      223
 #define IDI_SEARCH                      224
-#define IDD_SPG_BACK                    225
 #define c0                              1000
 #define c1                              1001
 #define c2                              1002
@@ -1062,6 +1062,12 @@
 #define gbFeatureInConsole              2746
 #define gbFeatureDebug                  2747
 #define gbFeatureRetard                 2748
+#define cbCmdGrpDefaultNew              2750
+#define cbCmdGrpDefaultCmd              2751
+#define cbCmdGrpTaskbar                 2752
+#define cbCmdGrpToolbar                 2753
+#define gbSTartGroupCommands            2754
+#define tStartGroupCommands             2755
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1070,7 +1076,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        226
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         2749
+#define _APS_NEXT_CONTROL_VALUE         2756
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

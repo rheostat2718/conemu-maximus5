@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -104,6 +104,7 @@ public:
 	/* ************************************* */
 	/*          Hook routines                */
 	/* ************************************* */
+	static HANDLE WINAPI OnCreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile );
 	static BOOL WINAPI OnWriteFile(HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped);
 	static BOOL WINAPI OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
 	static BOOL WINAPI OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved);
@@ -127,19 +128,21 @@ public:
 	static bool IsOutputHandle(HANDLE hFile, DWORD* pMode = NULL);
 
 	static void InitAnsiLog(LPCWSTR asFilePath);
-	static void DoneAnsiLog();
+	static void DoneAnsiLog(bool bFinal);
 
 	static void GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells);
 
+	static SHORT GetDefaultTextAttr();
+
 	static HANDLE ghLastAnsiCapable /*= NULL*/;
 	static HANDLE ghLastAnsiNotCapable /*= NULL*/;
+	static HANDLE ghLastConOut /*= NULL*/;
 	static HANDLE ghAnsiLogFile /*= NULL*/;
 	static MSectionSimple* gcsAnsiLogFile;
 
 	static bool gbWasXTermOutput;
 
 protected:
-	static SHORT GetDefaultTextAttr();
 	static int NextNumber(LPCWSTR& asMS);
 
 	static void StartXTermMode(bool bStart);

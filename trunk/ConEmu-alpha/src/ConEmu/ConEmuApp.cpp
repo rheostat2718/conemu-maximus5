@@ -2412,6 +2412,21 @@ BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint)
 	return MoveWindow(hWnd, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, bRepaint);
 }
 
+HICON CreateNullIcon()
+{
+	static HICON hNullIcon = NULL;
+
+	if (!hNullIcon)
+	{
+		BYTE NilBits[16*16/8] = {};
+		BYTE SetBits[16*16/8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+								0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+		hNullIcon = CreateIcon(NULL, 16, 16, 1, 1, SetBits, NilBits);
+	}
+
+	return hNullIcon;
+}
+
 void MessageLoop()
 {
 	MSG Msg = {NULL};
@@ -2946,7 +2961,8 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 		const CommandTasks* pGrp = NULL;
 		while ((pGrp = gpSet->CmdTaskGet(nGroup++)) && (nTasksCount < countof(pszTasks)))
 		{
-			if (pGrp->pszName && *pGrp->pszName)
+			if (pGrp->pszName && *pGrp->pszName
+				&& !(pGrp->Flags & CETF_NO_TASKBAR))
 			{
 				pszTasksPrefix[nTasksCount] = pGrp->pszGuiArgs;
 				pszTasks[nTasksCount++] = pGrp->pszName;
@@ -3462,6 +3478,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	bool SaveCfgFilePrm = false; TCHAR* SaveCfgFile = NULL;
 	bool UpdateSrcSetPrm = false; TCHAR* UpdateSrcSet = NULL;
 	bool AnsiLogPathPrm = false; TCHAR* AnsiLogPath = NULL;
+	bool GuiMacroPrm = false; TCHAR* ExecGuiMacro = NULL;
 	bool QuakePrm = false; BYTE QuakeMode = 0;
 	bool SizePosPrm = false; TCHAR *sWndX = NULL, *sWndY = NULL, *sWndW = NULL, *sWndH = NULL;
 	bool SetUpDefaultTerminal = false;
@@ -4119,6 +4136,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return 100;
 					}
 				}
+				else if (!klstricmp(curCommand, _T("/GuiMacro")) && i + 1 < params)
+				{
+					// выполняется только последний
+					if (!GetCfgParm(i, curCommand, GuiMacroPrm, ExecGuiMacro, 0x8000, false))
+					{
+						return 100;
+					}
+				}
 				else if (!klstricmp(curCommand, _T("/UpdateSrcSet")) && i + 1 < params)
 				{
 					// используем последний из параметров, если их несколько
@@ -4371,6 +4396,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		DEBUGSTRSTARTUP(L"Exit was requested");
 		goto wrap;
+	}
+
+	if (GuiMacroPrm && ExecGuiMacro && *ExecGuiMacro)
+	{
+		gpConEmu->SetPostGuiMacro(ExecGuiMacro);
 	}
 
 

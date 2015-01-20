@@ -4,6 +4,7 @@
 NAME=ConEmu
 DIRNAME=$(NAME)
 RELEASEDIR=..\..\Release
+NEEDDEFLIB = 1
 
 !include ../makefile_vc_defs
 
@@ -48,6 +49,7 @@ $(INTDIR)\DpiAware.obj \
 $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
 $(INTDIR)\DwmHelper.obj \
+$(INTDIR)\DynDialog.obj \
 $(INTDIR)\Execute.obj \
 $(INTDIR)\FindDlg.obj \
 $(INTDIR)\FindPanel.obj \
@@ -126,7 +128,7 @@ $(INTDIR)\WRegistry.obj \
 $(INTDIR)\WUser.obj
 
 
-LINK_LIBS=kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib version.lib shlwapi.lib comctl32.lib Comdlg32.lib Winmm.lib Oleaut32.lib Netapi32.lib
+LINK_LIBS=$(CRTLIB) kernel32.lib user32.lib winspool.lib advapi32.lib shell32.lib mpr.lib ole32.lib secur32.lib gdi32.lib version.lib shlwapi.lib comctl32.lib Comdlg32.lib Winmm.lib Oleaut32.lib Netapi32.lib
 
 DEFINES=\
 	/DUNICODE \
@@ -154,11 +156,11 @@ RFLAGS=$(RCWIN64) /D__GNUC__ /l 0x409 /fo"$(RES_FILE)" /d $(USEDEBUG)
 
 # config-cpecific
 !ifdef DEBUG
-CPPFLAGS=$(CPPFLAGS) /MTd /Od /Zi
+CPPFLAGS=$(CPPFLAGS) /Od /Zi
 LINKFLAGS=$(LINKFLAGS)
 ULINKFLAGS=$(ULINKFLAGS) -v
 !else
-CPPFLAGS=$(CPPFLAGS) /MT /O2 /Oy-
+CPPFLAGS=$(CPPFLAGS) /O2 /Oy-
 !ifndef NO_RELEASE_PDB
 CPPFLAGS=$(CPPFLAGS) /Zi
 LINKFLAGS=$(LINKFLAGS)
@@ -322,6 +324,8 @@ $(INTDIR)\DragDrop.obj: DragDrop.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 $(INTDIR)\DragDropData.obj: DragDropData.cpp BaseDragDrops.h DragDrop.h DragDropData.h
 
 $(INTDIR)\DwmHelper.obj: DwmHelper.cpp DwmHelper.h
+
+$(INTDIR)\DynDialog.obj: DynDialog.cpp DynDialog.h
 
 $(INTDIR)\Execute.obj: ../common/execute.cpp ../common/execute.h
 

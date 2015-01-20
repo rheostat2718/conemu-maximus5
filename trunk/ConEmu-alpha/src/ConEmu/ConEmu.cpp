@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -3199,7 +3199,17 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 			RConStartArgs args;
 
 			if (apDefArgs)
+			{
 				args.AssignFrom(apDefArgs);
+
+				// If the caller has specified exact split configuration - use it only for the first creating pane
+				if (lbOneCreated && args.eSplit)
+				{
+					args.eSplit = args.eSplitNone;
+					args.nSplitValue = DefaultSplitValue;
+					args.nSplitPane = 0;
+				}
+			}
 
 			if (apDefArgs && apDefArgs->pszStartupDir && *apDefArgs->pszStartupDir)
 				args.pszStartupDir = lstrdup(apDefArgs->pszStartupDir);
@@ -3296,7 +3306,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 				}
 				else
 				{
-					lbOneCreated = TRUE;
+					lbOneCreated = true;
 
 					const RConStartArgs& modArgs = pVCon->RCon()->GetArgs();
 					if (modArgs.ForegroungTab == crb_On)
@@ -3575,6 +3585,11 @@ void CConEmuMain::ExecuteProcessFinished(bool bOpt)
 //{
 //    return (dwCtrlType == CTRL_C_EVENT || dwCtrlType == CTRL_BREAK_EVENT ? true : false);
 //}
+
+void CConEmuMain::SetPostGuiMacro(LPCWSTR asGuiMacro)
+{
+	ms_PostGuiMacro.Set(asGuiMacro);
+}
 
 void CConEmuMain::SetWindowIcon(LPCWSTR asNewIcon)
 {
@@ -4787,6 +4802,13 @@ bool CConEmuMain::StartDebugActiveProcess()
 	}
 
 	DWORD dwPID = pRCon->GetActivePID();
+	if (!dwPID)
+	{
+		// For example, ChildGui started with: set ConEmuReportExe=notepad.exe & notepad.exe
+		// Check waiting dialog box with caption "ConEmuHk, PID=%u, ..."
+		// The content must be "<ms_RootProcessName> loaded!"
+		dwPID = pRCon->GetLoadedPID();
+	}
 	if (!dwPID)
 	{
 		MsgBox(L"There is no active process", MB_ICONSTOP, gpConEmu->GetDefaultTitle());
@@ -7141,6 +7163,13 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		}
 
 		mp_DefTrm->StartGuiDefTerm(false);
+
+		if (!ms_PostGuiMacro.IsEmpty())
+		{
+			CVConGuard VCon;
+			GetActiveVCon(&VCon);
+			ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
+		}
 	}
 
 	mn_StartupFinished = abReceived ? ss_PostCreate2Finished : ss_PostCreate1Finished;

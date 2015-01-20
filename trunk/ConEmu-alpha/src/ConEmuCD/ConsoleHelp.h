@@ -44,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		L"   or: ConEmuC /IsConEmu | /IsAnsi | /IsAdmin | /IsTerm\r\n" \
 		L"   or: ConEmuC /DEBUGPID=<PID>[,<PID2>[,...]] [/DUMP | /MINI | /FULL]\r\n" \
 		L"   or: ConEmuC /DEBUGEXE | /DEBUGTREE <CommandLine>\r\n" \
-		L"   or: ConEmuC /EXPORT[=CON|ALL] [Var1 [Var2 [...]]]\r\n" \
+		L"   or: ConEmuC /EXPORT[=CON|GUI|ALL] [Var1 [Var2 [...]]]\r\n" \
 		L"   or: ConEmuC /ECHO | /TYPE [...]\r\n" \
 _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n") \
 		L"   or: ConEmuC /?\r\n" \
@@ -62,15 +62,14 @@ _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n")
 		L"     /B{W|H|Z}       - define window width, height and buffer height\r\n" \
 		L"     /F{N|W|H}       - define console font name, width, height\r\n" \
 		L"     /GuiMacro ...   - http://code.google.com/p/conemu-maximus5/wiki/GuiMacro\r\n" \
-		L"     /Export[...]    - http://code.google.com/p/conemu-maximus5/wiki/ConEmuEnvironment#Export_variables\r\n" \
+		L"     /Export[...]    - http://code.google.com/p/conemu-maximus5/wiki/ExportEnvVar\r\n" \
 		L"     /IsAdmin        - returns 1 as errorlevel if current user has elevated privileges, 2 if not\r\n" \
 		L"     /IsAnsi         - returns 1 as errorlevel if ANSI are processed, 2 if not\r\n" \
 		L"     /IsConEmu       - returns 1 as errorlevel if running in ConEmu tab, 2 if not\r\n" \
 		L"     /IsTerm         - returns 1 as errorlevel if running in telnet, 2 if not\r\n" \
 		L"     /Log[N]         - create (debug) log file, N is number from 0 to 3\r\n" \
 		L"     /Echo | /Type   - http://code.google.com/p/conemu-maximus5/wiki/ConEmuC#Echo_and_Type\r\n" \
-_DBGHLP(L"     -- following switches are visible in debug builds only--\r\n") \
-_DBGHLP(L"     /CHECKUNICODE -> print some colorized text with unicode characters\r\n") \
+_DBGHLP(L"     -- following switches are visible in debug builds only but available in release too--\r\n") \
 _DBGHLP(L"     /CINMODE==<hex:gnConsoleModeFlags>\r\n") \
 _DBGHLP(L"     /CREATECON -> used internally for hidden console creation\r\n") \
 _DBGHLP(L"     /DOSBOX -> use DosBox\r\n") \
@@ -82,6 +81,7 @@ _DBGHLP(L"     /INJECT=PID{10}\r\n") \
 _DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
 _DBGHLP(L"     /Args <Command line> -> printf NextArg's\r\n") \
 _DBGHLP(L"     /CheckUnicode -> Some unicode printouts\r\n") \
+_DBGHLP(L"     /OsVerInfo -> Show OS information, returns OsVer as errorlevel\r\n") \
         L"     /ErrorLevel <number> -> exit with specified errorlevel\r\n" \
         L"     /Result -> print errorlevel of /C <command>\r\n" \
 		L"\r\n"

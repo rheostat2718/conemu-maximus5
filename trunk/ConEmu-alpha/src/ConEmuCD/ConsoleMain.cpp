@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -929,7 +929,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 	memset(&gOSVer, 0, sizeof(gOSVer));
 	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
-	GetVersionEx(&gOSVer);
+	GetOsVersionInformational(&gOSVer);
 	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
 
 	gbIsWine = IsWine(); // В общем случае, на флажок ориентироваться нельзя. Это для информации.
@@ -2663,6 +2663,38 @@ int CheckUnicodeFont()
 	return iRc;
 }
 
+// ConEmuC -OsVerInfo
+int OsVerInfo()
+{
+	OSVERSIONINFOEX osv = {sizeof(osv)};
+	GetOsVersionInformational((OSVERSIONINFO*)&osv);
+
+	UINT DBCS = IsDbcs();
+	UINT HWFS = IsHwFullScreenAvailable();
+	UINT W5fam = IsWin5family();
+	UINT WXPSP1 = IsWinXPSP1();
+	UINT W6 = IsWin6();
+	UINT W7 = IsWin7();
+	UINT W10 = IsWin10();
+	UINT Wx64 = IsWindows64();
+	UINT WINE = IsWine();
+	UINT WPE = IsWinPE();
+	UINT TELNET = isTerminalMode();
+
+	wchar_t szInfo[200];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo)
+		L"OS version information\n"
+		L"%u.%u build %u SP%u.%u suite=x%04X type=%u\n"
+		L"W5fam=%u WXPSP1=%u W6=%u W7=%u W10=%u Wx64=%u\n"
+		L"HWFS=%u DBCS=%u WINE=%u WPE=%u TELNET=%u\n",
+		osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask, osv.wProductType,
+		W5fam, WXPSP1, W6, W7, W10, Wx64, HWFS,
+		DBCS, WINE, WPE, TELNET);
+	_wprintf(szInfo);
+
+	return MAKEWORD(osv.dwMinorVersion, osv.dwMajorVersion);
+}
+
 enum ConEmuStateCheck
 {
 	ec_None = 0,
@@ -2730,8 +2762,10 @@ enum ConEmuExecAction
 	ea_InjectDefTrm,
 	ea_GuiMacro,
 	ea_CheckUnicodeFont,
+	ea_OsVerInfo,
 	ea_ExportCon,  // export env.vars to processes of active console
-	ea_ExportGui,  // ea_ExportCon + ConEmu window
+	ea_ExportTab,  // ea_ExportCon + ConEmu window
+	ea_ExportGui,  // export env.vars to ConEmu window
 	ea_ExportAll,  // export env.vars to all opened tabs of current ConEmu window
 	ea_Download,   // after "/download" switch may be unlimited pairs of {"url","file"},{"url","file"},...
 	ea_ParseArgs,  // debug test of NextArg function... print args to STDOUT
@@ -3090,7 +3124,9 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 
 	// Go, build tree (first step - query all running PIDs in the system)
 	nParentPID = nSelfPID;
-	h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	// Don't do snapshot if only GUI was requested
+	h = (eExecAction != ea_ExportGui) ? CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) : NULL;
+	// Snapshot opened?
 	if (h && (h != INVALID_HANDLE_VALUE))
 	{
 		PROCESSENTRY32 PI = {sizeof(PI)};
@@ -3196,6 +3232,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = f
 			_ASSERTE(pIn->hdr.nCmd == CECMD_EXPORTVARS);
 		}
 
+		// ea_ExportTab, ea_ExportGui, ea_ExportAll -> export to ConEmu window
 		ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, TRUE);
 	}
 
@@ -3595,6 +3632,29 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst)
 	return iRc;
 }
 
+HMODULE LoadConEmuHk()
+{
+	HMODULE hHooks = NULL;
+	LPCWSTR pszHooksName = WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll");
+
+	if ((hHooks = GetModuleHandle(pszHooksName)) == NULL)
+	{
+		wchar_t szSelf[MAX_PATH];
+		if (GetModuleFileName(ghOurModule, szSelf, countof(szSelf)))
+		{
+			wchar_t* pszName = (wchar_t*)PointToName(szSelf);
+			int nSelfName = lstrlen(pszName);
+			_ASSERTE(nSelfName == lstrlen(pszHooksName));
+			lstrcpyn(pszName, pszHooksName, nSelfName+1);
+
+			// ConEmuHk.dll / ConEmuHk64.dll
+			hHooks = LoadLibrary(szSelf);
+		}
+	}
+
+	return hHooks;
+}
+
 int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 {
 	int iRc = 0;
@@ -3785,20 +3845,8 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		HMODULE hHooks = NULL;
 		if (bProcessed)
 		{
-			LPCWSTR pszHooksName = WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll");
-			if ((hHooks = GetModuleHandle(pszHooksName)) == NULL)
-			{
-				wchar_t szSelf[MAX_PATH];
-				if (GetModuleFileName(ghOurModule, szSelf, countof(szSelf)))
-				{
-					wchar_t* pszName = (wchar_t*)PointToName(szSelf);
-					int nSelfName = lstrlen(pszName);
-					_ASSERTE(nSelfName == lstrlen(pszHooksName));
-					lstrcpyn(pszName, pszHooksName, nSelfName+1);
-					hHooks = LoadLibrary(szSelf);
-				}
-			}
-			if (hHooks)
+			// ConEmuHk.dll / ConEmuHk64.dll
+			if ((hHooks = LoadConEmuHk()) != NULL)
 			{
 				WriteProcessed = (WriteProcessed_t)GetProcAddress(hHooks, "WriteProcessed");
 			}
@@ -3898,7 +3946,13 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			iRc = CheckUnicodeFont();
 			break;
 		}
+	case ea_OsVerInfo:
+		{
+			iRc = OsVerInfo();
+			break;
+		}
 	case ea_ExportCon:
+	case ea_ExportTab:
 	case ea_ExportGui:
 	case ea_ExportAll:
 		{
@@ -4285,6 +4339,11 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 			eExecAction = ea_CheckUnicodeFont;
 			break;
 		}
+		else if (lstrcmpi(szArg, L"/OsVerInfo")==0)
+		{
+			eExecAction = ea_OsVerInfo;
+			break;
+		}
 		else if (lstrcmpi(szArg, L"/ErrorLevel")==0)
 		{
 			eExecAction = ea_ErrorLevel;
@@ -4349,8 +4408,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 				eExecAction = ea_ExportAll;
 			else if (lstrcmpi(szArg, L"/EXPORT=CON")==0 || lstrcmpi(szArg, L"/EXPORTCON")==0)
 				eExecAction = ea_ExportCon;
-			else
+			else if (lstrcmpi(szArg, L"/EXPORT=GUI")==0 || lstrcmpi(szArg, L"/EXPORTGUI")==0)
 				eExecAction = ea_ExportGui;
+			else
+				eExecAction = ea_ExportTab;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/Download")==0)

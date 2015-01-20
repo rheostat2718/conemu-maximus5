@@ -621,7 +621,7 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 		}
 		else if (bShowNone)
 		{
-			wcscpy_c(szFull, L"<None>");
+			wcscpy_c(szFull, gsNoHotkey);
 		}
 		else
 		{
@@ -928,7 +928,7 @@ void ConEmuHotKey::HotkeyNameUnitTests()
 			{'W', {VK_LWIN, VK_SHIFT}, cvk_Win|cvk_Shift, L"Win+Shift+W"},
 			{'L', {VK_RCONTROL}, cvk_Ctrl|cvk_RCtrl, L"RCtrl+L"},
 			{'C', {VK_CONTROL}, cvk_Ctrl, L"Ctrl+C"},
-			{0, {}, cvk_Naked, L"<None>"},
+			{0, {}, cvk_Naked, gsNoHotkey},
 	};
 
 	ConEmuHotKey HK = {0, chk_User};

@@ -40,10 +40,10 @@ enum ProcessDpiAwareness
 
 enum MonitorDpiType
 {
-  MDT_Effective_DPI  = 0,
-  MDT_Angular_DPI    = 1,
-  MDT_Raw_DPI        = 2,
-  MDT_Default        = MDT_Effective_DPI
+	MDT_Effective_DPI  = 0,
+	MDT_Angular_DPI    = 1,
+	MDT_Raw_DPI        = 2,
+	MDT_Default        = MDT_Effective_DPI
 };
 
 #ifndef WM_DPICHANGED
@@ -96,6 +96,8 @@ public:
 	static void GetCenteredRect(HWND hWnd, RECT& rcCentered);
 };
 
+class CDynDialog;
+
 class CDpiForDialog
 {
 protected:
@@ -104,9 +106,9 @@ protected:
 	LONG mn_InSet;
 
 	DpiValue m_InitDpi;
-	int mn_InitFontHeight;
 	LOGFONT mlf_InitFont;
 	DpiValue m_CurDpi;
+	UINT mn_TemplateFontSize;
 	int mn_CurFontHeight;
 	LOGFONT mlf_CurFont;
 
@@ -124,7 +126,7 @@ public:
 
 	~CDpiForDialog();
 
-	bool Attach(HWND hWnd, HWND hCenterParent);
+	bool Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTemplate);
 
 	bool SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested = NULL);
 
@@ -136,4 +138,5 @@ public:
 
 protected:
 	static MArray<DlgItem>* LoadDialogItems(HWND hDlg);
+	int GetFontSizeForDpi(HDC hdc, int Ydpi);
 };

@@ -29,13 +29,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
 #include "AboutDlg.h"
+#include "DynDialog.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "OptionsFast.h"
 #include "OptionsHelp.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
+#include "../common/WFiles.h"
 #include "../common/WRegistry.h"
+
+#define FOUND_APP_PATH_CHR L'\1'
+#define FOUND_APP_PATH_STR L"\1"
 
 static bool bCheckHooks, bCheckUpdate, bCheckIme;
 // Если файл конфигурации пуст, то после вызова CheckOptionsFast
@@ -60,7 +65,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 
 			if (gp_DpiAware)
 			{
-				gp_DpiAware->Attach(hDlg, NULL);
+				gp_DpiAware->Attach(hDlg, NULL, CDynDialog::GetDlgClass(hDlg));
 			}
 
 			RECT rect = {};
@@ -456,7 +461,8 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 
 		// Modal dialog (CreateDialog)
 
-		DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_FAST_CONFIG), NULL, CheckOptionsFastProc, (LPARAM)asTitle);
+		CDynDialog::ExecuteDialog(IDD_FAST_CONFIG, NULL, CheckOptionsFastProc, (LPARAM)asTitle);
+
 		SafeDelete(gp_FastHelp);
 		SafeDelete(gp_DpiAware);
 	}
@@ -482,12 +488,43 @@ checkDefaults:
 // Search on asFirstDrive and all (other) fixed drive letters
 // asFirstDrive may be letter ("C:") or network (\\server\share)
 // asSearchPath is path to executable (\cygwin\bin\sh.exe)
-static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&rsFound)[MAX_PATH+1], bool& bNeedQuot)
+static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFound, bool& bNeedQuot)
 {
 	bool bFound = false;
 	wchar_t* pszExpanded = NULL;
-	wchar_t szDrive[4] = L"C:\\";
+	wchar_t szDrive[4]; // L"C:"
+	wchar_t szTemp[MAX_PATH+1];
+
 	bNeedQuot = false;
+
+	if (!asSearchPath || !*asSearchPath)
+		goto wrap;
+
+	// Using registry path?
+	if ((asSearchPath[0] == L'[') && wcschr(asSearchPath+1, L']'))
+	{
+		// L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\sh.exe",
+		//   "InstallLocation"="C:\\Utils\\Lans\\GIT\\"
+		CEStr lsBuf, lsVal;
+		lsBuf.Set(asSearchPath+1);
+		wchar_t *pszFile = wcschr(lsBuf.ms_Arg, L']');
+		if (pszFile)
+		{
+			*(pszFile++) = 0;
+			wchar_t* pszValName = wcsrchr(lsBuf.ms_Arg, L':');
+			if (pszValName) *(pszValName++) = 0;
+			if (RegGetStringValue(NULL, lsBuf.ms_Arg, pszValName, lsVal) > 0)
+			{
+				rsFound.Attach(JoinPath(lsVal, pszFile));
+				if (FileExists(rsFound))
+				{
+					bNeedQuot = IsQuotationNeeded(pszExpanded);
+					bFound = true;
+				}
+			}
+		}
+		goto wrap;
+	}
 
 	// Using environment variables?
 	if (wcschr(asSearchPath, L'%'))
@@ -496,7 +533,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		if (pszExpanded && FileExists(pszExpanded))
 		{
 			bNeedQuot = IsQuotationNeeded(pszExpanded);
-			lstrcpyn(rsFound, asSearchPath, countof(rsFound));
+			rsFound.Set(asSearchPath);
 			bFound = true;
 		}
 		goto wrap;
@@ -505,21 +542,38 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 	// Only executable name was specified?
 	if (!wcschr(asSearchPath, L'\\'))
 	{
-		DWORD nFind = SearchPath(NULL, asSearchPath, NULL, countof(rsFound), rsFound, NULL);
-		if (nFind && nFind < countof(rsFound))
+		DWORD nFind = SearchPath(NULL, asSearchPath, NULL, countof(szTemp), szTemp, NULL);
+		if (nFind && (nFind < countof(szTemp)))
+		{
+			// OK, create task with just a name of exe file
+			bNeedQuot = IsQuotationNeeded(asSearchPath);
+			rsFound.Set(asSearchPath);
+			bFound = true;
+		}
+		// Search in [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
+		if (SearchAppPaths(asSearchPath, rsFound, false/*abSetPath*/))
 		{
 			bNeedQuot = IsQuotationNeeded(asSearchPath);
-			lstrcpyn(rsFound, asSearchPath, countof(rsFound));
 			bFound = true;
 		}
 		goto wrap;
 	}
 
+	// Full path was specified? Check it.
+	if (IsFilePath(asSearchPath, true)
+		&& FileExists(asSearchPath))
+	{
+		bNeedQuot = IsQuotationNeeded(asSearchPath);
+		rsFound.Set(asSearchPath);
+		bFound = true;
+		goto wrap;
+	}
+
+	// ConEmu's drive
 	if (asFirstDrive && *asFirstDrive)
 	{
 		INT_PTR nDrvLen = _tcslen(asFirstDrive);
-		lstrcpyn(rsFound, asFirstDrive, countof(rsFound));
-		lstrcpyn(rsFound+nDrvLen, asSearchPath, countof(rsFound)-nDrvLen);
+		rsFound.Attach(JoinPath(asFirstDrive, asSearchPath));
 		if (FileExists(rsFound))
 		{
 			bNeedQuot = IsQuotationNeeded(rsFound);
@@ -528,13 +582,15 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, wchar_t (&r
 		}
 	}
 
+	szDrive[1] = L':'; szDrive[2] = 0;
 	for (szDrive[0] = L'C'; szDrive[0] <= L'Z'; szDrive[0]++)
 	{
+		if ((asFirstDrive && *asFirstDrive) && (lstrcmpi(szDrive, asFirstDrive) == 0))
+			continue;
 		UINT nType = GetDriveType(szDrive);
 		if (nType != DRIVE_FIXED)
 			continue;
-		lstrcpyn(rsFound, szDrive, countof(rsFound));
-		lstrcpyn(rsFound+2, asSearchPath, countof(rsFound)-2);
+		rsFound.Attach(JoinPath(szDrive, asSearchPath));
 		if (FileExists(rsFound))
 		{
 			bNeedQuot = IsQuotationNeeded(rsFound);
@@ -608,7 +664,8 @@ void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, LPCWSTR 
 	va_list argptr;
 	va_start(argptr, asExePath);
 
-	wchar_t szFound[MAX_PATH+1], szUnexpand[MAX_PATH+32], *pszFull = NULL; bool bNeedQuot = false;
+	CEStr szFound, szArgs;
+	wchar_t szUnexpand[MAX_PATH+32], *pszFull = NULL; bool bNeedQuot = false;
 	MArray<wchar_t*> lsList;
 
 	while (asExePath)
@@ -647,6 +704,38 @@ void CreateDefaultTask(LPCWSTR asDrive, int& iCreatIdx, LPCWSTR asName, LPCWSTR 
 			wcscpy_c(szUnexpand, L"%ConEmuDrive%");
 			wcscat_c(szUnexpand, szFound+2);
 			pszFound = szUnexpand;
+		}
+
+		if (asArgs && wcschr(asArgs, FOUND_APP_PATH_CHR))
+		{
+			CEStr szPath(lstrdup(pszFound));
+			if (!szPath.IsEmpty() && szArgs.Set(asArgs))
+			{
+				wchar_t* ptr;
+				ptr = wcsrchr(szPath.ms_Arg, L'\\');
+				if (ptr) *ptr = 0;
+				while ((ptr = wcschr(szArgs.ms_Arg, FOUND_APP_PATH_CHR)) != NULL)
+				{
+					*ptr = 0;
+					LPCWSTR pszTail = ptr+1;
+					ptr = (wcsncmp(pszTail, L"..\\", 3) != NULL) ? wcsrchr(szPath.ms_Arg, L'\\') : NULL;
+					if (ptr)
+					{
+						*ptr = 0;
+						pszTail += 3;
+					}
+
+					CEStr szTemp(JoinPath(szPath, pszTail));
+					szArgs.Attach(lstrmerge(szArgs.ms_Arg, szTemp));
+
+					if (ptr) *ptr = L'\\';
+				}
+			}
+			// Succeeded?
+			if (!szArgs.IsEmpty())
+			{
+				asArgs = szArgs.ms_Arg;
+			}
 		}
 
 		// Spaces in path? (use expanded path)
@@ -699,6 +788,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 
 	wchar_t szConEmuDrive[MAX_PATH] = L"";
 	GetDrive(gpConEmu->ms_ConEmuExeDir, szConEmuDrive, countof(szConEmuDrive));
+	_ASSERTE(szConEmuDrive[0] && szConEmuDrive[_tcslen(szConEmuDrive)-1] != L'\\'); // Supposed to be simple "C:"
 
 	// Force use of "%ConEmuDrive%" instead of "%SystemDrive%"
 	CEStr sysSave;
@@ -715,7 +805,8 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 		PuTTY?
 	*/
 
-	wchar_t szFound[MAX_PATH+1], *pszFull; bool bNeedQuot = false;
+	CEStr szFound;
+	wchar_t *pszFull; bool bNeedQuot = false;
 
 	// Far Manager
 	CreateFarTasks(szConEmuDrive, iCreatIdx);
@@ -739,6 +830,14 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 
 	// Bash
 
+	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Git bash",
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL, NULL,
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\sh.exe",
+		L"%ProgramFiles%\\Git\\bin\\sh.exe", L"%ProgramW6432%\\Git\\bin\\sh.exe",
+		#ifdef _WIN64
+		L"%ProgramFiles(x86)%\\Git\\bin\\sh.exe",
+		#endif
+		NULL);
 	// For cygwin we can check registry keys (todo?)
 	// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
 	// HKLM\SOFTWARE\Cygwin\setup\rootdir
@@ -747,12 +846,6 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"MinGW bash",  L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"\\MinGW\\msys\\1.0\\bin\\sh.exe", NULL);
 	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Git bash", L" --login -i", NULL, NULL,
-		L"%ProgramFiles%\\Git\\bin\\sh.exe", L"%ProgramW6432%\\Git\\bin\\sh.exe",
-		#ifdef _WIN64
-		L"%ProgramFiles(x86)%\\Git\\bin\\sh.exe",
-		#endif
-		NULL);
 	// Last chance for bash
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"sh.exe", NULL);
 

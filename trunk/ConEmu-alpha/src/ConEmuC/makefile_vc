@@ -20,7 +20,7 @@ ULINK=ulink.exe
 M4=tools\m4 -P -DFARBIT=$(DIRBIT)
 GAWK=tools\gawk
 
-DEF_FILE = ".\$(NAME).def"
+DEF_FILE = .\$(NAME).def
 
 RES_FILE = "$(OBJDIR)\$(NAME).res"
 
@@ -29,7 +29,7 @@ RES_FILE = "$(OBJDIR)\$(NAME).res"
 LINK_OBJS = $(OBJDIR)\ConEmuC.obj
 
 
-LINK_LIBS=kernel32.lib user32.lib
+LINK_LIBS=$(CRTLIB) kernel32.lib user32.lib
 
 DEFINES=\
 	/DUNICODE \
@@ -49,11 +49,11 @@ RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d "SELF_MANIFEST" /d $(USEDEBUG)
 
 # config-cpecific
 !ifdef DEBUG
-CPPFLAGS=$(CPPFLAGS) /MTd /Od /Zi
+CPPFLAGS=$(CPPFLAGS) /Od /Zi
 LINKFLAGS=$(LINKFLAGS)
 ULINKFLAGS=$(ULINKFLAGS) -v
 !else
-CPPFLAGS=$(CPPFLAGS) /MT /O2 /Oy-
+CPPFLAGS=$(CPPFLAGS) /O2 /Oy-
 !ifndef NO_RELEASE_PDB
 CPPFLAGS=$(CPPFLAGS) /Zi
 LINKFLAGS=$(LINKFLAGS)
@@ -107,7 +107,7 @@ AllDirs:
 "$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
 	echo linking $@
 !ifndef LINK_ULINK
-   @echo $(LINK) $(LINKFLAGS)
+   @echo $(LINK) $(LINKFLAGS) $(LINK_LIBS)
 	$(LINK) @<<
 	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
 <<
