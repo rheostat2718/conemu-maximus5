@@ -239,6 +239,13 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        Relative==1: N (+-1, +-2) - increase/decrease font height
        Relative==2: N (per cents) - alias for Zoom(N)
        returns - "OK", or "InvalidArg"
+    GetOption("<Name>")
+     - Returns value of some ConEmu options (the set is limited)
+    GroupInput([<Cmd>])
+     - Group keyboard input for visible splits
+       Cmd==0: switch mode (default)
+       Cmd==1: group
+       Cmd==2: un-group
     HighlightMouse(0)
      - Switch highlight under mouse cursor (off/row/col/row+col/...)
     HighlightMouse(<What>,<Act>)
@@ -246,6 +253,7 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        Act:  0 - off, 1 - on,  2 - switch (default)
     IsConEmu
      - Returns "Yes" when console was started under !ConEmu
+       Alternative is "ConEmuC.exe -IsConEmu" and checking errorlevel
     IsConsoleActive
      - Check, is RealConsole active or not, "Yes"/"No"
     IsRealVisible
