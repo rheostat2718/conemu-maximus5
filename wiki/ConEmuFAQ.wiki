@@ -4,7 +4,7 @@
 ==General==
 
 ===Q. I found a bug, what should I do?===
-A. First, make sure that the bug doesn't occur without !ConEmu (e.g. running FAR directly, not via !ConEmu). Next, make sure that the bug wasn't fixed [http://code.google.com/p/conemu-maximus5/downloads/list in the latest ConEmu version]. If the bug persists, [http://code.google.com/p/conemu-maximus5/issues/list file a thoroughly detailed issue].
+A. First, make sure that the bug doesn't occur without !ConEmu (e.g. running FAR directly, not via !ConEmu). Next, make sure that the bug wasn't fixed [http://www.fosshub.com/ConEmu.html in the latest ConEmu version]. If the bug persists, [http://code.google.com/p/conemu-maximus5/issues/list file a thoroughly detailed issue].
 
 
 ===Q. What about !ConMan, alternative console, etc.?===

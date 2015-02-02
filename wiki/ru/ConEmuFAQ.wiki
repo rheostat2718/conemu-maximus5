@@ -45,7 +45,7 @@ A. In rare cases on some configurations users may notice lags while executing co
 
 ===Q. Что делать, если нашли ошибку?===
 A. Сначала проверить, повторяется ли ошибка БЕЗ !ConEmu, в 'чистом' FAR? Если не повторяется - проверить последнюю версию !ConEmu. Качать здесь:
-http://code.google.com/p/conemu-maximus5/downloads/list
+http://www.fosshub.com/ConEmu.html
 Если ошибка не исправлена - создавайте Issue с подробным описанием:
 http://code.google.com/p/conemu-maximus5/issues/list
 
