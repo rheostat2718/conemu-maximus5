@@ -6954,6 +6954,52 @@ DWORD CRealConsole::GetLoadedPID()
 	return impl.nPID;
 }
 
+// Используется при запросе подтверждения закрытия
+// В идеале - должен возвращать PID "работающего" процесса
+// то есть процесса, выполняющего в данный момент скрипт,
+// или копирующего файлы, или ждущего подтверждения пользователя...
+// PID или совпадает с GetActivePID или 0
+DWORD CRealConsole::GetRunningPID()
+{
+	if (!this)
+		return 0;
+
+	if (m_ChildGui.hGuiWnd)
+	{
+		return 0; // We can't handle ChildGui
+	}
+
+	if (!mn_ProcessCount)
+	{
+		return 0; // No process was found yet
+	}
+
+	DWORD nPID = 0, nCount = 0;
+
+	MSectionLock SPRC; SPRC.Lock(&csPRC);
+
+	for (int i = 0; i < mn_ProcessCount; i++)
+	{
+		const ConProcess& prc = m_Processes[i];
+		if (prc.IsConHost || prc.IsMainSrv || (prc.ProcessID == mn_MainSrv_PID))
+		{
+			continue;
+		}
+		nPID = prc.ProcessID; nCount++;
+	}
+
+	SPRC.Unlock();
+
+	// If the only shell is running now - consider it is free
+	if (nCount <= 1)
+	{
+		TODO("Recheck conditions. May be need to check if the shell is in ReadLine?");
+		return 0;
+	}
+
+	return nPID;
+}
+
 LPCWSTR CRealConsole::GetActiveProcessName()
 {
 	LPCWSTR pszName = NULL;
@@ -11251,13 +11297,26 @@ void CRealConsole::CloseConfirmReset()
 	mb_CloseFarMacroPosted = false;
 }
 
-bool CRealConsole::isCloseConfirmed(LPCWSTR asConfirmation, bool bForceAsk /*= false*/)
+bool CRealConsole::isCloseTabConfirmed(CEFarWindowType TabType, LPCWSTR asConfirmation, bool bForceAsk /*= false*/)
 {
-	if (!gpSet->isCloseConsoleConfirm)
+	_ASSERTE(TabType && ((TabType & fwt_TypeMask) == TabType));
+
+	// Simple console or Far panels
+	if (((TabType == fwt_Panels)
+			&& !(gpSet->nCloseConfirmFlags & Settings::cc_Console)
+			&& !((gpSet->nCloseConfirmFlags & Settings::cc_Running) && GetRunningPID()))
+		// Far Manager editors/viewers
+		|| (((TabType == fwt_Viewer) || (TabType == fwt_Editor))
+			&& !(gpSet->nCloseConfirmFlags & Settings::cc_FarEV))
+		)
+	{
 		return true;
+	}
 
 	if (!bForceAsk && mp_ConEmu->isCloseConfirmed())
+	{
 		return true;
+	}
 
 	int nBtn = 0;
 	{
@@ -11290,7 +11349,7 @@ void CRealConsole::CloseConsoleWindow(bool abConfirm)
 {
 	if (abConfirm)
 	{
-		if (!isCloseConfirmed(m_ChildGui.isGuiWnd() ? gsCloseGui : gsCloseCon))
+		if (!isCloseTabConfirmed(fwt_Panels, m_ChildGui.isGuiWnd() ? gsCloseGui : gsCloseCon))
 			return;
 	}
 
@@ -11315,7 +11374,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 	// Don't show confirmation dialog, if this method was reentered (via GuiMacro call)
 	if (abConfirm && !abForceTerminate && !mb_InPostCloseMacro)
 	{
-		if (!isCloseConfirmed(NULL))
+		if (!isCloseTabConfirmed(fwt_Panels, NULL))
 			return;
 	}
 	#ifdef _DEBUG
@@ -11536,12 +11595,13 @@ void CRealConsole::CloseTab()
 
 	if (GuiWnd())
 	{
-		if (!isCloseConfirmed(gsCloseGui))
+		if (!isCloseTabConfirmed(fwt_Panels, gsCloseGui))
 			return;
 		PostConsoleMessage(GuiWnd(), WM_CLOSE, 0, 0);
 	}
 	else
 	{
+		CEFarWindowType tabtype = fwt_Panels;
 		// Проверить, можно ли послать макрос, чтобы закрыть таб (фар/не фар)?
 		BOOL bCanCloseMacro = CanCloseTab(TRUE);
 		if (bCanCloseMacro && !isAlive())
@@ -11564,13 +11624,13 @@ void CRealConsole::CloseTab()
 
 			if (bCanCloseMacro)
 			{
-				CEFarWindowType tabtype = GetActiveTabType();
+				tabtype = GetActiveTabType();
 				LPCWSTR pszConfirmText =
 					((tabtype & fwt_TypeMask) == fwt_Editor) ? gsCloseEditor :
 					((tabtype & fwt_TypeMask) == fwt_Viewer) ? gsCloseViewer :
 					gsCloseCon;
 
-				if (!isCloseConfirmed(pszConfirmText))
+				if (!isCloseTabConfirmed((tabtype & fwt_TypeMask), pszConfirmText))
 				{
 					// Отмена
 					return;
@@ -11583,12 +11643,12 @@ void CRealConsole::CloseTab()
 			LPCWSTR pszConfirmText = gsCloseCon;
 			if (bCanCloseMacro)
 			{
-				CEFarWindowType tabtype = GetActiveTabType();
+				tabtype = GetActiveTabType();
 				pszConfirmText =
 					((tabtype & fwt_TypeMask) == fwt_Editor) ? gsCloseEditor :
 					((tabtype & fwt_TypeMask) == fwt_Viewer) ? gsCloseViewer :
 					gsCloseCon;
-				if (!gpSet->isCloseEditViewConfirm)
+				if (!(gpSet->nCloseConfirmFlags & Settings::cc_FarEV))
 				{
 					if (((tabtype & fwt_TypeMask) == fwt_Editor) || ((tabtype & fwt_TypeMask) == fwt_Viewer))
 					{
@@ -11597,7 +11657,7 @@ void CRealConsole::CloseTab()
 				}
 			}
 
-			if (!bSkipConfirm && !isCloseConfirmed(pszConfirmText))
+			if (!bSkipConfirm && !isCloseTabConfirmed((tabtype & fwt_TypeMask), pszConfirmText))
 			{
 				// Отмена
 				return;

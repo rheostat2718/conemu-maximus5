@@ -472,6 +472,7 @@ class CRealConsole
 		void SetFarStatus(DWORD nNewFarStatus);
 		DWORD GetActivePID();
 		DWORD GetLoadedPID();
+		DWORD GetRunningPID();
 		LPCWSTR GetActiveProcessName();
 		int GetActiveAppSettingsId(LPCWSTR* ppProcessName = NULL, bool* pbIsAdmin = NULL, int* pnBits = NULL, DWORD* pnPID = NULL);
 	private:
@@ -557,7 +558,7 @@ class CRealConsole
 		void SwitchKeyboardLayout(WPARAM wParam,DWORD_PTR dwNewKeybLayout);
 		void CloseConsole(bool abForceTerminate, bool abConfirm, bool abAllowMacro = true);
 		void CloseConsoleWindow(bool abConfirm);
-		bool isCloseConfirmed(LPCWSTR asConfirmation, bool bForceAsk = false);
+		bool isCloseTabConfirmed(CEFarWindowType TabType, LPCWSTR asConfirmation, bool bForceAsk = false);
 		void CloseConfirmReset();
 		BOOL CanCloseTab(BOOL abPluginRequired = FALSE);
 		void CloseTab();

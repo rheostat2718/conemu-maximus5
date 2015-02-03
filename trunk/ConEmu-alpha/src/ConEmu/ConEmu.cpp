@@ -6392,7 +6392,9 @@ bool CConEmuMain::isScClosing()
 
 bool CConEmuMain::isCloseConfirmed()
 {
-	return (gpSet->isCloseConsoleConfirm && !DisableCloseConfirm) ? mb_ScClosePending : true;
+	if (!(gpSet->nCloseConfirmFlags & Settings::cc_Window))
+		return false;
+	return DisableCloseConfirm ? true : mb_ScClosePending;
 }
 
 LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
@@ -13057,7 +13059,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				result = this->OnMoving(pRc, true);
 
 				size_t cchLen = wcslen(szDbg);
-				_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i,%i}-{%i,%i})", pRc->left, pRc->top, pRc->right, pRc->bottom);
+				_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i,%i}-{%i,%i})\n", pRc->left, pRc->top, pRc->right, pRc->bottom);
 				LogString(szDbg, true, false);
 				DEBUGSTRSIZE(szDbg);
 			}
