@@ -2030,9 +2030,13 @@ INT_PTR CSettings::pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARA
 			const CommandTasks* pGrp = NULL;
 			SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_RESETCONTENT, 0,0);
 			SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_ADDSTRING, 0, (LPARAM)csNoTask);
+			// Fill tasks from settings
 			while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
 				SendDlgItemMessage(hWnd2, lbStartNamedTask, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
-			if (CSetDlgLists::SelectStringExact(hWnd2, lbStartNamedTask, gpSet->psStartTasksName ? gpSet->psStartTasksName : L"") <= 0)
+			// Select active task
+			pGrp = gpSet->psStartTasksName ? gpSet->CmdTaskGetByName(gpSet->psStartTasksName) : NULL;
+			if (!pGrp || !pGrp->pszName
+				|| (CSetDlgLists::SelectStringExact(hWnd2, lbStartNamedTask, pGrp->pszName) <= 0))
 			{
 				if (gpSet->nStartType == (rbStartNamedTask - rbStartSingleApp))
 				{
