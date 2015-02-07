@@ -2712,6 +2712,11 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 		return E_INVALIDARG;
 	}
 
+	bool bSpecialXml = false;
+	LPCWSTR pszXmlFile = gpConEmu->ConEmuXml(&bSpecialXml);
+	if (pszXmlFile && (!bSpecialXml || !*pszXmlFile))
+		pszXmlFile = NULL;
+
 	LPCWSTR pszConfig = gpSetCls->GetConfigName();
 	if (pszConfig && !*pszConfig)
 		pszConfig = NULL;
@@ -2722,6 +2727,7 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 		size_t cchMax = _tcslen(pszTitle)
 			+ (pszPrefix ? _tcslen(pszPrefix) : 0)
 			+ (pszConfig ? _tcslen(pszConfig) : 0)
+			+ (pszXmlFile ? (_tcslen(pszXmlFile) + 32) : 0)
 			+ 32;
 
 		pszBuf = (wchar_t*)malloc(cchMax*sizeof(*pszBuf));
@@ -2729,6 +2735,12 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 			return E_UNEXPECTED;
 
 		pszBuf[0] = 0;
+		if (pszXmlFile)
+		{
+			_wcscat_c(pszBuf, cchMax, L"/LoadCfgFile \"");
+			_wcscat_c(pszBuf, cchMax, pszXmlFile);
+			_wcscat_c(pszBuf, cchMax, L"\" ");
+		}
 		if (pszPrefix)
 		{
 			_wcscat_c(pszBuf, cchMax, pszPrefix);
@@ -4033,7 +4045,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					else if (!klstricmp(curCommand, _T("/quakeauto")))
 						QuakeMode = 2;
 					else
+					{
 						QuakeMode = 0;
+						if (gpSetCls->SingleInstanceArg == sgl_Default)
+							gpSetCls->SingleInstanceArg = sgl_Disabled;
+					}
 				}
 				else if (!klstricmp(curCommand, _T("/showhide")) || !klstricmp(curCommand, _T("/showhideTSA")))
 				{
@@ -4263,7 +4279,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		DEBUGSTRSTARTUP(L"Exact cfg file was specified");
 		// При ошибке - не выходим, просто покажем ее пользователю
-		gpConEmu->SetConfigFile(LoadCfgFile);
+		gpConEmu->SetConfigFile(LoadCfgFile, false/*abWriteReq*/, true/*abSpecialPath*/);
 		// Release mem
 		SafeFree(LoadCfgFile);
 	}
@@ -4355,7 +4371,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		// Сохранять конфиг только если получилось сменить путь (создать файл)
 		DEBUGSTRSTARTUP(L"Force write current config to settings storage");
-		if (!gpConEmu->SetConfigFile(SaveCfgFile, true/*abWriteReq*/))
+		if (!gpConEmu->SetConfigFile(SaveCfgFile, true/*abWriteReq*/, true/*abSpecialPath*/))
 		{
 			if (!iMainRc) iMainRc = 11;
 		}

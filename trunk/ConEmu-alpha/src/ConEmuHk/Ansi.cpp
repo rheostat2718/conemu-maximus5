@@ -111,7 +111,7 @@ BOOL WINAPI WriteProcessed(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWOR
 {
 	HANDLE hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
 	InterlockedIncrement(&gnWriteProcessed);
-	BOOL bRc = CEAnsi::OnWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, NULL);
+	BOOL bRc = CEAnsi::OurWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, NULL);
 	InterlockedDecrement(&gnWriteProcessed);
 	return bRc;
 }
@@ -828,7 +828,7 @@ BOOL WINAPI CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer,
 
 	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && IsAnsiCapable(hConsoleOutput))
 	{
-		cp = GetConsoleOutputCP();
+		cp = gCpConv.nDefaultCP ? gCpConv.nDefaultCP : GetConsoleOutputCP();
 
 		DWORD nLastErr = 0;
 		DWORD nFlags = 0; //MB_ERR_INVALID_CHARS;
@@ -872,7 +872,7 @@ BOOL WINAPI CEAnsi::OnWriteConsoleA(HANDLE hConsoleOutput, const VOID *lpBuffer,
 				hWrite = hConsoleOutput;
 
 			DWORD nWideWritten = 0;
-			lbRc = OnWriteConsoleW(hWrite, buf, len, &nWideWritten, NULL);
+			lbRc = OurWriteConsoleW(hWrite, buf, len, &nWideWritten, NULL);
 
 			// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
 			if (lpNumberOfCharsWritten)
@@ -977,6 +977,11 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 
 BOOL WINAPI CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved)
 {
+	return OurWriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten, lpReserved, false);
+}
+
+BOOL WINAPI CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved, bool bInternal /*= false*/)
+{
 	ORIGINALFAST(WriteConsoleW);
 	//BOOL bMainThread = FALSE; // поток не важен
 	BOOL lbRc = FALSE;
@@ -1001,11 +1006,42 @@ BOOL WINAPI CEAnsi::OnWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer,
 	#endif
 
 	CEAnsi* pObj = NULL;
+	CEStr CpCvt;
 
 	if (lpBuffer && nNumberOfCharsToWrite && hConsoleOutput && IsAnsiCapable(hConsoleOutput, &bIsConOut))
 	{
 		if (ghAnsiLogFile)
 			CEAnsi::WriteAnsiLog((LPCWSTR)lpBuffer, nNumberOfCharsToWrite);
+
+		// if that was API call of WriteConsoleW
+		if (!bInternal && gCpConv.nFromCP && gCpConv.nToCP)
+		{
+			// Convert from unicode to MBCS
+			char* pszTemp = NULL;
+			int iMBCSLen = WideCharToMultiByte(gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, NULL, 0, NULL, NULL);
+			if ((iMBCSLen > 0) && ((pszTemp = (char*)malloc(iMBCSLen)) != NULL))
+			{
+				iMBCSLen = WideCharToMultiByte(gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, pszTemp, iMBCSLen, NULL, NULL);
+				if (iMBCSLen > 0)
+				{
+					int iWideLen = MultiByteToWideChar(gCpConv.nToCP, 0, pszTemp, iMBCSLen, NULL, 0);
+					if (iWideLen > 0)
+					{
+						wchar_t* ptrBuf = CpCvt.GetBuffer(iWideLen);
+						if (ptrBuf)
+						{
+							iWideLen = MultiByteToWideChar(gCpConv.nToCP, 0, pszTemp, iMBCSLen, ptrBuf, iWideLen);
+							if (iWideLen > 0)
+							{
+								lpBuffer = ptrBuf;
+								nNumberOfCharsToWrite = iWideLen;
+							}
+						}
+					}
+				}
+			}
+			SafeFree(pszTemp);
+		}
 
 		pObj = CEAnsi::Object();
 		if (pObj)

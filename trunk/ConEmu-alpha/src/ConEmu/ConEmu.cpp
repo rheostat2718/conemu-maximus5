@@ -479,6 +479,7 @@ CConEmuMain::CConEmuMain()
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = ms_ConEmuWorkDir[0] = 0;
 	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
 	ms_ConEmuXml[0] = ms_ConEmuIni[0] = ms_ConEmuChm[0] = 0;
+	mb_SpecialConfigPath = false;
 	mb_ForceUseRegistry = false;
 
 	wchar_t *pszSlash = NULL;
@@ -1028,7 +1029,7 @@ bool CConEmuMain::CheckBaseDir()
 	return lbBaseFound;
 }
 
-bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/)
+bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/, bool abSpecialPath /*= false*/)
 {
 	LPCWSTR pszExt = asFilePath ? PointToExt(asFilePath) : NULL;
 	int nLen = asFilePath ? lstrlen(asFilePath) : 0;
@@ -1112,6 +1113,8 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/)
 		wcscpy_c(ms_ConEmuXml, asFilePath);
 	}
 
+	mb_SpecialConfigPath = abSpecialPath;
+
 	return true;
 }
 
@@ -1120,8 +1123,10 @@ void CConEmuMain::SetForceUseRegistry()
 	mb_ForceUseRegistry = true;
 }
 
-LPWSTR CConEmuMain::ConEmuXml()
+LPWSTR CConEmuMain::ConEmuXml(bool* pbSpecialPath /*= NULL*/)
 {
+	if (pbSpecialPath) *pbSpecialPath = false;
+
 	if (mb_ForceUseRegistry)
 	{
 		return L"";
@@ -1130,7 +1135,10 @@ LPWSTR CConEmuMain::ConEmuXml()
 	if (ms_ConEmuXml[0])
 	{
 		if (FileExists(ms_ConEmuXml))
+		{
+			if (pbSpecialPath) *pbSpecialPath = mb_SpecialConfigPath;
 			return ms_ConEmuXml;
+		}
 	}
 
 	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
@@ -6735,21 +6743,8 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 		wchar_t* psz = wcschr(szName, TaskBracketRight);
 		if (psz) psz[1] = 0;
 
-		const CommandTasks* pGrp = NULL;
-		if (lstrcmp(asSource, AutoStartTaskName) == 0)
-		{
-			pGrp = gpSet->CmdTaskGet(-1);
-		}
-		else
-		{
-			for (int i = 0; (pGrp = gpSet->CmdTaskGet(i)) != NULL; i++)
-			{
-				if (lstrcmpi(pGrp->pszName, szName) == 0)
-				{
-					break;
-				}
-			}
-		}
+		const CommandTasks* pGrp = gpSet->CmdTaskGetByName(szName);
+
 		if (pGrp)
 		{
 			pszDataW = lstrdup(pGrp->pszCommands);
@@ -6789,17 +6784,26 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 				LPCWSTR pszDefCmd = gpSetCls->GetDefaultCmd();
 
 				RConStartArgs args;
-				args.aRecreate = cra_EditTab;
+				args.aRecreate = (mn_StartupFinished == ss_Started) ? cra_EditTab : cra_CreateTab;
 				if (pszDefCmd && *pszDefCmd)
 					args.pszSpecialCmd = lstrdup(pszDefCmd);
 
 				int nCreateRc = gpConEmu->RecreateDlg(&args);
 
-				if (nCreateRc == IDC_START)
+				if ((nCreateRc == IDC_START) && args.pszSpecialCmd && *args.pszSpecialCmd)
 				{
-					wchar_t* pszNewCmd = args.CreateCommandLine();
+					wchar_t* pszNewCmd = NULL;
+					if ((*args.pszSpecialCmd == CmdFilePrefix) || (*args.pszSpecialCmd == TaskBracketLeft))
+					{
+						wchar_t* pszTaskName = args.pszSpecialCmd; args.pszSpecialCmd = NULL;
+						pszNewCmd = LoadConsoleBatch(pszTaskName, &args);
+						free(pszTaskName);
+					}
+					else
+					{
+						pszNewCmd = args.CreateCommandLine();
+					}
 					return pszNewCmd;
-					//return lstrdup(pszDefCmd);
 				}
 			}
 			return NULL;
