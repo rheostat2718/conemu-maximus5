@@ -124,7 +124,7 @@ ConEmuC /download [-login <name> -password <pwd>]
 *Execute commands and create tabs (Internal use!)*
 {{{
 ConEmuC [switches] /ROOT <program with arguments, far.exe for example>
-ConEmuC [switches] [/U | /A] /C <command line, passed to %COMSPEC%>
+ConEmuC [switches] [/U | /A] [/Async | /Fork] /C <command line>
   Switches
     /[NO]CONFIRM - [don't] confirm closing console on program termination
     /B{W|H|Z}    - define window width, height and buffer height

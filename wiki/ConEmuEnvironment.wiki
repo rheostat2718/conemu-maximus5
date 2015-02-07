@@ -20,6 +20,8 @@
 || [ConEmuEnvironment#Disabling_hooks_temporarily ConEmuHooks] || `Enabled`|`OFF`|`NOARG`|`NOSTART` || you may temporarily disable injects when running ‘long’ batches or initialization scripts ||
 || [ConEmuEnvironment#Cheating_system_time ConEmuFakeDT] || `2014-12-31` || will cheat system and local current time for console processes ||
 || [GuiMacro#Far3-pre-Lua ConEmuMacroResult] || _vary_ || may be set only by !ConEmu's Far Manager plugin after executing [GuiMacro GUI Macro] ||
+|| [ConEmuEnvironment#ConEmuCpCvt ConEmuCpCvt] || perl.exe:1252:1251 || to force output CP conversion ||
+|| [ConEmuEnvironment#ConEmuDefaultCp ConEmuDefaultCp] || 1251 || to change output CP if you don't want to use chcp ||
 
 =PATH modifications=
 [SettingsComspec Settings page ComSpec] has an options ‘Add %!ConEmuDir% to %PATH%’ and ‘Add %!ConEmuBaseDir% to %PATH%’.
@@ -92,4 +94,35 @@ set ConEmuFakeDT=%DATE% %TIME%
 set ConEmuFakeDT=2013-12-31T23:59:59.99
 set ConEmuFakeDT=2013-01-31 9:0:0
 set ConEmuFakeDT=2013-11-30
+}}}
+
+=ConEmuCpCvt=
+Codepage hack to force output CP conversion.
+
+If some command uses wrong CP while converting ANSI to Unicode
+(the example may be perl.exe from "`git add -p`")
+set variable to correct its output. Use asterisk for all apps.
+This hack affects ONLY `WriteConsoleW` function calls.
+
+{{{
+Format:
+<exename>:<badcp>:<goodcp>[;<exename>:<badcp>:<goodcp>[...]]
+Example:
+set ConEmuCpCvt=perl.exe:1252:1251;*:850:866;
+}}}
+
+=ConEmuDefaultCp=
+Codepage hack to change output CP if you don't want to use chcp.
+
+If you can't use "`chcp <codepage>`" to change whole console CP output,
+you may change it using environment variable !ConEmuDefaultCp.
+It will affect only `WriteFile` and `WriteConsoleA` functions.
+So, if you need to run several apps in one console simultaneously...
+
+{{{
+set ConEmuDefaultCp=1251
+ConEmuC -fork -c App1.exe
+set ConEmuDefaultCp=866
+ConEmuC -fork -c App2.exe
+set ConEmuDefaultCp=
 }}}
