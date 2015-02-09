@@ -41,7 +41,7 @@ in the console properties.
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/RealConsoleProperties.png" title="RealConsole properties">
 
-This font may be configured from [SettingsFeatures Features] -> button `...` on the right of ‘Show real console’<br>
+This font may be configured from ConEmu's settings [SettingsFeatures Features page] `->` button ‘`...`’ on the right of ‘Show real console’<br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreRealFont.png" title="ConEmu settings, RealConsole font" alt="ConEmu settings, RealConsole font">
 
 
