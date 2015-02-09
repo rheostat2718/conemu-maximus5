@@ -41,7 +41,7 @@ in the console properties.
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/RealConsoleProperties.png" title="RealConsole properties">
 
-This font may be configured from ConEmu's settings [SettingsFeatures Features page] `->` button ‘`...`’ on the right of ‘Show real console’<br>
+This font may be configured from !ConEmu's [SettingsFeatures Features setting page] `->` button ‘`...`’ on the right of ‘Show real console’<br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreRealFont.png" title="ConEmu settings, RealConsole font" alt="ConEmu settings, RealConsole font">
 
 
@@ -49,8 +49,9 @@ This font may be configured from ConEmu's settings [SettingsFeatures Features pa
 What shell or application is responsible for your broken output? In most cases you will see
 the active application exe name in the StatusBar. If it does not support unicode output
 you need to check for updates of this application. For example, MSYS1 is not unicode-aware.
+May be your application has some configuration where you may choose proper encoding.
 
-Well, in some cases the following trick may help: set console codepage to UTF-8
+At last, in some cases the following trick may help: set console codepage to UTF-8
 before running your shell or application. For example, put the following in the startup task.
 {{{
 chcp 65001 & cmd
