@@ -15,7 +15,7 @@ Format:
 Example:
   set ConEmuCpCvt=perl.exe:1252:1251;*:850:866;
 }}}
-  * CP hack: Use ConEmuDefaultCp to change output CP if you don't want to use chcp. If you can't use "chcp <codepage>" to change whole console CP output, you may change it using environment variable ConEmuDefaultCp. It will affect only WriteFile and WriteConsoleA functions. So, if you need to run several apps in one console simultaneously...
+  * CP hack: Use ConEmuDefaultCp to change output CP if you don't want to use chcp. If you can't use "`chcp <codepage>`" to change whole console CP output, you may change it using environment variable ConEmuDefaultCp. It will affect only WriteFile and WriteConsoleA functions. So, if you need to run several apps in one console simultaneously...
 {{{
 set ConEmuDefaultCp=1251
 ConEmuC -fork -c App1.exe
