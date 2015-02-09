@@ -101,6 +101,7 @@ The !ConEmu Jump list is set here too. Set up a list of tasks in the field of «
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsFeatures.png" title="ConEmu settings, Features page" alt="ConEmu settings, Features page">
 
 ===!RealConsole font===
+Open this dialog from [SettingsFeatures Features] -> button `...` on the right of ‘Show real console’<br>
 <img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreRealFont.png" title="ConEmu settings, RealConsole font" alt="ConEmu settings, RealConsole font">
 
 ==Text cursor==

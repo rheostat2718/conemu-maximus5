@@ -1,0 +1,71 @@
+﻿#summary unicode support
+
+!ConEmu is unicode application. That means if your console application (cmd, java, perl, powershell and so on)
+can write unicode characters to the console, ConEmu will show them.
+
+So if you observe some non-ascii characters are not displayed correctly you may check the following:
+
+
+==Check if the font used in ConEmu has proper glyphs==
+===What font you are using===
+[SettingsMain Main] settings page has two section: ‘Main console font’ and ‘Change pseudographics font’.
+
+‘Pseudographics font’ is used for some unicode ranges generally containing frames and some pseudographics symbols.
+For example: `═ ║ ╒ ╓ ╔ ╕ ╖ ╗ ╘ ╙ ╚ ╛ ╜ ╝ ╞ ╟`.
+The default range is U2013..U25C4. You may change it within ConEmuXml:
+{{{
+<value name="FixFarBordersRanges" type="string" data="2013-25C4;"/>
+}}}
+Actually, you may untick the ‘Change pseudographics font’ if you do not need it.
+
+‘Main console’ font is used for all other symbols.
+
+There is ‘Font charset’ there. Usually it must contain ‘Default’ or ‘ANSI’.
+This setting is not related to UTF-8 or Unicode itself, it just tells to Windows
+what font it must choose it there are several fonts in one family. But
+you may play with this option and see how the result is changed.
+
+One more strange thing: the option ‘Treat font height as device units’
+reflects on created font too.
+
+===Check font glyphs===
+Check if the font has proper glyphs: run from `Win+R` the `charmap.exe` tool and examine your font.
+
+
+==Check if RealConsole is capable to accept unicode==
+Press ‘Ctrl+Win+Alt+Space’ to reveal RealConsole and check its contents.
+Actually, it may fails for hieroglyphs and some others unicode ranges.
+
+Anyway, the critical thing is that RealConsole has TrueType font selected
+in the console properties.
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/RealConsoleProperties.png" title="RealConsole properties">
+
+This font may be configured from [SettingsFeatures Features] -> button `...` on the right of ‘Show real console’<br>
+<img src="http://conemu-maximus5.googlecode.com/svn/files/SettingsMoreRealFont.png" title="ConEmu settings, RealConsole font" alt="ConEmu settings, RealConsole font">
+
+
+==Check if your console application is Unicode-aware==
+What shell or application is responsible for your broken output? In most cases you will see
+the active application exe name in the StatusBar. If it does not support unicode output
+you need to check for updates of this application. For example, MSYS1 is not unicode-aware.
+
+Well, in some cases the following trick may help: set console codepage to UTF-8
+before running your shell or application. For example, put the following in the startup task.
+{{{
+chcp 65001 & cmd
+}}}
+
+==Also ConEmu provide some tests you may run==
+
+{{{
+ConEmuC -CheckUnicode
+}}}
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuUnicodeTest1.png" title="ConEmuC -CheckUnicode">
+
+{{{
+cmd /c "%ConEmuBaseDir%\Addons\utf-8-test.cmd"
+}}}
+
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuUnicodeTest1.png" title="utf-8-test.cmd">
