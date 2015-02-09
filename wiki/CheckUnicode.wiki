@@ -1,12 +1,12 @@
 ﻿#summary unicode support
 
 !ConEmu is unicode application. That means if your console application (cmd, java, perl, powershell and so on)
-can write unicode characters to the console, ConEmu will show them.
+can write unicode characters to the console, !ConEmu will show them.
 
 So if you observe some non-ascii characters are not displayed correctly you may check the following:
 
 
-==Check if the font used in ConEmu has proper glyphs==
+==Check if the font used in !ConEmu has proper glyphs==
 ===What font you are using===
 [SettingsMain Main] settings page has two section: ‘Main console font’ and ‘Change pseudographics font’.
 
@@ -56,7 +56,7 @@ before running your shell or application. For example, put the following in the 
 chcp 65001 & cmd
 }}}
 
-==Also ConEmu provide some tests you may run==
+==Also !ConEmu provide some tests you may run==
 
 {{{
 ConEmuC -CheckUnicode
@@ -68,4 +68,4 @@ ConEmuC -CheckUnicode
 cmd /c "%ConEmuBaseDir%\Addons\utf-8-test.cmd"
 }}}
 
-<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuUnicodeTest1.png" title="utf-8-test.cmd">
+<img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuUnicodeTest2.png" title="utf-8-test.cmd">
