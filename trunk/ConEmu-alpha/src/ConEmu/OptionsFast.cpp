@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsHelp.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
+#include "Update.h"
 #include "../common/WFiles.h"
 #include "../common/WRegistry.h"
 
@@ -91,6 +92,8 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 			// lbStorageLocation
 			SettingsStorage Storage = {}; bool ReadOnly = false;
 			gpSet->GetSettingsType(Storage, ReadOnly);
+
+			// Same priority as in CConEmuMain::ConEmuXml (reverse order)
 			wchar_t* pszSettingsPlaces[] = {
 				lstrdup(L"HKEY_CURRENT_USER\\Software\\ConEmu"),
 				ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"),
@@ -98,33 +101,41 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 				ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"),
 				NULL
 			};
+			// Lets find first allowed item
 			int iAllowed = 0;
 			if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_XML) == 0)
 			{
-				iAllowed = 1; // Реестр уже низя
+				iAllowed = 1; // XML is used, registry is not allowed
 				if (Storage.pszFile)
 				{
-					if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[1]) == 0)
-						iAllowed = 1; // OK, перебить может любой другой xml
-					else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[2]) == 0)
-						iAllowed = 2; // "Перебить" может только %APPDATA%
-					else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[3]) == 0)
-						iAllowed = 3; // Приоритетнее настроек нет
+					if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[1]) == 0) // %APPDATA%
+						iAllowed = 1; // Any other xml has greater priority
+					else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[2]) == 0) // %ConEmuBaseDir%
+						iAllowed = 2; // Only %ConEmuDir% has greater priority
+					else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[3]) == 0) // %ConEmuDir%
+						iAllowed = 3; // Most prioritized
 					else
 					{
-						// Этот xml мог быть указан в "/LoadCfgFile ..."
+						// Directly specified with "/LoadCfgFile ..."
 						SafeFree(pszSettingsPlaces[3]);
 						pszSettingsPlaces[3] = lstrdup(Storage.pszFile);
-						iAllowed = 3; // Приоритетнее настроек нет
+						iAllowed = 3; // Most prioritized
 					}
 				}
 			}
+			// Index of the default location (relative to listbox, but not a pszSettingsPlaces)
+			// By default - suggest %APPDATA% or, if possible, %ConEmuDir%
+			int iDefault = (iAllowed == 0) ? (CConEmuUpdate::NeedRunElevation() ? 1 : 3) : 0;
+
+			// Populate lbStorageLocation
 			while (pszSettingsPlaces[iAllowed])
 			{
 				SendDlgItemMessage(hDlg, lbStorageLocation, CB_ADDSTRING, 0, (LPARAM)pszSettingsPlaces[iAllowed]);
 				iAllowed++;
 			}
-			SendDlgItemMessage(hDlg, lbStorageLocation, CB_SETCURSEL, 0, 0);
+			SendDlgItemMessage(hDlg, lbStorageLocation, CB_SETCURSEL, iDefault, 0);
+
+			// Release memory
 			for (int i = 0; pszSettingsPlaces[i]; i++)
 			{
 				SafeFree(pszSettingsPlaces[i]);

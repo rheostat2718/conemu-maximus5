@@ -1368,25 +1368,30 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 }
 
 
-BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
 							 LPDWORD pdwLastError)
 {
-	BOOL lbRc = FALSE;
-	BOOL lbTryStdCreate = FALSE;
-
-	Assert(lpApplicationName==NULL);
-
-	LPCWSTR pszCmdArgs = lpCommandLine;
-	CmdArg szExe;
-	if (0 != NextArg(&pszCmdArgs, szExe))
+	if (!lpCommandLine || !*lpCommandLine)
 	{
-		DisplayLastError(L"Invalid cmd line. Executable not exists", -1);
-		return 100;
+		DisplayLastError(L"CreateProcessDemoted failed, lpCommandLine is empty", -1);
+		return FALSE;
 	}
 
+	// Issue 1897: Created task stopped after 72 hour, so use "/bypass"
+	CEStr szExe;
+	if (!GetModuleFileName(NULL, szExe.GetBuffer(MAX_PATH), MAX_PATH) || szExe.IsEmpty())
+	{
+		DisplayLastError(L"GetModuleFileName(NULL) failed");
+		return FALSE;
+	}
+	CEStr szCommand(lstrmerge(L"/bypass /cmd ", lpCommandLine));
+	LPCWSTR pszCmdArgs = szCommand;
+
+	BOOL lbRc = FALSE;
+	BOOL lbTryStdCreate = FALSE;
 
 #if !defined(__GNUC__)
 
@@ -1423,6 +1428,7 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	ITrigger *pTrigger = NULL;
 	ITriggerCollection *pTriggerCollection = NULL;
 	ITaskDefinition *pTask = NULL;
+	ITaskSettings *pSettings = NULL;
 	ITaskFolder *pRootFolder = NULL;
 	ITaskService *pService = NULL;
 	HRESULT hr;
@@ -1431,6 +1437,7 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	DWORD nTickStart, nDuration;
 	const DWORD nMaxTaskWait = 20000;
 	const DWORD nMaxWindowWait = 20000;
+	wchar_t szIndefinitely[] = L"PT0S";
 
 	//  ------------------------------------------------------
 	//  Initialize COM.
@@ -1491,6 +1498,21 @@ BOOL CreateProcessDemoted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	}
 
 	SafeRelease(pService);  // COM clean up.  Pointer is no longer used.
+
+	//  ------------------------------------------------------
+	//  Ensure there will be no execution time limit
+	hr = pTask->get_Settings(&pSettings);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"Cannot get task settings: 0x%08X", hr);
+		goto wrap;
+	}
+	hr = pSettings->put_ExecutionTimeLimit(szIndefinitely);
+	if (FAILED(hr))
+	{
+		DisplayLastError(L"Cannot set task execution time limit: 0x%08X", hr);
+		goto wrap;
+	}
 
 	//  ------------------------------------------------------
 	//  Get the trigger collection to insert the registration trigger.
@@ -1687,7 +1709,7 @@ wrap:
 	if (0 != NextArg(&pszDefCmd, szExe))
 	{
 		DisplayLastError(L"Invalid cmd line. ConEmu.exe not exists", -1);
-		return 100;
+		return FALSE;
 	}
 
 	OleInitialize(NULL);
@@ -1767,7 +1789,7 @@ wrap:
 		//}
 		else
 		{
-			if (CreateProcessAsUserW(hTokenRest, lpApplicationName, lpCommandLine,
+			if (CreateProcessAsUserW(hTokenRest, NULL, lpCommandLine,
 							 lpProcessAttributes, lpThreadAttributes,
 							 bInheritHandles, dwCreationFlags, lpEnvironment,
 							 lpCurrentDirectory, lpStartupInfo, lpProcessInformation))
@@ -1855,7 +1877,7 @@ wrap:
 				CreateProcessWithTokenW(hTokenDesktop, LOGON_WITH_PROFILE,
 				//CreateProcessAsUserW(hTokenDesktop,
 				//CreateProcessW(
-					lpApplicationName, lpCommandLine,
+					NULL, lpCommandLine,
 					//lpProcessAttributes, lpThreadAttributes, bInheritHandles,
 					dwCreationFlags, lpEnvironment,
 					lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
@@ -1889,7 +1911,7 @@ wrap:
 	// If all methods fails - try to execute "as is"?
 	if (lbTryStdCreate)
 	{
-		lbRc = CreateProcess(lpApplicationName, lpCommandLine,
+		lbRc = CreateProcess(NULL, lpCommandLine,
 							 lpProcessAttributes, lpThreadAttributes,
 							 bInheritHandles, dwCreationFlags, lpEnvironment,
 							 lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
@@ -3710,7 +3732,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					DWORD nErr = 0;
 
 
-					b = CreateProcessDemoted(NULL, cmdNew, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+					b = CreateProcessDemoted(cmdNew, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
 
 
