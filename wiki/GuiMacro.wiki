@@ -383,6 +383,8 @@ When you use Far Manager macro - result is placed to the ‘[ConEmuEnvironment C
        Cmd = 2, Value = 0..255 (255==Opaque) - for inactive window
        Cmd = 3, Value = <relative inc/dec> - for inactive window
        Cmd = 4, Value = <0/1> - AlphaValueSeparate
+    Wiki(["PageName"])
+     - Open online documentation
     WindowFullscreen()
      - Switch fullscreen window mode
        returns previous window mode

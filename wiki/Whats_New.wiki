@@ -59,7 +59,7 @@ set ConEmuDefaultCp=
 
 ==Build 150128==
   * Add missed GuiMacro GetOption description.
-  * Debug. Show ConEmu build number in the _ASSERT dialog
+  * Debug. Show ConEmu build number in the `_ASSERT` dialog
   * Issue 1878: GuiMacro. Add ability to get some environment from ConEmu.
 {{{
 GetInfo("PID"[,"HWND"[,...]])
@@ -77,7 +77,7 @@ After Ctrl+Click on highlighted (underlined) file
 ConEmu will start cmd.exe in new tab and highlighted file will be executed.
 Documents will be opened using associated application.
 Add "-new_console:n" suffix to suppress "Press Enter or Esc to close console".
-]]}
+}}}
   * Issue 1883: Search field activation hotkey was not working if toolbar buttons were hidden.
   * AnsiEscapeCodes: Change behavior on wrong ST terminator of OSC detected (allowed 'ESC \' or 'BEL').
   * Issue 1865: Deadlocks were happened sometimes, PipeServer termination sequence was changed.
