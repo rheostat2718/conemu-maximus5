@@ -424,6 +424,16 @@ void ConEmuAbout::InitCommCtrls()
 	mb_CommCtrlsInitialized = true;
 }
 
+void ConEmuAbout::OnInfo_OnlineWiki(LPCWSTR asPageName /*= NULL*/)
+{
+	CEStr szUrl(lstrmerge(CEWIKIBASE,asPageName ? asPageName : L"ConEmu"));
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", szUrl, NULL, NULL, SW_SHOWNORMAL);
+	if (shellRc <= 32)
+	{
+		DisplayLastError(L"ShellExecute failed", shellRc);
+	}
+}
+
 void ConEmuAbout::OnInfo_Donate()
 {
 	int nBtn = MsgBox(
@@ -686,7 +696,7 @@ void ConEmuAbout::LoadResources()
 		case 0:
 			m_Btns[i].ResId = L"DONATE";
 			m_Btns[i].pImg = new CToolImg();
-			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateDonateButton(GetSysColor(COLOR_BTNFACE)))
+			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateDonateButton())
 				SafeDelete(m_Btns[i].pImg);
 			m_Btns[i].nCtrlId = pLinkDonate;
 			m_Btns[i].pszUrl = gsDonatePage;
@@ -694,7 +704,7 @@ void ConEmuAbout::LoadResources()
 		case 1:
 			m_Btns[i].ResId = L"FLATTR";
 			m_Btns[i].pImg = new CToolImg();
-			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateFlattrButton(GetSysColor(COLOR_BTNFACE)))
+			if (m_Btns[i].pImg && !m_Btns[i].pImg->CreateFlattrButton())
 				SafeDelete(m_Btns[i].pImg);
 			m_Btns[i].nCtrlId = pLinkFlattr;
 			m_Btns[i].pszUrl = gsFlattrPage;

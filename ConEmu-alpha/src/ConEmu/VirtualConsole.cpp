@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -89,6 +89,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRCOORD(s) //DEBUGSTR(s)
 #define DEBUGSTRFAIL(s) DEBUGSTR(s)
+#define DEBUGSTRAPPID(s) DEBUGSTR(s)
 
 // WARNING("не появляются табы во второй консоли");
 WARNING("На предыдущей строке символы под курсором прыгают влево");
@@ -280,6 +281,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
 	isFade = false; isForeground = true;
 	mp_Colors = gpSet->GetColors(-1);
+	mn_AppSettingsChangCount = 0;
 	memset(&m_LeftPanelView, 0, sizeof(m_LeftPanelView));
 	memset(&m_RightPanelView, 0, sizeof(m_RightPanelView));
 	mn_ConEmuFadeMsg = /*mn_ConEmuSettingsMsg =*/ 0;
@@ -2660,6 +2662,33 @@ bool CVirtualConsole::ChangePalette(int aNewPaletteIdx)
 	return true;
 }
 
+void CVirtualConsole::OnAppSettingsChanged(int iAppId /*= -1*/)
+{
+	wchar_t szInfo[80];
+	LONG lNew = InterlockedIncrement(&mn_AppSettingsChangCount);
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"VCon::OnAppSettingsChanged AppId=%i, Counter=%i", iAppId, lNew);
+
+	if (lNew == 1)
+	{
+		if (!mb_InUpdate)
+		{
+			wcscat_c(szInfo, L" - calling Update(true)");
+			DEBUGSTRAPPID(szInfo);
+			Update(true);
+		}
+		else
+		{
+			wcscat_c(szInfo, L" - skipped, mb_InUpdate");
+			DEBUGSTRAPPID(szInfo);
+		}
+	}
+	else
+	{
+		wcscat_c(szInfo, L" - skipped, counter");
+		DEBUGSTRAPPID(szInfo);
+	}
+}
+
 bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock *pSCON)
 {
 	MSectionLock SCON; SCON.Lock(&csCON);
@@ -2671,6 +2700,13 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 
 	// Retrieve palette colors
 	GetColors();
+
+	// The application settings were changed?
+	LONG lOldChange = InterlockedExchange(&mn_AppSettingsChangCount, 0);
+	if (lOldChange)
+	{
+		InvalidateBack();
+	}
 
 	if ((nFontHeight != gpSetCls->FontHeight()) || (nFontWidth != gpSetCls->FontWidth()))
 		isFontSizeChanged = true;

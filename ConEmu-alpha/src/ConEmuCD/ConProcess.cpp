@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,15 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 {
 	int nExitPlaceAdd = 2; // 2,3,4,5,6,7,8,9 +(nExitPlaceStep)
 	bool bPrevCount2 = (anPrevCount>1);
+
+	#ifdef _DEBUG
+	wchar_t szCountInfo[80];
+	if (abChanged)
+	{
+		_wsprintf(szCountInfo, SKIPCOUNT(szCountInfo) L"Process list was changed: %i", gpSrv ? gpSrv->nProcessCount : -1);
+		DEBUGSTRPROC(szCountInfo);
+	}
+	#endif
 
 	// Заблокировать, если этого еще не сделали
 	MSectionLock CS;
@@ -270,6 +279,11 @@ void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
 			ShutdownSrvStep(L"All processes are terminated, SetEvent(ghExitQueryEvent)");
 			SetTerminateEvent(ste_ProcessCountChanged);
 		}
+	}
+	else if (abChanged && gpSrv->pConsole)
+	{
+		gpSrv->pConsole->bDataChanged = TRUE;
+		SetEvent(gpSrv->hRefreshEvent);
 	}
 
 	UNREFERENCED_PARAMETER(nWaitDbg1); UNREFERENCED_PARAMETER(nWaitDbg2); UNREFERENCED_PARAMETER(bForcedTo2);
@@ -544,20 +558,21 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 				gpSrv->nProcessCount = nCurCount;
 			}
 
+			UINT nSize = sizeof(DWORD)*min(gpSrv->nMaxProcesses,START_MAX_PROCESSES);
+			#ifdef _DEBUG
+			_ASSERTE(!IsBadWritePtr(gpSrv->pnProcessesCopy,nSize));
+			_ASSERTE(!IsBadWritePtr(gpSrv->pnProcesses,nSize));
+			#endif
+
 			if (!lbChanged)
 			{
-				UINT nSize = sizeof(DWORD)*min(gpSrv->nMaxProcesses,START_MAX_PROCESSES);
-
-				#ifdef _DEBUG
-				_ASSERTE(!IsBadWritePtr(gpSrv->pnProcessesCopy,nSize));
-				_ASSERTE(!IsBadWritePtr(gpSrv->pnProcesses,nSize));
-				#endif
-
 				lbChanged = memcmp(gpSrv->pnProcessesCopy, gpSrv->pnProcesses, nSize) != 0;
 				MCHKHEAP;
+			}
 
-				if (lbChanged)
-					memmove(gpSrv->pnProcessesCopy, gpSrv->pnProcesses, nSize);
+			if (lbChanged)
+			{
+				memmove(gpSrv->pnProcessesCopy, gpSrv->pnProcesses, nSize);
 
 				MCHKHEAP;
 			}

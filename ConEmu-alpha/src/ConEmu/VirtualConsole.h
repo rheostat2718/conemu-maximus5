@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -346,6 +346,9 @@ class CVirtualConsole :
 		void SavePaneSnapshoot();
 		void OnTaskbarSettingsChanged();
 		void OnTaskbarFocus();
+
+		void OnAppSettingsChanged(int iAppId = -1);
+		LONG mn_AppSettingsChangCount;
 
 	protected:
 		//inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);
