@@ -4248,7 +4248,7 @@ DWORD WaitForRootConsoleProcess(DWORD nTimeout)
 
 	if (!nFoundPID)
 	{
-		ShowWindow(ghConWnd, SW_SHOWNORMAL);
+		apiShowWindow(ghConWnd, SW_SHOWNORMAL);
 		_ASSERTE(FALSE && "Was unable to find starting process");
 	}
 
@@ -4894,10 +4894,10 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 								//		GetWindowRect(gpSrv->hGuiWnd, &rcGui);
 								//	//SetWindowPos(ghConWnd, HWND_BOTTOM, rcGui.left+3, rcGui.top+3, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
 								//	SetWindowPos(ghConWnd, NULL, -30000, -30000, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
-								//	ShowWindow(ghConWnd, SW_SHOWMINNOACTIVE);
+								//	apiShowWindow(ghConWnd, SW_SHOWMINNOACTIVE);
 								//	#ifdef _DEBUG
-								//	ShowWindow(ghConWnd, SW_SHOWNORMAL);
-								//	ShowWindow(ghConWnd, SW_HIDE);
+								//	apiShowWindow(ghConWnd, SW_SHOWNORMAL);
+								//	apiShowWindow(ghConWnd, SW_HIDE);
 								//	#endif
 								//}
 
@@ -4906,7 +4906,7 @@ int ParseCommandLine(LPCWSTR asCmdLine/*, wchar_t** psNewCmd, BOOL* pbRunInBackg
 								// Что-то Win7 хулиганит
 								if (!gbVisibleOnStartup)
 								{
-									ShowWindow(ghConWnd, SW_HIDE);
+									apiShowWindow(ghConWnd, SW_HIDE);
 								}
 							}
 						}
@@ -7262,7 +7262,7 @@ BOOL cmd_SetWindowPos(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if ((in.SetWndPos.uFlags & SWP_SHOWWINDOW) && !IsWindowVisible(in.SetWndPos.hWnd))
 	{
-		lbShowRc = ShowWindowAsync(in.SetWndPos.hWnd, SW_SHOW);
+		lbShowRc = apiShowWindowAsync(in.SetWndPos.hWnd, SW_SHOW);
 		nErrCode[1] = lbShowRc ? 0 : GetLastError();
 	}
 
@@ -8040,7 +8040,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 						bNeedRepaint = FALSE;
 						if (!bIsVisible && IsWindowVisible(ghConWnd))
 						{
-							ShowWindow(ghConWnd, SW_HIDE);
+							apiShowWindow(ghConWnd, SW_HIDE);
 						}
 						if (bOk)
 						{
@@ -9298,7 +9298,7 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 	// если только само консольное приложение не выполняет прокрутку.
 	// Сам ConEmu должен "крутить" консоль только виртуально, не трогая физический скролл.
 	bool lbCursorInScreen = CoordInSmallRect(csbi.dwCursorPosition, csbi.srWindow);
-	bool lbScreenAtBottom = (csbi.srWindow.Bottom >= (csbi.dwSize.Y - 1));
+	bool lbScreenAtBottom = (csbi.srWindow.Top > 0) && (csbi.srWindow.Bottom >= (csbi.dwSize.Y - 1));
 	bool lbCursorAtBottom = (lbCursorInScreen && (csbi.dwCursorPosition.Y >= (csbi.srWindow.Bottom - 2)));
 	SHORT nCursorAtBottom = lbCursorAtBottom ? (csbi.srWindow.Bottom - csbi.dwCursorPosition.Y + 1) : 0;
 	SHORT nBottomLine = csbi.srWindow.Bottom;
