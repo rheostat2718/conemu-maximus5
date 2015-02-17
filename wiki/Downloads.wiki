@@ -14,7 +14,7 @@ Read more about [StableVsPreview release stages].
 <td width="215"> </td>
 </tr>
 </table>
-===All mirrors===
+===Official mirrors===
   * [http://www.fosshub.com/ConEmu.html Fosshub.com]
   * [https://sourceforge.net/projects/conemu/files/ Sourceforge.com]
   * [https://conemu.codeplex.com/releases CodePlex.com]
@@ -22,13 +22,15 @@ Read more about [StableVsPreview release stages].
   * [http://code.google.com/p/conemu-maximus5/downloads/list Googlecode.com] - will be [http://google-opensource.blogspot.se/2013/05/a-change-to-google-code-download-service.html broken soon]
 </wiki:comment>
 
+===Third-pary mirrors===
+  * [http://www.instalki.pl/programy/download/Windows/emulatory/ConEmu.html Instalki.pl]
+  * [http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml Softpedia.com]
+
 ==Release archives==
 Searching for some old (exact) ConEmu build? All builds are available here:
 
-  * [http://sourceforge.net/projects/conemu/files/OldReleases/ConEmuPack/ Release archives]
-<wiki:comment>
-  * [http://code.google.com/p/conemu-maximus5/downloads/list?can=1&q=summary%3AConEmu Release archives]
-</wiki:comment>
+  * [http://sourceforge.net/projects/conemu/files/OldReleases/ConEmuPack/ Release archives (sourceforge)]
+  * [http://www.oldfoss.com/ConEmu.html Release archives (oldfoss)]
 
 ==Far Manager related==
 New plugins adopted to newest Far 3.0 are located now on GitHub
