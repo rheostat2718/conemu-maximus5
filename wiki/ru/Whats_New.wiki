@@ -8,7 +8,7 @@ http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
 ==Build 150216==
-  * GuiMacro. `WindowPosSize("<X>","<Y>","<W>","<H>")`. It changes window pos and size, same as ‘Apply’ button in the ‘Size & Pos’ page of the Settings dialog.
+  * GuiMacro. Issue 1411, gh#58. `WindowPosSize("<X>","<Y>","<W>","<H>")`. It changes window pos and size, same as ‘Apply’ button in the ‘Size & Pos’ page of the Settings dialog.
   * GuiMacro. Simplify passing string arguments. For example, the following commands will be equal now:
 {{{
 ConEmuC -GuiMacro WindowPosSize "0" "0" "800px" "600px"
