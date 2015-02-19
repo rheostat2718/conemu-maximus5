@@ -77,12 +77,9 @@ struct GuiMacroArg
 	DWORD Pad;
 	#endif
 
-	union
-	{
-		int Int;
-		LPWSTR Str;
-		GuiMacro* Macro;
-	};
+	int Int;
+	LPWSTR Str;
+	GuiMacro* Macro;
 };
 
 struct GuiMacro
@@ -108,7 +105,7 @@ namespace ConEmuMacro
 	/* ****** Helper functions ****** */
 	/* ****************************** */
 	LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim = false);
-	LPWSTR GetNextInt(LPWSTR& rsArguments, int& rnValue);
+	LPWSTR GetNextInt(LPWSTR& rsArguments, GuiMacroArg& rnValue);
 	void SkipWhiteSpaces(LPWSTR& rsString);
 	GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg);
 	#ifdef _DEBUG
@@ -226,6 +223,8 @@ namespace ConEmuMacro
 	LPWSTR WindowMinimize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Вернуть текущий статус: NOR/MAX/FS/MIN/TSA
 	LPWSTR WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Change window pos and size, same as ‘Apply’ button in the ‘Size & Pos’ page of the Settings dialog
+	LPWSTR WindowPosSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Установить Zoom для шрифта. 100% и т.п.
 	LPWSTR Zoom(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 
@@ -285,6 +284,7 @@ namespace ConEmuMacro
 		{WindowMaximize, {L"WindowMaximize"}},
 		{WindowMinimize, {L"WindowMinimize"}},
 		{WindowMode, {L"WindowMode"}},
+		{WindowPosSize, {L"WindowPosSize"}},
 		{Zoom, {L"Zoom"}},
 		// End
 		{NULL}
@@ -444,15 +444,16 @@ bool GuiMacro::GetIntArg(size_t idx, int& val)
 
 bool GuiMacro::GetStrArg(size_t idx, LPWSTR& val)
 {
+	// It it is detected as "Int" but we need "Str" - return it as string
 	if ((idx >= argc)
-		|| (argv[idx].Type != gmt_Str && argv[idx].Type != gmt_VStr))
+		|| (argv[idx].Type != gmt_Str && argv[idx].Type != gmt_VStr && argv[idx].Type != gmt_Int))
 	{
 		val = NULL;
 		return false;
 	}
 
 	val = argv[idx].Str;
-	return true;
+	return (val != NULL);
 }
 
 bool GuiMacro::GetRestStrArgs(size_t idx, LPWSTR& val)
@@ -679,19 +680,16 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 			break;
 		}
 
+		bool bIntArg = false;
 		if (isDigit(asString[0]) || (asString[0] == L'-') || (asString[0] == L'+'))
 		{
 			a.Type = (asString[0] == L'0' && (asString[1] == L'x' || asString[1] == L'X')) ? gmt_Hex : gmt_Int;
 
-			if (!GetNextInt(asString, a.Int))
-			{
-				_wsprintf(szArgErr, SKIPLEN(countof(szArgErr)) L"Argument #%u failed (int)", Args.size()+1);
-				if (rsErrMsg)
-					*rsErrMsg = lstrdup(szArgErr);
-				return NULL;
-			}
+			// If it fails - just use as string
+			bIntArg = GetNextInt(asString, a);
 		}
-		else
+
+		if (!bIntArg)
 		{
 			// Delimiter was ':' and argument was specified without quotas - return it "as is" to the end of macro string
 			// Otherwise, if there are no ‘"’ or ‘@"’ - use powershell style (one word == one string arg)
@@ -892,8 +890,7 @@ void ConEmuMacro::UnitTests()
 
 	p = GetNextMacro(pszString, false, NULL);
 	// InvalidArg(9q)
-	_ASSERTE(p==NULL);
-	_ASSERTE(pszString && lstrcmp(pszString, L"q)")==0);
+	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str, L"9q)")==0);
 	SafeFree(p);
 
 	// Test some invalid declarations
@@ -1064,10 +1061,11 @@ void ConEmuMacro::SkipWhiteSpaces(LPWSTR& rsString)
 
 // Get next numerical argument (dec or hex)
 // Delimiter - comma or space
-LPWSTR ConEmuMacro::GetNextInt(LPWSTR& rsArguments, int& rnValue)
+LPWSTR ConEmuMacro::GetNextInt(LPWSTR& rsArguments, GuiMacroArg& rnValue)
 {
 	LPWSTR pszArg = NULL, pszEnd = NULL;
-	rnValue = 0; // Reset
+	rnValue.Str = rsArguments;
+	rnValue.Int = 0; // Reset
 
 	SkipWhiteSpaces(rsArguments);
 
@@ -1090,23 +1088,28 @@ LPWSTR ConEmuMacro::GetNextInt(LPWSTR& rsArguments, int& rnValue)
 
 	// Hex value?
 	if (pszArg[0] == L'0' && (pszArg[1] == L'x' || pszArg[1] == L'X'))
-		rnValue = wcstol(pszArg+2, &pszEnd, 16);
+		rnValue.Int = wcstol(pszArg+2, &pszEnd, 16);
 	else
-		rnValue = wcstol(pszArg, &pszEnd, 10);
+		rnValue.Int = wcstol(pszArg, &pszEnd, 10);
 
 	_ASSERTE(pszEnd == pszTestEnd);
-	rsArguments = pszEnd;
-	if (rsArguments && *rsArguments)
+
+	if (pszEnd && *pszEnd)
 	{
 		// Check, if next symbol is correct delimiter
-		if (wcschr(L" \t\r\n),", *rsArguments) == NULL)
+		if (wcschr(L" \t\r\n),", *pszEnd) == NULL)
 		{
-			_ASSERTE(gbUnitTest && "Wrong argument separator, parsing failed");
+			// We'll use it as string
 			return NULL;
 		}
+		rsArguments = pszEnd;
 		SkipWhiteSpaces(rsArguments);
 		if (*rsArguments == L',')
 			rsArguments++;
+	}
+	else
+	{
+		rsArguments = pszEnd;
 	}
 	return pszArg;
 }
@@ -1639,6 +1642,22 @@ LPWSTR ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 	}
 
 	return lstrdup(pszRc);
+}
+
+// Change window pos and size, same as ‘Apply’ button in the ‘Size & Pos’ page of the Settings dialog
+LPWSTR ConEmuMacro::WindowPosSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszX = NULL, pszY = NULL, pszW = NULL, pszH = NULL;
+
+	p->GetStrArg(0, pszX);
+	p->GetStrArg(1, pszY);
+	p->GetStrArg(2, pszW);
+	p->GetStrArg(3, pszH);
+
+	if (!gpConEmu->SetWindowPosSize(pszX, pszY, pszW, pszH))
+		return lstrdup(L"FAILED");
+
+	return lstrdup(L"OK");
 }
 
 // Menu(Type)
