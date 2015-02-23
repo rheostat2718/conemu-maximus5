@@ -1,9 +1,48 @@
 ﻿#summary unicode support
 
-!ConEmu is unicode application. That means if your console application (cmd, java, perl, powershell and so on)
+!ConEmu is unicode application. That means if your console application (cmd, java, perl, powershell, bash and so on)
 can write unicode characters to the console, !ConEmu will show them.
 
-So if you observe some non-ascii characters are not displayed correctly you may check the following:
+=UTF-8=
+On Windows, unlike Unix, the console itself is not a stream of ‘bytes’ but a spreadsheet of
+cells, each of which contains an UTF-16 character and a color attribute.
+
+That means if your application produces output using single-byte or multi-byte character sets
+(which are ANSI, OEM, UTF-8 and many others) the Windows converts that output to UTF-16
+automatically regarding active codepage selected in your console (use "chcp" command to check it).
+
+If you want to work with UTF-8 encoding you have to select UTF-8 as active console codepage.
+Just use "chcp 65001" command to do that. You may call this command from your shell prompt
+or run it before shell in a ConEmu task content.
+Of course your application must be able to output data using UTF-8. Refer to your application manual.
+
+{{{
+chcp 65001 & cmd
+}}}
+
+
+=On-the-fly conversion=
+Sometimes you may observe a broken output if your application uses wrong codepage.
+That is, for example, if you run "`git app -p`" and your sources have some national
+encoding (Russian 1251 codepage for example). Perl prints chunks using codepage 1252
+and I have not find a simple way to force it using proper codepage. That why the
+environment variable [ConEmuEnvironment ConEmuCpCvt] was created. Run the following
+to fix broken output.
+
+{{{
+set ConEmuCpCvt=perl.exe:1252:1251
+git app -p
+}}}
+
+
+=Font charset=
+There is a ‘Font charset’ option in the font settings.
+This setting is *not* related to UTF-8 or Unicode itself, it just tells to Windows
+what font it must choose if there are several fonts available in one family. But
+you may play with this option and see how the result is changed.
+
+=Troubleshooting=
+If you observe some non-ascii characters are not displayed correctly you may check the following:
 
 
 ==Check if the font used in !ConEmu has proper glyphs==
@@ -21,9 +60,7 @@ Actually, you may untick the ‘Change pseudographics font’ if you do not need
 ‘Main console’ font is used for all other symbols.
 
 There is ‘Font charset’ there. Usually it must contain ‘Default’ or ‘ANSI’.
-This setting is not related to UTF-8 or Unicode itself, it just tells to Windows
-what font it must choose it there are several fonts in one family. But
-you may play with this option and see how the result is changed.
+Read ‘Font charset’ section above.
 
 One more strange thing: the option ‘Treat font height as device units’
 reflects on created font too.
@@ -59,11 +96,14 @@ chcp 65001 & cmd
 
 ==Also !ConEmu provide some tests you may run==
 
+===!CheckUnicode test===
 {{{
 ConEmuC -CheckUnicode
 }}}
 
 <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuUnicodeTest1.png" title="ConEmuC -CheckUnicode">
+
+===UTF-8 test===
 
 {{{
 cmd /c "%ConEmuBaseDir%\Addons\utf-8-test.cmd"
