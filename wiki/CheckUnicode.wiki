@@ -1,6 +1,6 @@
 ﻿#summary unicode support
 
-!ConEmu is unicode application. That means if your console application (cmd, java, perl, powershell, bash and so on)
+!ConEmu is a unicode application. That means if your console application (cmd, java, perl, powershell, bash and so on)
 can write unicode characters to the console, !ConEmu will show them.
 
 =UTF-8=

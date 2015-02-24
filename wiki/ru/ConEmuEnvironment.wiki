@@ -37,9 +37,9 @@ csudo dism.exe /online /enable-feature /featurename:NetFX3 /All /Source:D:\sourc
 
 
 =Debug purposed variables=
-|| *Name* || *Description* || *Example* ||
-|| `ConEmuSleepIndicator` || turning on monitoring feature of ‘Sleep in background’, when `ConEmuSleepIndicator=NUM` !ConEmu will turn off !NumLock when going sleep and turn on !NumLock when full active back || `NUM` or `OFF` ||
-|| `ConEmuReportExe` || show message box like ‘hi.exe loaded’ when `hi.exe` started inside ConEmu tab; option ‘Inject ConEmuHk’ must be enabled || `hi.exe` ||
+|| *Name* || *Example* || *Description* ||
+|| `ConEmuSleepIndicator` || `TITLE`, `NUM` or `OFF` || Turns on monitoring feature of ‘Sleep in background’, when `ConEmuSleepIndicator=NUM` !ConEmu will turn off !NumLock when going sleep and turn on !NumLock when full active back, when `ConEmuSleepIndicator=TITLE` - state will be shown in the TabBar or window title. ||
+|| `ConEmuReportExe` || `perl.exe` || Shows message box like ‘perl.exe loaded’ when `perl.exe` started inside ConEmu tab; option ‘Inject ConEmuHk’ must be enabled ||
 
 
 =Export variables=
@@ -72,29 +72,6 @@ ConEmuC /export[=CON|ALL] [Var1 [Var2 [...]]]
     * «cmd» - fails partially (required to run smth from active cmd, for example "cmd /k exit", to «apply» changes);
     * «bash» - fails completely (seems, it does not support outside changing of env.vars).
 
-
-=Disabling hooks temporarily=
-You may temporarily disable injects when running ‘long’ batches or initialization scripts:
-{{{
-cmd /k set ConEmuHooks=OFF & "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" -new_console:sV -new_console:t:SDK & set ConEmuHooks=
-}}}
-Actually, `ConEmuHooks` may be set of ‘`OFF`’,‘`NOARG`’,‘`NOSTART`’ or simple ‘`Enabled`’. So if you want temporarily disable
-processing of `-new_console` and `start` (which both are forcing command into the new [Tabs ConEmu tab])
-you may set the following:
-{{{
-set ConEmuHooks=NOARG,NOSTART
-}}}
-
-=Cheating system time=
-Environment variable "ConEmuFakeDT". That will cheat system and local current time for console processes.
-Use carefully! Console applications will think that time was freezed! «Inject ConEmuHk» must be on!
-Some examples (cmd):
-{{{
-set ConEmuFakeDT=%DATE% %TIME%
-set ConEmuFakeDT=2013-12-31T23:59:59.99
-set ConEmuFakeDT=2013-01-31 9:0:0
-set ConEmuFakeDT=2013-11-30
-}}}
 
 =Disabling hooks temporarily=
 You may temporarily disable injects when running ‘long’ batches or initialization scripts:
