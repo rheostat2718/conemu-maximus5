@@ -194,6 +194,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkCloseExceptCon, chk_User,  NULL,    L"CloseExceptConKey",     CConEmuCtrl::key_GuiMacro, false, L"Close(5)")
 		;
 	Add(vkTerminateApp,   chk_User,  NULL,    L"TerminateProcessKey",   CConEmuCtrl::key_TerminateProcess/*sort of Close*/)
+		;
+	Add(vkTermButShell,   chk_User,  NULL,    L"TerminateAllButShell",  CConEmuCtrl::key_GuiMacro, false, L"Close(10,1)")
 		->SetHotKey(VK_DELETE,VK_LWIN,VK_SHIFT);
 	Add(vkDuplicateRoot,  chk_User,  NULL,    L"DuplicateRootKey",      CConEmuCtrl::key_DuplicateRoot)
 		->SetHotKey('S',VK_LWIN);
@@ -201,6 +203,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_F4,VK_LWIN); // sort of AltF4 for GUI apps
 	Add(vkRenameTab,      chk_User,  NULL,    L"Multi.Rename",          CConEmuCtrl::key_RenameTab, true/*OnKeyUp*/)
 		->SetHotKey('R',VK_APPS);
+	Add(vkAffinity,       chk_User,  NULL,    L"AffinityPriorityKey",   CConEmuCtrl::key_GuiMacro, true/*OnKeyUp*/, L"AffinityPriority")
+		->SetHotKey('A',VK_APPS);
 	Add(vkMoveTabLeft,    chk_User,  NULL,    L"Multi.MoveLeft",        CConEmuCtrl::key_MoveTabLeft)
 		->SetHotKey(VK_LEFT,VK_LWIN,VK_MENU);
 	Add(vkMoveTabRight,   chk_User,  NULL,    L"Multi.MoveRight",       CConEmuCtrl::key_MoveTabRight)

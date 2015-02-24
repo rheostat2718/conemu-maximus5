@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MMap.h"
 #include "../common/execute.h"
 #include "../common/WFiles.h"
+#include "../common/WObjects.h"
 #include "../common/WUser.h"
 //#include "../common/TokenHelper.h"
 #include "AboutDlg.h"
@@ -1395,6 +1396,16 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	return lbRc;
 }
 
+#if !defined(__GNUC__)
+static void DisplayShedulerError(LPCWSTR pszStep, HRESULT hr, LPCWSTR bsTaskName, LPCWSTR lpCommandLine)
+{
+	wchar_t szInfo[200] = L"";
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L" Please check sheduler log.\n" L"HR=%u, TaskName=", (DWORD)hr);
+	wchar_t* pszErr = lstrmerge(pszStep, szInfo, bsTaskName, L"\n", lpCommandLine);
+	DisplayLastError(pszErr, hr);
+	free(pszErr);
+}
+#endif
 
 BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
@@ -1450,11 +1461,10 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	const IID IID_ITaskService    = {0x2faba4c7, 0x4da9, 0x4013, {0x96, 0x97, 0x20, 0xcc, 0x3f, 0xd4, 0x0f, 0x85}};
 
 	IRegisteredTask *pRegisteredTask = NULL;
+	IRunningTask *pRunningTask = NULL;
 	IAction *pAction = NULL;
 	IExecAction *pExecAction = NULL;
 	IActionCollection *pActionCollection = NULL;
-	ITrigger *pTrigger = NULL;
-	ITriggerCollection *pTriggerCollection = NULL;
 	ITaskDefinition *pTask = NULL;
 	ITaskSettings *pSettings = NULL;
 	ITaskFolder *pRootFolder = NULL;
@@ -1463,8 +1473,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	TASK_STATE taskState;
 	bool bCoInitialized = false;
 	DWORD nTickStart, nDuration;
-	const DWORD nMaxTaskWait = 20000;
-	const DWORD nMaxWindowWait = 20000;
+	const DWORD nMaxWindowWait = 30000;
 	wchar_t szIndefinitely[] = L"PT0S";
 
 	//  ------------------------------------------------------
@@ -1472,7 +1481,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"CoInitializeEx failed: 0x%08X", hr);
+		DisplayShedulerError(L"CoInitializeEx failed.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 	bCoInitialized = true;
@@ -1481,7 +1490,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"CoInitializeSecurity failed: 0x%08X", hr);
+		DisplayShedulerError(L"CoInitializeSecurity failed.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1490,7 +1499,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = CoCreateInstance( CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, IID_ITaskService, (void**)&pService );
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Failed to CoCreate an instance of the TaskService class: 0x%08X", hr);
+		DisplayShedulerError(L"Failed to CoCreate an instance of the TaskService class.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1498,7 +1507,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pService->Connect(vtEmpty, vtEmpty, vtEmpty, vtEmpty);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"ITaskService::Connect failed: 0x%08X", hr);
+		DisplayShedulerError(L"ITaskService::Connect failed.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1508,7 +1517,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pService->GetFolder(bsRoot, &pRootFolder);
 	if( FAILED(hr) )
 	{
-		DisplayLastError(L"Cannot get Root Folder pointer: 0x%08X", hr);
+		DisplayShedulerError(L"Cannot get Root Folder pointer.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1521,7 +1530,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pService->NewTask(0, &pTask);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Failed to CoCreate an instance of the TaskService class: 0x%08X", hr);
+		DisplayShedulerError(L"Failed to create an instance of the TaskService class.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1532,34 +1541,15 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pTask->get_Settings(&pSettings);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Cannot get task settings: 0x%08X", hr);
+		DisplayShedulerError(L"Cannot get task settings.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 	hr = pSettings->put_ExecutionTimeLimit(szIndefinitely);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Cannot set task execution time limit: 0x%08X", hr);
+		DisplayShedulerError(L"Cannot set task execution time limit.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
-
-	//  ------------------------------------------------------
-	//  Get the trigger collection to insert the registration trigger.
-	hr = pTask->get_Triggers(&pTriggerCollection);
-	if (FAILED(hr))
-	{
-		DisplayLastError(L"Cannot get trigger collection: 0x%08X", hr);
-		goto wrap;
-	}
-
-	//  Add the registration trigger to the task.
-	hr = pTriggerCollection->Create( TASK_TRIGGER_REGISTRATION, &pTrigger);
-	if (FAILED(hr))
-	{
-		DisplayLastError(L"Cannot add registration trigger to the Task 0x%08X", hr);
-		goto wrap;
-	}
-	SafeRelease(pTriggerCollection);  // COM clean up.  Pointer is no longer used.
-	SafeRelease(pTrigger);
 
 	//  ------------------------------------------------------
 	//  Add an Action to the task.
@@ -1568,7 +1558,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pTask->get_Actions(&pActionCollection);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Cannot get Task collection pointer: 0x%08X", hr);
+		DisplayShedulerError(L"Cannot get task collection pointer.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1576,7 +1566,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pActionCollection->Create(TASK_ACTION_EXEC, &pAction);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"pActionCollection->Create failed: 0x%08X", hr);
+		DisplayShedulerError(L"pActionCollection->Create failed.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 	SafeRelease(pActionCollection);  // COM clean up.  Pointer is no longer used.
@@ -1584,7 +1574,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pAction->QueryInterface(IID_IExecAction, (void**)&pExecAction);
 	if( FAILED(hr) )
 	{
-		DisplayLastError(L"pAction->QueryInterface failed: 0x%08X", hr);
+		DisplayShedulerError(L"pAction->QueryInterface failed.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 	SafeRelease(pAction);
@@ -1593,14 +1583,14 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pExecAction->put_Path(bsExecutablePath);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Cannot set path of executable: 0x%08X", hr);
+		DisplayShedulerError(L"Cannot set path of executable.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
 	hr = pExecAction->put_Arguments(bsArgs);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Cannot set arguments of executable: 0x%08X", hr);
+		DisplayShedulerError(L"Cannot set arguments of executable.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
@@ -1609,7 +1599,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 		hr = pExecAction->put_WorkingDirectory(bsDir);
 		if (FAILED(hr))
 		{
-			DisplayLastError(L"Cannot set working directory of executable: 0x%08X", hr);
+			DisplayShedulerError(L"Cannot set working directory of executable.", hr, bsTaskName, lpCommandLine);
 			goto wrap;
 		}
 	}
@@ -1620,40 +1610,32 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pRootFolder->RegisterTaskDefinition(bsTaskName, pTask, TASK_CREATE, vtUsersSID, vtEmpty, TASK_LOGON_GROUP, vtZeroStr, &pRegisteredTask);
 	if (FAILED(hr))
 	{
-		DisplayLastError(L"Error saving the Task : 0x%08X", hr);
+		DisplayShedulerError(L"Error registering the task instance.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 
-	// Success! Task successfully registered.
-	// Give 20 seconds for the task to start
-	nTickStart = GetTickCount();
-	nDuration = 0;
+	//  ------------------------------------------------------
+	//  Run the task
 	taskState = TASK_STATE_UNKNOWN;
-	while (nDuration <= nMaxTaskWait/*20000*/)
+	hr = pRegisteredTask->Run(vtEmpty, &pRunningTask);
+	if (FAILED(hr))
 	{
-		hr = pRegisteredTask->get_State(&taskState);
-		if (taskState == TASK_STATE_RUNNING)
-		{
-			// Task is running
-			break;
-		}
-		Sleep(100);
-		nDuration = (GetTickCount() - nTickStart);
+		DisplayShedulerError(L"Error starting the task instance.", hr, bsTaskName, lpCommandLine);
+		goto wrap;
 	}
 
-	if (taskState != TASK_STATE_RUNNING)
+	#ifdef _DEBUG
+	HRESULT hrRun; hrRun = pRunningTask->get_State(&taskState);
+	#endif
+
+	//  ------------------------------------------------------
+	// Success! Task successfully started. But our task may end
+	// promptly because it just bypassing the command line
 	{
-		wchar_t* pszErr = lstrmerge(L"Failed to start task in user mode, timeout!\n", lpCommandLine);
-		DisplayLastError(pszErr, hr);
-		free(pszErr);
-	}
-	else
-	{
-		// OK, считаем что успешно запустились
 		lbRc = TRUE;
 
 		// Success! Program was started.
-		// Give 20 seconds for new window appears and bring it to front
+		// Give 30 seconds for new window appears and bring it to front
 		LPCWSTR pszExeName = PointToName(szExe);
 		if (lstrcmpi(pszExeName, L"ConEmu.exe") == 0 || lstrcmpi(pszExeName, L"ConEmu64.exe") == 0)
 		{
@@ -1692,7 +1674,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	hr = pRootFolder->DeleteTask(bsTaskName, NULL);
 	if( FAILED(hr) )
 	{
-		DisplayLastError(L"Error deleting the Task : 0x%08X", hr);
+		DisplayShedulerError(L"CoInitializeEx failed.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
 	// Task successfully deleted
@@ -1707,11 +1689,10 @@ wrap:
 	VariantClear(&vtUsersSID);
 	VariantClear(&vtZeroStr);
 	SafeRelease(pRegisteredTask);
+	SafeRelease(pRunningTask);
 	SafeRelease(pAction);
 	SafeRelease(pExecAction);
 	SafeRelease(pActionCollection);
-	SafeRelease(pTrigger);
-	SafeRelease(pTriggerCollection);
 	SafeRelease(pTask);
 	SafeRelease(pRootFolder);
 	SafeRelease(pService);
@@ -1959,39 +1940,6 @@ bool isKey(DWORD wp,DWORD vk)
 		|| ((vk==VK_LMENU||vk==VK_RMENU)&&wp==VK_MENU));
 	return bEq;
 }
-
-bool isConsoleService(LPCWSTR pszProcessName)
-{
-	LPCWSTR pszName = PointToName(pszProcessName);
-	if (!pszName || !*pszName)
-	{
-		_ASSERTE(pszName && *pszName);
-		return false;
-	}
-
-	LPCWSTR lsNameExt[] = {L"ConEmuC.exe", L"ConEmuC64.exe", L"csrss.exe", L"conhost.exe"};
-	LPCWSTR lsName[] = {L"ConEmuC", L"ConEmuC64", L"csrss", L"conhost"};
-
-	if (wcschr(pszName, L'.'))
-	{
-		for (size_t i = 0; i < countof(lsNameExt); i++)
-		{
-			if (lstrcmpi(pszName, lsNameExt[i]) == 0)
-				return true;
-		}
-	}
-	else
-	{
-		for (size_t i = 0; i < countof(lsName); i++)
-		{
-			if (lstrcmpi(pszName, lsName[i]) == 0)
-				return true;
-		}
-	}
-
-	return false;
-}
-
 
 #ifdef DEBUG_MSG_HOOKS
 HHOOK ghDbgHook = NULL;
@@ -3389,6 +3337,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	RemoveOldComSpecC();
 	AssertMsgBox = MsgBox;
 	gn_MainThreadId = GetCurrentThreadId();
+	gfnSearchAppPaths = SearchAppPaths;
 
 	// On Vista and higher ensure our process will be
 	// marked as fully dpi-aware, regardless of manifest
@@ -3717,7 +3666,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 					PROCESS_INFORMATION pi = {};
 
-					BOOL b = CreateProcess(NULL, cmdNew, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
+					BOOL b = CreateProcess(NULL, cmdNew, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 					if (b)
 					{
 						CloseHandle(pi.hProcess);
@@ -3771,8 +3720,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						return 0;
 					}
 
-					// Failed
-					DisplayLastError(cmdNew, nErr);
+					// If the error was not shown yet
+					if (nErr) DisplayLastError(cmdNew, nErr);
 					return 100;
 				}
 				else if (!klstricmp(curCommand, _T("/multi")))
@@ -4252,6 +4201,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/FindBugMode")))
 				{
 					gpConEmu->mb_FindBugMode = true;
+				}
+				else if (!klstricmp(curCommand, _T("/debug")) || !klstricmp(curCommand, _T("/debugi")))
+				{
+					// These switches were already processed
 				}
 				else if (!klstricmp(curCommand, _T("/?")) || !klstricmp(curCommand, _T("/h")) || !klstricmp(curCommand, _T("/help")))
 				{

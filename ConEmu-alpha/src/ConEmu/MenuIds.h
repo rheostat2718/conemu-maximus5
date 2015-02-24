@@ -57,7 +57,7 @@
 #define IDM_TERMINATEPRC 0xABD4 // Terminate -> Kill &active process
 #define IDM_TERMINATECON 0xABD5 // Terminate -> Close active &console
 #define IDM_ADMIN_DUPLICATE 0xABD6
-//#define IDM_SAVE 0xABD7
+#define IDM_TERMINATEBUTSHELL 0xABD7 // Terminate -> Kill all but &shell
 //#define IDM_SAVEALL 0xABD8
 #define IDM_DETACH 0xABD9
 #define IDM_ATTACHTO 0xABDA
@@ -71,7 +71,8 @@
 #define IDM_TERMINATECONEXPT 0xABE2 // Terminate -> Close except active
 #define IDM_TERMINATEZOMBIES 0xABE3 // Terminate -> Close all zombies
 #define IDM_UNFASTEN 0xABE4
-#define IDM_VCONCMD_LAST IDM_UNFASTEN
+#define IDM_CHANGEAFFINITY 0xABE5
+#define IDM_VCONCMD_LAST IDM_CHANGEAFFINITY
 
 // Consoles // DWORD MAKELONG(WORD wLow,WORD wHigh);
 #define IDM_VCON_FIRST MAKELONG(1,1)                   // 0x00010001
