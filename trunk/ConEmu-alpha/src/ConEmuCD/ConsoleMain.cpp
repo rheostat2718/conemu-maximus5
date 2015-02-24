@@ -309,6 +309,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			gnSelfPID = GetCurrentProcessId();
 			ghWorkingModule = (u64)hModule;
+			gfnSearchAppPaths = SearchAppPaths;
 
 			#ifdef _DEBUG
 			HANDLE hProcHeap = GetProcessHeap();
@@ -318,8 +319,9 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			#ifdef SHOW_STARTED_MSGBOX
 			if (!IsDebuggerPresent())
 			{
-				char szMsg[128]; msprintf(szMsg, countof(szMsg), WIN3264TEST("ConEmuCD.dll","ConEmuCD64.dll") " loaded, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-				MessageBoxA(NULL, szMsg, "ConEmu server" WIN3264TEST(""," x64"), 0);
+				char szMsg[128] = ""; msprintf(szMsg, countof(szMsg), WIN3264TEST("ConEmuCD.dll","ConEmuCD64.dll") " loaded, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+				char szFile[MAX_PATH] = ""; GetModuleFileNameA(NULL, szFile, countof(szFile));
+				MessageBoxA(NULL, szMsg, PointToName(szFile), 0);
 			}
 			#endif
 			#ifdef _DEBUG
@@ -5793,7 +5795,10 @@ void SendStarted()
 	static bool bSent = false;
 
 	if (bSent)
+	{
+		_ASSERTE(FALSE && "SendStarted repetition");
 		return; // отсылать только один раз
+	}
 
 	//crNewSize = gpSrv->sbi.dwSize;
 	//_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
@@ -5825,13 +5830,11 @@ void SendStarted()
 		ConsoleMap.InitName(CECONMAPNAME, (DWORD)hConWnd); //-V205
 		const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo = ConsoleMap.Open();
 
-		//WCHAR sHeaderMapName[64];
-		//StringCchPrintf(sHeaderMapName, countof(sHeaderMapName), CECONMAPNAME, (DWORD)hConWnd);
-		//HANDLE hFileMapping = OpenFileMapping(FILE_MAP_READ/*|FILE_MAP_WRITE*/, FALSE, sHeaderMapName);
-		//if (hFileMapping) {
-		//	const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo
-		//		= (CESERVER_CONSOLE_MAPPING_HDR*)MapViewOfFile(hFileMapping, FILE_MAP_READ/*|FILE_MAP_WRITE*/,0,0,0);
-		if (pConsoleInfo)
+		if (!pConsoleInfo)
+		{
+			_ASSERTE(pConsoleInfo && "ConsoleMap was not initialized for AltServer/ComSpec");
+		}
+		else
 		{
 			nMainServerPID = pConsoleInfo->nServerPID;
 			nAltServerPID = pConsoleInfo->nAltServerPID;
@@ -5840,15 +5843,12 @@ void SendStarted()
 			if (pConsoleInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
 			{
 				if (pConsoleInfo->nLogLevel)
-					CreateLogSizeFile(pConsoleInfo->nLogLevel);
+					CreateLogSizeFile(pConsoleInfo->nLogLevel, pConsoleInfo);
 			}
 
 			//UnmapViewOfFile(pConsoleInfo);
 			ConsoleMap.CloseMap();
 		}
-
-		//	CloseHandle(hFileMapping);
-		//}
 
 		if (nMainServerPID == 0)
 		{
@@ -6334,7 +6334,7 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 
 
 WARNING("Добавить LogInput(INPUT_RECORD* pRec) но имя файла сделать 'ConEmuC-input-%i.log'");
-void CreateLogSizeFile(int nLevel)
+void CreateLogSizeFile(int nLevel, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo /*= NULL*/)
 {
 	if (gpLogSize) return;  // уже
 
@@ -6357,36 +6357,53 @@ void CreateLogSizeFile(int nLevel)
 		return; // ошибка
 	}
 
-	if (pszName > szFile)
+	if (pszName && (pszName > szFile))
 	{
-		*(pszName-1) = 0;
-		wcscpy_c(szDir, szFile);
-		pszDir = wcsrchr(szDir, L'\\');
-		if (!pszDir || (lstrcmpi(pszDir, L"\\ConEmu") != 0))
+		// If we were started from ConEmu, the pConsoleInfo must be defined...
+		if (pConsoleInfo && pConsoleInfo->cbSize && pConsoleInfo->sConEmuExe[0])
 		{
-			// Если ConEmuC.exe лежит НЕ в папке "ConEmu"
-			pszDir = szDir; // писать в текущую папку или на десктоп
-		}
-		else
-		{
-			// Иначе - попытаться найти соответствующий файл GUI
-			wchar_t szGuiFiles[] = L"\\ConEmu.exe" L"\0" L"\\ConEmu64.exe" L"\0\0";
-			if (FilesExists(szDir, szGuiFiles))
+			lstrcpyn(szDir, pConsoleInfo->sConEmuExe, countof(szDir));
+			wchar_t* pszConEmuExe = (wchar_t*)PointToName(szDir);
+			if (pszConEmuExe)
 			{
-				pszDir = szFile; // GUI лежит в той же папке, что и "сервер"
+				*(pszConEmuExe-1) = 0;
+				pszDir = szDir;
+			}
+		}
+
+		if (!pszDir)
+		{
+			// if our exe lays in subfolder of ConEmu.exe?
+			*(pszName-1) = 0;
+			wcscpy_c(szDir, szFile);
+			pszDir = wcsrchr(szDir, L'\\');
+
+			if (!pszDir || (lstrcmpi(pszDir, L"\\ConEmu") != 0))
+			{
+				// Если ConEmuC.exe лежит НЕ в папке "ConEmu"
+				pszDir = szDir; // писать в текущую папку или на десктоп
 			}
 			else
 			{
-				// На уровень выше?
-				*pszDir = 0;
+				// Иначе - попытаться найти соответствующий файл GUI
+				wchar_t szGuiFiles[] = L"\\ConEmu.exe" L"\0" L"\\ConEmu64.exe" L"\0\0";
 				if (FilesExists(szDir, szGuiFiles))
 				{
-					*pszDir = 0;
-					pszDir = szDir; // GUI лежит в родительской папке
+					pszDir = szFile; // GUI лежит в той же папке, что и "сервер"
 				}
 				else
 				{
-					pszDir = szFile; // GUI не нашли
+					// На уровень выше?
+					*pszDir = 0;
+					if (FilesExists(szDir, szGuiFiles))
+					{
+						*pszDir = 0;
+						pszDir = szDir; // GUI лежит в родительской папке
+					}
+					else
+					{
+						pszDir = szFile; // GUI не нашли
+					}
 				}
 			}
 		}
@@ -6402,6 +6419,7 @@ void CreateLogSizeFile(int nLevel)
 	if (dwErr != 0)
 	{
 		_printf("Create console log file failed! ErrCode=0x%08X\n", dwErr, gpLogSize->GetLogFileName()); //-V576
+		_ASSERTE(FALSE && "gpLogSize->CreateLogFile failed");
 		SafeDelete(gpLogSize);
 		return;
 	}
@@ -7662,17 +7680,15 @@ BOOL cmd_GuiChanged(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
-BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
+bool TerminateOneProcess(DWORD nPID, DWORD& nErrCode)
 {
-	// Прибить процесс (TerminateProcess)
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
+	bool bNeedClose = false;
 	HANDLE hProcess = NULL;
-	BOOL bNeedClose = FALSE;
-	DWORD nErrCode = 0;
 
 	if (gpSrv && gpSrv->pConsole)
 	{
-		if (in.dwData[0] == gpSrv->dwRootProcess)
+		if (nPID == gpSrv->dwRootProcess)
 		{
 			hProcess = gpSrv->hRootProcess;
 			bNeedClose = FALSE;
@@ -7681,7 +7697,7 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if (!hProcess)
 	{
-		hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, in.dwData[0]);
+		hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, nPID);
 		if (hProcess != NULL)
 		{
 			bNeedClose = TRUE;
@@ -7696,23 +7712,106 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		if (TerminateProcess(hProcess, 100))
 		{
-			lbRc = TRUE;
+			lbRc = true;
 		}
 		else
 		{
 			nErrCode = GetLastError();
 			if (!bNeedClose)
 			{
-				hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, in.dwData[0]);
+				hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, nPID);
 				if (hProcess != NULL)
 				{
-					bNeedClose = TRUE;
+					bNeedClose = true;
 					if (TerminateProcess(hProcess, 100))
-						lbRc = TRUE;
+						lbRc = true;
 				}
 			}
 		}
 	}
+
+	if (hProcess && bNeedClose)
+		CloseHandle(hProcess);
+
+	return lbRc;
+}
+
+bool TerminateProcessGroup(int nCount, LPDWORD pPID, DWORD& nErrCode)
+{
+	bool lbRc = false;
+	HANDLE hJob, hProcess;
+
+	if ((hJob = CreateJobObject(NULL, NULL)) == NULL)
+	{
+		// Job failed? Do it one-by-one
+		for (int i = nCount-1; i >= 0; i--)
+		{
+			lbRc = TerminateOneProcess(pPID[i], nErrCode);
+		}
+	}
+	else
+	{
+		MArray<HANDLE> hh;
+
+		for (int i = 0; i < nCount; i++)
+		{
+			if (pPID[i] == gpSrv->dwRootProcess)
+				continue;
+
+			hProcess = OpenProcess(PROCESS_TERMINATE|PROCESS_SET_QUOTA, FALSE, pPID[i]);
+			if (!hProcess) continue;
+
+			if (AssignProcessToJobObject(hJob, hProcess))
+			{
+				hh.push_back(hProcess);
+			}
+			else
+			{
+				// Strange, can't assign to jub? Do it manually
+				if (TerminateProcess(hProcess, 100))
+					lbRc = true;
+				CloseHandle(hProcess);
+			}
+		}
+
+		if (!hh.empty())
+		{
+			lbRc = (TerminateJobObject(hJob, 100) != FALSE);
+
+			while (hh.pop_back(hProcess))
+			{
+				if (!lbRc) // If job failed - last try
+					TerminateProcess(hProcess, 100);
+				CloseHandle(hProcess);
+			}
+		}
+
+		CloseHandle(hJob);
+	}
+
+	return lbRc;
+}
+
+// CECMD_TERMINATEPID
+BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	// Прибить процесс (TerminateProcess)
+	size_t cbInSize = in.DataSize();
+	if ((cbInSize < 2*sizeof(DWORD)) || (cbInSize < (sizeof(DWORD)*(1+in.dwData[0]))))
+		return FALSE;
+
+	BOOL lbRc = FALSE;
+	HANDLE hProcess = NULL;
+	BOOL bNeedClose = FALSE;
+	DWORD nErrCode = 0;
+	DWORD nCount = in.dwData[0];
+	LPDWORD pPID = in.dwData+1;
+
+	if (nCount == 1)
+		lbRc = TerminateOneProcess(pPID[0], nErrCode);
+	else
+		lbRc = TerminateProcessGroup(nCount, pPID, nErrCode);
+
 
 	if (lbRc)
 	{
@@ -7729,8 +7828,58 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 		(*out)->dwData[1] = nErrCode;
 	}
 
-	if (hProcess && bNeedClose)
-		CloseHandle(hProcess);
+	return lbRc;
+}
+
+// CECMD_AFFNTYPRIORITY
+BOOL cmd_AffinityPriority(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	size_t cbInSize = in.DataSize();
+	if (cbInSize < 2*sizeof(u64))
+		return FALSE;
+
+	BOOL lbRc = FALSE;
+	HANDLE hProcess = NULL;
+	BOOL bNeedClose = FALSE;
+	DWORD nErrCode = 0;
+
+	DWORD_PTR nAffinity = (DWORD_PTR)in.qwData[0];
+	DWORD nPriority = (DWORD)in.qwData[1];
+
+	MSectionLock CS; CS.Lock(gpSrv->csProc);
+	CheckProcessCount(TRUE);
+	for (UINT i = 0; i < gpSrv->nProcessCount; i++)
+	{
+		DWORD nPID = gpSrv->pnProcesses[i];
+		if (nPID == gnSelfPID) continue;
+
+		HANDLE hProcess = OpenProcess(PROCESS_SET_INFORMATION, FALSE, nPID);
+		if (hProcess)
+		{
+			if (SetProcessAffinityMask(hProcess, nAffinity)
+					&& SetPriorityClass(hProcess, nPriority))
+				lbRc = TRUE;
+			else
+				nErrCode = GetLastError();
+
+			CloseHandle(hProcess);
+		}
+		else
+		{
+			nErrCode = GetLastError();
+		}
+	}
+	CS.Unlock();
+
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_AFFNTYPRIORITY,nOutSize);
+
+	if (*out != NULL)
+	{
+		(*out)->dwData[0] = lbRc;
+		(*out)->dwData[1] = nErrCode;
+	}
+
 	return lbRc;
 }
 
@@ -8447,6 +8596,61 @@ BOOL cmd_CtrlBreakEvent(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_SetTopLeft(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+	BOOL lbGenRc = FALSE;
+
+	if (in.DataSize() >= sizeof(in.ReqConInfo.TopLeft))
+	{
+		gpSrv->TopLeft = in.ReqConInfo.TopLeft;
+
+		// May be we can scroll the console down?
+		if (in.ReqConInfo.TopLeft.isLocked())
+		{
+			// We need real (uncorrected) position
+			CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+			if (GetConsoleScreenBufferInfo(ghConOut, &csbi))
+			{
+				bool bChange = false;
+				SMALL_RECT srNew = csbi.srWindow;
+				int height = srNew.Bottom - srNew.Top + 1;
+
+				// In some cases we can do physical scrolling
+				if ((in.ReqConInfo.TopLeft.y >= 0)
+					// cursor was visible?
+					&& ((csbi.dwCursorPosition.Y >= srNew.Top)
+						&& (csbi.dwCursorPosition.Y <= srNew.Bottom))
+					// and cursor is remains visible?
+					&& ((csbi.dwCursorPosition.Y >= in.ReqConInfo.TopLeft.y)
+						&& (csbi.dwCursorPosition.Y < (in.ReqConInfo.TopLeft.y + height)))
+					)
+				{
+					int shiftY = in.ReqConInfo.TopLeft.y - srNew.Top;
+					srNew.Top = in.ReqConInfo.TopLeft.y;
+					srNew.Bottom += shiftY;
+					bChange = true;
+				}
+
+				if (bChange)
+				{
+					SetConsoleWindowInfo(ghConOut, TRUE, &srNew);
+				}
+			}
+		}
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Invalid SetTopLeft data");
+	}
+
+	size_t cbReplySize = sizeof(CESERVER_REQ_HDR);
+	*out = ExecuteNewCmd(CECMD_SETTOPLEFT, cbReplySize);
+	lbRc = ((*out) != NULL);
+
+	return lbRc;
+}
+
 BOOL cmd_PromptStarted(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = TRUE;
@@ -8621,6 +8825,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			lbRc = cmd_TerminatePid(in, out);
 		} break;
+		case CECMD_AFFNTYPRIORITY:
+		{
+			lbRc = cmd_AffinityPriority(in, out);
+		} break;
 		case CECMD_ATTACHGUIAPP:
 		{
 			lbRc = cmd_GuiAppAttached(in, out);
@@ -8698,10 +8906,7 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		} break;
 		case CECMD_SETTOPLEFT:
 		{
-			size_t cbReplySize = sizeof(CESERVER_REQ_HDR);
-			*out = ExecuteNewCmd(CECMD_SETTOPLEFT, cbReplySize);
-			gpSrv->TopLeft = in.ReqConInfo.TopLeft;
-			lbRc = true;
+			lbRc = cmd_SetTopLeft(in, out);
 		} break;
 		case CECMD_PROMPTSTARTED:
 		{
@@ -9429,7 +9634,7 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 		dwErr = GetLastError();
 	}
 
-	return false;
+	return lbRc;
 }
 
 

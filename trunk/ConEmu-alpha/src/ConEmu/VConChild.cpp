@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -102,6 +102,7 @@ CConEmuChild::CConEmuChild(CVirtualConsole* pOwner)
 	mn_WndDCStyle = mn_WndDCExStyle = 0;
 	mh_WndDC = NULL;
 	mh_WndBack = NULL;
+	mn_InvalidateViewPending = 0; mn_WmPaintCounter = 0;
 	mh_LastGuiChild = NULL;
 	mb_ScrollVisible = FALSE; mb_Scroll2Visible = FALSE; /*mb_ScrollTimerSet = FALSE;*/ mb_ScrollAutoPopup = FALSE;
 	mb_VTracking = FALSE;
@@ -428,6 +429,14 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			result = 0;
 			break;
 		case WM_PAINT:
+			pVCon->mn_WmPaintCounter++;
+			if (gpSetCls->isAdvLogging)
+			{
+				wchar_t szInfo[80];
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"VCon[%i] WM_PAINT %u times, %u pending", pVCon->Index(), pVCon->mn_WmPaintCounter, pVCon->mn_InvalidateViewPending);
+				LogString(szInfo);
+			}
+			pVCon->mn_InvalidateViewPending = 0;
 			result = pVCon->OnPaint();
 			break;
 		case WM_PRINTCLIENT:
@@ -1051,6 +1060,7 @@ LRESULT CConEmuChild::OnPaintGaps()
 	return 0;
 }
 
+// Utilizes BeginPaint/EndPaint for obtaining HDC
 LRESULT CConEmuChild::OnPaint()
 {
 	if (!this)
@@ -1375,11 +1385,17 @@ void CConEmuChild::Invalidate()
 	UNREFERENCED_PARAMETER(pVCon);
 }
 
+bool CConEmuChild::IsInvalidatePending()
+{
+	return (this && (mn_InvalidateViewPending > 0));
+}
+
 void CConEmuChild::InvalidateView()
 {
 	if (mh_WndDC)
 	{
 		DEBUGSTRDRAW(L" +++ Invalidate on DC window called\n");
+		LONG l = InterlockedIncrement(&mn_InvalidateViewPending);
 
 		if (!m_LockDc.bLocked)
 		{
@@ -1399,6 +1415,13 @@ void CConEmuChild::InvalidateView()
 
 			DeleteObject(hLock);
 			DeleteObject(hRgn);
+		}
+
+		if (l == 1)
+		{
+			wchar_t szInfo[80];
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"VCon[%i] invalidate called", mp_VCon->Index());
+			LogString(szInfo);
 		}
 	}
 	else

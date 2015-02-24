@@ -203,6 +203,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"About([\"<Page>\"])\r\n" \
 	L"  - Show ‘About’ dialog with page activated, e.g. ‘About(\"-new_console\")’\r\n" \
+	L"AffinityPriority([Affinity,Priority])\r\n" \
+	L"  - Change affinity and priority of active console\r\n" \
 	L"Attach([<PID>[,<Alternative>]])\r\n" \
 	L"  - Attach console or ChildGui by PID\r\n" \
 	L"Break([<Event>[,<ProcessGroupId>]])\r\n" \
@@ -220,6 +222,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"    close all active processes of the active group (7)\r\n" \
 	L"    close all tabs (8), no confirm (8,1)\r\n" \
 	L"    close all zombies (9), no confirm (9,1)\r\n" \
+	L"    terminate all but shell process (10), no confirm (10,1)\r\n" \
 	L"Context([<Tab>[,<Split>]])\r\n" \
 	L"  - Change macro execution context\r\n" \
 	L"    Tab: 1-based tab index\r\n" \

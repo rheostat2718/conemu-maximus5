@@ -3146,7 +3146,7 @@ int CreateMapHeader()
 	gpSrv->pAppMap->InitName(CECONAPPMAPNAME, (DWORD)ghConWnd); //-V205
 
 
-	BOOL lbCreated;
+	bool lbCreated, lbUseExisting = false;
 	if (gnRunMode == RM_SERVER)
 	{
 		lbCreated = (gpSrv->pConsoleMap->Create() != NULL)
@@ -3170,6 +3170,8 @@ int CreateMapHeader()
 		// На всякий случай, перекинем параметры
 		if (gpSrv->pConsoleMap->GetTo(&gpSrv->pConsole->hdr))
 		{
+			lbUseExisting = true;
+
 			if (gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0] && gpSrv->pConsole->hdr.ComSpec.ConEmuBaseDir[0])
 			{
 				gpSrv->guiSettings.ComSpec = gpSrv->pConsole->hdr.ComSpec;
@@ -3182,12 +3184,11 @@ int CreateMapHeader()
 		gpSrv->pAppMap->SetFrom(&init);
 	}
 
-	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings() !!!
+	// !!! Warning !!! Изменил здесь, поменяй и ReloadGuiSettings/CopySrvMapFromGuiMap !!!
 	gpSrv->pConsole->cbMaxSize = nTotalSize;
-	//gpSrv->pConsole->cbActiveSize = ((LPBYTE)&(gpSrv->pConsole->data)) - ((LPBYTE)gpSrv->pConsole);
-	//gpSrv->pConsole->bChanged = TRUE; // Initially == changed
 	gpSrv->pConsole->hdr.cbSize = sizeof(gpSrv->pConsole->hdr);
-	gpSrv->pConsole->hdr.nLogLevel = (gpLogSize!=NULL) ? 1 : 0;
+	if (!lbUseExisting)
+		gpSrv->pConsole->hdr.nLogLevel = (gpLogSize!=NULL) ? 1 : 0;
 	gpSrv->pConsole->hdr.crMaxConSize = crMax;
 	gpSrv->pConsole->hdr.bDataReady = FALSE;
 	gpSrv->pConsole->hdr.hConWnd = ghConWnd; _ASSERTE(ghConWnd!=NULL);
@@ -3199,9 +3200,7 @@ int CreateMapHeader()
 	gpSrv->pConsole->hdr.hConEmuWndDc = ghConEmuWndDC;
 	gpSrv->pConsole->hdr.hConEmuWndBack = ghConEmuWndBack;
 	_ASSERTE(gpSrv->pConsole->hdr.hConEmuRoot==NULL || gpSrv->pConsole->hdr.nGuiPID!=0);
-	//gpSrv->pConsole->hdr.bConsoleActive = TRUE; // пока - TRUE (это на старте сервера)
 	gpSrv->pConsole->hdr.nServerInShutdown = 0;
-	//gpSrv->pConsole->hdr.bThawRefreshThread = TRUE; // пока - TRUE (это на старте сервера)
 	gpSrv->pConsole->hdr.nProtocolVersion = CESERVER_REQ_VER;
 	gpSrv->pConsole->hdr.nActiveFarPID = gpSrv->nActiveFarPID; // PID последнего активного фара
 
@@ -4132,6 +4131,7 @@ static BOOL ReadConsoleData()
 		memmove(gpSrv->pConsole->data, gpSrv->pConsoleDataCopy, nCurSize);
 		gpSrv->pConsole->bDataChanged = TRUE; // TRUE уже может быть с прошлого раза, не сбрасывать в FALSE
 		lbChanged = TRUE;
+		LogString("ReadConsoleData: content was changed");
 	}
 
 

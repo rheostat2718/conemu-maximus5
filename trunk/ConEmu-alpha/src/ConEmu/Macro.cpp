@@ -133,6 +133,8 @@ namespace ConEmuMacro
 
 	// Диалог About(["Tab"])
 	LPWSTR About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// AffinityPriority([Affinity,Priority])
+	LPWSTR AffinityPriority(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Attach - console or ChildGui by PID
 	LPWSTR Attach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Break (0=CtrlC; 1=CtrlBreak)
@@ -239,6 +241,7 @@ namespace ConEmuMacro
 	} Functions[] = {
 		// List all functions
 		{About, {L"About"}},
+		{AffinityPriority, {L"AffinityPriority"}},
 		{Attach, {L"Attach"}},
 		{Break, {L"Break"}},
 		{Close, {L"Close"}},
@@ -1235,6 +1238,20 @@ LPWSTR ConEmuMacro::About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	return lstrdup(L"OK");
 }
 
+LPWSTR ConEmuMacro::AffinityPriority(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszRc = NULL;
+	LPWSTR pszAffinity = NULL, pszPriority = NULL;
+
+	p->GetStrArg(0, pszAffinity);
+	p->GetStrArg(1, pszPriority);
+
+	if (apRCon && apRCon->ChangeAffinityPriority(pszAffinity, pszPriority))
+		pszRc = lstrdup(L"OK");
+
+	return pszRc ? pszRc : lstrdup(L"FAILED");
+}
+
 LPWSTR ConEmuMacro::Attach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nPID = 0, nAlt = 0;
@@ -1372,6 +1389,12 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			else
 				apRCon->CloseTab();
 			pszResult = lstrdup(L"OK");
+		}
+		break;
+	case 10: // terminate all but shell process (10), no confirm (10,1)
+		if (apRCon)
+		{
+			pszResult = apRCon->TerminateAllButShell((nFlags & 1)==0) ? lstrdup(L"OK") : lstrdup(L"FAILED");
 		}
 		break;
 	}

@@ -289,6 +289,9 @@ CConEmuMain::CConEmuMain()
 
 	getForegroundWindow();
 
+	// ConEmu main window was not created yet, so...
+	ZeroStruct(m_Foreground);
+
 	_ASSERTE(gOSVer.dwMajorVersion>=5);
 	//ZeroStruct(gOSVer);
 	//gOSVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -3335,17 +3338,8 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 			MSG Msg;
 			while (PeekMessage(&Msg,0,0,0,PM_REMOVE))
 			{
-				ConEmuMsgLogger::Log(Msg, ConEmuMsgLogger::msgCommon);
-
-				if (Msg.message == WM_QUIT)
+				if (!ProcessMessage(Msg))
 					goto wrap;
-
-				BOOL lbDlgMsg = isDialogMessage(Msg);
-				if (!lbDlgMsg)
-				{
-					TranslateMessage(&Msg);
-					DispatchMessage(&Msg);
-				}
 			}
 
 			if (!ghWnd || !IsWindow(ghWnd))
@@ -6077,49 +6071,82 @@ bool CConEmuMain::isLBDown()
 	return (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
 }
 
+bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
+{
+	DWORD NewState = fgf_Background;
+
+	// Call this function only
+	HWND hForeWnd = getForegroundWindow();
+
+	if (hForeWnd != m_Foreground.hLastFore)
+	{
+		DWORD nForePID = 0;
+
+		if (hForeWnd != NULL)
+		{
+			if (hForeWnd == ghWnd)
+			{
+				NewState |= fgf_ConEmuMain;
+			}
+			else
+			{
+				GetWindowThreadProcessId(hForeWnd, &nForePID);
+
+				if (nForePID == GetCurrentProcessId())
+				{
+					NewState |= fgf_ConEmuDialog;
+				}
+				else if (mp_Inside && (hForeWnd == mp_Inside->mh_InsideParentRoot))
+				{
+					NewState |= fgf_InsideParent;
+				}
+				else if (CVConGroup::isOurWindow(hForeWnd))
+				{
+					NewState |= fgf_RealConsole;
+				}
+			}
+
+			// DefTerm checks
+			if (!(m_Foreground.ForegroundState & fgf_ConEmuAny)
+				&& nForePID && mp_DefTrm->IsReady() && gpSet->isSetDefaultTerminal && isMainThread())
+			{
+				// If user want to use ConEmu as default terminal for CUI apps
+				// we need to hook GUI applications (e.g. explorer)
+				mp_DefTrm->CheckForeground(hForeWnd, nForePID);
+			}
+		}
+
+		// Logging
+		wchar_t szLog[120];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"Foreground state changed (%s): State=x%02X HWND=x%08X PID=%u OldHWND=x%08X OldState=x%02X",
+			asFrom, NewState, (DWORD)(DWORD_PTR)hForeWnd, nForePID, (DWORD)(DWORD_PTR)m_Foreground.hLastFore, m_Foreground.ForegroundState);
+		LogString(szLog);
+
+		// Save new state
+		if (m_Foreground.ForegroundState != NewState)
+			m_Foreground.ForegroundState = NewState;
+		m_Foreground.hLastFore = hForeWnd;
+	}
+
+	if (phFore)
+		*phFore = hForeWnd;
+
+	return ((m_Foreground.ForegroundState & fgf_ConEmuMain) != fgf_Background);
+}
+
 bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*=true*/, HWND* phFore/*=NULL*/)
 {
 	if (!this) return false;
 
-	static HWND hLastFore = NULL;
-	static bool isMe = false;
-	static bool bLastRealAlso, bLastDialogsAlso;
-	HWND h = getForegroundWindow();
+	// Reuse states evaluated in RecheckForegroundWindow
+	DWORD nMask = fgf_ConEmuMain
+		| (abDialogsAlso ? fgf_ConEmuDialog : fgf_Background)
+		| (abRealAlso ? fgf_RealConsole : fgf_Background)
+		| (mp_Inside ? fgf_InsideParent : fgf_Background);
+	bool isMe = ((m_Foreground.ForegroundState & nMask) != fgf_Background);
+
 	if (phFore)
-		*phFore = h;
-
-	if ((h != hLastFore) || (bLastRealAlso != abRealAlso) || (bLastDialogsAlso != abDialogsAlso))
-	{
-		DWORD nForePID = 0;
-		if (h)
-			GetWindowThreadProcessId(h, &nForePID);
-		isMe = (h != NULL)
-			&& ((h == ghWnd)
-				|| (abDialogsAlso && (nForePID == GetCurrentProcessId()))
-					//((h == ghOpWnd)
-					//|| (mp_AttachDlg && (mp_AttachDlg->GetHWND() == h))
-					//|| (mp_RecreateDlg && (mp_RecreateDlg->GetHWND() == h))
-					//|| (mp_Find->mh_FindDlg == h)))
-				|| (mp_Inside && (h == mp_Inside->mh_InsideParentRoot)))
-			;
-
-		if (h && !isMe && abRealAlso)
-		{
-			if (CVConGroup::isOurWindow(h))
-				isMe = true;
-		}
-
-		hLastFore = h;
-		bLastRealAlso = abRealAlso;
-		bLastDialogsAlso = abDialogsAlso;
-
-		if (!isMe && nForePID && mp_DefTrm->IsReady() && gpSet->isSetDefaultTerminal && isMainThread())
-		{
-			// If user want to use ConEmu as default terminal for CUI apps
-			// we need to hook GUI applications (e.g. explorer)
-			mp_DefTrm->CheckForeground(h, nForePID);
-		}
-	}
+		*phFore = m_Foreground.hLastFore;
 
 	return isMe;
 }
@@ -8421,6 +8448,21 @@ void CConEmuMain::OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp)
 	setFocus();
 }
 
+// During excessing keyboard activity weird things may happen:
+// WM_PAINT do not come into message queue until key is released
+void CConEmuMain::CheckNeedRepaint()
+{
+	CVConGuard VCon;
+	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
+	{
+		if (VCon->IsInvalidatePending())
+		{
+			LogString(L"Forcing active VCon redraw");
+			VCon->Redraw(true);
+		}
+	}
+}
+
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 #ifdef _DEBUG
@@ -8532,6 +8574,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		        && PeekMessage(&msg, 0,0,0, PM_NOREMOVE)
 		      )
 		{
+			bool bNeedGet = true;
+
 			// Windows иногда умудряется вклинить "левые" сообщения между WM_KEYDOWN & WM_CHAR
 			// в результате некоторые буквы могут "проглатываться" или вообще перемешиваться...
 			// Обработаем "посторонние" сообщения
@@ -8548,7 +8592,8 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				// After these messages we certanly must stop trying to process keypress
 				break;
 			}
-			else if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
+
+			if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
 						|| msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR
 						|| msg.message == WM_KEYUP || msg.message == WM_KEYDOWN
 						))
@@ -8556,6 +8601,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				// Remove from buffer and process
 				if (!GetMessage(&msg1, 0,0,0))
 					break;
+				bNeedGet = false;
 
 				#ifdef _DEBUG
 				wchar_t szDbg[160]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"  Recursion of WM_%04X(0x%02X, 0x%08X)",
@@ -8563,12 +8609,24 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				DEBUGSTRCHAR(szDbg);
 				#endif
 
-				_ASSERTE(msg.message == msg1.message);
-				if (!ProcessMessage(msg1))
-					break;
+				if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
+						|| msg.message == WM_DEADCHAR || msg.message == WM_SYSDEADCHAR
+						|| msg.message == WM_KEYUP || msg.message == WM_KEYDOWN
+						))
+				{
+					if (!ProcessMessage(msg1))
+						break;
 
-				// This message skipped
-				continue;
+					CheckNeedRepaint();
+
+					// This message skipped
+					continue;
+				}
+				else
+				{
+					// Unexpected message ID, keyboard input may be garbled?
+					_ASSERTE(msg.message == msg1.message);
+				}
 			}
 
 			if (!(msg.message == WM_CHAR || msg.message == WM_SYSCHAR
@@ -8588,12 +8646,14 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 					msg.message, (DWORD)msg.wParam, (DWORD)msg.lParam);
 				DEBUGSTRCHAR(szDbg);
 				#endif
+				// Message was already removed from input buffer, but Peek and Get was returned different message IDs?
+				_ASSERTE(bNeedGet && "Keyboard message must be processed, but there was unexpected sequence");
 				// Stop queue checking
 				break;
 			}
 
 			// Remove from buffer
-			if (!GetMessage(&msg1, 0,0,0))
+			if (bNeedGet && !GetMessage(&msg1, 0,0,0))
 			{
 				_ASSERTE(FALSE && "GetMessage was failed while PeekMessage was succeded");
 				break;
@@ -8647,6 +8707,11 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 				// Требуется обработать сообщение
 				TranslateMessage(&msg1);
 				//DispatchMessage(&msg1);
+
+				if ((msg.message == WM_KEYDOWN) || (msg.message == WM_SYSKEYDOWN))
+				{
+					CheckNeedRepaint();
+				}
 			}
 		} // end of "while nTranslatedChars && PeekMessage"
 
@@ -11943,7 +12008,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	}
 
 	HWND hForeWnd = NULL;
-	bool bForeground = isMeForeground(false, true, &hForeWnd);
+	bool bForeground = RecheckForegroundWindow(L"OnTimer_Main", &hForeWnd);
 	if (bForeground && !m_GuiInfo.bGuiActive)
 	{
 		UpdateGuiInfoMappingActive(true);
@@ -12946,7 +13011,7 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 		|| bSkipActivation
 		|| (gpSet->isMouseSkipActivation
 			&& (LOWORD(lParam) == HTCLIENT)
-			&& !isMeForeground(false,false))
+			&& !(m_Foreground.ForegroundState & fgf_ConEmuMain))
 		)
 	{
 		this->mouse.bForceSkipActivation = FALSE; // Однократно
@@ -12980,6 +13045,8 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 	{
 		apiSetForegroundWindow(ghWnd);
 	}
+
+	RecheckForegroundWindow(L"OnActivateByMouse");
 
 	return result;
 }
@@ -13257,7 +13324,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 #endif
 
 		case WM_ACTIVATE:
-			LogString((wParam == WA_CLICKACTIVE) ? L"Window was activated by mouse click" : (wParam == WA_CLICKACTIVE) ? L"Window was activated somehow" : L"Window was deactivated");
+			LogString((wParam == WA_CLICKACTIVE) ? L"Window was activated by mouse click" : (wParam == WA_ACTIVE) ? L"Window was activated somehow" : (wParam == WA_INACTIVE) ? L"Window was deactivated" : L"Unknown state in WM_ACTIVATE");
+			RecheckForegroundWindow(L"WM_ACTIVATE");
 			result = this->OnFocus(hWnd, messg, wParam, lParam);
 			if (this->mb_AllowAutoChildFocus)
 			{
@@ -13288,6 +13356,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				wParam = FALSE; lParam = 0;
 			}
 			LogString(wParam ? L"Application activating" : L"Application deactivating");
+			RecheckForegroundWindow(L"WM_ACTIVATEAPP");
 			// просто так фокус в дочернее окно ставить нельзя
 			// если переключать фокус в дочернее приложение по любому чиху
 			// вообще не получается активировать окно ConEmu, открыть системное меню,

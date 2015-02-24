@@ -377,6 +377,7 @@ class CConEmuMain
 		HCURSOR mh_SplitV, mh_SplitH;
 		HCURSOR mh_DragCursor;
 		CDragDrop *mp_DragDrop;
+		// TODO: ==>> m_Foreground
 		bool mb_SkipOnFocus;
 		bool mb_LastConEmuFocusState;
 		DWORD mn_ForceTimerCheckLoseFocus; // GetTickCount()
@@ -606,6 +607,23 @@ class CConEmuMain
 		#endif
 
 	public:
+		enum {
+			fgf_Background   = 0x0000,
+			fgf_ConEmuMain   = 0x0001,
+			fgf_ConEmuDialog = 0x0002,
+			fgf_RealConsole  = 0x0004,
+			fgf_InsideParent = 0x0008,
+			fgf_ConEmuAny    = (fgf_ConEmuMain|fgf_RealConsole|fgf_ConEmuDialog|fgf_InsideParent),
+		};
+		bool isMeForeground(bool abRealAlso=false, bool abDialogsAlso=true, HWND* phFore=NULL);
+	protected:
+		struct {
+			HWND  hLastFore;
+			DWORD ForegroundState;
+		} m_Foreground;
+		bool RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore=NULL);
+
+	public:
 		DWORD GetWindowStyle();
 		DWORD FixWindowStyle(DWORD dwExStyle, ConEmuWindowMode wmNewMode = wmCurrent);
 		void SetWindowStyle(DWORD anStyle);
@@ -628,7 +646,6 @@ class CConEmuMain
 		bool isFirstInstance(bool bFolderIgnore = false);
 		bool isInImeComposition();
 		bool isLBDown();
-		bool isMeForeground(bool abRealAlso=false, bool abDialogsAlso=true, HWND* phFore=NULL);
 		bool isMouseOverFrame(bool abReal=false);
 		bool isNtvdm(BOOL abCheckAllConsoles=FALSE);
 		bool isOurConsoleWindow(HWND hCon);
@@ -661,6 +678,7 @@ class CConEmuMain
 		void SetDragCursor(HCURSOR hCur);
 		bool SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);
+		void CheckNeedRepaint();
 	public:
 		void ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
 		bool SetParent(HWND hNewParent);

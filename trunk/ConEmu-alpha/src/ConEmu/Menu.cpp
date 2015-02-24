@@ -956,6 +956,9 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 		case IDM_RENAMETAB:
 			apVCon->RCon()->DoRenameTab();
 			break;
+		case IDM_CHANGEAFFINITY:
+			apVCon->RCon()->ChangeAffinityPriority();
+			break;
 		case IDM_DUPLICATE:
 		case IDM_ADMIN_DUPLICATE:
 			if ((nCmd == IDM_ADMIN_DUPLICATE) || isPressed(VK_SHIFT))
@@ -968,6 +971,9 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 			break;
 		case IDM_TERMINATEPRC:
 			apVCon->RCon()->CloseConsole(true, false);
+			break;
+		case IDM_TERMINATEBUTSHELL:
+			apVCon->RCon()->TerminateAllButShell(false);
 			break;
 		case IDM_TERMINATECON:
 			//apVCon->RCon()->CloseConsoleWindow();
@@ -1866,6 +1872,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		hTerminate = CreatePopupMenu();
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATECON,     MenuAccel(vkMultiClose,L"Close active &console"));
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEPRC,     MenuAccel(vkTerminateApp,L"Kill &active process"));
+		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEBUTSHELL,MenuAccel(vkTermButShell,L"Kill all but &shell"));
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEGROUP,   MenuAccel(vkCloseGroup,L"Close active &group"));
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEPRCGROUP,MenuAccel(vkCloseGroupPrc,L"Kill active &processes"));
@@ -1901,6 +1908,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 
 		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_CLOSE,            szRootCloseName);
 		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_RENAMETAB,        MenuAccel(vkRenameTab,L"Rena&me tab..."));
+		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_CHANGEAFFINITY,   MenuAccel(vkAffinity,L"A&ffinity/priority..."));
 		AppendMenu(hMenu,      MF_POPUP|MF_ENABLED, (UINT_PTR)hRestart,    L"&Restart or duplicate");
 		AppendMenu(hMenu,      MF_POPUP|MF_ENABLED, (UINT_PTR)hTerminate,  L"Close or &kill");
 		AppendMenu(hMenu,      MF_STRING|((apVCon && apVCon->GuiWnd())?MF_ENABLED:0),
@@ -1946,10 +1954,12 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		EnableMenuItem(hMenu,      IDM_DETACH,            MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hMenu,      IDM_DUPLICATE,         MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hMenu,      IDM_RENAMETAB,         MF_BYCOMMAND|MF_ENABLED);
+		EnableMenuItem(hMenu,      IDM_CHANGEAFFINITY,    MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATECON,      MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEGROUP,    MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRCGROUP, MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRC,      MF_BYCOMMAND|MF_ENABLED);
+		EnableMenuItem(hTerminate, IDM_TERMINATEBUTSHELL, MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hMenu,      IDM_CHILDSYSMENU,      MF_BYCOMMAND|((apVCon && apVCon->GuiWnd()) ? 0 : MF_GRAYED));
 		EnableMenuItem(hMenu,      IDM_RESTARTDLG,        MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hMenu,      IDM_RESTART,           MF_BYCOMMAND|MF_ENABLED);
@@ -1964,10 +1974,12 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		EnableMenuItem(hMenu,      IDM_DETACH,            MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_DUPLICATE,         MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_RENAMETAB,         MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(hMenu,      IDM_CHANGEAFFINITY,    MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATECON,      MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEGROUP,    MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRCGROUP, MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hTerminate, IDM_TERMINATEPRC,      MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(hTerminate, IDM_TERMINATEBUTSHELL, MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_CHILDSYSMENU,      MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_RESTARTDLG,        MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hMenu,      IDM_RESTART,           MF_BYCOMMAND|MF_GRAYED);
