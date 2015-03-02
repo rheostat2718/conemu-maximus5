@@ -53,10 +53,16 @@ private:
 public:
 	/* OUR(!) startup info */
 	STARTUPINFOW ourSI;
+	/* Last Shell exit code */
+	int mn_ShellExitCode;
 
 public:
 	/* switch -detached in the ConEmu.exe arguments */
 	bool mb_StartDetached;
+	/* switch -here in the ConEmu.exe arguments (used with "ConEmu Here" feature) */
+	bool mb_ConEmuHere;
+	/* switch -QuitOnClose: close ConEmu with last tab or cross-clicking */
+	bool mb_ForceQuitOnClose;
 
 public:
 	/* Store/retrieve command line, specified with "/cmd" or "/cmdlist" switches */
