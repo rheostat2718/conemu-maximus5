@@ -49,7 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRDPI(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
@@ -1225,6 +1225,81 @@ void CConEmuSize::SetWindowPosSizeParam(wchar_t acType, LPCWSTR asValue)
 	}
 }
 
+bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
+{
+	RECT rcReal = *prcWnd;
+	if (ghWnd)
+		GetWindowRect(ghWnd, &rcReal);
+	MONITORINFO mi = {sizeof(mi)};
+	HMONITOR hMon = GetNearestMonitorInfo(&mi, NULL, &rcReal);
+
+	bool bChange = false;
+
+	RECT rcFrameOnly = CalcMargins(CEM_FRAMECAPTION);
+
+	// Если успешно - подгоняем по экрану
+	if (mi.rcWork.right > mi.rcWork.left)
+	{
+		int nWidth = prcWnd->right - prcWnd->left;
+		int nHeight = prcWnd->bottom - prcWnd->top;
+
+		switch (gpSet->_WindowMode)
+		{
+			case wmMaximized:
+			{
+				prcWnd->left = mi.rcWork.left - rcFrameOnly.left;
+				prcWnd->right = mi.rcWork.right + rcFrameOnly.right;
+				prcWnd->top = mi.rcWork.top - rcFrameOnly.top;
+				prcWnd->bottom = prcWnd->top + nHeight;
+
+				bChange = true;
+				break;
+			}
+
+			case wmFullScreen:
+			{
+				prcWnd->left = mi.rcMonitor.left - rcFrameOnly.left;
+				prcWnd->right = mi.rcMonitor.right + rcFrameOnly.right;
+				prcWnd->top = mi.rcMonitor.top - rcFrameOnly.top;
+				prcWnd->bottom = prcWnd->top + nHeight;
+
+				bChange = true;
+				break;
+			}
+
+			case wmNormal:
+			{
+				// Если выбран режим "Fixed" - разрешим задавать левую координату
+				if (!gpSet->wndCascade)
+					prcWnd->left = max(mi.rcWork.left,min(wndX,(mi.rcWork.right - nWidth)));
+				else // Иначе - центрируется по монитору
+					prcWnd->left = max(mi.rcWork.left,((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
+				prcWnd->right = min(mi.rcWork.right,(prcWnd->left + nWidth));
+				prcWnd->top = mi.rcWork.top - rcFrameOnly.top;
+				prcWnd->bottom = prcWnd->top + nHeight;
+
+				bChange = true;
+				break;
+			}
+		}
+	}
+
+	if (bChange)
+	{
+		ptFullScreenSize.x = prcWnd->right - prcWnd->left + 1;
+		ptFullScreenSize.y = mi.rcMonitor.bottom - mi.rcMonitor.top + (rcFrameOnly.bottom + rcFrameOnly.top);
+
+		DEBUGTEST(RECT rcCon = CalcRect(CER_CONSOLE_ALL, *prcWnd, CER_MAIN));
+		//if (rcCon.right)
+		//	this->wndWidth = rcCon.right;
+
+		this->wndX = prcWnd->left;
+		this->wndY = prcWnd->top;
+	}
+
+	return bChange;
+}
+
 // Вызывается при старте программы, для вычисления mrc_Ideal - размера окна по умолчанию
 RECT CConEmuSize::GetDefaultRect()
 {
@@ -1249,18 +1324,54 @@ RECT CConEmuSize::GetDefaultRect()
 		}
 	}
 
+	if (gpSet->isQuakeStyle && !IsRectEmpty(&m_QuakePrevSize.PreSlidedSize))
+	{
+		rcWnd = m_QuakePrevSize.PreSlidedSize;
+		return rcWnd;
+	}
+
 	Assert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
 
-
-	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_SCROLL|CEM_STATUS|CEM_PAD);
+	// Рамка, статус
+	RECT rcFrameMargin = CalcMargins(CEM_FRAMECAPTION|CEM_STATUS);
 	int nFrameX = rcFrameMargin.left + rcFrameMargin.right;
 	int nFrameY = rcFrameMargin.top + rcFrameMargin.bottom;
 	RECT rcTabMargins = mp_ConEmu->mp_TabBar->GetMargins();
 
+	// Отступы для VCon
+	RECT rcVConPad = CalcMargins(CEM_SCROLL|CEM_PAD);
+	if (CVConGroup::isVConExists(0))
+	{
+		// Если есть сплиты (даже если их размер == 0)
+		SIZE Splits = {};
+		RECT rcMin = CVConGroup::AllTextRect(&Splits, true);
+		// Умножить отступы
+		if (Splits.cx > 0)
+		{
+			rcVConPad.left *= (Splits.cx+1);
+			rcVConPad.right *= (Splits.cx+1);
+		}
+		if (Splits.cy > 0)
+		{
+			rcVConPad.top *= (Splits.cy+1);
+			rcVConPad.bottom *= (Splits.cy+1);
+		}
+		// Если размер самих разделителей не нулевой
+		if ((Splits.cx > 0) && (gpSet->nSplitWidth > 0))
+			rcVConPad.right += Splits.cx * gpSetCls->EvalSize(gpSet->nSplitWidth, esf_Horizontal|esf_CanUseDpi);
+		if ((Splits.cy > 0) && (gpSet->nSplitHeight > 0))
+			rcVConPad.bottom += Splits.cy * gpSetCls->EvalSize(gpSet->nSplitHeight, esf_Vertical|esf_CanUseDpi);
+	}
+
 	// Если табы показываются всегда (или сейчас) - сразу добавим их размер, чтобы размер консоли был заказанным
 	bool bTabs = mp_ConEmu->isTabsShown();
-	int nShiftX = nFrameX + (bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0);
-	int nShiftY = nFrameY + (bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
+
+	int nShiftX = nFrameX
+		+ (rcVConPad.left + rcVConPad.right)
+		+ (bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0);
+	int nShiftY = nFrameY
+		+ (rcVConPad.top + rcVConPad.bottom)
+		+ (bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0);
 
 	// Расчет размеров
 	SIZE szConPixels = GetDefaultSize(false);
@@ -1275,82 +1386,7 @@ RECT CConEmuSize::GetDefaultRect()
 	// Go
 	if (gpSet->isQuakeStyle)
 	{
-		HMONITOR hMon;
-		POINT pt = {this->wndX+2*nFrameX,this->wndY+2*nFrameY};
-		if (ghWnd)
-		{
-			RECT rcReal; GetWindowRect(ghWnd, &rcReal);
-			pt.x = (rcReal.left+rcReal.right)/2;
-			pt.y = (rcReal.top+rcReal.bottom)/2;
-		}
-		hMon = MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
-
-		MONITORINFO mi = {sizeof(mi)};
-		GetMonitorInfoSafe(hMon, mi);
-
-		bool bChange = false;
-
-		// Если успешно - подгоняем по экрану
-		if (mi.rcWork.right > mi.rcWork.left)
-		{
-			int nWidth = rcWnd.right - rcWnd.left;
-			int nHeight = rcWnd.bottom - rcWnd.top;
-
-			RECT rcFrameOnly = CalcMargins(CEM_FRAMECAPTION);
-
-			switch (gpSet->_WindowMode)
-			{
-				case wmMaximized:
-				{
-					rcWnd.left = mi.rcWork.left - rcFrameOnly.left;
-					rcWnd.right = mi.rcWork.right + rcFrameOnly.right;
-					rcWnd.top = mi.rcWork.top - rcFrameOnly.top;
-					rcWnd.bottom = rcWnd.top + nHeight;
-
-					bChange = true;
-					break;
-				}
-
-				case wmFullScreen:
-				{
-					rcWnd.left = mi.rcMonitor.left - rcFrameOnly.left;
-					rcWnd.right = mi.rcMonitor.right + rcFrameOnly.right;
-					rcWnd.top = mi.rcMonitor.top - rcFrameOnly.top;
-					rcWnd.bottom = rcWnd.top + nHeight;
-
-					bChange = true;
-					break;
-				}
-
-				case wmNormal:
-				{
-					// Если выбран режим "Fixed" - разрешим задавать левую координату
-					if (!gpSet->wndCascade)
-						rcWnd.left = max(mi.rcWork.left,min(wndX,(mi.rcWork.right - nWidth)));
-					else
-						rcWnd.left = max(mi.rcWork.left,((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
-					rcWnd.right = min(mi.rcWork.right,(rcWnd.left + nWidth));
-					rcWnd.top = mi.rcWork.top - rcFrameOnly.top;
-					rcWnd.bottom = rcWnd.top + nHeight;
-
-					bChange = true;
-					break;
-				}
-			}
-		}
-
-		if (bChange)
-		{
-			ptFullScreenSize.x = rcWnd.right - rcWnd.left + 1;
-			ptFullScreenSize.y = mi.rcMonitor.bottom - mi.rcMonitor.top + nFrameY;
-
-			DEBUGTEST(RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN));
-			//if (rcCon.right)
-			//	this->wndWidth = rcCon.right;
-
-			this->wndX = rcWnd.left;
-			this->wndY = rcWnd.top;
-		}
+		CheckQuakeRect(&rcWnd);
 	}
 	// При старте, если указан "Cascade" (то есть только при создании окна)
 	else if (gpSet->wndCascade && !ghWnd)
@@ -1495,7 +1531,13 @@ RECT CConEmuSize::GetVirtualScreenRect(bool abFullScreen)
 RECT CConEmuSize::GetIdealRect()
 {
 	RECT rcIdeal = mr_Ideal.rcIdeal;
-	if (mp_ConEmu->mp_Inside || (rcIdeal.right <= rcIdeal.left) || (rcIdeal.bottom <= rcIdeal.top))
+	if (!mp_ConEmu->mp_Inside && (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight || m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth))
+	{
+		MONITORINFO mi = {};
+		GetNearestMonitor(&mi);
+		rcIdeal = GetTileRect(m_TileMode, mi);
+	}
+	else if (mp_ConEmu->mp_Inside || (rcIdeal.right <= rcIdeal.left) || (rcIdeal.bottom <= rcIdeal.top))
 	{
 		rcIdeal = GetDefaultRect();
 	}
@@ -1767,11 +1809,13 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 			if ((w.Style == ss_Standard) || (h.Style == ss_Standard))
 			{
 				RECT rcAll;
+				/* -- removed that because console size was not changed until resize was finished
 				if (CVConGroup::isVConExists(0))
 				{
 					rcAll = CVConGroup::AllTextRect();
 				}
 				else
+				*/
 				{
 					rcAll = CalcRect(CER_CONSOLE_ALL, rcNormal, CER_MAIN);
 				}
@@ -2366,59 +2410,54 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	{
 		if (gpSet->isQuakeStyle)
 		{
-			// Разрешить менять и ширину окна Quake
-			//CESize SaveWidth = {WndWidth.Raw};
-			//bool tempChanged = false;
-
-			RECT rc = GetDefaultRect();
-
-			p->y = rc.top;
-
-			TODO("разрешить изменение ширины в Quake!");
-#if 0
-			ConEmuWindowMode wmCurQuake = GetWindowMode();
-
-			if (isSizing() && p->cx && (wmCurQuake == wmNormal))
+			if (!mp_ConEmu->mp_Status->IsStatusResizing())
 			{
-				// Поскольку оно центрируется (wndCascade)... изменение ширину нужно множить на 2
-				RECT rcQNow = {}; GetWindowRect(hWnd, &rcQNow);
-				int width = rcQNow.right - rcQNow.left;
-				int shift = p->cx - width;
-				// TODO: разрешить изменение ширины в Quake!
-				if (shift)
-				{
-					//_ASSERTE(shift==0);
-					#ifndef _DEBUG
-					shift = 0;
-					#endif
-				}
-				//WndWidth.Set(true, ss_Pixels, width + 2*shift);
-				if (gpSet->wndCascade)
-				{
-					// Скорректировать координату!
-					wndX = rc.left - shift;
+				RECT rc = GetDefaultRect();
 
-					p->x -= shift;
-					p->cx += shift;
+				p->y = rc.top;
+
+				ConEmuWindowMode wmCurQuake = GetWindowMode();
+
+				if (isSizing() && p->cx && (wmCurQuake == wmNormal))
+				{
+					// Если выбран режим "Fixed" - разрешим задавать левую координату, иначе - центрируется по монитору
+					int iDifMul = gpSet->wndCascade ? 2 : 1;
+
+					// Поскольку оно центрируется (wndCascade)... изменение ширину нужно множить на 2
+					RECT rcQNow = {}; GetWindowRect(hWnd, &rcQNow);
+					int width = rcQNow.right - rcQNow.left;
+					int shift = (p->cx - width);
+
+					if (shift && gpSet->wndCascade)
+					{
+						#ifdef _DEBUG
+						wchar_t szQuake[200];
+						_wsprintf(szQuake, SKIPCOUNT(szQuake) L"QuakePosFix Shift=%i Old={%ix%i} Suggested={%ix%i} Fixed={%ix%i}",
+							shift, rcQNow.left, width, p->x, p->cx, (p->x - shift), (p->cx + shift));
+						DEBUGSTRSIZE(szQuake);
+						#endif
+
+						p->x -= shift;
+						p->cx += shift;
+					}
 				}
 				else
 				{
-					//p->cx = rc.right - rc.left + shift*(gpSet->wndCascade ? 2 : 1); // + 1;
+					p->x = rc.left;
+					p->cx = rc.right - rc.left; // + 1;
+				}
+
+				wndX = p->x;
+
+				RECT rcFixup = {p->x, p->y, p->x + p->cx, p->y + p->cy};
+				if (CheckQuakeRect(&rcFixup))
+				{
+					p->x = rcFixup.left;
+					p->y = rcFixup.top;
+					p->cx = rcFixup.right - rcFixup.left;
+					p->cy = rcFixup.bottom - rcFixup.top;
 				}
 			}
-			else
-#endif
-			{
-				p->x = rc.left;
-				p->cx = rc.right - rc.left; // + 1;
-			}
-
-
-			//// Вернуть WndWidth, т.к. это было временно
-			//if (tempChanged)
-			//{
-			//	WndWidth.Set(true, SaveWidth.Style, SaveWidth.Value);
-			//}
 		}
 		else if (zoomed)
 		{
@@ -2496,6 +2535,15 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		}
 	#endif
 	}
+	else
+	{
+		#ifdef _DEBUG
+		if (!(p->flags & SWP_NOMOVE) && (p->flags & SWP_NOSIZE))
+			DEBUGSTRSIZE(L"!!! Only position was changed !!!");
+		else if ((p->flags & SWP_NOMOVE) && !(p->flags & SWP_NOSIZE))
+			DEBUGSTRSIZE(L"!!! Only size was changed !!!");
+		#endif
+	}
 
 	//if (gpSet->isDontMinimize) {
 	//	if ((p->flags & (0x8000|SWP_NOACTIVATE)) == (0x8000|SWP_NOACTIVATE)
@@ -2523,7 +2571,10 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	if (bResized)
 	{
 		RECT rcWnd = {0,0,p->cx,p->cy};
-		CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN, true);
+		//CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN, true);
+		RECT rcClient = CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
+		OnSize(true, isZoomed() ? SIZE_MAXIMIZED : SIZE_RESTORED,
+			rcClient.right - rcClient.left, rcClient.bottom - rcClient.top);
 	}
 
 #if 0
@@ -2793,7 +2844,7 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 			restrictRect.left = pRect->right - calcRect.right;
 			restrictRect.top = pRect->bottom - calcRect.bottom;
 
-			switch(wParam)
+			switch (wParam)
 			{
 				case WMSZ_RIGHT:
 				case WMSZ_BOTTOM:
@@ -2816,6 +2867,20 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 					pRect->bottom = restrictRect.bottom;
 					break;
 			}
+		}
+
+		if (gpSet->isQuakeStyle)
+		{
+			switch (wParam)
+			{
+			case WMSZ_LEFT:
+			case WMSZ_TOPLEFT:
+			case WMSZ_BOTTOMLEFT:
+				// Save left coordinate if user drags left frame edge
+				wndX = pRect->left;
+			}
+			// And final corrections (especially for centered mode)
+			CheckQuakeRect(pRect);
 		}
 
 		// При смене размера (пока ничего не делаем)
@@ -2955,7 +3020,7 @@ bool CConEmuSize::SizeWindow(const CESize sizeW, const CESize sizeH)
 	return bSizeOK;
 }
 
-void CConEmuSize::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo)
+void CConEmuSize::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo, const bool& abAlwaysShowTrayIcon)
 {
 	wndWidth = awndWidth;
 	wndHeight = awndHeight;
@@ -2964,11 +3029,12 @@ void CConEmuSize::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awn
 	nFrame = anFrame;
 	WindowMode = aWindowMode;
 	rcIdealInfo = arcIdealInfo;
+	MinToTray = abAlwaysShowTrayIcon;
 	//
 	bWasSaved = true;
 }
 
-ConEmuWindowMode CConEmuSize::QuakePrevSize::Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo)
+ConEmuWindowMode CConEmuSize::QuakePrevSize::Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo, bool& rbAlwaysShowTrayIcon)
 {
 	rwndWidth = wndWidth;
 	rwndHeight = wndHeight;
@@ -2976,7 +3042,15 @@ ConEmuWindowMode CConEmuSize::QuakePrevSize::Restore(CESize& rwndWidth, CESize& 
 	rwndY = wndY;
 	rnFrame = nFrame;
 	rrcIdealInfo = rcIdealInfo;
+	rbAlwaysShowTrayIcon = MinToTray;
 	return WindowMode;
+}
+
+// If Quake mode was loaded from settings and user wants to get back "standard" behavior
+void CConEmuSize::QuakePrevSize::SetNonQuakeDefaults()
+{
+	gpSet->mb_MinToTray = false;
+	gpSet->nHideCaptionAlwaysFrame = HIDECAPTIONALWAYSFRAME_DEF;
 }
 
 bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode /*= wmNotChanging*/, bool bFromDlg /*= false*/)
@@ -3034,11 +3108,14 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 
 	if (gpSet->isQuakeStyle && !bPrevStyle)
 	{
-		m_QuakePrevSize.Save(this->WndWidth, this->WndHeight, this->wndX, this->wndY, gpSet->nHideCaptionAlwaysFrame, this->WindowMode, mr_Ideal);
+		m_QuakePrevSize.Save(this->WndWidth, this->WndHeight, this->wndX, this->wndY, gpSet->nHideCaptionAlwaysFrame, this->WindowMode, mr_Ideal, gpSet->mb_MinToTray);
 	}
-	else if (!gpSet->isQuakeStyle && m_QuakePrevSize.bWasSaved)
+	else if (!gpSet->isQuakeStyle)
 	{
-		nNewWindowMode = m_QuakePrevSize.Restore(this->WndWidth, this->WndHeight, this->wndX, this->wndY, gpSet->nHideCaptionAlwaysFrame, mr_Ideal);
+		if (m_QuakePrevSize.bWasSaved)
+			nNewWindowMode = m_QuakePrevSize.Restore(this->WndWidth, this->WndHeight, this->wndX, this->wndY, gpSet->nHideCaptionAlwaysFrame, mr_Ideal, gpSet->mb_MinToTray);
+		else
+			m_QuakePrevSize.SetNonQuakeDefaults();
 	}
 
 
@@ -3252,43 +3329,21 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 			bChange = false;
 		}
 
-
 		switch (Tile)
 		{
 		case cwc_Current:
 			// Вернуться из Tile-режима в нормальный
 			rcNewWnd = GetDefaultRect();
-			//bChange = true;
+			//bChange = true; -- already processed in SetNormalWindowSize
 			break;
 
 		case cwc_TileLeft:
-			rcNewWnd.left = mi.rcWork.left;
-			rcNewWnd.top = mi.rcWork.top;
-			rcNewWnd.bottom = mi.rcWork.bottom;
-			rcNewWnd.right = (mi.rcWork.left + mi.rcWork.right) >> 1;
-			bChange = true;
-			break;
-
 		case cwc_TileRight:
-			rcNewWnd.right = mi.rcWork.right;
-			rcNewWnd.top = mi.rcWork.top;
-			rcNewWnd.bottom = mi.rcWork.bottom;
-			rcNewWnd.left = (mi.rcWork.left + mi.rcWork.right) >> 1;
-			bChange = true;
-			break;
-
 		case cwc_TileHeight:
-			rcNewWnd = GetDefaultRect();
-			rcNewWnd.top = mi.rcWork.top;
-			rcNewWnd.bottom = mi.rcWork.bottom;
+		case cwc_TileWidth:
+			rcNewWnd = GetTileRect(Tile, mi);
 			bChange = true;
 			break;
-
-		case cwc_TileWidth:
-			rcNewWnd = GetDefaultRect();
-			rcNewWnd.left = mi.rcWork.left;
-			rcNewWnd.right = mi.rcWork.right;
-			bChange = true;
 		}
 
 		if (bChange)
@@ -3319,10 +3374,57 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 		RECT rc = {}; GetWindowRect(ghWnd, &rc);
 		LogTileModeChange(L"result of SetTileMode", Tile, bChange, rcNewWnd, &rc, hMon);
 
+		CVConGroup::SyncConsoleToWindow();
+
 		mp_ConEmu->UpdateProcessDisplay(false);
 	}
 
 	return true;
+}
+
+RECT CConEmuSize::GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi)
+{
+	RECT rcNewWnd;
+
+	switch (Tile)
+	{
+	case cwc_Current:
+		// Вернуться из Tile-режима в нормальный
+		rcNewWnd = GetDefaultRect();
+		break;
+
+	case cwc_TileLeft:
+		rcNewWnd.left = mi.rcWork.left;
+		rcNewWnd.top = mi.rcWork.top;
+		rcNewWnd.bottom = mi.rcWork.bottom;
+		rcNewWnd.right = (mi.rcWork.left + mi.rcWork.right) >> 1;
+		break;
+
+	case cwc_TileRight:
+		rcNewWnd.right = mi.rcWork.right;
+		rcNewWnd.top = mi.rcWork.top;
+		rcNewWnd.bottom = mi.rcWork.bottom;
+		rcNewWnd.left = (mi.rcWork.left + mi.rcWork.right) >> 1;
+		break;
+
+	case cwc_TileHeight:
+		rcNewWnd = GetDefaultRect();
+		rcNewWnd.top = mi.rcWork.top;
+		rcNewWnd.bottom = mi.rcWork.bottom;
+		break;
+
+	case cwc_TileWidth:
+		rcNewWnd = GetDefaultRect();
+		rcNewWnd.left = mi.rcWork.left;
+		rcNewWnd.right = mi.rcWork.right;
+		break;
+
+	default:
+		_ASSERTE(FALSE && "Must not get here");
+		rcNewWnd = GetDefaultRect();
+	}
+
+	return rcNewWnd;
 }
 
 void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, bool bChanged, const RECT& rcSet, LPRECT prcAfter, HMONITOR hMon)
@@ -3452,6 +3554,10 @@ bool CConEmuSize::IsSizeFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
 
 	// В режиме "Desktop" переходить в FullScreen - нельзя
 	if (gpSet->isDesktopMode && (CheckMode == wmFullScreen))
+		return false;
+
+	// В режиме "Quake" менять размер можно только в "Normal"
+	if (gpSet->isQuakeStyle && (GetWindowMode() != wmNormal))
 		return false;
 
 	// Размер И положение можно менять произвольно
@@ -3842,6 +3948,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			DEBUGLOGFILE("SetWindowMode(wmNormal)\n");
 			//RECT consoleSize;
 
+			bool bTiled = (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight || m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth);
 			RECT rcIdeal = (gpSet->isQuakeStyle) ? GetDefaultRect() : GetIdealRect();
 			AutoSizeFont(rcIdeal, CER_MAIN);
 			// Расчитать размер по оптимальному WindowRect
@@ -3899,24 +4006,29 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			//if (mb_MaximizedHideCaption)
 			//	mb_MaximizedHideCaption = FALSE;
 
-			RECT rcNew = GetDefaultRect();
-			if (mp_ConEmu->mp_Inside == NULL)
+			RECT rcNew = rcIdeal;
+			if (!bTiled)
 			{
-				//130508 - интересует только ширина-высота
-				//rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE_ALL);
-				rcNew.right -= rcNew.left; rcNew.bottom -= rcNew.top;
-				rcNew.top = rcNew.left = 0;
+				rcNew = GetDefaultRect();
 
-				if ((mrc_StoredNormalRect.right > mrc_StoredNormalRect.left) && (mrc_StoredNormalRect.bottom > mrc_StoredNormalRect.top))
+				if (mp_ConEmu->mp_Inside == NULL)
 				{
-					rcNew.left+=mrc_StoredNormalRect.left; rcNew.top+=mrc_StoredNormalRect.top;
-					rcNew.right+=mrc_StoredNormalRect.left; rcNew.bottom+=mrc_StoredNormalRect.top;
-				}
-				else
-				{
-					MONITORINFO mi; GetNearestMonitor(&mi);
-					rcNew.left+=mi.rcWork.left; rcNew.top+=mi.rcWork.top;
-					rcNew.right+=mi.rcWork.left; rcNew.bottom+=mi.rcWork.top;
+					//130508 - интересует только ширина-высота
+					//rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE_ALL);
+					rcNew.right -= rcNew.left; rcNew.bottom -= rcNew.top;
+					rcNew.top = rcNew.left = 0;
+
+					if ((mrc_StoredNormalRect.right > mrc_StoredNormalRect.left) && (mrc_StoredNormalRect.bottom > mrc_StoredNormalRect.top))
+					{
+						rcNew.left+=mrc_StoredNormalRect.left; rcNew.top+=mrc_StoredNormalRect.top;
+						rcNew.right+=mrc_StoredNormalRect.left; rcNew.bottom+=mrc_StoredNormalRect.top;
+					}
+					else
+					{
+						MONITORINFO mi; GetNearestMonitor(&mi);
+						rcNew.left+=mi.rcWork.left; rcNew.top+=mi.rcWork.top;
+						rcNew.right+=mi.rcWork.left; rcNew.bottom+=mi.rcWork.top;
+					}
 				}
 			}
 
@@ -4986,7 +5098,9 @@ bool CConEmuSize::isSizing(UINT nMouseMsg/*=0*/)
 		return false;
 
 	// могло не сброситься, проверим
-	if ((nMouseMsg==WM_NCLBUTTONUP) || !isPressed(VK_LBUTTON))
+	// но только если не ресайзят статусбаром (grip) - он сам все обработает
+	if (!mp_ConEmu->mp_Status->IsStatusResizing() &&
+		((nMouseMsg==WM_NCLBUTTONUP) || !isPressed(VK_LBUTTON)))
 	{
 		EndSizing(nMouseMsg);
 		return false;
@@ -5027,6 +5141,13 @@ void CConEmuSize::SetSizingFlags(DWORD nSetFlags /*= MOUSE_SIZING_BEGIN*/)
 	_ASSERTE((nSetFlags & (~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))) == 0); // Допустимые флаги
 
 	#ifdef _DEBUG
+	if ((nSetFlags & MOUSE_SIZING_BEGIN) && !(mp_ConEmu->mouse.state & MOUSE_SIZING_BEGIN))
+	{
+		DEBUGSTRSIZE(L"SetSizingFlags(MOUSE_SIZING_BEGIN)");
+	}
+	#endif
+
+	#ifdef _DEBUG
 	if (!(mp_ConEmu->mouse.state & nSetFlags)) // For debug purposes (breakpoints)
 	#endif
 	mp_ConEmu->mouse.state |= nSetFlags;
@@ -5035,6 +5156,13 @@ void CConEmuSize::SetSizingFlags(DWORD nSetFlags /*= MOUSE_SIZING_BEGIN*/)
 void CConEmuSize::ResetSizingFlags(DWORD nDropFlags /*= MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO*/)
 {
 	_ASSERTE((nDropFlags & (~(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO))) == 0); // Допустимые флаги
+
+	#ifdef _DEBUG
+	if ((nDropFlags & MOUSE_SIZING_BEGIN) && (mp_ConEmu->mouse.state & MOUSE_SIZING_BEGIN))
+	{
+		DEBUGSTRSIZE(L"ResetSizingFlags(MOUSE_SIZING_BEGIN)");
+	}
+	#endif
 
 	#ifdef _DEBUG
 	if ((mp_ConEmu->mouse.state & nDropFlags)) // For debug purposes (breakpoints)
@@ -5796,6 +5924,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			}
 		}
 		mn_QuakePercent = 0; // 0 - отключен
+		ZeroStruct(m_QuakePrevSize.PreSlidedSize);
 
 		CVConGuard VCon;
 		if (mp_ConEmu->GetActiveVCon(&VCon) >= 0)
@@ -5837,6 +5966,18 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
 		{
+			BOOL bVs1 = ::IsWindowVisible(ghWnd);
+			RECT rc1 = {}; ::GetWindowRect(ghWnd, &rc1);
+			if (bVs1)
+			{
+				m_QuakePrevSize.PreSlidedSize = rc1;
+			}
+			else
+			{
+				_ASSERTE(FALSE && "Quake must not be slided up from hidden state");
+				ZeroStruct(m_QuakePrevSize.PreSlidedSize);
+			}
+
 			if (bUseQuakeAnimation)
 			{
 				DWORD nAnimationMS = gpSet->nQuakeAnimation; // (100 / nQuakeShift) * nQuakeDelay * 2;
@@ -5846,9 +5987,8 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 				DWORD nFlags = AW_SLIDE|AW_VER_NEGATIVE|AW_HIDE;
 
-				DEBUGTEST(BOOL bVs1 = ::IsWindowVisible(ghWnd));
-				DEBUGTEST(RECT rc1; ::GetWindowRect(ghWnd, &rc1));
 				AnimateWindow(nAnimationMS, nFlags);
+
 				DEBUGTEST(BOOL bVs2 = ::IsWindowVisible(ghWnd));
 				DEBUGTEST(RECT rc2; ::GetWindowRect(ghWnd, &rc2));
 				DEBUGTEST(bVs1 = bVs2);
@@ -5900,6 +6040,10 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 					UpdateWindowRgn();
 				}
 			}
+		}
+		else
+		{
+			ZeroStruct(m_QuakePrevSize.PreSlidedSize);
 		}
 		mn_QuakePercent = 0; // 0 - отключен
 

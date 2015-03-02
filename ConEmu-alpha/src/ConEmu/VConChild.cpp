@@ -51,6 +51,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
+#define DEBUGSTRPAINTGAPS(s) //DEBUGSTR(s)
+#define DEBUGSTRPAINTVCON(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 
 //#define SCROLLHIDE_TIMER_ID 1726
 #define TIMER_SCROLL_SHOW         3201
@@ -437,11 +440,25 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				LogString(szInfo);
 			}
 			pVCon->mn_InvalidateViewPending = 0;
+			#ifdef _DEBUG
+			{
+				wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(hWnd, &rcScreen);
+				_wsprintf(szPos, SKIPCOUNT(szPos) L"PaintClient VCon[%i] at {%i,%i}-{%i,%i} screen coords", pVCon->Index(), rcScreen.left, rcScreen.top, rcScreen.right, rcScreen.bottom);
+				DEBUGSTRPAINTVCON(szPos);
+			}
+			#endif
 			result = pVCon->OnPaint();
 			break;
 		case WM_PRINTCLIENT:
 			if (wParam && (lParam & PRF_CLIENT))
 			{
+				#ifdef _DEBUG
+				{
+					wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(hWnd, &rcScreen);
+					_wsprintf(szPos, SKIPCOUNT(szPos) L"PrintClient VCon[%i] at {%i,%i}-{%i,%i} screen coords", pVCon->Index(), rcScreen.left, rcScreen.top, rcScreen.right, rcScreen.bottom);
+					DEBUGSTRPAINTVCON(szPos);
+				}
+				#endif
 				pVCon->PrintClient((HDC)wParam, false, NULL);
 			}
 			break;
@@ -809,7 +826,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 	switch (messg)
 	{
-	case WM_SHOWWINDOW:
+		case WM_SHOWWINDOW:
 			if (wParam)
 			{
 				HWND hView = pVCon->GetView();
@@ -829,7 +846,13 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			break;
 		case WM_PAINT:
 			_ASSERTE(hWnd == pVCon->mh_WndBack);
-			pVCon->OnPaintGaps();
+			pVCon->OnPaintGaps(NULL/*use BeginPaint/EndPaint*/);
+			break;
+		case WM_PRINTCLIENT:
+			if (wParam && (lParam & PRF_CLIENT))
+			{
+				pVCon->OnPaintGaps((HDC)wParam);
+			}
 			break;
 		case WM_MOUSEWHEEL:
 		case WM_MOUSEHWHEEL:
@@ -916,13 +939,17 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 #ifdef _DEBUG
 		case WM_WINDOWPOSCHANGING:
 			{
-				WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+				WINDOWPOS* p = (WINDOWPOS*)lParam;
+				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGED.BACK ({%i,%i}x{%i,%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
+				DEBUGSTRSIZE(szDbg);
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 			}
 			return result;
 		case WM_WINDOWPOSCHANGED:
 			{
-				WINDOWPOS* pwp = (WINDOWPOS*)lParam;
+				WINDOWPOS* p = (WINDOWPOS*)lParam;
+				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGED.BACK ({%i,%i}x{%i,%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
+				DEBUGSTRSIZE(szDbg);
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 			}
 			break;
@@ -1021,7 +1048,7 @@ INT_PTR CConEmuChild::DbgChildDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LP
 }
 #endif
 
-LRESULT CConEmuChild::OnPaintGaps()
+LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 {
 	CVConGuard VCon(mp_VCon);
 	if (!VCon.VCon())
@@ -1044,18 +1071,54 @@ LRESULT CConEmuChild::OnPaintGaps()
 		nColorIdx = pRCon->GetDefaultBackColorIdx();
 	}
 
+	#ifdef _DEBUG
+	{
+		wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(mh_WndBack, &rcScreen);
+		_wsprintf(szPos, SKIPCOUNT(szPos) L"PaintGaps VCon[%i] at {%i,%i}-{%i,%i} screen coords", mp_VCon->Index(), rcScreen.left, rcScreen.top, rcScreen.right, rcScreen.bottom);
+		DEBUGSTRPAINTGAPS(szPos);
+	}
+	#endif
+
 	PAINTSTRUCT ps = {};
-	BeginPaint(mh_WndBack, &ps);
+	if (hdc)
+	{
+		ps.hdc = hdc;
+		GetClientRect(mh_WndBack, &ps.rcPaint);
+	}
+	else
+	{
+		BeginPaint(mh_WndBack, &ps);
+	}
 
 	HBRUSH hBrush = CreateSolidBrush(clrPalette[nColorIdx]);
 	if (hBrush)
 	{
-		FillRect(ps.hdc, &ps.rcPaint, hBrush);
+		if (!hdc)
+		{
+			FillRect(ps.hdc, &ps.rcPaint, hBrush);
+		}
+		else
+		{
+			HRGN hrgn = CreateRectRgnIndirect(&ps.rcPaint);
+			RECT rcVCon = {}; GetClientRect(mh_WndDC, &rcVCon);
+			MapWindowPoints(mh_WndDC, mh_WndBack, (LPPOINT)&rcVCon, 2);
+			HRGN hrgnVCon = CreateRectRgnIndirect(&rcVCon);
+			int iRgn = CombineRgn(hrgn, hrgn, hrgnVCon, RGN_DIFF);
+			if (iRgn == SIMPLEREGION || iRgn == COMPLEXREGION)
+			{
+				FillRgn(ps.hdc, hrgn, hBrush);
+			}
+			SafeDeleteObject(hrgn);
+			SafeDeleteObject(hrgnVCon);
+		}
 
 		DeleteObject(hBrush);
 	}
 
-	EndPaint(mh_WndBack, &ps);
+	if (!hdc)
+	{
+		EndPaint(mh_WndBack, &ps);
+	}
 
 	return 0;
 }

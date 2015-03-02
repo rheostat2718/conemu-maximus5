@@ -72,10 +72,16 @@ protected:
 		DWORD nFrame; // it's BYTE, DWORD here for alignment
 		ConEmuWindowMode WindowMode;
 		IdealRectInfo rcIdealInfo;
+		bool MinToTray;
+		// Used in GetDefaultRect/GetDefaultSize after Quake was slided up (hidden)
+		RECT PreSlidedSize;
 		// helper methods
-		void Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo);
-		ConEmuWindowMode Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo);
+		void Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo, const bool& abMinToTray);
+		ConEmuWindowMode Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo, bool& rbMinToTray);
+		void SetNonQuakeDefaults();
 	} m_QuakePrevSize;
+
+	bool CheckQuakeRect(LPRECT prcWnd);
 
 	ConEmuWindowCommand m_TileMode;
 
@@ -154,6 +160,7 @@ public:
 
 	static LPCWSTR FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, size_t cchBufMax);
 	bool SetTileMode(ConEmuWindowCommand Tile);
+	RECT GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi);
 	ConEmuWindowMode GetWindowMode();
 	ConEmuWindowMode GetChangeFromWindowMode();
 	bool IsWindowModeChanging();

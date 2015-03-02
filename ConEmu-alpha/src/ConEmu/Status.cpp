@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRSTAT(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRPAINT(s) DEBUGSTR(s)
 
 #include <windows.h>
 #include <commctrl.h>
@@ -328,6 +329,7 @@ CStatus::CStatus()
 	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L" %c %s[%u%s]",
 		0x00AB/* « */, gpConEmu->ms_ConEmuBuild, WIN3264TEST(32,64), RELEASEDEBUGTEST(L"","D"));
 	ZeroStruct(mpt_StatusResizePt);
+	ZeroStruct(mpt_StatusResizeCmp);
 	ZeroStruct(mrc_StatusResizeRect);
 }
 
@@ -418,6 +420,15 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	{
 		GetStatusBarClientRect(&rcStatus);
 	}
+
+	#ifdef _DEBUG
+	{
+		wchar_t szPos[80]; RECT rcScreen = rcStatus;
+		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcScreen, 2);
+		_wsprintf(szPos, SKIPCOUNT(szPos) L"StatusBar painted at {%i,%i}-{%i,%i} screen coords", rcScreen.left, rcScreen.top, rcScreen.right, rcScreen.bottom);
+		DEBUGSTRPAINT(szPos);
+	}
+	#endif
 
 	// Сразу сбросим
 	//mb_Invalidated = false;
@@ -1137,6 +1148,47 @@ bool CStatus::IsStatusResizing()
 	return mb_StatusResizing;
 }
 
+void CStatus::DoStatusResize(const POINT& ptScr)
+{
+	DEBUGSTRSIZE(L"Change size from status bar grip");
+
+	int iPosXdiff = 0;
+	int iWidthDiff = (ptScr.x - mpt_StatusResizePt.x);
+	int iHeightDiff = (ptScr.y - mpt_StatusResizePt.y);
+
+	// Quake + Centered on the monitor
+	if (gpSet->isQuakeStyle && gpSet->wndCascade)
+	{
+		iPosXdiff = - iWidthDiff;
+		iWidthDiff *= 2;
+	}
+
+	int nWidth = (mrc_StatusResizeRect.right - mrc_StatusResizeRect.left) + iWidthDiff;
+	int nHeight = (mrc_StatusResizeRect.bottom - mrc_StatusResizeRect.top) + iHeightDiff;
+
+	RECT rcNew = {mrc_StatusResizeRect.left + iPosXdiff, mrc_StatusResizeRect.top, mrc_StatusResizeRect.left + iPosXdiff + nWidth, mrc_StatusResizeRect.top + nHeight};
+
+	#ifdef _DEBUG
+	RECT rcBefore = {}; GetWindowRect(ghWnd, &rcBefore);
+	#endif
+
+	gpConEmu->OnSizing(WMSZ_BOTTOMRIGHT, (LPARAM)&rcNew);
+
+	SetWindowPos(ghWnd, NULL,
+		rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top,
+		SWP_NOZORDER);
+
+	#ifdef _DEBUG
+	RECT rcAfter = {}; GetWindowRect(ghWnd, &rcAfter);
+	#endif
+
+	// Force repaint to avoid artefacts
+	RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
+
+	// Store last point
+	mpt_StatusResizeCmp = ptScr;
+}
+
 bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, POINT ptCurClient, LRESULT& lResult)
 {
 	if (!gpSet->isStatusBarShow)
@@ -1153,36 +1205,39 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		switch (uMsg)
 		{
 		case WM_LBUTTONDOWN:
+			if (!gpConEmu->IsSizeFree())
+			{
+				DEBUGSTRSIZE(L"Resize from status bar grip skipped - size is fixed");
+				break;
+			}
 			DEBUGSTRSIZE(L"Starting resize from status bar grip");
 			GetCursorPos(&mpt_StatusResizePt);
 			GetWindowRect(ghWnd, &mrc_StatusResizeRect);
 			mb_StatusResizing = true;
 			SetCapture(ghWnd);
 			gpConEmu->BeginSizing(true);
+			// Force first resize
+			DoStatusResize(mpt_StatusResizePt);
 			break;
 		case WM_LBUTTONUP:
 		case WM_MOUSEMOVE:
-			if (mb_StatusResizing && GetCursorPos(&ptScr))
+			if (mb_StatusResizing)
 			{
-				DEBUGSTRSIZE(L"Change size from status bar grip");
+				if (GetCursorPos(&ptScr)
+					// Do resize if the cursor position was changed only
+					&& ((ptScr.x != mpt_StatusResizeCmp.x) || (ptScr.y != mpt_StatusResizeCmp.y))
+					)
+				{
+					DoStatusResize(ptScr);
+				}
 
-				int nWidth = (mrc_StatusResizeRect.right - mrc_StatusResizeRect.left) + (ptScr.x - mpt_StatusResizePt.x);
-				int nHeight = (mrc_StatusResizeRect.bottom - mrc_StatusResizeRect.top) + (ptScr.y - mpt_StatusResizePt.y);
-
-				RECT rcNew = {mrc_StatusResizeRect.left, mrc_StatusResizeRect.top, mrc_StatusResizeRect.left + nWidth, mrc_StatusResizeRect.top + nHeight};
-				gpConEmu->OnSizing(WMSZ_BOTTOMRIGHT, (LPARAM)&rcNew);
-
-				SetWindowPos(ghWnd, NULL,
-					rcNew.left, rcNew.top, rcNew.right - rcNew.left, rcNew.bottom - rcNew.top,
-					SWP_NOZORDER|SWP_NOCOPYBITS);
-			}
-
-			if (uMsg == WM_LBUTTONUP)
-			{
-				SetCapture(NULL);
-				gpConEmu->EndSizing();
-				mb_StatusResizing = false;
-				DEBUGSTRSIZE(L"Resize from status bar grip finished");
+				if (uMsg == WM_LBUTTONUP)
+				{
+					SetCapture(NULL);
+					gpConEmu->EndSizing();
+					mb_StatusResizing = false;
+					DEBUGSTRSIZE(L"Resize from status bar grip finished");
+				}
 			}
 			break;
 		case WM_SETCURSOR: // не приходит

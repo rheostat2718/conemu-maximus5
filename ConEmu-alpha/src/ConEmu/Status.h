@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -136,7 +136,9 @@ private:
 	RECT mrc_LastResizeCol;
 	bool mb_StatusResizing;
 	POINT mpt_StatusResizePt;
+	POINT mpt_StatusResizeCmp;
 	RECT mrc_StatusResizeRect;
+	void DoStatusResize(const POINT& ptScr);
 
 	SIZE mn_BmpSize;
 	HBITMAP mh_Bmp, mb_OldBmp;

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -608,10 +608,9 @@ HWND CTabPanelWin::CreateToolbar()
 	btn.iBitmap = nFirst + BID_APPCLOSE_IDX; btn.idCommand = TID_APPCLOSE;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0);
-#ifdef _DEBUG
-	SIZE sz;
-	SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
-#endif
+	#ifdef _DEBUG
+	SIZE sz = {}; SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
+	#endif
 	return mh_Toolbar;
 }
 
@@ -999,8 +998,8 @@ void CTabPanelWin::RepositionInt()
 			bRebarChanged = true;
 		}
 
-		// If the toolbar is visible, and rebar was changed...
-		if (bRebarChanged && (Panes[2].iPaneMinWidth > 0))
+		// If the toolbar is visible
+		if (Panes[2].iPaneMinWidth > 0)
 		{
 			UpdateToolbarPos();
 		}
@@ -1115,12 +1114,20 @@ void CTabPanelWin::OnCaptionHiddenChanged(bool bCaptionHidden)
 
 	bool lbHideBtn = !bCaptionHidden;
 
+	#ifdef _DEBUG
+	SIZE sz1 = {}; SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz1);
+	#endif
+
 	OnWindowStateChanged(gpConEmu->GetWindowMode());
 	SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE_SEP, lbHideBtn);
 	SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MINIMIZE, lbHideBtn);
 	SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_MAXIMIZE, lbHideBtn);
 	SendMessage(mh_Toolbar, TB_HIDEBUTTON, TID_APPCLOSE, lbHideBtn);
 	SendMessage(mh_Toolbar, TB_AUTOSIZE, 0, 0);
+
+	#ifdef _DEBUG
+	SIZE sz2 = {}; SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz2);
+	#endif
 
 	RepositionInt();
 }

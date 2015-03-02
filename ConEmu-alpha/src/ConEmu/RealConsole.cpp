@@ -3895,7 +3895,7 @@ BOOL CRealConsole::StartProcess()
 		si.lpTitle = ms_DefTitle.ms_Arg;
 
 	// Prepare cmd line
-	LPCWSTR lpszRawCmd = (m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd) ? m_Args.pszSpecialCmd : gpSetCls->GetCmd(NULL, true);
+	LPCWSTR lpszRawCmd = (m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd) ? m_Args.pszSpecialCmd : gpConEmu->GetCmd(NULL, true);
 	_ASSERTE(lpszRawCmd && *lpszRawCmd);
 	//SafeFree(mpsz_CmdBuffer);
 	//mpsz_CmdBuffer = ParseConEmuSubst(lpszRawCmd);
@@ -3972,7 +3972,7 @@ BOOL CRealConsole::StartProcess()
 		DEBUGSTRPROC(L"CreateProcess failed\n");
 		size_t nErrLen = _tcslen(psCurCmd)+120+(lpszWorkDir ? _tcslen(lpszWorkDir) : 16/*"%USERPROFILE%"*/);
 
-		LPCWSTR pszDefaultCmd = bAllowDefaultCmd ? gpSetCls->GetDefaultCmd() : NULL;
+		LPCWSTR pszDefaultCmd = bAllowDefaultCmd ? gpConEmu->GetDefaultCmd() : NULL;
 		nErrLen += pszDefaultCmd ? (100 + _tcslen(pszDefaultCmd)) : 0;
 
 		// Get description of 'dwLastError'
@@ -7286,7 +7286,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 		// may return task name instead of real command.
 		_ASSERTE(m_Args.pszSpecialCmd && *m_Args.pszSpecialCmd && "Command line must be specified already!");
 
-		lpszCmd = gpSetCls->GetCmd(NULL, true);
+		lpszCmd = gpConEmu->GetCmd(NULL, true);
 
 		//// May be this is batch?
 		//pszBuffer = mp_ConEmu->LoadConsoleBatch(lpszCmd);
@@ -7614,17 +7614,8 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	if (abProcessChanged)
 	{
 		mp_ConEmu->UpdateProcessDisplay(abProcessChanged);
-		//2009-09-10
-		//mp_ConEmu->mp_TabBar->Refresh(mn_ProgramStatus & CES_FARACTIVE);
+
 		mp_ConEmu->mp_TabBar->Update();
-
-		//if (!mb_AdminShieldChecked)
-		//{
-		//	mb_AdminShieldChecked = TRUE;
-
-		//	if ((gOSVer.dwMajorVersion > 6) || ((gOSVer.dwMajorVersion == 6) && (gOSVer.dwMinorVersion >= 1)))
-		//		mp_ConEmu->Taskbar_SetShield(true);
-		//}
 	}
 
 	return lbChanged;
@@ -9436,8 +9427,6 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
 	mp_ConEmu->mp_Status->OnActiveVConChanged(nNewNum, this);
 
-	//if ((gOSVer.dwMajorVersion > 6) || ((gOSVer.dwMajorVersion == 6) && (gOSVer.dwMinorVersion >= 1)))
-	//	mp_ConEmu->Taskbar_SetShield(isAdministrator());
 	mp_ConEmu->Taskbar_UpdateOverlay();
 
 	if (m_ChildGui.hGuiWnd && !m_ChildGui.bGuiExternMode)
@@ -12551,7 +12540,7 @@ LPCWSTR CRealConsole::GetCmd(bool bThisOnly /*= false*/)
 	if (m_Args.pszSpecialCmd)
 		return m_Args.pszSpecialCmd;
 	else if (!bThisOnly)
-		return gpSetCls->GetCmd(NULL, true);
+		return gpConEmu->GetCmd(NULL, true);
 	else
 		return L"";
 }
