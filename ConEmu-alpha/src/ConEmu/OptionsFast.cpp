@@ -37,9 +37,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "Update.h"
+#include "../common/execute.h"
 #include "../common/FarVersion.h"
 #include "../common/WFiles.h"
 #include "../common/WRegistry.h"
+#include "../common/WUser.h"
 
 #define FOUND_APP_PATH_CHR L'\1'
 #define FOUND_APP_PATH_STR L"\1"
@@ -905,6 +907,9 @@ protected:
 
 		if (LoadFarVersion(szPath, FI.Ver, ErrText))
 		{
+			DWORD ImageSubsystem = 0, FileAttrs = 0;
+			GetImageSubsystem(szPath, ImageSubsystem, FI.Ver.dwBits, FileAttrs);
+
 			// Far instance found, add it to Installed array?
 			bool bAlready = false;
 			for (INT_PTR a = 0; a < Installed.size(); a++)
@@ -916,6 +921,7 @@ protected:
 			}
 			if (!bAlready)
 			{
+				wcscpy_c(FI.szTaskName, L"Far");
 				FI.szFullPath = lstrdup(szPath);
 				if (FI.szFullPath)
 				{
@@ -1012,10 +1018,31 @@ public:
 		}
 
 		// Done, create task names
-		if (Installed.size() > 0)
+		// If there is only one found instance - just use name {Far}
+		if (Installed.size() > 1)
 		{
 			UINT idx = 0;
 			LPCWSTR pszPrefix = (Installed.size() > 1) ? szFarPrefix : L"";
+
+			struct impl {
+				static int SortRoutine(FarInfo &e1, FarInfo &e2)
+				{
+					if (e1.Ver.dwVer < e2.Ver.dwVer)
+						return 1;
+					if (e1.Ver.dwVer > e2.Ver.dwVer)
+						return -1;
+					if (e1.Ver.dwBuild < e2.Ver.dwBuild)
+						return 1;
+					if (e1.Ver.dwBuild > e2.Ver.dwBuild)
+						return -1;
+					if (e1.Ver.dwBits < e2.Ver.dwBits)
+						return 1;
+					if (e1.Ver.dwBits > e2.Ver.dwBits)
+						return -1;
+					return 0;
+				};
+			};
+			Installed.sort(impl::SortRoutine);
 
 			// All task names MUST be unique
 			for (int u = 0; u <= 2; u++)
@@ -1025,7 +1052,7 @@ public:
 				for (i = 0; i < Installed.size(); i++)
 				{
 					FarInfo& FI = Installed[i];
-					wchar_t szPlatform[6] = L""; //TODO: x86/x64
+					wchar_t szPlatform[6]; wcscpy_c(szPlatform, (FI.Ver.dwBits == 64) ? L" x64" : (FI.Ver.dwBits == 32) ? L" x86" : L"");
 
 					switch (u)
 					{
@@ -1109,6 +1136,42 @@ void CreateFarTasks(LPCWSTR asDrive, int& iCreatIdx)
 	Vers.Installed.clear();
 }
 
+void CreateTccTasks(LPCWSTR asDrive, int& iCreatIdx)
+{
+	ConEmuComspec tcc = {}; tcc.csType = cst_AutoTccCmd;
+	FindComspec(&tcc, false/*bCmdAlso*/);
+	bool bTccFound = false;
+
+	LPCWSTR pszTcc = NULL, pszTcc64 = NULL;
+
+	// Comspec may be "cmd.exe" or "tcc.exe", check it
+	if (tcc.Comspec32[0] && (lstrcmpi(PointToName(tcc.Comspec32), L"tcc.exe") == 0))
+	{
+		pszTcc = tcc.Comspec32;
+	}
+	// It's possible that both x86 & x64 versions are found
+	if (tcc.Comspec64[0] && (lstrcmpi(PointToName(tcc.Comspec64), L"tcc.exe") == 0))
+	{
+		if (tcc.Comspec32[0] && (lstrcmpi(tcc.Comspec32, tcc.Comspec64) != 0))
+			pszTcc64 = tcc.Comspec64;
+		else if (!pszTcc)
+			pszTcc = tcc.Comspec64;
+	}
+	// Not found? Last chance
+	if (!pszTcc) pszTcc = L"tcc.exe";
+
+	// Add tasks
+	CreateDefaultTask(asDrive, iCreatIdx, L"Shells::TCC", NULL, NULL, NULL, pszTcc, NULL);
+	CreateDefaultTask(asDrive, iCreatIdx, L"Shells::TCC (Admin)", L" -new_console:a", NULL, NULL, pszTcc, NULL);
+
+	// separate x64 version?
+	if (pszTcc64)
+	{
+		CreateDefaultTask(asDrive, iCreatIdx, L"Shells::TCC x64", NULL, NULL, NULL, pszTcc64, NULL);
+		CreateDefaultTask(asDrive, iCreatIdx, L"Shells::TCC x64 (Admin)", L" -new_console:a", NULL, NULL, pszTcc64, NULL);
+	}
+}
+
 void CreateDefaultTasks(bool bForceAdd /*= false*/)
 {
 	int iCreatIdx = 0;
@@ -1160,8 +1223,7 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 	CreateFarTasks(szConEmuDrive, iCreatIdx);
 
 	// TakeCommand
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::TCC", NULL, NULL, NULL, L"tcc.exe", NULL);
-	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::TCC (Admin)", L" -new_console:a", NULL, NULL, L"tcc.exe", NULL);
+	CreateTccTasks(szConEmuDrive, iCreatIdx);
 
 	// NYAOS - !!!Registry TODO!!!
 	CreateDefaultTask(szConEmuDrive, iCreatIdx, L"Shells::NYAOS", NULL, NULL, NULL, L"nyaos.exe", NULL);
