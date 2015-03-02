@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,48 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-extern HANDLE ghServerTerminateEvent;
+#include <windows.h>
 
-void PlugServerInit();
-bool PlugServerStart();
-void PlugServerStop(bool bFromDllMain);
+class CConEmuMain;
 
-void cmd_FarSetChanged(FAR_REQ_FARSETCHANGED *pFarSet);
+class CConEmuStart
+{
+private:
+	CConEmuMain* mp_ConEmu;
+
+public:
+	CConEmuStart(CConEmuMain* pOwner);
+	virtual ~CConEmuStart();
+
+private:
+	/* 'Default' command line (if nor Registry, nor /cmd specified) */
+	wchar_t  szDefCmd[MAX_PATH+32];
+	CEStr ms_DefNewTaskName;
+	/* Current command line, specified with "/cmd" or "/cmdlist" switches */
+	wchar_t* pszCurCmd;
+	bool isCurCmdList; // а это если был указан /cmdlist
+
+public:
+	/* OUR(!) startup info */
+	STARTUPINFOW ourSI;
+
+public:
+	/* switch -detached in the ConEmu.exe arguments */
+	bool mb_StartDetached;
+
+public:
+	/* Store/retrieve command line, specified with "/cmd" or "/cmdlist" switches */
+	void SetCurCmd(wchar_t*& pszNewCmd, bool bIsCmdList);
+	LPCTSTR GetCurCmd(bool *pIsCmdList = NULL);
+
+	/* "Active" command line */
+	LPCTSTR GetCmd(bool *pIsCmdList = NULL, bool bNoTask = false);
+	/* If some task was marked ad "Default for new consoles" */
+	LPCTSTR GetDefaultTask();
+
+	/* "Default" command line "far/cmd" */
+	LPCTSTR GetDefaultCmd();
+	void    SetDefaultCmd(LPCWSTR asCmd);
+
+	void ResetCmdArg();
+};

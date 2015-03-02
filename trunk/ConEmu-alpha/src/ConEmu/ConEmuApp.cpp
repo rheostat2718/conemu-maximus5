@@ -3899,7 +3899,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/detached")))
 				{
-					gpConEmu->mb_StartDetached = TRUE;
+					gpConEmu->mb_StartDetached = true;
 				}
 				else if (!klstricmp(curCommand, _T("/noupdate")))
 				{
@@ -4510,7 +4510,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Если запускается conman (нафига?) - принудительно включить флажок "Обновлять handle"
 	//TODO("Deprecated: isUpdConHandle использоваться не должен");
 
-	if (gpSetCls->IsMulti() || StrStrI(gpSetCls->GetCmd(), L"conman.exe"))
+	if (gpSetCls->IsMulti() || StrStrI(gpConEmu->GetCmd(), L"conman.exe"))
 	{
 		//gpSet->isUpdConHandle = TRUE;
 
@@ -4618,7 +4618,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		MCHKHEAP
 
 		// Запоминаем
-		gpSetCls->SetCurCmd(pszReady, isScript);
+		gpConEmu->SetCurCmd(pszReady, isScript);
 	}
 
 	//if (FontFilePrm) {

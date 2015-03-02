@@ -71,7 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRTOPLEFT(s) DEBUGSTR(s)
-#define DEBUGSTRTRUEMOD(s) DEBUGSTR(s)
+#define DEBUGSTRTRUEMOD(s) //DEBUGSTR(s)
 
 // ANSI, without "\r\n"
 #define IFLOGCONSOLECHANGE gpSetCls->isAdvLogging>=2
@@ -2413,7 +2413,15 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 			{
 				// Сброс позиции прокрутки, она поменялась
 				// в результате действий пользователя в консоли
-				SetTopLeft();
+				DEBUGTEST(DWORD nCurTick = GetTickCount());
+				if (!con.InTopLeftSet
+					&& (!con.TopLeftTick
+						|| ((int)(pInfo->nSrvUpdateTick - con.TopLeftTick) > 0))
+					)
+				{
+					// Сбрасывать не будем, просто откорректируем текущее положение
+					SetTopLeft(pInfo->srRealWindow.Top, -1, false);
+				}
 			}
 
 
@@ -6902,6 +6910,12 @@ bool CRealBuffer::SetTopLeft(int ay /*= -1*/, int ax /*= -1*/, bool abServerCall
 		#endif
 	}
 
+	if (abServerCall)
+	{
+		con.InTopLeftSet = TRUE;
+		con.TopLeftTick = GetTickCount();
+	}
+
 	con.TopLeft.y = ay;
 	con.TopLeft.x = ax;
 
@@ -6915,12 +6929,18 @@ bool CRealBuffer::SetTopLeft(int ay /*= -1*/, int ax /*= -1*/, bool abServerCall
 			CESERVER_REQ *pOut = ExecuteSrvCmd(nSrvPID, pIn, ghWnd);
 			ExecuteFreeResult(pOut);
 			ExecuteFreeResult(pIn);
+			con.TopLeftTick = GetTickCount();
 		}
 	}
 
 	if (bLockChanged)
 	{
 		mp_RCon->UpdateScrollInfo();
+	}
+
+	if (abServerCall)
+	{
+		con.InTopLeftSet = FALSE;
 	}
 
 	return bChanged;

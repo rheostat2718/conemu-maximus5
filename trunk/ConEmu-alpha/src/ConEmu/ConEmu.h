@@ -94,6 +94,7 @@ struct ConsoleInfoArg
 #include "GestureEngine.h"
 #include "ConEmuCtrl.h"
 #include "ConEmuSize.h"
+#include "ConEmuStart.h"
 #include "../common/MArray.h"
 #include "../common/MMap.h"
 #include "../common/MFileMapping.h"
@@ -133,6 +134,7 @@ class CConEmuMain
 	, public CGestures
 	, public CConEmuCtrl
 	, public CConEmuSize
+	, public CConEmuStart
 {
 	public:
 		wchar_t ms_ConEmuDefTitle[32];          // Название с версией, например "ConEmu 110117 (32)"
@@ -260,8 +262,6 @@ class CConEmuMain
 
 		BOOL  mb_ExternalHidden;
 
-		BOOL  mb_StartDetached;
-
 		enum StartupStage {
 			ss_Starting,
 			ss_PostCreate1Called,
@@ -373,6 +373,7 @@ class CConEmuMain
 		DWORD m_ProcCount;
 		BOOL mb_IsUacAdmin; // ConEmu itself is started elevated
 		bool IsActiveConAdmin();
+		HICON GetCurrentVConIcon();
 		HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove, mh_CursorIBeam;
 		HCURSOR mh_SplitV, mh_SplitH;
 		HCURSOR mh_DragCursor;

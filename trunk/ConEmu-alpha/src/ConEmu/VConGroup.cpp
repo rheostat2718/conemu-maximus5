@@ -52,7 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)
-#define DEBUGSTRACTIVATE(s) DEBUGSTR(s)
+#define DEBUGSTRACTIVATE(s) //DEBUGSTR(s)
 #define DEBUGSTRERR(s) //DEBUGSTR(s)
 #define DEBUGSTRATTACHERR(s) DEBUGSTR(s)
 
@@ -1104,7 +1104,7 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 		rcCon1 = MakeRect(rcNewCon.left, rcNewCon.top,
 			max(rcNewCon.left + nScreenWidth,rcNewCon.right - nCon2Width - nPadX), rcNewCon.bottom);
 		rcCon2 = MakeRect(rcNewCon.right - nCon2Width, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
-		rcSplitter = MakeRect(rcCon1.right+1, rcCon1.top, rcCon2.left, rcCon2.bottom);
+		rcSplitter = MakeRect(rcCon1.right, rcCon1.top, rcCon2.left, rcCon2.bottom);
 	}
 	else // RConStartArgs::eSplitVert
 	{
@@ -4086,7 +4086,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 		_ASSERTE(args->pszSpecialCmd==NULL);
 
 		// Сюда мы попадаем, если юзер жмет Win+W (создание без подтверждения)
-		LPCWSTR pszSysCmd = gpSetCls->GetCmd(NULL, !abAllowScripts);
+		LPCWSTR pszSysCmd = gpConEmu->GetCmd(NULL, !abAllowScripts);
 		LPCWSTR pszSysDir = NULL;
 		CVConGuard vActive;
 		// Не задано?
@@ -4113,7 +4113,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 			// Хм? Команда по умолчанию тогда.
 			if (!pszSysCmd || !*pszSysCmd)
 			{
-				pszSysCmd = gpSetCls->GetDefaultCmd();
+				pszSysCmd = gpConEmu->GetDefaultCmd();
 			}
 		}
 
@@ -5139,6 +5139,32 @@ wrap:
 #endif
 }
 
+void CVConGroup::PaintSplitter(HDC hdc, HBRUSH hbr)
+{
+	if (mp_Grp1 && mp_Grp2)
+	{
+		CVConGuard VCon1(mp_Grp1 ? mp_Grp1->mp_Item : NULL);
+		CVConGuard VCon2(mp_Grp2 ? mp_Grp2->mp_Item : NULL);
+
+		TODO("DoubleView: красивая отрисовка выпуклых сплиттеров");
+		if (IsRectEmpty(&mrc_Splitter))
+		{
+			_ASSERTE(FALSE && "mrc_Splitter is empty");
+		}
+		else
+		{
+			RECT rcPaint = mrc_Splitter;
+			MapWindowPoints(ghWnd, ghWndWork, (LPPOINT)&rcPaint, 2);
+			FillRect(hdc, &rcPaint, hbr);
+		}
+
+		if (mp_Grp1)
+			mp_Grp1->PaintSplitter(hdc, hbr);
+		if (mp_Grp2)
+			mp_Grp2->PaintSplitter(hdc, hbr);
+	}
+}
+
 // Должно вызываться ТОЛЬКО для DC в ghWndWork!!!
 void CVConGroup::PaintGaps(HDC hDC)
 {
@@ -5156,18 +5182,12 @@ void CVConGroup::PaintGaps(HDC hDC)
 	bool lbFade = gpSet->isFadeInactive && !gpConEmu->isMeForeground(true);
 
 
-	////RECT rcClient = GetGuiClientRect(); // Клиентская часть главного окна
-	//RECT rcClient = gpConEmu->CalcRect(CER_WORKSPACE);
-
 	_ASSERTE(ghWndWork!=NULL);
 	RECT rcClient = {};
 	GetClientRect(ghWndWork, &rcClient);
-	//MapWindowPoints(ghWndWork, ghWnd, (LPPOINT)&rcClient, 2);
 
-	//HWND hView = gp_VActive ? gp_VActive->GetView() : NULL;
-
-	//if (!hView || !IsWindowVisible(hView))
-	if (!isVConExists(0))
+	CVConGuard VCon;
+	if (GetActiveVCon(&VCon) < 0)
 	{
 		int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
 		HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(-1, lbFade)[nColorIdx]);
@@ -5184,9 +5204,12 @@ void CVConGroup::PaintGaps(HDC hDC)
 
 		hBrush = CreateSolidBrush(crBack);
 
-		TODO("DoubleView: красивая отрисовка выпуклых сплиттеров");
-
-		FillRect(hDC, &rcClient, hBrush);
+		MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+		CVConGroup* pRoot = GetRootOfVCon(VCon.VCon());
+		if (pRoot)
+		{
+			pRoot->PaintSplitter(hDC, hBrush);
+		}
 
 		//int iRc = SIMPLEREGION;
 

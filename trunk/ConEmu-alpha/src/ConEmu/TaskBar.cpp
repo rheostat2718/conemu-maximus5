@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2013 Maximus5
+Copyright (c) 2011-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -321,9 +321,12 @@ void CTaskBar::Taskbar_SetShield(bool abShield)
 		}
 	}
 
-	HRESULT hr;
+	Taskbar_SetOverlay(abShield ? mh_Shield : NULL);
+}
 
-	hr = mp_TaskBar3->SetOverlayIcon(ghWnd, abShield ? mh_Shield : NULL, NULL);
+void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
+{
+	HRESULT hr = mp_TaskBar3 ? mp_TaskBar3->SetOverlayIcon(ghWnd, ahIcon, NULL) : E_FAIL;
 
 	_ASSERTE(hr==S_OK);
 	UNREFERENCED_PARAMETER(hr);
@@ -331,17 +334,31 @@ void CTaskBar::Taskbar_SetShield(bool abShield)
 
 void CTaskBar::Taskbar_UpdateOverlay()
 {
+	if (!this || !mp_TaskBar3)
+		return;
+
 	if (!IsWindows7)
 		return;
 
-	bool bAdmin = false;
-
-	if (gpSet->isTaskbarShield)
+	if (!gpSet->isTaskbarShield)
 	{
-		bAdmin = gpConEmu->IsActiveConAdmin();
+		Taskbar_SetOverlay(NULL);
+		return;
 	}
 
-	Taskbar_SetShield(bAdmin);
+	bool bAdmin;
+	HICON hIcon;
+
+	if ((hIcon = gpConEmu->GetCurrentVConIcon()) != NULL)
+	{
+		Taskbar_SetOverlay(hIcon);
+		DestroyIcon(hIcon);
+	}
+	else
+	{
+		bAdmin = gpConEmu->IsActiveConAdmin();
+		Taskbar_SetShield(bAdmin);
+	}
 }
 
 HRESULT CTaskBar::Taskbar_MarkFullscreenWindow(HWND hwnd, BOOL fFullscreen)

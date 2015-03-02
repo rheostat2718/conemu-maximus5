@@ -179,7 +179,7 @@ struct PipeServer
 			BOOL fPendingIO;
 			PipeState dwState;
 			//BOOL bSkipTerminate;
-			DWORD nCreateBegin, nCreateEnd, nStartedTick;
+			DWORD nCreateBegin, nCreateEnd, nStartedTick, nTerminatedTick;
 			DWORD nCreateError; // Thread creation error?
 			
 			wchar_t sErrorMsg[128];
@@ -864,7 +864,8 @@ struct PipeServer
 					{
 						// Проверить, какие коды ошибок? Может быть нужно CloseHandle дернуть?
 						// 120603 - см. комментарий на ERROR_IO_INCOMPLETE
-						_ASSERTEX(nOverRc==1 || (nOverRc==2 && pPipe->hPipeInst==NULL && pPipe->dwConnErr==ERROR_IO_PENDING && pPipe->dwState==CLOSED_STATE));
+						// Если это (nOverRc==2 && mb_Terminate) - то _Disconnect будет вызван в StopPipeServer
+						_ASSERTEX(nOverRc==1 || (nOverRc==2 && pPipe->hPipeInst==NULL && pPipe->dwConnErr==ERROR_IO_PENDING && (pPipe->dwState==CLOSED_STATE || (pPipe->dwState==CONNECTING_STATE && mb_Terminate))));
 						continue; // ошибка, пробуем еще раз
 					}
 				} // end - mb_Overlapped
@@ -1225,6 +1226,7 @@ struct PipeServer
 				nResult = pPipe->pServer->PipeServerThread(pPipe);
 			}
 
+			pPipe->nTerminatedTick = GetTickCount();
 			pPipe->dwState = TERMINATED_STATE;
 			PLOG("_PipeServerThread.Finished");
 
@@ -1445,14 +1447,15 @@ struct PipeServer
 
 			DWORD nTimeout = RELEASEDEBUGTEST(250,5000);
 			DEBUGTEST(DWORD nWarnTimeout = 500);
-			DWORD nStartTick = GetTickCount();
-			int nLeft = 0, nWaitLeft = 0;
+			DWORD nStartTick = GetTickCount(), nEndTick = 0;
+			int nLeft = 0, nWaitLeft = 0, nLoops = 0;
 			const DWORD nSingleThreadWait = 5;
 
 			PLOG3(-1,"WaitFor TERMINATED_STATE",0);
 
 			// Waiting for TERMINATED_STATE for all threads
 			do {
+				nLoops++;
 				nLeft = nWaitLeft = 0;
 				for (int i = 0; i < mn_MaxCount; i++)
 				{
@@ -1515,7 +1518,7 @@ struct PipeServer
 					}
 				}
 				#endif
-			} while ((nWaitLeft > 0) && ((GetTickCount() - nStartTick) < nTimeout));
+			} while ((nWaitLeft > 0) && (((nEndTick = GetTickCount()) - nStartTick) < nTimeout));
 
 			// Non terminated threads exists?
 			if (nLeft > 0)
@@ -1527,7 +1530,8 @@ struct PipeServer
 				{
 					if (m_Pipes[i].hThread && (m_Pipes[i].dwState != THREAD_FINISHED_STATE))
 					{
-						nWait = WaitForSingleObject(m_Pipes[i].hThread, mb_StopFromDllMain ? 0 : 1);
+						DWORD nTimeout = (m_Pipes[i].dwState == TERMINATED_STATE) ? 250 : mb_StopFromDllMain ? 0 : 1;
+						nWait = WaitForSingleObject(m_Pipes[i].hThread, nTimeout);
 						if (nWait != WAIT_OBJECT_0)
 						{
 							PLOG3(i,"TerminateThread/Timeout",m_Pipes[i].dwState);
