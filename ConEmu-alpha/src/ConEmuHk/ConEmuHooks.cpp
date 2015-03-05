@@ -195,7 +195,15 @@ InQueue gInQueue = {};
 HANDLE  ghConsoleCursorChanged = NULL;
 /* ************ Globals for Far Hooks ************ */
 
-void PreReadConsoleInput(HANDLE hConIn, bool abUnicode, bool abPeek);
+enum CEReadConsoleInputFlags
+{
+	rcif_Ansi      = 1,
+	rcif_Unicode   = 2,
+	rcif_Peek      = 4,
+	rcif_LLInput   = 8, // [Read|Peek]ConsoleInput[A|W]
+};
+void PreReadConsoleInput(HANDLE hConIn, DWORD nFlags, CESERVER_CONSOLE_APP_MAPPING** ppAppMap = NULL);
+void PostReadConsoleInput(HANDLE hConIn, DWORD nFlags, CESERVER_CONSOLE_APP_MAPPING* ppAppMap = NULL);
 
 /* ************ Globals for cmd.exe/clink ************ */
 bool     gbIsCmdProcess = false;
@@ -3546,7 +3554,7 @@ void OnReadConsoleStart(bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 		gReadConsoleInfo.InReadConsoleTID = 0;
 	}
 
-	PreReadConsoleInput(hConsoleInput, bUnicode, false);
+	PreReadConsoleInput(hConsoleInput, (bUnicode ? rcif_Unicode : rcif_Ansi));
 }
 
 void OnReadConsoleEnd(BOOL bSucceeded, bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
@@ -3582,6 +3590,8 @@ void OnReadConsoleEnd(BOOL bSucceeded, bool bUnicode, HANDLE hConsoleInput, LPVO
 
 	// Сброс кешированных значений
 	GetConsoleScreenBufferInfoCached(NULL, NULL);
+
+	PostReadConsoleInput(hConsoleInput, (bUnicode ? rcif_Unicode : rcif_Ansi));
 }
 
 bool IsPromptActionAllowed(bool bForce, bool bBashMargin, HANDLE* phConIn)
@@ -4742,7 +4752,10 @@ void OnPeekReadConsoleInput(char acPeekRead/*'P'/'R'*/, char acUnicode/*'A'/'W'*
 
 }
 
-void PreReadConsoleInput(HANDLE hConIn, bool abUnicode, bool abPeek)
+static CESERVER_CONSOLE_APP_MAPPING* gpReadConAppMap = NULL;
+static DWORD gnReadConAppPID = 0;
+
+void PreReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFlags*/, CESERVER_CONSOLE_APP_MAPPING** ppAppMap /*= NULL*/)
 {
 	#if defined(_DEBUG) && defined(PRE_PEEK_CONSOLE_INPUT)
 	INPUT_RECORD ir = {}; DWORD nRead = 0, nBuffer = 0;
@@ -4776,6 +4789,34 @@ void PreReadConsoleInput(HANDLE hConIn, bool abUnicode, bool abPeek)
 					SendCurrentDirectory(ghConWnd, szDir);
 				}
 			}
+		}
+	}
+
+	if ((nFlags & rcif_LLInput) && !(nFlags & rcif_Peek))
+	{
+		// On the one hand - there is a problem with unexpected Enter/Space keypress
+		// github#19: After executing php.exe from command prompt (it runs by Enter KeyDown)
+		//            the app gets in its input queue unexpected Enter KeyUp
+		// On the other hand - application must be able to understand if the key was released
+		// Powershell's 'get-help Get-ChildItem -full | out-host -paging' or Issue 1927 (jilrun.exe)
+		CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL;
+		if (pAppMap)
+		{
+			DWORD nSelfPID = GetCurrentProcessId();
+			pAppMap->nReadConsoleInputPID = nSelfPID;
+			pAppMap->nLastReadConsoleInputPID = nSelfPID;
+			if (ppAppMap) *ppAppMap = pAppMap;
+		}
+	}
+}
+
+void PostReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFlags*/, CESERVER_CONSOLE_APP_MAPPING* pAppMap /*= NULL*/)
+{
+	if ((nFlags & rcif_LLInput) && !(nFlags & rcif_Peek))
+	{
+		if (pAppMap && (pAppMap->nReadConsoleInputPID == GetCurrentProcessId()))
+		{
+			pAppMap->nReadConsoleInputPID = 0;
 		}
 	}
 }
@@ -4824,7 +4865,7 @@ BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
-	PreReadConsoleInput(hConsoleInput, false, true);
+	PreReadConsoleInput(hConsoleInput, rcif_Ansi|rcif_Peek|rcif_LLInput);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
@@ -4836,6 +4877,8 @@ BOOL WINAPI OnPeekConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 #endif
 
 	lbRc = F(PeekConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+
+	PostReadConsoleInput(hConsoleInput, rcif_Ansi|rcif_Peek|rcif_LLInput);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
@@ -4872,7 +4915,7 @@ BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
-	PreReadConsoleInput(hConsoleInput, true, true);
+	PreReadConsoleInput(hConsoleInput, rcif_Unicode|rcif_Peek|rcif_LLInput);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
@@ -4901,8 +4944,10 @@ BOOL WINAPI OnPeekConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	}
 	else
 	{
-	lbRc = F(PeekConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+		lbRc = F(PeekConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 	}
+
+	PostReadConsoleInput(hConsoleInput, rcif_Unicode|rcif_Peek|rcif_LLInput);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
@@ -4961,7 +5006,8 @@ BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
-	PreReadConsoleInput(hConsoleInput, false, false);
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = NULL;
+	PreReadConsoleInput(hConsoleInput, rcif_Ansi|rcif_LLInput, &pAppMap);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
@@ -4969,6 +5015,8 @@ BOOL WINAPI OnReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 	//#endif
 
 	lbRc = F(ReadConsoleInputA)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
+
+	PostReadConsoleInput(hConsoleInput, rcif_Ansi|rcif_LLInput, pAppMap);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
@@ -5009,7 +5057,8 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 			return lbRc;
 	}
 
-	PreReadConsoleInput(hConsoleInput, true, false);
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = NULL;
+	PreReadConsoleInput(hConsoleInput, rcif_Unicode|rcif_LLInput, &pAppMap);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//DWORD nSemaphore = ghConInSemaphore ? WaitForSingleObject(ghConInSemaphore, INSEMTIMEOUT_READ) : 1;
@@ -5034,13 +5083,6 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 		#endif
 	}
 	#endif
-
-	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL;
-	DWORD nAppPID = 0;
-	if (pAppMap)
-	{
-		pAppMap->nReadConsoleInputPID = nAppPID = GetCurrentProcessId();
-	}
 
 	if (gFarMode.bFarHookMode && USE_INTERNAL_QUEUE) // ecompl speed-up
 	{
@@ -5067,10 +5109,7 @@ BOOL WINAPI OnReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DW
 		lbRc = F(ReadConsoleInputW)(hConsoleInput, lpBuffer, nLength, lpNumberOfEventsRead);
 	}
 
-	if (pAppMap && (pAppMap->nReadConsoleInputPID == nAppPID))
-	{
-		pAppMap->nReadConsoleInputPID = 0;
-	}
+	PostReadConsoleInput(hConsoleInput, rcif_Unicode|rcif_LLInput, pAppMap);
 
 	//#ifdef USE_INPUT_SEMAPHORE
 	//if ((nSemaphore == WAIT_OBJECT_0) && ghConInSemaphore) ReleaseSemaphore(ghConInSemaphore, 1, NULL);
