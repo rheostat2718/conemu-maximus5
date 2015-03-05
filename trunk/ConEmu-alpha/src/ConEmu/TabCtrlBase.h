@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,8 @@ protected:
 	int        mn_LBtnDrag;
 	HCURSOR    mh_DragCursor;
 	POINT      mpt_DragStart;
+	LONG       mn_InSelChange;
+	DWORD      mn_LastChangeTick;
 
 protected:
 	//void InitIconList();

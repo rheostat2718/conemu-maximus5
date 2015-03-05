@@ -70,13 +70,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "TabBar.h"
 #include "TermX.h"
+#include "TrayIcon.h"
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
 #define DEBUGSTRCMD(s) //DEBUGSTR(s)
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
-#define DEBUGSTRSTATUS(s) //DEBUGSTR(s)
+#define DEBUGSTRSTATUS(s) DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
 #define DEBUGSTRWHEEL(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
@@ -98,6 +99,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRPROGRESS(s) //DEBUGSTR(s)
 #define DEBUGSTRFARPID(s) DEBUGSTR(s)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
+#define DEBUGSTRSEL(s) DEBUGSTR(s)
 
 // Иногда не отрисовывается диалог поиска полностью - только бежит текущая сканируемая директория.
 // Иногда диалог отрисовался, но часть до текста "..." отсутствует
@@ -160,6 +162,7 @@ const wchar_t gsCloseViewer[] = L"Confirm closing Far viewer?";
 CRealConsole::CRealConsole(CVirtualConsole* pVCon, CConEmuMain* pOwner)
 	: mp_VCon(pVCon)
 	, mp_ConEmu(pOwner)
+	, mb_ConstuctorFinished(false)
 {
 }
 
@@ -409,6 +412,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 		RequestStartup();
 	}
 
+	mb_ConstuctorFinished = true;
 	return true;
 }
 
@@ -3142,7 +3146,7 @@ BOOL CRealConsole::StartMonitorThread()
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 			L"[DBG] Very high CPU load? CreateThread takes %u ms", nThreadCreationTime);
 		#ifdef _DEBUG
-		AssertMsg(szInfo);
+		Icon.ShowTrayIcon(szInfo);
 		#endif
 		LogString(szInfo);
 	}
@@ -9408,6 +9412,10 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 	if (!this)
 		return;
 
+	wchar_t szInfo[120];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"RCon was activated Index=%i OldIndex=%i", nNewNum+1, nOldNum+1);
+	if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+
 	_ASSERTE(isActive(false));
 	// Чтобы можно было найти хэндл окна по хэндлу консоли
 	mp_ConEmu->OnActiveConWndStore(hConWnd);
@@ -10393,7 +10401,8 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 	int iModal = -1, iTabCount;
 	if (tabs.mn_tabsCount < 1)
 	{
-		_ASSERTE(tabs.mn_tabsCount>=1);
+		// Possible situation if some windows message was processed during RCon construction (ex. status bar re-painting)
+		_ASSERTE(tabs.mn_tabsCount>=1 || !mb_ConstuctorFinished);
 		nType = fwt_Panels|fwt_CurrentFarWnd;
 	}
 	else

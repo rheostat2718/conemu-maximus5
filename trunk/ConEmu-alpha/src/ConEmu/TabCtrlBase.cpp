@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2014 Maximus5
+Copyright (c) 2013-2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRWARN(s) DEBUGSTR(s)
+#define DEBUGSTRSEL(s) DEBUGSTR(s)
 
 #include <windows.h>
 #include "header.h"
@@ -49,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Menu.h"
 
 #define TAB_DRAG_START_DELTA 5
+#define MIN_TABCLICK_CHANGE_DELTA 200
 
 CTabPanelBase::CTabPanelBase(CTabBarClass* ap_Owner)
 {
@@ -61,6 +63,8 @@ CTabPanelBase::CTabPanelBase(CTabBarClass* ap_Owner)
 	mn_LBtnDrag = 0;
 	mh_DragCursor = NULL;
 	ZeroStruct(mpt_DragStart);
+	mn_InSelChange = 0;
+	mn_LastChangeTick = 0;
 }
 
 CTabPanelBase::~CTabPanelBase()
@@ -198,6 +202,15 @@ bool CTabPanelBase::FarSendChangeTab(int tabIndex, CVConGuard* rpVCon /*= NULL*/
 	ShowTabErrorInt(NULL, 0);
 
 	bool bVConOk = mp_Owner->GetVConFromTab(tabIndex, &VCon, &wndIndex);
+
+	static DWORD nLastTick = 0; DWORD nCurTick = GetTickCount();
+	wchar_t szInfo[120];
+	int iTickDelta = nLastTick ? (int)(nCurTick - nLastTick) : -1;
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Change tab requested: Tab=%i VCon=%i Wnd=%i Delta=%i",
+		tabIndex+1, VCon.VCon() ? VCon->Index() : -1, wndIndex, iTickDelta);
+	if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+	// _ASSERTE((iTickDelta==-1 || iTickDelta>=250) && "Suspicious fast tab switching, may be not intended by user"); -- may occurs while closing all tabs or window
+	nLastTick = nCurTick;
 
 	if (rpVCon)
 		rpVCon->Release();
@@ -433,14 +446,33 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 	{
 	case WM_LBUTTONDOWN:
 		{
+			wchar_t szInfo[120];
+			if (mn_LastChangeTick && ((GetTickCount() - mn_LastChangeTick) <= MIN_TABCLICK_CHANGE_DELTA))
+			{
+				wcscpy_c(szInfo, L"Tab LeftClick was skipped (mn_LastChangeTick)");
+				if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+				break;
+			}
 			// Может приходить и из ReBar по клику НАД табами
 			mn_LBtnDrag = 1;
 			GetCursorPos(&mpt_DragStart);
 			int lnCurTab = GetCurSelInt();
 			if (lnCurTab != nTabIdx)
 			{
-				FarSendChangeTab(nTabIdx);
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Tab was LeftClicked Tab=%i OldTab=%i InSelChange=%i", nTabIdx+1, lnCurTab+1, mn_InSelChange);
+				if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+
+				if (mn_InSelChange == 0)
+				{
+					FarSendChangeTab(nTabIdx);
+				}
+				else
+				{
+					wcscpy_c(szInfo, L"Tab LeftClick was skipped (mn_InSelChange)");
+					if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+				}
 			}
+			mn_LastChangeTick = GetTickCount();
 			break;
 		}
 	case WM_LBUTTONUP:

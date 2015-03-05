@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #define DEBUGSTRTABS(l,i,s) // { wchar_t szLbl[80]; _wsprintf(szLbl,SKIPLEN(countof(szLbl)) L"CTabPanelWin(%s,%i): ",l,i+1); wchar_t* pszDbg = lstrmerge(szLbl,s); DEBUGSTR(pszDbg); SafeFree(pszDbg); }
+#define DEBUGSTRSEL(s) DEBUGSTR(s)
 
 #include <windows.h>
 #include "header.h"
@@ -818,6 +819,10 @@ int CTabPanelWin::SelectTabInt(int i)
 	int iCurSel = GetCurSelInt();
 	mb_ChangeAllowed = true;
 
+	wchar_t szInfo[120];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"SelectTabInt Tab=%i CurTab=%i", i+1, iCurSel+1);
+	if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+
 	if (i != iCurSel)    // Меняем выделение, только если оно реально меняется
 	{
 		iCurSel = i;
@@ -1056,21 +1061,47 @@ bool CTabPanelWin::OnNotifyInt(LPNMHDR nmhdr, LRESULT& lResult)
 
 	if (nmhdr->code == TCN_SELCHANGE)
 	{
+		InterlockedIncrement(&mn_InSelChange);
 		int lnNewTab = GetCurSelInt();
 
-		if (mn_prevTab>=0)
-		{
-			SelectTabInt(mn_prevTab);
-			mn_prevTab = -1;
-		}
+		wchar_t szInfo[120];
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"WinApi tab was changed: NewTab=%i", lnNewTab+1);
+		if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+
+		bool bRollbackTabs = false, bRefreshTabs = false;
 
 		if (!mb_ChangeAllowed)
 		{
-			FarSendChangeTab(lnNewTab);
+			if (!FarSendChangeTab(lnNewTab))
+			{
+				bRollbackTabs = bRefreshTabs = true;
+			}
 			// start waiting for title to change
 			//_titleShouldChange = true;
 		}
+		else
+		{
+			// This message was intended to be received from user interactions only
+			_ASSERTE(FALSE && "Must not be triggered from internal calls?");
+			bRollbackTabs = true;
+		}
 
+		if (bRollbackTabs)
+		{
+			if (mn_prevTab>=0)
+			{
+				SelectTabInt(mn_prevTab);
+				mn_prevTab = -1;
+			}
+			if (bRefreshTabs)
+			{
+				mp_Owner->Update();
+			}
+		}
+
+		if (gpSetCls->isAdvLogging) { LogString(L"WinApi tab change was finished"); } else { DEBUGSTRSEL(L"WinApi tab change was finished"); }
+		mn_LastChangeTick = GetTickCount();
+		InterlockedDecrement(&mn_InSelChange);
 		lResult = FALSE; // Value ignored actually
 		return true; // Processed
 	}
