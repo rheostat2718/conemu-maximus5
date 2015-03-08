@@ -4027,7 +4027,7 @@ BOOL CRealConsole::StartProcess()
 		{
 			RConStartArgs args;
 			args.AssignFrom(&m_Args);
-			args.aRecreate = cra_EditTab;
+			args.aRecreate = cra_CreateTab; // cra_EditTab; -- button "Start" is expected instead of ambiguous "Save"
 
 			int nCreateRc = mp_ConEmu->RecreateDlg(&args);
 
@@ -13971,7 +13971,8 @@ void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 
 	// Tab templates are case insensitive yet
 	LPCWSTR pszTabTempl = isFar() ? gpSet->szTabPanels : gpSet->szTabConsole;
-	if (wcsstr(pszTabTempl, L"%d") || wcsstr(pszTabTempl, L"%D"))
+	if (wcsstr(pszTabTempl, L"%d") || wcsstr(pszTabTempl, L"%D")
+		|| wcsstr(pszTabTempl, L"%f") || wcsstr(pszTabTempl, L"%F"))
 	{
 		mp_ConEmu->mp_TabBar->Update();
 	}
