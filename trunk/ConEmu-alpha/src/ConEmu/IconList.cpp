@@ -43,6 +43,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ToolImg.h"
 #include "../common/MSectionSimple.h"
 
+#ifdef _DEBUG
+#include "LoadImg.h"
+#endif
+
 CIconList::CIconList()
 {
 	mh_TabIcons = NULL;
@@ -91,7 +95,7 @@ bool CIconList::Initialize()
 			CToolImg img;
 			int nFirstAdd = -1;
 			const int iShieldButtons = 4;
-			if (img.Create(mn_CxIcon * iShieldButtons, mn_CyIcon, 1, GetSysColor(COLOR_BTNFACE)))
+			if (img.Create(mn_CxIcon, mn_CyIcon, iShieldButtons, GetSysColor(COLOR_BTNFACE)))
 			{
 				if (img.AddButtons(g_hInstance, IDB_SHIELD16, iShieldButtons))
 				{
@@ -99,6 +103,9 @@ bool CIconList::Initialize()
 					#ifdef _DEBUG
 					BITMAP bmi = {};
 					GetObject(hShieldUser, sizeof(bmi), &bmi);
+					#ifdef _DEBUG
+					//SaveImageEx(L"T:\\ShieldUser.png", hShieldUser);
+					#endif
 					#endif
 
 					nFirstAdd = ImageList_AddMasked(mh_TabIcons, hShieldUser, RGB(128,0,0));
@@ -109,6 +116,7 @@ bool CIconList::Initialize()
 			int iCount = ImageList_GetImageCount(mh_TabIcons);
 			_ASSERTE(iCount==4);
 			IMAGEINFO ii = {}; BOOL b;
+			// An application should not call DeleteObject to destroy the bitmaps retrieved by ImageList_GetImageInfo
 			b = ImageList_GetImageInfo(mh_TabIcons, 0, &ii);
 			b = ImageList_GetImageInfo(mh_TabIcons, 1, &ii);
 			#endif
@@ -225,6 +233,15 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 
 	if (hFileIcon)
 	{
+		wchar_t szIconInfo[80] = L"", szMergedInfo[80] = L"";
+		GetIconInfoStr(hFileIcon, szIconInfo);
+
+		if (gpSetCls->isAdvLogging)
+		{
+			CEStr lsLog(lstrmerge(L"Icon `", asIconDescr, L"` was loaded: ", szIconInfo));
+			gpConEmu->LogString(lsLog);
+		}
+
 		int iIconIdxAdm = -1;
 		iIconIdx = ImageList_ReplaceIcon(mh_TabIcons, -1, hFileIcon);
 
@@ -239,6 +256,9 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 				HICON hNewIcon = ImageList_GetIcon(hAdmList, 0, ILD_TRANSPARENT);
 				if (hNewIcon)
 				{
+					CEStr lsLog(lstrmerge(L"Admin icon `", asIconDescr, L"` was created: ", GetIconInfoStr(hNewIcon, szMergedInfo)));
+					gpConEmu->LogString(lsLog);
+
 					iIconIdxAdm = ImageList_ReplaceIcon(mh_TabIcons, -1, hNewIcon);
 					DestroyIcon(hNewIcon);
 
@@ -250,6 +270,14 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 						iIconIdx = iIconIdxAdm;
 					}
 				}
+				else
+				{
+					gpConEmu->LogString(L"GetIcon for admin icon was failed");
+				}
+			}
+			else
+			{
+				gpConEmu->LogString(L"Admin icon merging was failed");
 			}
 		}
 
@@ -262,7 +290,24 @@ wrap:
 		gpConEmu->ChangeWorkDir(NULL);
 	}
 	SafeFree(pszExpanded);
+	if (gpSetCls->isAdvLogging && (iIconIdx < 0))
+	{
+		CEStr lsLog(lstrmerge(L"Icon `", asIconDescr, L"` loading was failed"));
+		gpConEmu->LogString(lsLog);
+	}
 	return iIconIdx;
+}
+
+LPCWSTR CIconList::GetIconInfoStr(HICON h, wchar_t (&szInfo)[80])
+{
+	ICONINFO ii = {};
+	GetIconInfo(h, &ii);
+	BITMAP bi = {};
+	GetObject(ii.hbmColor, sizeof(bi), &bi);
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"{%ix%i} planes=%u bpp=%u", bi.bmWidth, bi.bmHeight, bi.bmPlanes, bi.bmBitsPixel);
+	SafeDeleteObject(ii.hbmColor);
+	SafeDeleteObject(ii.hbmMask);
+	return szInfo;
 }
 
 HICON CIconList::GetTabIconByIndex(int IconIndex)
