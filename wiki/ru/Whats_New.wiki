@@ -7,6 +7,15 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
+==Build 150310==
+  * Mouse events were sometimes unexpectedly sent to the console during selection.
+  * 150309 regression. "`ConEmu.ico`" was looked in wrong folder.
+  * Overlay icon on Win7 TaskBar was not shown in some cases.
+  * Name checkbox ‘Alternative font ...’ instead of ‘... pseudographics font’.
+  * TaskBar aero thumbnail of active console was not live-updated if ConEmu was minimized.
+  * Don't use ‘Enhance progressbars and scrollbars’ for cells with `bg==gf` unless it is `100%` filled block.
+
+
 ==Build 150309==
   * Issue 1937: ‘Admin shield’ in TabBar was broken.
   * Only use "`ConEmu.ico`" name as possible external icon.
