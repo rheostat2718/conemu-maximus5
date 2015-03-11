@@ -2996,6 +2996,9 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				//	mp_ConEmu->OnSize(false); // послать в главную нить запрос на обновление размера
 				bool lbNeedRedraw = false;
 
+				if (lbForceUpdate && gpConEmu->isIconic())
+					mp_VCon->UpdateThumbnail();
+
 				if ((nWait == (WAIT_OBJECT_0+1)) || lbForceUpdate)
 				{
 					//2010-05-18 lbForceUpdate вызывал CVirtualConsole::Update(abForce=true), что приводило к тормозам
@@ -4606,6 +4609,13 @@ void CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 
 	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
 		return; // В консоль не пересылать, событие обработал "сам буфер"
+
+	#ifdef _DEBUG
+	if (mp_ABuf->isSelectionPresent())
+	{
+		_ASSERTE(FALSE && "Buffer must process mouse internally");
+	}
+	#endif
 
 
 	if (isFar() && mp_ConEmu->IsGesturesEnabled())

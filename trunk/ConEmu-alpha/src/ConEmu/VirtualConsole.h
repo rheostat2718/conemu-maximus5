@@ -187,7 +187,7 @@ class CVirtualConsole :
 		// Working pointers
 		bool mb_PointersAllocated;
 		wchar_t  *mpsz_ConChar, *mpsz_ConCharSave;   // nMaxTextWidth * nMaxTextHeight
-		// CharAttr определен в RealConsole.h
+		// CharAttr определен в "common/RgnDetect.h"
 		CharAttr *mpn_ConAttrEx, *mpn_ConAttrExSave; // nMaxTextWidth * nMaxTextHeight
 		DWORD *ConCharX;      // nMaxTextWidth * nMaxTextHeight
 		DWORD *ConCharDX;     // nMaxTextWidth
@@ -368,7 +368,7 @@ class CVirtualConsole :
 		bool UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock *pSCON);
 		void UpdateText();
 		void PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC, bool bFill);
-		WORD CharWidth(wchar_t ch);
+		WORD CharWidth(wchar_t ch, const CharAttr& attr);
 		void CharABC(wchar_t ch, ABC *abc);
 		bool CheckChangedTextAttr();
 		bool CheckTransparentRgn(bool abHasChildWindows);
