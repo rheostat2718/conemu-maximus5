@@ -3263,7 +3263,11 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 	// Ensure that coordinates are correct
 	if (!PatchMouseCoords(x, y, crMouse))
+	{
+		if (isSelectionPresent())
+			return true; // even if outside - don't send to console!
 		return false;
+	}
 
 	mcr_LastMousePos = crMouse;
 
@@ -5417,9 +5421,23 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				{
 					lca = lcaTable[7];
 
-					for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
+					if (!gbIsDBCS)
 					{
-						pcaDst[nX] = lca;
+						for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
+						{
+							pcaDst[nX] = lca;
+						}
+					}
+					else
+					{
+						for (nX = 0; nX < (int)cnSrcLineLen; nX++, pnSrc++, pcolSrc++)
+						{
+							pcaDst[nX] = lca;
+							if ((*pnSrc & (COMMON_LVB_LEADING_BYTE|COMMON_LVB_TRAILING_BYTE)) == (COMMON_LVB_LEADING_BYTE|COMMON_LVB_TRAILING_BYTE))
+							{
+								pcaDst[nX].Flags |= CharAttr_DoubleSpaced;
+							}
+						}
 					}
 				}
 				else
@@ -5436,6 +5454,11 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 						TODO("OPTIMIZE: lca = lcaTable[atr];");
 						lca = lcaTable[atr];
 						TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
+
+						if (gbIsDBCS && ((*pnSrc & (COMMON_LVB_LEADING_BYTE|COMMON_LVB_TRAILING_BYTE)) == (COMMON_LVB_LEADING_BYTE|COMMON_LVB_TRAILING_BYTE)))
+						{
+							lca.Flags |= CharAttr_DoubleSpaced;
+						}
 
 						if (bExtendColors && (nY >= nExtendStartsY))
 						{

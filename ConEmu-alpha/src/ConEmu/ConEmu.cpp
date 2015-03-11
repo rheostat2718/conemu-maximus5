@@ -422,6 +422,7 @@ CConEmuMain::CConEmuMain()
 	mb_AllowAutoChildFocus = false;
 	mb_ScClosePending = false;
 	mb_UpdateJumpListOnStartup = false;
+	mn_AdmShieldTimerCounter = 0;
 
 	mps_IconPath = NULL;
 
@@ -3663,7 +3664,7 @@ void CConEmuMain::LoadIcons()
 	else
 	{
 		wcscpy_c(szIconPath, ms_ConEmuExeDir);
-		wcscat_c(szIconPath, L"ConEmu.ico");
+		wcscat_c(szIconPath, L"\\ConEmu.ico");
 		if (!FileExists(szIconPath))
 		{
 			szIconPath[0] = 0;
@@ -7253,9 +7254,10 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		UNREFERENCED_PARAMETER(n);
 		OnActivateSplitChanged();
 
-		if (gpSet->isTaskbarShield && mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
+		if (gpSet->isTaskbarShield && gpSet->isWindowOnTaskBar())
 		{
 			// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
+			mn_AdmShieldTimerCounter = 0;
 			SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
 		}
 
@@ -8280,6 +8282,7 @@ void CConEmuMain::OnTaskbarButtonCreated()
 		if (mb_IsUacAdmin)
 		{
 			// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
+			mn_AdmShieldTimerCounter = 0;
 			SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
 		}
 	}
@@ -12407,15 +12410,16 @@ void CConEmuMain::OnTimer_RClickPaint()
 // Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
 void CConEmuMain::OnTimer_AdmShield()
 {
-	static int nStep = 0;
 	if (gpSet->isTaskbarShield)
 	{
+		LogString(L"Calling Taskbar_UpdateOverlay from timer");
 		Taskbar_UpdateOverlay();
-		nStep++;
+		mn_AdmShieldTimerCounter++;
 	}
-	if ((nStep >= 5) || !gpSet->isTaskbarShield)
+	if ((mn_AdmShieldTimerCounter >= 5) || !gpSet->isTaskbarShield)
 	{
 		SetKillTimer(false, TIMER_ADMSHIELD_ID, 0);
+		LogString(L"Timer for Taskbar_UpdateOverlay was stopped");
 	}
 }
 
@@ -13787,6 +13791,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgTaskBarBtnCreated)
 			{
+				LogString(L"Message 'TaskbarButtonCreated' was received, reapplying icon properties");
 				this->OnTaskbarButtonCreated();
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 				return result;
