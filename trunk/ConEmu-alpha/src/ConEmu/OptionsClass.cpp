@@ -1741,7 +1741,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2, bool abInitial)
 			L"Far Manager borders: 2500-25C4;",
 			L"Dashes and Borders: 2013-2015;2500-25C4;",
 			L"Pseudographics: 2013-25C4;",
-			L"CJK: 2E80-9FC3;F900-FAFF;FE30-FE4F;FF01-FF60;FFE0-FFE6;",
+			L"CJK: 2E80-9FC3;AC00-D7A3;F900-FAFF;FE30-FE4F;FF01-FF60;FFE0-FFE6;",
 			NULL
 		};
 		CEStr szCharRanges(gpSet->CreateCharRanges(gpSet->mpc_FixFarBorderValues));
@@ -1765,7 +1765,7 @@ LRESULT CSettings::OnInitDialog_Main(HWND hWnd2, bool abInitial)
 				bExist = true;
 			}
 		}
-		if (pszCurrentRange && *pszCurrentRange)
+		if (pszCurrentRange && *pszCurrentRange && !bExist)
 			SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)pszCurrentRange);
 		// And show current value
 		SetWindowText(hCombo, pszCurrentRange ? pszCurrentRange : L"");
@@ -5336,6 +5336,8 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tUnicodeRanges:
 		// Do not required actually, the button "Apply" is enabled by default
 		EnableWindow(GetDlgItem(hWnd2, cbUnicodeRangesApply), TRUE);
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+			PostMessage(hWnd2, WM_COMMAND, cbUnicodeRangesApply, 0);
 		break;
 
 	case lbBgPlacement:
