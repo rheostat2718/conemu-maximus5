@@ -7,7 +7,7 @@
 http://code.google.com/p/conemu-maximus5/wiki/Awards
 
 
-==Build 150311==
+==Build 150316==
   * Issue 1931: Fix crash and broken Far frames after resize (regression).
   * Inform user about some project events using TaskBar status area notification. Click on the icon or information balloon will show extended information dialog where user may stop showing this notification.
   * Translate mouse wheel into escape sequences when ConEmu emulates xterm (vim especially). If you want to use mouse wheel in Vim (official version was tested), just add to vimrc:
