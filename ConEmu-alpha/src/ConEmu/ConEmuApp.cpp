@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <commctrl.h>
 #pragma warning(disable: 4091)
 #include <shlobj.h>
+#include <exdisp.h>
 #pragma warning(default: 4091)
 #include <tlhelp32.h>
 #ifndef __GNUC__
@@ -45,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include "../common/ConEmuCheck.h"
 #include "../common/CmdLine.h"
+#include "../common/DefTermBase.h"
 #include "../common/MMap.h"
 #include "../common/execute.h"
 #include "../common/WFiles.h"
@@ -2700,10 +2702,103 @@ void ResetConman()
 	}
 }
 
+HWND FindTopExplorerWindow()
+{
+	wchar_t szClass[MAX_PATH] = L"";
+	HWND hwndFind = NULL;
+
+	while ((hwndFind = FindWindowEx(NULL, hwndFind, NULL, NULL)) != NULL)
+	{
+		if ((GetClassName(hwndFind, szClass, countof(szClass)) > 0)
+			&& CDefTermBase::IsExplorerWindowClass(szClass))
+			break;
+	}
+
+	return hwndFind;
+}
+
+wchar_t* getFocusedExplorerWindowPath()
+{
+#define FE_CHECK_OUTER_FAIL(statement) \
+	if (!SUCCEEDED(statement)) goto outer_fail;
+
+#define FE_CHECK_FAIL(statement) \
+	if (!SUCCEEDED(statement)) goto fail;
+
+#define FE_RELEASE(hnd) \
+	if (hnd) { hnd->Release(); hnd = NULL; }
+
+	wchar_t* ret = NULL;
+	wchar_t szPath[MAX_PATH] = L"";
+
+	IShellBrowser *psb = NULL;
+	IShellView *psv = NULL;
+	IFolderView *pfv = NULL;
+	IPersistFolder2 *ppf2 = NULL;
+	IDispatch  *pdisp = NULL;
+	IWebBrowserApp *pwba = NULL;
+	IServiceProvider *psp = NULL;
+	IShellWindows *psw = NULL;
+
+	VARIANT v;
+	HWND hwndWBA;
+	LPITEMIDLIST pidlFolder;
+
+	BOOL fFound = FALSE;
+	HWND hwndFind = FindTopExplorerWindow();
+
+	FE_CHECK_OUTER_FAIL(CoCreateInstance(CLSID_ShellWindows, NULL, CLSCTX_ALL,
+		IID_IShellWindows, (void**)&psw))
+
+	V_VT(&v) = VT_I4;
+	for (V_I4(&v) = 0; !fFound && psw->Item(v, &pdisp) == S_OK; V_I4(&v)++)
+	{
+		FE_CHECK_FAIL(pdisp->QueryInterface(IID_IWebBrowserApp, (void**)&pwba))
+		FE_CHECK_FAIL(pwba->get_HWND((LONG_PTR*)&hwndWBA))
+
+		if (hwndWBA != hwndFind)
+			goto fail;
+
+		fFound = TRUE;
+		FE_CHECK_FAIL(pwba->QueryInterface(IID_IServiceProvider, (void**)&psp))
+		FE_CHECK_FAIL(psp->QueryService(SID_STopLevelBrowser, IID_IShellBrowser, (void**)&psb))
+		FE_CHECK_FAIL(psb->QueryActiveShellView(&psv))
+		FE_CHECK_FAIL(psv->QueryInterface(IID_IFolderView, (void**)&pfv))
+		FE_CHECK_FAIL(pfv->GetFolder(IID_IPersistFolder2, (void**)&ppf2))
+		FE_CHECK_FAIL(ppf2->GetCurFolder(&pidlFolder))
+
+		if (!SHGetPathFromIDList(pidlFolder, szPath) || !*szPath)
+			goto fail;
+
+		ret = lstrdup(szPath);
+
+		CoTaskMemFree(pidlFolder);
+
+		fail:
+		FE_RELEASE(ppf2)
+		FE_RELEASE(pfv)
+		FE_RELEASE(psv)
+		FE_RELEASE(psb)
+		FE_RELEASE(psp)
+		FE_RELEASE(pwba)
+		FE_RELEASE(pdisp)
+	}
+
+	outer_fail:
+	FE_RELEASE(psw)
+
+	return ret;
+
+#undef FE_CHECK_OUTER_FAIL
+#undef FE_CHECK_FAIL
+#undef FE_RELEASE
+}
+
 #ifndef __GNUC__
 // Creates a CLSID_ShellLink to insert into the Tasks section of the Jump List.  This type of Jump
 // List item allows the specification of an explicit command line to execute the task.
-HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle, IShellLink **ppsl)
+// Used only for JumpList creation...
+static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle, IShellLink **ppsl)
 {
 	if ((!pszArguments || !*pszArguments) && (!pszTitle || !*pszTitle))
 	{
@@ -2719,6 +2814,8 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 	if (pszConfig && !*pszConfig)
 		pszConfig = NULL;
 
+	LPCWSTR pszAddArgs = gpConEmu->mps_ConEmuExtraArgs;
+
 	wchar_t* pszBuf = NULL;
 	if (!pszArguments || !*pszArguments)
 	{
@@ -2726,6 +2823,7 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 			+ (pszPrefix ? _tcslen(pszPrefix) : 0)
 			+ (pszConfig ? _tcslen(pszConfig) : 0)
 			+ (pszXmlFile ? (_tcslen(pszXmlFile) + 32) : 0)
+			+ (pszAddArgs ? _tcslen(pszAddArgs) : 0)
 			+ 32;
 
 		pszBuf = (wchar_t*)malloc(cchMax*sizeof(*pszBuf));
@@ -2749,6 +2847,10 @@ HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR pszTitle,
 			_wcscat_c(pszBuf, cchMax, L"/config \"");
 			_wcscat_c(pszBuf, cchMax, pszConfig);
 			_wcscat_c(pszBuf, cchMax, L"\" ");
+		}
+		if (pszAddArgs)
+		{
+			_wcscat_c(pszBuf, cchMax, pszAddArgs);
 		}
 		_wcscat_c(pszBuf, cchMax, L"/cmd ");
 		_wcscat_c(pszBuf, cchMax, pszTitle);
@@ -3728,10 +3830,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/multi")))
 				{
+					gpConEmu->AppendExtraArgs(curCommand);
 					MultiConValue = true; MultiConPrm = true;
 				}
 				else if (!klstricmp(curCommand, _T("/nomulti")))
 				{
+					gpConEmu->AppendExtraArgs(curCommand);
 					MultiConValue = false; MultiConPrm = true;
 				}
 				else if (!klstricmp(curCommand, _T("/visible")))
@@ -3761,6 +3865,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					{
 						FontPrm = true;
 						FontVal = curCommand;
+						gpConEmu->AppendExtraArgs(L"/font", curCommand);
 					}
 				}
 				// Высота шрифта
@@ -3864,6 +3969,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					{
 						return 100;
 					}
+					gpConEmu->AppendExtraArgs(L"/fontfile", pszFile);
 					gpSetCls->RegisterFont(pszFile, TRUE);
 				}
 				// Register all fonts from specified directory
@@ -3874,6 +3980,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					{
 						return 100;
 					}
+					gpConEmu->AppendExtraArgs(L"/fontdir", pszDir);
 					gpSetCls->RegisterFontsDir(pszDir);
 				}
 				else if (!klstricmp(curCommand, _T("/fs")))
@@ -4038,10 +4145,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/single")) || !klstricmp(curCommand, _T("/reuse")))
 				{
 					// "/reuse" switch to be remastered
+					gpConEmu->AppendExtraArgs(curCommand);
 					gpSetCls->SingleInstanceArg = sgl_Enabled;
 				}
 				else if (!klstricmp(curCommand, _T("/nosingle")))
 				{
+					gpConEmu->AppendExtraArgs(curCommand);
 					gpSetCls->SingleInstanceArg = sgl_Disabled;
 				}
 				else if (!klstricmp(curCommand, _T("/quake"))
@@ -4084,6 +4193,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				else if (!klstricmp(curCommand, _T("/nocascade"))
 					|| !klstricmp(curCommand, _T("/dontcascade")))
 				{
+					gpConEmu->AppendExtraArgs(curCommand);
 					gpSetCls->isDontCascade = true;
 				}
 				else if (!klstricmp(curCommand, _T("/WndX")) || !klstricmp(curCommand, _T("/WndY"))
@@ -4149,6 +4259,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				}
 				else if (!klstricmp(curCommand, _T("/LoadRegistry")))
 				{
+					gpConEmu->AppendExtraArgs(curCommand);
 					ForceUseRegistryPrm = true;
 				}
 				else if (!klstricmp(curCommand, _T("/LoadCfgFile")) && i + 1 < params)

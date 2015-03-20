@@ -121,9 +121,11 @@ WARNING("Часто после разблокирования компьютер
 #ifdef _DEBUG
 //#undef HEAPVAL
 #define HEAPVAL //HeapValidate(mh_Heap, 0, NULL);
+#define HEAPVALPTR(p) //xf_validate(p)
 #define CURSOR_ALWAYS_VISIBLE
 #else
 #define HEAPVAL
+#define HEAPVALPTR(p)
 #endif
 
 #define ISBGIMGCOLOR(a) (nBgImageColors & (1 << a))
@@ -3837,8 +3839,13 @@ void CVirtualConsole::UpdateText()
 
 						if (bIsHorzBorder)
 						{
+							DEBUGTEST(WORD nCurCharWidth2 = CharWidth(c, attr));
+							_ASSERTE(nCurCharWidth2 == nCurCharWidth);
 							while (j2 < end && ConAttrLine[j2] == attr && c == ConCharLine[j2])
+							{
+								ConCharXLine[j2] = (j2 ? ConCharXLine[j2-1] : 0)+nCurCharWidth;
 								j2++;
+							}
 						}
 
 						// Why that was called? It breaks evaluated previously hieroglyphs positions on DBCS
@@ -3847,7 +3854,7 @@ void CVirtualConsole::UpdateText()
 						int nBorderWidth = CharWidth(c, attr);
 						rect.left = j ? ConCharXLine[j-1] : 0;
 						rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
-						int nCnt = (rect.right - rect.left + (nBorderWidth>>1)) / nBorderWidth;
+						int nCnt = klMin((long)TextWidth,(rect.right - rect.left + (nBorderWidth>>1)) / nBorderWidth);
 
 						if (nCnt > (j2 - j))
 						{
@@ -3889,16 +3896,49 @@ void CVirtualConsole::UpdateText()
 					pszDraw = ConCharLine + j;
 					pDrawAttr = ConAttrLine + j;
 					nDrawLen = j2 - j;
+					_ASSERTE(nDrawLen <= (int)TextWidth);
 				}
+				_ASSERTE(nDrawLen >= 0);
 
 				//if (!gpSet->isProportional) {
 				//	TODO("Что-то как-то... ведь положения уже вроде расчитали?");
 				//  rect = MakeRect(j * nFontWidth, pos, j2 * nFontWidth, pos + nFontHeight);
 				//} else {
-				rect.left = j ? ConCharXLine[j-1] : 0;
+				if (j)
+				{
+					if (ConCharXLine[j-1])
+					{
+						rect.left = ConCharXLine[j-1];
+					}
+					else
+					{
+						_ASSERTE((ConCharXLine[j-1]!=0) && "Must be already filled");
+						rect.left = j * nFontWidth;
+					}
+				}
+				else
+				{
+					rect.left = 0;
+				}
 				rect.top = pos;
-				rect.right = (TextWidth>(UINT)j2) ? ConCharXLine[j2-1] : Width;
+				if (TextWidth>(UINT)j2)
+				{
+					if (ConCharXLine[j2-1])
+					{
+						rect.right = ConCharXLine[j2-1];
+					}
+					else
+					{
+						_ASSERTE((ConCharXLine[j2-1]!=0) && "Must be already filled");
+						rect.right = j2 * nFontWidth;
+					}
+				}
+				else
+				{
+					rect.right = Width;
+				}
 				rect.bottom = rect.top + nFontHeight;
+				_ASSERTE(rect.left > 0 || (j <= 2));
 				//}
 				HEAPVAL
 				BOOL lbImgDrawn = FALSE;
@@ -3979,11 +4019,12 @@ void CVirtualConsole::UpdateText()
 
 						if (!bProportional)
 						{
-							for(int idx = 0; idx < nDrawLen; idx++)
+							for (int idx = 0; idx < nDrawLen; idx++)
 							{
 								WARNING("BUGBUG: что именно нужно передавать для получения ширины OEM символа?");
 								nDX[idx] = CharWidth(tmpOem[idx], attr);
 							}
+							HEAPVALPTR(nDX);
 						}
 
 						m_DC.TextDrawOem(rect.left, rect.top, nFlags,
@@ -3993,6 +4034,12 @@ void CVirtualConsole::UpdateText()
 					{
 						int nShift0 = 0, nPrevEdge = 0;
 						ABC abc;
+
+						if (nDrawLen > (int)TextWidth)
+						{
+							_ASSERTE(nDrawLen <= (int)TextWidth);
+							nDrawLen = TextWidth;
+						}
 
 						// Для пропорциональных шрифтов - где рисовать каждый символ разбирается GDI
 						if (!bProportional)
@@ -4005,6 +4052,7 @@ void CVirtualConsole::UpdateText()
 								{
 									for (int idx = 0, n = nDrawLen; n; idx++, n--)
 										nDX[idx] = nFontWidth;
+									HEAPVALPTR(nDX);
 								}
 								else
 								{
@@ -4012,6 +4060,7 @@ void CVirtualConsole::UpdateText()
 										nDX[idx] = (pDrawAttr[idx].Flags & CharAttr_DoubleSpaced)
 											? CharWidth(pszDraw[idx], attr)
 											: nFontWidth;
+									HEAPVALPTR(nDX);
 								}
 							}
 							else
@@ -4072,6 +4121,7 @@ void CVirtualConsole::UpdateText()
 										{
 											nDX[idx-1] += nEdge;
 											_ASSERTE(nDX[idx-1]>=-100);
+											HEAPVALPTR(nDX);
 										}
 										else
 										{
@@ -4081,6 +4131,7 @@ void CVirtualConsole::UpdateText()
 										nPrevEdge += nEdge;
 
 										nDX[idx] = nCharWidth;
+										HEAPVALPTR(nDX);
 
 										//if (abc.abcA < nEdge)
 										//{
@@ -4100,11 +4151,14 @@ void CVirtualConsole::UpdateText()
 											nDX[idx-1] -= nPrevEdge;
 											nPrevEdge = 0;
 										}
+										HEAPVALPTR(nDX);
 										//_ASSERTE(abc.abcC==0 && "Check what symbols can produce '!=0'");
 									}
 								}
 							}
 						}
+
+						_ASSERTE(rect.left > 0 || (j <= 2));
 
 						// nDX это сдвиги до начала следующего символа, с начала предыдущего
 						m_DC.TextDraw(rect.left+nShift0, rect.top, nFlags, &rect,
@@ -4133,6 +4187,8 @@ void CVirtualConsole::UpdateText()
 			//    }
 			//}
 		}
+
+		HEAPVALPTR(nDX);
 	}
 
 	if ((pos > nMaxPos) && (pos < (int)Height))
@@ -4148,6 +4204,8 @@ void CVirtualConsole::UpdateText()
 	}
 
 	free(nDX);
+
+	HEAPVAL;
 
 	// Screen updated, reset until next "UpdateHighlights()" call
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
@@ -4370,6 +4428,12 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 			//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
 		}
 
+		if (!nHeight)
+		{
+			// Hollow cursor, nothing to draw
+			return;
+		}
+
 		//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
 		rect.top = max(rect.top, (rect.bottom-nHeight));
 	}
@@ -4409,6 +4473,12 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 			nWidth = min(nMaxWidth,max(nWidth,MinSize));
 			//if (nWidth < VCURSORWIDTH) nWidth = VCURSORWIDTH;
+		}
+
+		if (!nWidth)
+		{
+			// Hollow cursor, nothing to draw
+			return;
 		}
 
 		rect.right = min(nR, (rect.left+nWidth));

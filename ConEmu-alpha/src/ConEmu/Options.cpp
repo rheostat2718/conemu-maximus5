@@ -1079,8 +1079,8 @@ void Settings::LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECu
 		reg->Load(L"CursorTypeInactive", pInactive->Raw);
 
 		_MinMax(pInactive->CursorType, cur_First, cur_Last);
-		_MinMax(pInactive->FixedSize, CURSORSIZE_MIN, CURSORSIZE_MAX);
-		_MinMax(pInactive->MinSize, CURSORSIZEPIX_MIN, CURSORSIZEPIX_MAX);
+		_MinMax(pInactive->FixedSize, 0, CURSORSIZE_MAX);
+		_MinMax(pInactive->MinSize, 0, CURSORSIZEPIX_MAX);
 	}
 	else
 	{
@@ -2894,32 +2894,14 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"Update.LeavePackages", UpdSet.isUpdateLeavePackages);
 		reg->Load(L"Update.PostUpdateCmd", &UpdSet.szUpdatePostUpdateCmd);
 
-		/* Hotkeys */
-		LoadHotkeys(reg);
-		// Для совместимости настроек
-		if (bSendAltSpace || bSendAltEnter || bSendAltF9)
-		{
-			ConEmuHotKey* pHK;
-			// Если раньше был включен флажок "Send Alt+Space to console"
-			if (bSendAltSpace && GetHotkeyById(vkSystemMenu, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->Equal(VK_SPACE,VK_MENU)))
-			{
-				pHK->Key.Set(); // Сбросить VkMod для vkSystemMenu (раньше назывался vkAltSpace)
-			}
-			// Если раньше был включен флажок "Send Alt+Enter to console"
-			if (bSendAltEnter && GetHotkeyById(vkAltEnter, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->Equal(VK_RETURN,VK_MENU)))
-			{
-				pHK->Key.Set(); // Сбросить VkMod для vkAltEnter
-			}
-			// Если раньше был включен флажок "Send Alt+F9 to console"
-			if (bSendAltF9 && GetHotkeyById(vkMaximize, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->Equal(VK_F9,VK_MENU)))
-			{
-				pHK->Key.Set(); // Сбросить VkMod для vkMaximize
-			}
-		}
+		/* *** Notification *** */
+		reg->Load(L"Notification.StopBuzzingDate", StopBuzzingDate, countof(StopBuzzingDate));
 
 		/* Done */
 		reg->CloseKey();
 	}
+
+	LoadHotkeys(reg, bSendAltEnter, bSendAltSpace, bSendAltF9);
 
 	LoadPalettes(reg);
 
@@ -3109,6 +3091,29 @@ void Settings::SaveSettingsOnExit()
 	else
 	{
 		gpConEmu->LogWindowPos(L"SaveSettingsOnExit - FAILED(OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))");
+	}
+
+	delete reg;
+}
+
+void Settings::SaveStopBuzzingDate()
+{
+	if (gpConEmu->IsResetBasicSettings())
+		return;
+
+	SettingsBase* reg = CreateSettings(NULL);
+	if (!reg)
+	{
+		gpConEmu->LogWindowPos(L"SaveStopBuzzingDate - FAILED(CreateSettings)");
+		_ASSERTE(reg!=NULL);
+		return;
+	}
+
+	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
+	{
+		SYSTEMTIME st = {}; GetLocalTime(&st);
+		_wsprintf(StopBuzzingDate, SKIPCOUNT(StopBuzzingDate) L"%u-%u-%u", st.wYear, st.wMonth, st.wDay);
+		reg->Save(L"Notification.StopBuzzingDate", StopBuzzingDate);
 	}
 
 	delete reg;
@@ -3678,13 +3683,11 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"Update.LeavePackages", UpdSet.isUpdateLeavePackages);
 		reg->Save(L"Update.PostUpdateCmd", UpdSet.szUpdatePostUpdateCmd);
 
-		/* Hotkeys */
-		SaveHotkeys(reg);
-
 		/* Done */
 		reg->CloseKey();
 
 		/* Subsections */
+		SaveHotkeys(reg);
 		SaveCmdTasks(reg);
 		SaveAppsSettings(reg);
 		SavePalettes(reg);
@@ -5348,23 +5351,49 @@ bool Settings::isKeyOrModifierExist(BYTE Mod/*VK*/)
 	return false;
 }
 
-void Settings::LoadHotkeys(SettingsBase* reg)
+void Settings::LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const bool& bSendAltSpace, const bool& bSendAltF9)
 {
-	reg->Load(L"Multi.Modifier", nHostkeyNumberModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyNumberModifier);
-	nHostkeyArrowModifier = nHostkeyArrowModifier; // Умолчание - то же что и "Multi.Modifier"
-	reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyArrowModifier);
-
-	wchar_t szMacroName[80];
-
-	// Compatibility with old settings format
-	BYTE MacroVersion = 0;
-	reg->Load(L"KeyMacroVersion", MacroVersion);
+	if (!reg)
+	{
+		_ASSERTE(reg!=NULL);
+		return;
+	}
 
 	if (!gpSetCls)
 	{
 		_ASSERTE(gpSetCls);
 		return;
 	}
+
+	BOOL lbOpened = FALSE;
+	wchar_t szMacroName[80];
+	wchar_t szKeysPath[MAX_PATH+64];
+
+	wcscpy_c(szKeysPath, gpSetCls->GetConfigPath());
+	wchar_t* pszKeysRoot = szKeysPath + lstrlen(szKeysPath);
+	wcscat_c(szKeysPath, L"\\HotKeys");
+
+	lbOpened = reg->OpenKey(szKeysPath, KEY_READ);
+	if (!lbOpened)
+	{
+		// HotKeys had been located originally in the root settings keys,
+		// but have been moved to subkey later
+		*pszKeysRoot = 0;
+		lbOpened = reg->OpenKey(szKeysPath, KEY_READ);
+		if (!lbOpened)
+		{
+			_ASSERTE(FALSE && "Settings Open operation failed");
+			return;
+		}
+	}
+
+	// Compatibility with old settings format
+	BYTE MacroVersion = 0;
+	reg->Load(L"KeyMacroVersion", MacroVersion);
+
+	reg->Load(L"Multi.Modifier", nHostkeyNumberModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyNumberModifier);
+	nHostkeyArrowModifier = nHostkeyArrowModifier; // Умолчание - то же что и "Multi.Modifier"
+	reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyArrowModifier);
 
 	INT_PTR iMax = gpSetCls->m_HotKeys.size();
 	for (int i = 0; i < iMax; i++)
@@ -5437,6 +5466,29 @@ void Settings::LoadHotkeys(SettingsBase* reg)
 			{
 				ppHK->GuiMacro = pszMacro;
 			}
+		}
+	}
+
+	reg->CloseKey();
+
+	// Для совместимости настроек
+	if (bSendAltSpace || bSendAltEnter || bSendAltF9)
+	{
+		ConEmuHotKey* pHK;
+		// Если раньше был включен флажок "Send Alt+Space to console"
+		if (bSendAltSpace && GetHotkeyById(vkSystemMenu, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->Equal(VK_SPACE,VK_MENU)))
+		{
+			pHK->Key.Set(); // Сбросить VkMod для vkSystemMenu (раньше назывался vkAltSpace)
+		}
+		// Если раньше был включен флажок "Send Alt+Enter to console"
+		if (bSendAltEnter && GetHotkeyById(vkAltEnter, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->Equal(VK_RETURN,VK_MENU)))
+		{
+			pHK->Key.Set(); // Сбросить VkMod для vkAltEnter
+		}
+		// Если раньше был включен флажок "Send Alt+F9 to console"
+		if (bSendAltF9 && GetHotkeyById(vkMaximize, (const ConEmuHotKey**)&pHK) && pHK->NotChanged && (pHK->Equal(VK_F9,VK_MENU)))
+		{
+			pHK->Key.Set(); // Сбросить VkMod для vkMaximize
 		}
 	}
 }
@@ -5555,11 +5607,11 @@ wrap:
 
 void Settings::SaveHotkeys(SettingsBase* reg)
 {
-	reg->Save(L"Multi.Modifier", nHostkeyNumberModifier);
-	reg->Save(L"Multi.ArrowsModifier", nHostkeyArrowModifier);
-
-	BYTE MacroVersion = GUI_MACRO_VERSION;
-	reg->Save(L"KeyMacroVersion", MacroVersion);
+	if (!reg)
+	{
+		_ASSERTE(reg!=NULL);
+		return;
+	}
 
 	if (!gpSetCls)
 	{
@@ -5567,7 +5619,27 @@ void Settings::SaveHotkeys(SettingsBase* reg)
 		return;
 	}
 
+	BOOL lbOpened = FALSE;
 	wchar_t szMacroName[80];
+	wchar_t szKeysPath[MAX_PATH+64];
+
+	wcscpy_c(szKeysPath, gpSetCls->GetConfigPath());
+	wcscat_c(szKeysPath, L"\\HotKeys");
+
+	// Write "Count" before first "Palette"
+	int UserCount = 0;
+	lbOpened = reg->OpenKey(szKeysPath, KEY_WRITE);
+	if (!lbOpened)
+	{
+		_ASSERTE(FALSE && "Settings Open operation failed");
+		return;
+	}
+
+	BYTE MacroVersion = GUI_MACRO_VERSION;
+	reg->Save(L"KeyMacroVersion", MacroVersion);
+
+	reg->Save(L"Multi.Modifier", nHostkeyNumberModifier);
+	reg->Save(L"Multi.ArrowsModifier", nHostkeyArrowModifier);
 
 	// Таски сохраняются отдельно
 
@@ -5605,4 +5677,6 @@ void Settings::SaveHotkeys(SettingsBase* reg)
 			}
 		}
 	}
+
+	reg->CloseKey();
 }

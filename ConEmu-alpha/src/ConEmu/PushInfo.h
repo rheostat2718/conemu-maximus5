@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2015 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,8 +31,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
-struct TermX
+class CPushInfo
 {
-	static bool GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16]);
-	static bool GetSubstitute(const MOUSE_EVENT_RECORD& m, wchar_t (&szSubst)[16]);
+public:
+	struct PushInfo
+	{
+		struct PushDate { int wYear, wMonth, wDay; } dtBegin, dtEnd;
+		LPCWSTR pszTsaNotify;
+		LPCWSTR pszFullMessage;
+		LPCWSTR pszUrl;
+	};
+
+	PushInfo* mp_Active;
+
+public:
+	CPushInfo();
+	~CPushInfo();
+
+public:
+	// Methods
+	bool ShowNotification();
+	void OnNotificationClick();
+	void OpenNotificationUrl();
 };
