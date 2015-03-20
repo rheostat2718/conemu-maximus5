@@ -341,6 +341,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			int     nGrpCount;
 		};
 		MArray<FolderInfo> Folders;
+		FolderInfo flNew = {};
 		CEStr szTempName;
 
 		while ((pGrp = gpSet->CmdTaskGet(nGroup++)) != NULL)
@@ -391,7 +392,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 					hGrpPopup = itm.hPopup;
 					m_CmdTaskPopup.push_back(itm);
 
-					FolderInfo flNew = {};
+					ZeroStruct(flNew);
 					wcscpy_c(flNew.szFolderName, szFolderName);
 					flNew.hPopup = itm.hPopup;
 					flNew.nGrpCount = nGrpCount = 1;
@@ -424,11 +425,15 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			itm.pGrp = pGrp;
 			//itm.pszCmd = NULL; // pGrp->pszCommands; - don't show hint, there is SubMenu on RClick
 
-			_ASSERTE(nGrpCount>=1 && nGrpCount<=MAX_CMD_GROUP_SHOW);
 			if (nGrpCount >= 1 && nGrpCount <= nMenuHotkeyMax)
+			{
 				_wsprintf(itm.szShort, SKIPLEN(countof(itm.szShort)) L"&%c: ", sMenuHotkey[nGrpCount-1]);
+			}
 			else
+			{
 				itm.szShort[0] = 0;
+				_ASSERTE(nGrpCount>=1 && nGrpCount<=nMenuHotkeyMax); // Too many tasks in one submenu?
+			}
 
 			wchar_t szHotkey[128];
 			itm.SetShortName(pszTaskName, !mb_CmdShowTaskItems, pGrp->HotKey.GetHotkeyName(szHotkey, false));
@@ -953,6 +958,9 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 			break;
 		case IDM_DETACH:
 			apVCon->RCon()->Detach();
+			break;
+		case IDM_UNFASTEN:
+			apVCon->RCon()->Unfasten();
 			break;
 		case IDM_RENAMETAB:
 			apVCon->RCon()->DoRenameTab();
@@ -1891,9 +1899,9 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, B
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEZOMBIES, MenuAccel(vkCloseZombies,L"Close all &zombies"));
 		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATECONEXPT, MenuAccel(vkCloseExceptCon,L"Close e&xcept active"));
 		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_DETACH,           L"Detach");
+		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_DETACH,           MenuAccel(vkConDetach,L"Detach"));
 		#ifdef _DEBUG // Not yet implemented
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_UNFASTEN,         L"Unfasten");
+		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_UNFASTEN,         MenuAccel(vkConUnfasten,L"Unfasten"));
 		#endif
 	}
 

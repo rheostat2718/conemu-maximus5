@@ -77,6 +77,7 @@ struct MSectionLockSimple;
 enum ConEmuWindowMode;
 struct CEFindDlg;
 union CESize;
+class CPushInfo;
 
 struct ConsoleInfoArg
 {
@@ -147,11 +148,14 @@ class CConEmuMain
 		void StoreWorkDir(LPCWSTR asNewCurDir = NULL);
 		LPCWSTR WorkDir(LPCWSTR asOverrideCurDir = NULL);
 		bool ChangeWorkDir(LPCWSTR asTempCurDir);
+		LPWSTR  mps_ConEmuExtraArgs;            // Used with TaskBar jump list creation (/FontDir, /FontFile, etc.)
+		void AppendExtraArgs(LPCWSTR asSwitch, LPCWSTR asSwitchValue = NULL);
 		wchar_t ms_ComSpecInitial[MAX_PATH];
 		CEStr ms_PostGuiMacro;
 		void SetPostGuiMacro(LPCWSTR asGuiMacro);
 		wchar_t *mps_IconPath;
 		void SetWindowIcon(LPCWSTR asNewIcon);
+		CPushInfo *mp_PushInfo;
 		BOOL mb_DosBoxExists;
 		ConEmuInstallMode m_InstallMode;
 		bool isMingwMode();

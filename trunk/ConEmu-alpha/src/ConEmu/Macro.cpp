@@ -145,6 +145,8 @@ namespace ConEmuMacro
 	LPWSTR Context(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Copy (<What>)
 	LPWSTR Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Detach
+	LPWSTR Detach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
 	LPWSTR FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
@@ -180,6 +182,8 @@ namespace ConEmuMacro
 	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Paste (<Cmd>[,"<Text>"[,"<Text2>"[...]]])
 	LPWSTR Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// PasteExplorerPath (<DoCd>,<SetFocus>)
+	LPWSTR PasteExplorerPath(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// PasteFile (<Cmd>[,"<File>"[,"<CommentMark>"]])
 	LPWSTR PasteFile(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Pause
@@ -215,6 +219,8 @@ namespace ConEmuMacro
 	// Transparency
 	LPWSTR Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 		LPWSTR TransparencyHelper(int nCmd, int nValue); // helper, это не макро-фукнция
+	// Unfasten
+	LPWSTR Unfasten(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Wiki(["Page"])
 	LPWSTR Wiki(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Fullscreen
@@ -247,6 +253,7 @@ namespace ConEmuMacro
 		{Close, {L"Close"}},
 		{Context, {L"Context"}},
 		{Copy, {L"Copy"}},
+		{Detach, {L"Detach"}},
 		{FindEditor, {L"FindEditor"}},
 		{FindFarWindow, {L"FindFarWindow"}},
 		{FindViewer, {L"FindViewer"}},
@@ -266,6 +273,7 @@ namespace ConEmuMacro
 		{Palette, {L"Palette"}},
 		{Paste, {L"Paste"}},
 		{PasteFile, {L"PasteFile"}},
+		{PasteExplorerPath, {L"PasteExplorerPath"}},
 		{Pause, {L"Pause"}},
 		{Print, {L"Print"}},
 		{Progress, {L"Progress"}},
@@ -282,6 +290,7 @@ namespace ConEmuMacro
 		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
 		{Task, {L"Task"}},
 		{Transparency, {L"Transparency"}},
+		{Unfasten, {L"Unfasten"}},
 		{Wiki, {L"Wiki"}},
 		{WindowFullscreen, {L"WindowFullscreen"}},
 		{WindowMaximize, {L"WindowMaximize"}},
@@ -1402,6 +1411,28 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	return pszResult ? pszResult : lstrdup(L"Failed");
 }
 
+LPWSTR ConEmuMacro::Detach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszResult = NULL;
+	if (apRCon)
+	{
+		apRCon->Detach();
+		pszResult = lstrdup(L"OK");
+	}
+	return pszResult ? pszResult : lstrdup(L"Failed");
+}
+
+LPWSTR ConEmuMacro::Unfasten(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	LPWSTR pszResult = NULL;
+	if (apRCon)
+	{
+		apRCon->Unfasten();
+		pszResult = lstrdup(L"OK");
+	}
+	return pszResult ? pszResult : lstrdup(L"Failed");
+}
+
 LPWSTR ConEmuMacro::Context(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int iVal = 0;
@@ -2001,6 +2032,27 @@ LPWSTR ConEmuMacro::GroupInput(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 	}
 
 	return lstrdup(L"InvalidArg");
+}
+
+// PasteExplorerPath (<DoCd>,<SetFocus>)
+LPWSTR ConEmuMacro::PasteExplorerPath(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	int iDoCd = 1, iSetFocus = 1;
+
+	if (!apRCon)
+		return lstrdup(L"InvalidArg");
+
+	if (p->IsIntArg(0))
+	{
+		p->GetIntArg(0, iDoCd);
+
+		if (p->IsIntArg(1))
+			p->GetIntArg(1, iSetFocus);
+	}
+
+	apRCon->PasteExplorerPath((iDoCd!=0), (iSetFocus!=0));
+
+	return lstrdup(L"OK");
 }
 
 // PasteFile (<Cmd>[,"<File>"[,"<CommentMark>"]])

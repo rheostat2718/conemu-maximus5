@@ -884,7 +884,7 @@ struct Settings
 		// Проверить на дубли
 		void CheckHotkeyUnique();
 	private:
-		void LoadHotkeys(SettingsBase* reg);
+		void LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const bool& bSendAltSpace, const bool& bSendAltF9);
 		void SaveHotkeys(SettingsBase* reg);
 	public:
 
@@ -1010,6 +1010,9 @@ struct Settings
 		//bool isUpdateLeavePackages;
 		//wchar_t *szUpdatePostUpdateCmd; // Юзер может чего-то свое делать с распакованными файлами
 
+		/* *** Notification *** */
+		wchar_t StopBuzzingDate[16];
+
 
 		/* *** HotKeys & GuiMacros *** */
 		//reg->Load(L"GuiMacro<N>.Key", &Macros.vk);
@@ -1040,6 +1043,7 @@ struct Settings
 		void SaveConsoleFont();
 		void SaveFindOptions(SettingsBase* reg = NULL);
 		void SaveSettingsOnExit();
+		void SaveStopBuzzingDate();
 		//void UpdateMargins(RECT arcMargins);
 	public:
 		void CheckConsoleSettings();

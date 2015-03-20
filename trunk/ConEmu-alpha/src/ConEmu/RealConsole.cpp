@@ -1431,6 +1431,30 @@ void CRealConsole::ShowKeyBarHint(WORD nID)
 		mp_RBuf->ShowKeyBarHint(nID);
 }
 
+void CRealConsole::PasteExplorerPath(bool bDoCd /*= true*/, bool bSetFocus /*= true*/)
+{
+	if (!this)
+		return;
+
+	wchar_t* pszPath = getFocusedExplorerWindowPath();
+
+	if (pszPath)
+	{
+		PostPromptCmd(bDoCd, pszPath);
+
+		if (bSetFocus)
+		{
+			if (!isActive(false/*abAllowGroup*/))
+				gpConEmu->Activate(mp_VCon);
+
+			if (!mp_ConEmu->isMeForeground())
+				mp_ConEmu->DoMinimizeRestore(sih_SetForeground);
+		}
+
+		free(pszPath);
+	}
+}
+
 bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 {
 	if (!this || !asCmd || !*asCmd)
@@ -1450,7 +1474,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 			wchar_t* pszMacro = (wchar_t*)malloc(cchMax*sizeof(*pszMacro));
 			if (pszMacro)
 			{
-				_wcscpy_c(pszMacro, cchMax, L"@panel.setpath(0,\"");
+				_wcscpy_c(pszMacro, cchMax, L"@Panel.SetPath(0,\"");
 				wchar_t* pszDst = pszMacro+_tcslen(pszMacro);
 				LPCWSTR pszSrc = asCmd;
 				while (*pszSrc)
@@ -1923,6 +1947,12 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		}
 
 		return lbRc;
+	}
+
+	// Эмуляция терминала?
+	if (m_Term.Term && ProcessXtermSubst(*piRec))
+	{
+		return true;
 	}
 
 	//DWORD dwTID = 0;
@@ -6227,6 +6257,51 @@ void CRealConsole::OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	return;
 }
 
+bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
+{
+	// Эмуляция терминала?
+	if (!m_Term.Term)
+		return false;
+
+	bool bProcessed = false;
+	bool bSend = false;
+	wchar_t szSubstKeys[16] = L"";
+
+	// Till now, this may be ‘te_xterm’ or ‘te_win32’ only
+	_ASSERTE(m_Term.Term == te_xterm);
+
+	if (!isProcessExist(m_Term.nCallTermPID))
+	{
+		StartStopXTerm(0, false/*te_win32*/);
+	}
+	// Processed xterm keys?
+	else
+	{
+		switch (r.EventType)
+		{
+		case KEY_EVENT:
+			// Key need to be translated?
+			bProcessed = TermX::GetSubstitute(r.Event.KeyEvent, szSubstKeys);
+			// But only key presses are sent to terminal
+			bSend = (bProcessed && r.Event.KeyEvent.bKeyDown && szSubstKeys[0]);
+			break; // KEY_EVENT
+
+		case MOUSE_EVENT:
+			// Mouse event need to be translated?
+			bProcessed = TermX::GetSubstitute(r.Event.MouseEvent, szSubstKeys);
+			bSend = (bProcessed && szSubstKeys[0]);
+			break; // MOUSE_EVENT
+		}
+
+		if (bSend)
+		{
+			PostString(szSubstKeys, _tcslen(szSubstKeys));
+		}
+	}
+
+	return bProcessed;
+}
+
 // pszChars may be NULL
 void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars)
 {
@@ -6322,27 +6397,9 @@ void CRealConsole::ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, con
 	}
 
 	// Эмуляция терминала?
-	wchar_t szSubstKeys[16] = L"";
-
-	if (m_Term.Term)
+	if (m_Term.Term && ProcessXtermSubst(r))
 	{
-		// Till now, this may be ‘te_xterm’ or ‘te_win32’ only
-		_ASSERTE(m_Term.Term == te_xterm);
-
-		if (!isProcessExist(m_Term.nCallTermPID))
-		{
-			StartStopXTerm(0, false/*te_win32*/);
-		}
-		// Processed xterm keys?
-		else if (TermX::GetSubstiture(r.Event.KeyEvent, szSubstKeys))
-		{
-			if (r.Event.KeyEvent.bKeyDown && szSubstKeys[0])
-			{
-				// only key presses are sent to terminal
-				PostString(szSubstKeys, _tcslen(szSubstKeys));
-			}
-			return;
-		}
+		return;
 	}
 
 	PostConsoleEvent(&r);
@@ -14997,6 +15054,10 @@ void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	m_Args.Detached = crb_On;
 
 	CConEmuChild::ProcessVConClosed(mp_VCon);
+}
+
+void CRealConsole::Unfasten()
+{
 }
 
 const CEFAR_INFO_MAPPING* CRealConsole::GetFarInfo()

@@ -79,6 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Menu.h"
 #include "Options.h"
 #include "OptionsClass.h"
+#include "PushInfo.h"
 #include "RealBuffer.h"
 #include "Recreate.h"
 #include "RunQueue.h"
@@ -180,6 +181,7 @@ gRegisteredHotKeys[] = {
 	{vkMinimizeRestor2},
 	{vkGlobalRestore},
 	{vkForceFullScreen},
+	{vkCdExplorerPath},
 };
 
 namespace ConEmuMsgLogger
@@ -425,6 +427,7 @@ CConEmuMain::CConEmuMain()
 	mn_AdmShieldTimerCounter = 0;
 
 	mps_IconPath = NULL;
+	mp_PushInfo = NULL;
 
 	#ifdef __GNUC__
 	HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
@@ -485,6 +488,7 @@ CConEmuMain::CConEmuMain()
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = ms_ConEmuWorkDir[0] = 0;
 	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
 	ms_ConEmuXml[0] = ms_ConEmuIni[0] = ms_ConEmuChm[0] = 0;
+	mps_ConEmuExtraArgs = NULL;
 	mb_SpecialConfigPath = false;
 	mb_ForceUseRegistry = false;
 
@@ -926,6 +930,22 @@ bool CConEmuMain::ChangeWorkDir(LPCWSTR asTempCurDir)
 	UNREFERENCED_PARAMETER(bApi);
 	UNREFERENCED_PARAMETER(nApiErr);
 	return bChanged;
+}
+
+void CConEmuMain::AppendExtraArgs(LPCWSTR asSwitch, LPCWSTR asSwitchValue /*= NULL*/)
+{
+	if (!asSwitch || !*asSwitch)
+		return;
+
+	lstrmerge(&mps_ConEmuExtraArgs, L" ", asSwitch);
+
+	if (asSwitchValue && *asSwitchValue)
+	{
+		if (IsQuotationNeeded(asSwitchValue))
+			lstrmerge(&mps_ConEmuExtraArgs, L" \"", asSwitchValue, L"\"");
+		else
+			lstrmerge(&mps_ConEmuExtraArgs, L" ", asSwitchValue);
+	}
 }
 
 bool CConEmuMain::CheckRequiredFiles()
@@ -2592,6 +2612,8 @@ CConEmuMain::~CConEmuMain()
 	SafeDelete(mp_RunQueue);
 
 	SafeDelete(mp_Find);
+
+	SafeDelete(mp_PushInfo);
 
 	//if (m_Child)
 	//{
@@ -4359,6 +4381,15 @@ void CConEmuMain::OnWmHotkey(WPARAM wParam)
 					break;
 				case vkForceFullScreen:
 					DoForcedFullScreen(true);
+					break;
+				case vkCdExplorerPath:
+					{
+						CVConGuard VCon;
+						if (GetActiveVCon(&VCon) >= 0)
+						{
+							VCon->RCon()->PasteExplorerPath(true, true);
+						}
+					}
 					break;
 				}
 				break;
@@ -7269,6 +7300,12 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			GetActiveVCon(&VCon);
 			LPWSTR pszRc = ConEmuMacro::ExecuteMacro(ms_PostGuiMacro.ms_Arg, VCon.VCon() ? VCon->RCon() : NULL);
 			SafeFree(pszRc);
+		}
+
+		mp_PushInfo = new CPushInfo();
+		if (mp_PushInfo && !mp_PushInfo->ShowNotification())
+		{
+			SafeDelete(mp_PushInfo);
 		}
 	}
 

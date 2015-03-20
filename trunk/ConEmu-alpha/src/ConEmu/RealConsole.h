@@ -433,6 +433,7 @@ class CRealConsole
 		//BOOL FlushInputQueue(DWORD nTimeout = 500);
 		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg);
 		const ConEmuHotKey* ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars);
+		bool ProcessXtermSubst(const INPUT_RECORD& r);
 		void ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false);
@@ -509,6 +510,7 @@ class CRealConsole
 		void OnSelectionChanged();
 		void DoFindText(int nDirection);
 		void DoEndFindText();
+		void PasteExplorerPath(bool bDoCd = true, bool bSetFocus = true);
 		void CtrlWinAltSpace();
 		void ShowConsoleOrGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
@@ -622,6 +624,7 @@ class CRealConsole
 		void UpdateCursorInfo();
 		bool isNeedCursorDraw();
 		void Detach(bool bPosted = false, bool bSendCloseConsole = false);
+		void Unfasten();
 		void AdminDuplicate();
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
 		bool InCreateRoot();

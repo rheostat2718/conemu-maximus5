@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DpiAware.h"
 #include "DynDialog.h"
 #include "OptionsClass.h"
+#include "PushInfo.h"
 #include "RealConsole.h"
 #include "SearchCtrl.h"
 #include "ToolImg.h"
@@ -471,7 +472,15 @@ void ConEmuAbout::TabSelected(HWND hDlg, int idx)
 		return;
 
 	wcscpy_c(sLastOpenTab, Pages[idx].Title);
-	SetDlgItemText(hDlg, tAboutText, Pages[idx].Text);
+	LPCWSTR pszNewText = Pages[idx].Text;
+	CEStr lsTemp;
+	if (gpConEmu->mp_PushInfo && gpConEmu->mp_PushInfo->mp_Active && gpConEmu->mp_PushInfo->mp_Active->pszFullMessage)
+	{
+		// EDIT control requires \r\n as line endings
+		lsTemp = lstrmerge(gpConEmu->mp_PushInfo->mp_Active->pszFullMessage, L"\r\n\r\n\r\n", pszNewText);
+		pszNewText = lsTemp.ms_Arg;
+	}
+	SetDlgItemText(hDlg, tAboutText, pszNewText);
 }
 
 void ConEmuAbout::LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine)
