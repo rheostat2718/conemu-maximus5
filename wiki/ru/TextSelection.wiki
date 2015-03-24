@@ -1,4 +1,10 @@
-Under construction, Issue 887, Issue 1292, Issue 1332
+=Миграция на [http://conemu.github.io/ conemu.github.io]=
+Google объявил [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html закрытие] сервиса googlecode. 
+
+Новые версии этого файла будут доступны на сайте [http://conemu.github.io/ru/TextSelection.html conemu.github.io].
+
+==Under construction==
+Issue 887, Issue 1292, Issue 1332
 
 !ConEmu allows marking console block (like real console *Mark* menu item, or Far Manager *!AltIns* feature)
 and text (like standard GUI text editors), copying marked text to Windows Clipboard,

@@ -1,10 +1,11 @@
 ﻿#labels Featured
 
-Вы можете поддержать проект пожертвованием, кнопка
-[http://conemu.github.io/donate.html Donate] расположена на [http://code.google.com/p/conemu-maximus5 главной странице] под превьюшкой !ConEmu (справа-вверху страницы).
+Вы можете поддержать проект [http://conemu.github.io/donate.html пожертвованием].
 
-Проголосуйте за !ConEmu, если не жалко :)
-http://code.google.com/p/conemu-maximus5/wiki/Awards
+=Миграция на [http://conemu.github.io/ conemu.github.io]=
+Google объявил [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html закрытие] сервиса googlecode. 
+
+Новые версии этого файла будут доступны на сайте [http://conemu.github.io/ru/Whats_New.html conemu.github.io].
 
 
 ==Build 150319==

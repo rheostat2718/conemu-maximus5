@@ -1,4 +1,9 @@
-﻿<font size="5">*Настройка !ConEmu*</font>
+﻿=Миграция на [http://conemu.github.io/ conemu.github.io]=
+Google объявил [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html закрытие] сервиса googlecode. 
+
+Новые версии этого файла будут доступны на сайте [http://conemu.github.io/ru/Settings.html conemu.github.io].
+
+<font size="5">*Настройка !ConEmu*</font>
 <wiki:toc max_depth="3"/>
 
 =Where settings are stored?=

@@ -1,9 +1,11 @@
 ﻿#labels Featured
-You can show your appreciation and support future development by donating.
-[http://conemu.github.io/donate.html Donate] button located on [http://code.google.com/p/conemu-maximus5 main page] under !ConEmu sketch (upper right of page).
 
-Votes and awards (vote for !ConEmu, if you please)
-http://code.google.com/p/conemu-maximus5/wiki/Awards
+You can show your appreciation and support future development by [http://conemu.github.io/donate.html donation].
+
+=Migration to [http://conemu.github.io/ conemu.github.io]=
+Google has declared [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html shutdown] of googlecode service. 
+
+New versions of this file will be available on [http://conemu.github.io/en/Whats_New.html conemu.github.io].
 
 
 ==Build 150319==

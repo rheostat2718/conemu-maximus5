@@ -1,4 +1,9 @@
-﻿<font size="5">*ANSI X3.64 and Xterm 256 colors*</font>
+﻿=Migration to [http://conemu.github.io/ conemu.github.io]=
+Google has declared [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html shutdown] of googlecode service. 
+
+New versions of this file will be available on [http://conemu.github.io/en/AnsiEscapeCodes.html conemu.github.io].
+
+<font size="5">*ANSI X3.64 and Xterm 256 colors*</font>
 
 !ConEmu (from build 120520d) can process [http://en.wikipedia.org/wiki/ANSI_X3.64 ANSI X3.64]
 and its extension [http://www.frexx.de/xterm-256-notes/ xterm 256 color mode].

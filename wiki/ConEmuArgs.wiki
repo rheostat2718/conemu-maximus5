@@ -1,4 +1,9 @@
-﻿===!ConEmu.exe command line switches===
+﻿=Migration to [http://conemu.github.io/ conemu.github.io]=
+Google has declared [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html shutdown] of googlecode service. 
+
+New versions of this file will be available on [http://conemu.github.io/en/ConEmuArgs.html conemu.github.io].
+
+===!ConEmu.exe command line switches===
 
 || *Argument* || *Description* ||
 || /? || Show help screen ||

@@ -1,4 +1,9 @@
-﻿<wiki:toc max_depth="3" />
+﻿=Миграция на [http://conemu.github.io/ conemu.github.io]=
+Google объявил [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html закрытие] сервиса googlecode. 
+
+Новые версии этого файла будут доступны на сайте [http://conemu.github.io/ru/ConEmuEnvironment.html conemu.github.io].
+
+<wiki:toc max_depth="3" />
 
 =Список переменных окружения устанавливаемых в !ConEmu=
 || *Имя* || *Пример* || *Описание* ||

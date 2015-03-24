@@ -1,4 +1,11 @@
-﻿This is console part of !ConEmu. It serves all console requests.
+﻿=Migration to [http://conemu.github.io/ conemu.github.io]=
+Google has declared [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html shutdown] of googlecode service. 
+
+New versions of this file will be available on [http://conemu.github.io/en/ConEmuC.html conemu.github.io].
+
+----
+
+This is console part of !ConEmu. It serves all console requests.
 
 There are two versions - ConEmuC.exe and !ConEmuC64.exe.
 

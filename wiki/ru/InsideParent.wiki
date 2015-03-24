@@ -1,4 +1,9 @@
-﻿<font size="5">*[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FInsideParent%3Fshow%3Dcontent ConEmu Inside (autotranslated Ru-En)]*</font>
+﻿=Миграция на [http://conemu.github.io/ conemu.github.io]=
+Google объявил [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html закрытие] сервиса googlecode. 
+
+Новые версии этого файла будут доступны на сайте [http://conemu.github.io/ru/InsideParent.html conemu.github.io].
+
+<font size="5">*[http://translate.google.ru/translate?hl=ru&sl=ru&tl=en&u=http%3A%2F%2Fcode.google.com%2Fp%2Fconemu-maximus5%2Fwiki%2FInsideParent%3Fshow%3Dcontent ConEmu Inside (autotranslated Ru-En)]*</font>
 ----------------------------------------------------------------------
 
 =!ConEmu Inside=

@@ -1,4 +1,9 @@
-﻿<wiki:toc max_depth="3" />
+﻿=Migration to [http://conemu.github.io/ conemu.github.io]=
+Google has declared [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html shutdown] of googlecode service. 
+
+New versions of this file will be available on [http://conemu.github.io/en/ConEmuEnvironment.html conemu.github.io].
+
+<wiki:toc max_depth="3" />
 
 =List of environment variables set by !ConEmu=
 || *Name* || *Example* || *Description* ||

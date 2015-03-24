@@ -1,4 +1,9 @@
-﻿<font size="5">*-new_console and -cur_console switches*</font>
+﻿=Migration to [http://conemu.github.io/ conemu.github.io]=
+Google has declared [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html shutdown] of googlecode service. 
+
+New versions of this file will be available on [http://conemu.github.io/en/NewConsole.html conemu.github.io].
+
+<font size="5">*-new_console and -cur_console switches*</font>
 <wiki:toc max_depth="3" /> 
 
 =Purpose=

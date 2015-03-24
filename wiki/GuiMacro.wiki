@@ -1,4 +1,11 @@
-﻿There is an easy way to control (a little) !ConEmu window from console applications or additional hotkeys.
+﻿=Migration to [http://conemu.github.io/ conemu.github.io]=
+Google has declared [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html shutdown] of googlecode service. 
+
+New versions of this file will be available on [http://conemu.github.io/en/GuiMacro.html conemu.github.io].
+
+------
+
+There is an easy way to control (a little) !ConEmu window from console applications or additional hotkeys.
 It's a !GuiMacro.
 
 <wiki:toc max_depth="3" />

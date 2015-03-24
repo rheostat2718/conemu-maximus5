@@ -1,3 +1,8 @@
+=Миграция на [http://conemu.github.io/ conemu.github.io]=
+Google объявил [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html закрытие] сервиса googlecode. 
+
+Новые версии этого файла будут доступны на сайте [http://conemu.github.io/ru/ConEmuFAQ.html conemu.github.io].
+
 <font size="4">Содержание</font>
 <wiki:toc max_depth="3" /> 
 
