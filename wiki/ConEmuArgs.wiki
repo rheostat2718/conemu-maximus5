@@ -93,8 +93,9 @@ cmd /k color 4F "-cur_console:h400d:%ALLUSERSPROFILE%"
 C:\MinGW\msys\1.0\bin\sh.exe --login -i "-cur_console:d:C:\Source"
 }}}
 
+{{{
 start "Three tabs" "C:\Program Files\ConEmu\ConEmu.exe" /cmdlist ^> cmd /k color 4C -cur_console:d:x:\mercurial\blah\blah ^|^|^| cmd /k color 5D -cur_console:d:x:\mercurial\blah\blah\solr ^|^|^| cmd /k color 2A -cur_console:d:x:\mercurial\blah\blah\rep
-
+}}}
 
 ===Rarely used switches===
 
