@@ -1,4 +1,5 @@
-=Welcome to !ConEmu bugtracker=
+=!ConEmu has moved to [http://conemu.github.io/ conemu.github.io]=
+New versions of this file will be available on [http://conemu.github.io/en/Issues.html conemu.github.io].
 
 <wiki:comment>
 ==Issues usability==
@@ -6,9 +7,13 @@
 </wiki:comment>
 
 ==View existing issues==
+  * ===[https://github.com/Maximus5/ConEmu/issues]===
+  * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=&sort=-id Old issues (deprecated)]===
+<wiki:comment>
   * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-id Active issues], [http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-modified sorted by date]===
   * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=&sort=-id All (active + fixed) issues]===
   * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=Type%3DDocumentation+&sort=-modified Documentation issues]===
+</wiki:comment>
 
 ==How to use bugtracker==
 ===Before reporting a bug or requesting a feature===
@@ -19,7 +24,12 @@
 
 ==Create new issue==
 *Please, note!* !ConEmu, OS and Far Manager (if used) versions are required information!
+
+  * ===[https://github.com/Maximus5/ConEmu/issues]===
+
+<wiki:comment>
   * ===[http://code.google.com/p/conemu-maximus5/issues/entry Report a bug]===
   * ===[http://code.google.com/p/conemu-maximus5/issues/entry?template=Question Ask a question]===
   * ===[http://code.google.com/p/conemu-maximus5/issues/entry?template=Concept Make a suggestion]===
   * ===[http://code.google.com/p/conemu-maximus5/issues/entry?template=Documentation Documentation and translation issues]===
+</wiki:comment>

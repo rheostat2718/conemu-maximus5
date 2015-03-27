@@ -1,4 +1,5 @@
-﻿Want to contribute? You may help with coding or documentation (wiki).
+﻿=!ConEmu has moved to [http://conemu.github.io/ conemu.github.io]=
+New versions of this file will be available on [http://conemu.github.io/en/Source.html conemu.github.io].
 
 =Sources=
 
