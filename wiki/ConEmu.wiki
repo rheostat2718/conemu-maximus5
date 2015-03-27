@@ -1,9 +1,9 @@
-﻿=Migration to [http://conemu.github.io/ conemu.github.io]=
+﻿=!ConEmu has moved to [http://conemu.github.io/ conemu.github.io]=
 Google has declared [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html shutdown] of googlecode service. 
 
 New versions of this file will be available on [http://conemu.github.io/en/ConEmu.html conemu.github.io].
 
-==About !ConEmu <g:plusone size="medium" href="http://code.google.com/p/conemu-maximus5/"/>==
+==About !ConEmu <g:plusone size="medium" href="http://conemu.github.io/"/>==
 <table cellpadding="0" cellspacing="0" border="0">
 <tr><td valign="top">
 !ConEmu-Maximus5 is a Windows console emulator with tabs, which presents multiple consoles and simple GUI applications as one customizable GUI window with various features.
