@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #include <TlHelp32.h>
 #endif
+#include "../common/WRegistry.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuPlugin/FarDefaultMacros.h"
 #include "Background.h"
@@ -99,10 +100,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_SPLITTER_SIZE 32
 
 // That is positive value for LF.lfHeight
+#define DEF_INSIDESIZEY_P 10
 #define DEF_FONTSIZEY_P   16
 #define DEF_TABFONTY_P    16
 #define DEF_STATUSFONTY_P 14
 // That is positive value for LF.lfHeight
+#define DEF_INSIDESIZEY_U 9
 #define DEF_FONTSIZEY_U   14
 #define DEF_TABFONTY_U    13
 #define DEF_STATUSFONTY_U 12
@@ -444,6 +447,13 @@ void Settings::InitSettings()
 
 	bool bIsDbcs = (GetSystemMetrics(SM_DBCSENABLED) != 0);
 
+	/* ********** Font initialization begins ********** */
+	{
+	// Specially left it in ‘false’ state because that was the defaults in old builds
+	// Also use DEF_FONTSIZEY_P, DEF_STATUSFONTY_P, DEF_TABFONTY_P for the same reason
+	// Will be changed in ‘InitVanillaFontSettings’ if settings are ‘new’
+	FontUseUnits = false;
+
 	// Font initialization (all fields must be already zeroed)
 	_ASSERTE(!FontSizeY && !FontSizeX && !FontSizeX2 && !FontSizeX3 && !FontUseDpi && !FontUseUnits);
 	// Let take into account monitor dpi
@@ -466,6 +476,16 @@ void Settings::InitSettings()
 		mn_AntiAlias = ANTIALIASED_QUALITY;
 	// Some resets?
 	inFont[0] = inFont2[0] = 0;
+
+	// StatusBar fonts
+	wcscpy_c(sStatusFontFace, gsDefMUIFont); nStatusFontCharSet = ANSI_CHARSET;
+	nStatusFontHeight = DEF_STATUSFONTY_P; // dpi must not be embedded into font height!
+
+	// TabBar fonts
+	wcscpy_c(sTabFontFace, gsDefMUIFont); nTabFontCharSet = ANSI_CHARSET;
+	nTabFontHeight = DEF_TABFONTY_P; // dpi must not be embedded into font height!
+	}
+	/* ********** Font initialization ends ********** */
 
 	isTryToCenter = false;
 	nCenterConsolePad = 0;
@@ -726,8 +746,6 @@ void Settings::InitSettings()
 	nStatusBarLight = RGB(255,255,255);
 	nStatusBarDark = RGB(160,160,160);
 	#endif
-	wcscpy_c(sStatusFontFace, gsDefMUIFont); nStatusFontCharSet = ANSI_CHARSET;
-	nStatusFontHeight = DEF_STATUSFONTY_P; // dpi must not be embedded into font height!
 	//nHideStatusColumns = ces_CursorInfo;
 	_ASSERTE(countof(isStatusColumnHidden)>csi_Last);
 	memset(isStatusColumnHidden, 0, sizeof(isStatusColumnHidden));
@@ -737,6 +755,8 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_KeyHooks] = true;
 	isStatusColumnHidden[csi_ViewLock] = true;
 	#endif
+	isStatusColumnHidden[csi_CapsLock] = true;
+	isStatusColumnHidden[csi_ScrollLock] = true;
 	isStatusColumnHidden[csi_InputLocale] = true;
 	isStatusColumnHidden[csi_WindowPos] = true;
 	isStatusColumnHidden[csi_WindowSize] = true;
@@ -751,7 +771,8 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_Zoom] = true;
 	isStatusColumnHidden[csi_DPI] = true;
 	isStatusColumnHidden[csi_ConEmuPID] = true;
-	isStatusColumnHidden[csi_ConsoleSize] = true;
+	isStatusColumnHidden[csi_ConsolePos] = true;
+	isStatusColumnHidden[csi_BufferSize] = true;
 	//isStatusColumnHidden[csi_CursorInfo] = true; -- show one info col instead of three cursor columns (by default)
 	isStatusColumnHidden[csi_CursorX] = true;
 	isStatusColumnHidden[csi_CursorY] = true;
@@ -776,8 +797,6 @@ void Settings::InitSettings()
 	isTabsInCaption = true;
 	#endif
 
-	wcscpy_c(sTabFontFace, gsDefMUIFont); nTabFontCharSet = ANSI_CHARSET;
-	nTabFontHeight = DEF_TABFONTY_P; // dpi must not be embedded into font height!
 	sTabCloseMacro = sSaveAllMacro = NULL;
 	nToolbarAddSpace = 0;
 	// Show only shield (szAdminTitleSuffix is ignored if ats_Shield)
@@ -846,16 +865,30 @@ void Settings::InitVanilla()
 	}
 
 	// WARNING!!! Following settings MUST be saved in Settings::SaveVanilla
+	InitVanillaFontSettings();
+	// WARNING!!! These settings MUST be saved in Settings::SaveVanilla
 
+
+	// And some settings we need to load from registry if started with "-basic" switch
+	if (gpConEmu->IsResetBasicSettings())
+	{
+		CEStr lsStr;
+		if (RegGetStringValue(HKEY_CURRENT_USER, CONEMU_ROOT_KEY, L"Notification.StopBuzzingDate", lsStr) > 0)
+		{
+			lstrcpyn(StopBuzzingDate, lsStr, countof(StopBuzzingDate));
+		}
+	}
+}
+
+void Settings::InitVanillaFontSettings()
+{
 	// For new users, let use ‘standard’ font heights? Meaning of display units and character height
 	FontUseUnits = true;
 	// dpi must not be embedded into font height!
 	// To avoid fatal conflicts with old versions - we are storing only positive values
-	FontSizeY = DEF_FONTSIZEY_U;
+	FontSizeY = gpConEmu->mp_Inside ? DEF_INSIDESIZEY_U : DEF_FONTSIZEY_U;
 	nStatusFontHeight = DEF_STATUSFONTY_U;
 	nTabFontHeight = DEF_TABFONTY_U;
-
-	// WARNING!!! These settings MUST be saved in Settings::SaveVanilla
 }
 
 bool Settings::SaveVanilla(SettingsBase* reg)
@@ -2175,6 +2208,14 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 	}
 	gpConEmu->LogString(L"Settings::LoadSettings");
 
+	// Settings service
+	SettingsBase* reg = NULL;
+	bool lbOpened = false;
+
+	// For compatibility
+	bool bSendAltEnter = false, bSendAltSpace = false, bSendAltF9 = false;
+	bool bInitVanillaFontSizes = true;
+
 	MCHKHEAP
 	mb_CharSetWasSet = FALSE;
 
@@ -2202,14 +2243,14 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 			if (hParent == INSIDE_PARENT_NOT_FOUND)
 			{
 				_ASSERTE(FALSE && "Settings initialization skipped because InsideFindParent was failed");
-				return;
+				goto wrap;
 			}
 			else if (hParent)
 			{
 				// Типа, запуститься как панель в Explorer (не в таскбаре, а в проводнике)
 				//isStatusBarShow = false;
 				isTabs = 0;
-				FontSizeY = 10;
+				FontSizeY = DEF_FONTSIZEY_P;
 				isTryToCenter = true;
 				nCenterConsolePad = 3;
 				// Скрыть колонки, чтобы много слишком не было...
@@ -2236,16 +2277,15 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 //-----------------------------------------------------------------------
 ///| Loading from reg/xml |//////////////////////////////////////////////
 //-----------------------------------------------------------------------
-	SettingsBase* reg = CreateSettings(apStorage);
+	reg = CreateSettings(apStorage);
 	if (!reg)
 	{
 		_ASSERTE(reg!=NULL);
-		return;
+		goto wrap;
 	}
 
 	wcscpy_c(Type, reg->m_Storage.szType);
 
-	bool lbOpened = false;
 	rbNeedCreateVanilla = false;
 
 	lbOpened = reg->OpenKey(gpSetCls->GetConfigPath(), KEY_READ);
@@ -2284,12 +2324,19 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		}
 	}
 
-	// Для совместимости настроек
-	bool bSendAltEnter = false, bSendAltSpace = false, bSendAltF9 = false;
-
 
 	if (lbOpened)
 	{
+		// Check, if user'd saved font settings before
+		{
+			DWORD dw = 0; bool b = false;
+			// If any of following options were saved before - don't change font size options
+			bInitVanillaFontSizes = !(reg->Load(L"FontUseUnits", b)
+				|| reg->Load(L"FontSize", dw)
+				|| reg->Load(L"StatusFontHeight", dw)
+				|| reg->Load(L"TabFontHeight", dw));
+		}
+
 		bool bCmdLine = reg->Load(L"CmdLine", &psStartSingleApp);
 		reg->Load(L"StartTasksFile", &psStartTasksFile);
 		reg->Load(L"StartTasksName", &psStartTasksName);
@@ -2913,72 +2960,14 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 	delete reg;
 	reg = NULL;
 
-	// -- перенесено в gpSetCls->SettingsLoaded();
-	//// Зовем "FastConfiguration" (перед созданием новой/чистой конфигурации)
-	//{
-	//	LPCWSTR pszDef = gpConEmu->GetDefaultTitle();
-	//	wchar_t szType[8]; bool ReadOnly;
-	//	GetSettingsType(szType, ReadOnly);
-	//	LPCWSTR pszConfig = gpSetCls->GetConfigName();
-	//	wchar_t szTitle[1024];
-	//	if (pszConfig && *pszConfig)
-	//		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration (%s) %s", pszDef, pszConfig, szType);
-	//	else
-	//		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s fast configuration %s", pszDef, szType);
-	//
-	//	CheckOptionsFast(szTitle, lbNeedCreateVanilla);
-	//}
-	//
-
-	//if (lbNeedCreateVanilla)
-	//{
-	//	SaveSettings(TRUE/*abSilent*/);
-	//}
-
-	//// Передернуть палитру затенения
-	//ResetFadeColors();
-	//GetColors(-1, TRUE);
-	//
-	//
-
-	//// Проверить необходимость установки хуков
-	////-- isKeyboardHooks();
-	//// При первом запуске - проверить, хотят ли включить автообновление?
-	////-- CheckUpdatesWanted();
-
-
-
-	//// Стили окна
-	//if ((_WindowMode!=rNormal) && (_WindowMode!=rMaximized) && (_WindowMode!=rFullScreen))
-	//{
-	//	// Иначе окно вообще не отображается
-	//	_ASSERTE(_WindowMode!=0);
-	//	_WindowMode = rNormal;
-	//}
-
-	////if (rcTabMargins.top > 100) rcTabMargins.top = 100;
-	////_ASSERTE((rcTabMargins.bottom == 0 || rcTabMargins.top == 0) && !rcTabMargins.left && !rcTabMargins.right);
-	////rcTabMargins.left = rcTabMargins.right = 0;
-	////int nTabHeight = rcTabMargins.top ? rcTabMargins.top : rcTabMargins.bottom;
-	////if (nTabsLocation == 1)
-	////{
-	////	rcTabMargins.top = 0; rcTabMargins.bottom = nTabHeight;
-	////}
-	////else
-	////{
-	////	rcTabMargins.top = nTabHeight; rcTabMargins.bottom = 0;
-	////}
-
-	//if (!psCmdHistory)
-	//{
-	//	psCmdHistory = (wchar_t*)calloc(2,2);
-	//}
-
-	//MCHKHEAP
-
-	// -- перенесено в WinMain
-	//// Переменные загружены, выполнить дополнительные действия в классе настроек
-	//gpSetCls->SettingsLoaded();
+wrap:
+	// In some cases for some options we must apply vanilla defaults
+	if (bInitVanillaFontSizes)
+	{
+		// For example, user had pressed ‘Esc’ in the ‘Fast settings’ dialog
+		// So, config will be not totally ‘new’ but font settins are ‘new’ actually
+		InitVanillaFontSettings();
+	}
 }
 
 void Settings::SaveSettingsOnExit()
@@ -3098,8 +3087,15 @@ void Settings::SaveSettingsOnExit()
 
 void Settings::SaveStopBuzzingDate()
 {
+	SYSTEMTIME st = {}; GetLocalTime(&st);
+	_wsprintf(StopBuzzingDate, SKIPCOUNT(StopBuzzingDate) L"%u-%u-%u", st.wYear, st.wMonth, st.wDay);
+
+	// -basic switch?
 	if (gpConEmu->IsResetBasicSettings())
+	{
+		RegSetStringValue(HKEY_CURRENT_USER, CONEMU_ROOT_KEY, L"Notification.StopBuzzingDate", StopBuzzingDate);
 		return;
+	}
 
 	SettingsBase* reg = CreateSettings(NULL);
 	if (!reg)
@@ -3111,8 +3107,6 @@ void Settings::SaveStopBuzzingDate()
 
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
 	{
-		SYSTEMTIME st = {}; GetLocalTime(&st);
-		_wsprintf(StopBuzzingDate, SKIPCOUNT(StopBuzzingDate) L"%u-%u-%u", st.wYear, st.wMonth, st.wDay);
 		reg->Save(L"Notification.StopBuzzingDate", StopBuzzingDate);
 	}
 
