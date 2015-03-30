@@ -1,5 +1,9 @@
 ﻿#summary cygwin, mingw, ConEmu and start up directory
 
+=!ConEmu has moved to conemu.github.io=
+New versions of this file are available on [http://conemu.github.io/en/CygwinStartDir.html conemu.github.io].
+
+=Cygwin startup directory=
 One of the most asked questions about cygwin using - how to run its shell in the specified working directory.
 
 Finally, thanks to csbdess, Issue1552#15, the problem was identified.

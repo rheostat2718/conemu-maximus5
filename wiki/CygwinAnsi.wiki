@@ -1,5 +1,9 @@
 ﻿#summary Cygwin and pty related issues
 
+=!ConEmu has moved to conemu.github.io=
+New versions of this file are available on [http://conemu.github.io/en/CygwinAnsi.html conemu.github.io].
+
+=Cygwin and pty related issues=
 I have many reports about cygwin.
 And most of them are related to one cygwin behavior:
 when it detects real win32 console, it process all ANSI sequences internally,

@@ -1,9 +1,9 @@
 ﻿#summary How to change the default terminal emulator on Windows
 
-=Migration to [http://conemu.github.io/ conemu.github.io]=
-Google has declared [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html shutdown] of googlecode service. 
+=!ConEmu has moved to conemu.github.io=
+New versions of this file are available on [http://conemu.github.io/en/DefaultTerminal.html conemu.github.io].
 
-New versions of this file will be available on [http://conemu.github.io/en/DefaultTerminal.html conemu.github.io].
+Google has declared [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html shutdown] of googlecode service. 
 
 =Introduction=
 

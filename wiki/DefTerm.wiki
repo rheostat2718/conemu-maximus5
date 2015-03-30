@@ -1,3 +1,8 @@
-﻿Read about Default terminal feature [DefaultTerminal here].
+﻿=!ConEmu has moved to conemu.github.io=
+New versions of this file are available on [http://conemu.github.io/en/DefaultTerminal.html conemu.github.io].
+
+<wiki:comment>
+Read about Default terminal feature [DefaultTerminal here].
 
 [SettingsDefTerm Settings page and screenshot].
+</wiki:comment>

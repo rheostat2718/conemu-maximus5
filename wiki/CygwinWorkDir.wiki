@@ -1,1 +1,6 @@
-﻿Renamed to CygwinStartDir
+﻿=!ConEmu has moved to conemu.github.io=
+New versions of this file are available on [http://conemu.github.io/en/CygwinStartDir.html conemu.github.io].
+
+<wiki:comment>
+Renamed to CygwinStartDir
+</wiki:comment>

@@ -1,4 +1,8 @@
-﻿When you run any application compiled with cygwin or msys (that is
+﻿=!ConEmu has moved to conemu.github.io=
+New versions of this file are available on [http://conemu.github.io/en/CygwinHeap.html conemu.github.io].
+
+=Problems with Cygwin heap=
+When you run any application compiled with cygwin or msys (that is
 statically linked with cygwin1.dll or msys???.dll) you may,
 sometimes, notice weird error in application console output, and it
 will immediately exits after that.

@@ -1,5 +1,10 @@
 ﻿#summary cygwin, mingw, ConEmu and current shell directory
 
+=!ConEmu has moved to conemu.github.io=
+New versions of this file are available on [http://conemu.github.io/en/ShellWorkDir.html conemu.github.io].
+
+<wiki:comment>
 ConEmu may utilize shell's current directory.
 
 ShellWorkDir
+</wiki:comment>
