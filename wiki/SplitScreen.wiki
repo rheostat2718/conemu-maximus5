@@ -1,4 +1,8 @@
-﻿!ConEmu may split any tab into several panes with free (user choice) grid configuration.
+﻿=!ConEmu has moved to conemu.github.io=
+New versions of this file are available on [http://conemu.github.io/en/SplitScreen.html conemu.github.io].
+
+==Splits or panes==
+!ConEmu may split any tab into several panes with free (user choice) grid configuration.
 Unlike many other terminals (who can start in the split only the same shell as original one), you may
   * create new pane (split) with any shell of your choice, with different credentials or elevated (as Administrator);
   * or just duplicate shell from your active pane (classic way) with Ctrl+Shift+O or Ctrl+Shift+E.
