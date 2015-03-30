@@ -1,7 +1,7 @@
-=Migration to [http://conemu.github.io/ conemu.github.io]=
-Google has declared [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html shutdown] of googlecode service. 
+=!ConEmu has moved to conemu.github.io=
+New versions of this file are available on [http://conemu.github.io/en/Settings.html conemu.github.io].
 
-New versions of this file will be available on [http://conemu.github.io/en/Settings.html conemu.github.io].
+Google has declared [http://google-opensource.blogspot.ru/2015/03/farewell-to-google-code.html shutdown] of googlecode service. 
 
 <font size="5">*!ConEmu setup*</font>
 <wiki:toc max_depth="3" /> 
