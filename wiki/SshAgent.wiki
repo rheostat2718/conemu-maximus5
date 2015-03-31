@@ -1,4 +1,8 @@
-﻿ConEmu, cygwin/msys and ssh-agent
+﻿=!ConEmu has moved to conemu.github.io=
+New versions of this file will be available on [http://conemu.github.io/en/SshAgent.html conemu.github.io].
+
+
+==ConEmu, cygwin/msys and ssh-agent==
 
 Article is under construction
 
