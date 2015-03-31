@@ -1,6 +1,4 @@
-﻿#labels Featured
-
-=!ConEmu has moved to [http://conemu.github.io/ conemu.github.io]=
+﻿=!ConEmu has moved to [http://conemu.github.io/ conemu.github.io]=
 New versions of this file will be available on [http://conemu.github.io/en/Screenshots.html conemu.github.io].
 
 ===Screencasts===

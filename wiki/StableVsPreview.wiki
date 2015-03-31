@@ -1,4 +1,3 @@
-#labels Featured
 =!ConEmu has moved to conemu.github.io=
 
 [http://conemu.github.io/ New official ConEmu website]
