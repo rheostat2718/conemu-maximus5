@@ -17,7 +17,7 @@ New versions of this file will be available on [http://conemu.github.io/en/Issue
 
 ==How to use bugtracker==
 ===Before reporting a bug or requesting a feature===
-  * Please read [TableOfContents Documentation] and [ConEmuFAQ FAQ]. If something in Documentation is not clear, please let me know in comments what exactly must be clarified (comment field in the end of each wiki-page).
+  * Please read [http://conemu.github.io/en/TableOfContents.html Documentation] and [http://conemu.github.io/en/ConEmuFAQ.html FAQ]. If something in Documentation is not clear, please let me know in comments what exactly must be clarified.
   * Also, check existing issues. May be same issue already exists of was fixed.
 ===How to monitor issues===
   * If you are interested in some issue, star it and you'll receive e-mail notifications on any changes in it.
