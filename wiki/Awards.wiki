@@ -1,4 +1,8 @@
 #labels Featured
+=!ConEmu has moved to conemu.github.io=
+
+[http://conemu.github.io/ New official ConEmu website]
+
 ===Awards===
 <a href="http://www.softpedia.com/get/System/System-Miscellaneous/ConEmu.shtml"><img border="0" src="http://s1.softpedia-static.com/base_img/softpedia_free_award_f.gif"/></a>
 <a href="http://www.windows8downloads.com/" target="_blank"><img src="http://www.windows8downloads.com/img/awards/award_5.png" alt="Windows 8 Downloads" border="0" width="160" height="80"/></a>
