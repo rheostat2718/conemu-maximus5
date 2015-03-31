@@ -1,5 +1,3 @@
-#labels Featured
-
 *Note* Some old plugins from this list will not be working in the latest
 builds of Far 3. Updated plugins were moved to [https://github.com/Maximus5/FarPlugins GitHub].
 

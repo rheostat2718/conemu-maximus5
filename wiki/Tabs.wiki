@@ -1,4 +1,7 @@
-﻿#labels Featured
+﻿=!ConEmu has moved to conemu.github.io=
+
+New versions of this file will be available on [http://conemu.github.io/en/Tabs.html conemu.github.io].
+
 =Windows console with tabs=
 !ConEmu may visualize with tabs all opened consoles, GUI applications (PuTTY for example) and Far Manager windows (panels, editors, viewers). !ConEmu can handle up to 30 consoles and much more Far Manager editor (viewer) windows.
 

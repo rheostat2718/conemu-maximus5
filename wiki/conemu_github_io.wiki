@@ -2,7 +2,7 @@
 
 =!ConEmu has moved to conemu.github.io=
 
-[http://conemu.github.io/en/SplitScreen.html New official ConEmu website]
+[http://conemu.github.io/ New official ConEmu website]
 
   * [http://conemu.github.io/en/Downloads.html Download mirrors]
   * [http://conemu.github.io/en/TableOfContents.html Documentation]

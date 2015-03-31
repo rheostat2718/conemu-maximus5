@@ -1,4 +1,8 @@
 #labels Featured
+=!ConEmu has moved to conemu.github.io=
+
+[http://conemu.github.io/ New official ConEmu website]
+
 =!ConEmu released with 3-stage manner=
 Choose your version.
 
