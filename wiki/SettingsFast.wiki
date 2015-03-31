@@ -59,7 +59,7 @@ Less number of settings may be changed manually via [Settings#Registry registry]
 !ConEmu не «самовольничает», перед запуском процесса обновления у вас спросят подтверждение.
 
 ==Disable !ConIme.exe autorun (Vista only)==
-Пользователи Windows Vista могут увидеть этот флажок. Почему и зачем написано в [ConEmuFAQ#Windows_Vista FAQ].
+Пользователи Windows Vista могут увидеть этот флажок. Почему и зачем написано в [http://conemu.github.io/en/ConEmuFAQ.html#Windows_Vista FAQ].
 
 ==После нажатия кнопки «OK»==
 !ConEmu запускает в своей вкладке либо Far Manager (если найден),
@@ -70,7 +70,7 @@ Less number of settings may be changed manually via [Settings#Registry registry]
 [Settings#Settings_dialog Как открыть диалог настроек]
 
 =Ссылки на документацию=
-  * [http://conemu.narod.ru/settings.html#Screenshots Скриншоты с русскими подсказками (начало)]
-  * [http://code.google.com/p/conemu-maximus5/wiki/Command_Line Параметры командной строки, запуск при старте нескольких вкладок]
-  * [http://code.google.com/p/conemu-maximus5/wiki/ConEmuFAQ ЧаВо (на русском)]
-  * [http://code.google.com/p/conemu-maximus5/wiki/TableOfContents Остальная документация]
+  * [http://conemu.github.io/en/Settings.html Настройки]
+  * [http://conemu.github.io/en/Command_Line.html Параметры командной строки, запуск при старте нескольких вкладок]
+  * [http://conemu.github.io/ru/ConEmuFAQ.html ЧаВо (на русском)]
+  * [http://conemu.github.io/en/TableOfContents.html Остальная документация]

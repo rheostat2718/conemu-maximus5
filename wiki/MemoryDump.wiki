@@ -1,7 +1,7 @@
 ﻿‘Memory dump’ (or ‘Mini dump’, or ‘Crash dump’) is a binary file, containing full or brief information about program state at specified moment.
 Usually, files has `.dmp` or `.mdmp` extension.
 
-Following information is a copy of answers from [ConEmuFAQ ConEmu FAQ].
+Following information is a copy of answers from [http://conemu.github.io/en/ConEmuFAQ.html ConEmu FAQ].
 
 =How to create a minidump=
 
