@@ -16,7 +16,7 @@ You will get command prompt with permanent history (Alt+F8).
 
 
 ==Plain cmd.exe==
-OK. If you still want use plain "cmd.exe" - here is one trick using AnsiEscapeCodes.
+OK. If you still want use plain "cmd.exe" - here is one trick using [http://conemu.github.io/en/AnsiEscapeCodes.html AnsiEscapeCodes].
 
 ===Set up your task===
 <img src="http://conemu-maximus5.googlecode.com/svn/files/PromptAtBottom1.png" title="Prompt at the bottom of ConEmu window" alt="Prompt at the bottom">

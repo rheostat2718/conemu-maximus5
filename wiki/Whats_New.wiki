@@ -246,7 +246,7 @@ Documents will be opened using associated application.
 Add "-new_console:n" suffix to suppress "Press Enter or Esc to close console".
 }}}
   * Issue 1883: Search field activation hotkey was not working if toolbar buttons were hidden.
-  * AnsiEscapeCodes: Change behavior on wrong ST terminator of OSC detected (allowed 'ESC \' or 'BEL').
+  * http://conemu.github.io/en/AnsiEscapeCodes.html AnsiEscapeCodes]: Change behavior on wrong ST terminator of OSC detected (allowed 'ESC \' or 'BEL').
   * Issue 1865: Deadlocks were happened sometimes, PipeServer termination sequence was changed.
 
 

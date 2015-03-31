@@ -99,7 +99,7 @@ ConEmuC -t [-b] [-CP] "Path to text file to echo"
           Without specified code page BOM may be used for utf-8 and CP1200
           Otherwise the file will be threated as ANSI
 }}}
-Both commands are able to process [AnsiEscapeCodes ANSI sequences].
+Both commands are able to process [http://conemu.github.io/en/AnsiEscapeCodes.html ANSI sequences].
 But take into account, that `"ConEmuC -t ..."` does not do replacements with ASCII equivalents.
 {{{
 ConEmuC -e "^[[1;33;45mqwerty^[[m"

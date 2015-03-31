@@ -20,15 +20,15 @@ working directories internally.
 However, since !ConEmu's build 140818 you get full support of ‘Current directory’ (*CD*).
 
   * Automatic detection of *CD* in `cmd.exe` or `tcc.exe`;
-  * Ability to inform !ConEmu GUI about shell *CD* using [AnsiEscapeCodes ANSI] or [ConEmuC ConEmuC];
-  * Display *CD* in the tab title using [SettingsTabBar tab templates];
-  * Reuse *CD* in the [RestartTab Restart] and [LaunchNewTab Create new console] dialogs;
-  * At last you may use "*%CD%*" variable with [GuiMacro#List_of_functions Shell] macro function in the `Dir` parameter.
+  * Ability to inform !ConEmu GUI about shell *CD* using [http://conemu.github.io/en/AnsiEscapeCodes.html ANSI] or [http://conemu.github.io/en/ConEmuC.html ConEmuC];
+  * Display *CD* in the tab title using [http://conemu.github.io/en/SettingsTabBar.html tab templates];
+  * Reuse *CD* in the [RestartTab Restart] and [http://conemu.github.io/en/LaunchNewTab.html Create new console] dialogs;
+  * At last you may use "*%CD%*" variable with [http://conemu.github.io/en/GuiMacro.html#List_of_functions Shell] macro function in the `Dir` parameter.
 
 =What you shall do to get *CD* support=
 
 ==cmd and tcc==
-Just enable ‘[ConEmuHk Inject ConEmuHk]’ feature. !ConEmu will maintain *CD* for you automatically.
+Just enable ‘[http://conemu.github.io/en/ConEmuHk.html Inject ConEmuHk]’ feature. !ConEmu will maintain *CD* for you automatically.
 
 ==bash and other cygwin shells==
 You need to tell bash to run `"ConEmuC -StoreCWD"` command each time its prompt executed.
