@@ -26,8 +26,8 @@ svn co http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu-stable/ ConEmu-sta
 =Documentation=
 Oh, there are many docs and places with information about !ConEmu, but not enough.
 
-  * [https://code.google.com/p/conemu-maximus5/wiki/ConEmu Official wiki]
-    * [https://code.google.com/p/conemu-maximus5/wiki/Whats_New Change log]
+  * [http://conemu.github.io/en/TableOfContents.html Official wiki]
+    * [http://conemu.github.io/en/Whats_New.html Change log]
   * [http://superuser.com/questions/tagged/conemu Questions on superuser.com]
   * [http://stackoverflow.com/questions/tagged/conemu Questions on stackoverflow.com]
   * [https://code.google.com/p/conemu-maximus5/issues/list?can=1&q=&sort=-id+-id&colspec=ID+Stars+Type+Status+Modified+Reporter+Summary&cells=tiles Issue tracker]
