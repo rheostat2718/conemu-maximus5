@@ -4424,8 +4424,9 @@ void CConEmuMain::DeleteVConMainThread(CVirtualConsole* apVCon)
 // abRecreate: TRUE - пересоздать текущую, FALSE - создать новую
 // abConfirm:  TRUE - показать диалог подтверждения
 // abRunAs:    TRUE - под админом
-void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs /*= crb_Undefined*/)
+bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs /*= crb_Undefined*/)
 {
+	bool bExecRc = false;
 	FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
 	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
 	RConStartArgs args;
@@ -4480,7 +4481,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 			}
 
 			FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
-			return;
+			return false;
 		}
 
 		if (abConfirm)
@@ -4489,7 +4490,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 
 			//int nRc = DialogBoxParam(g_hInstance, MAKEINTRESOURCE(IDD_RESTART), ghWnd, Recreate DlgProc, (LPARAM)&args);
 			if (nRc != IDC_START)
-				return;
+				return false;
 
 			CVConGroup::Redraw();
 		}
@@ -4497,7 +4498,8 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 		if (args.aRecreate == cra_CreateTab)
 		{
 			//Собственно, запуск
-			CreateCon(&args, true);
+			if (CreateCon(&args, true))
+				bExecRc = true;
 		}
 		else
 		{
@@ -4514,7 +4516,8 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 			else
 			{
 				// Start new ConEmu.exe process with chosen arguments...
-				CreateWnd(&args);
+				if (CreateWnd(&args))
+					bExecRc = true;
 			}
 		}
 	}
@@ -4534,11 +4537,11 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 				if (nRc == IDC_TERMINATE)
 				{
 					VCon->RCon()->CloseConsole(true, false);
-					return;
+					return true;
 				}
 
 				if (nRc != IDC_START)
-					return;
+					return false;
 			}
 
 			if (VCon.VCon())
@@ -4546,6 +4549,7 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 				VCon->Redraw();
 				// Собственно, Recreate
 				VCon->RCon()->RecreateProcess(&args);
+				bExecRc = true;
 			}
 		}
 	}
@@ -4554,10 +4558,19 @@ void CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 	SafeFree(args.pszStartupDir);
 	SafeFree(args.pszUserName);
 	//SafeFree(args.pszUserPassword);
+	return bExecRc;
 }
 
 int CConEmuMain::RecreateDlg(RConStartArgs* apArg)
 {
+	static LONG lnInCall = 0;
+	if (lnInCall > 0)
+	{
+		LogString(L"RecreateDlg was skipped because it is already shown");
+		return IDCANCEL;
+	}
+	MSetter lSet(&lnInCall);
+
 	if (!mp_RecreateDlg)
 		mp_RecreateDlg = new CRecreateDlg();
 
@@ -4617,12 +4630,12 @@ BOOL CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd 
 				pIn->NewCmd.ShowHide = gpSetCls->SingleInstanceShowHide;
 				if (gpSetCls->SingleInstanceShowHide == sih_None)
 				{
-					if (mb_StartDetached)
+					if (m_StartDetached == crb_On)
 						pIn->NewCmd.ShowHide = sih_StartDetached;
 				}
 				else
 				{
-					_ASSERTE(mb_StartDetached==false);
+					_ASSERTE(m_StartDetached==crb_Undefined);
 				}
 
 				//GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
@@ -7081,7 +7094,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 		gpSet->CheckHotkeyUnique();
 
 
-		if (!isVConExists(0) || !mb_StartDetached)  // Консоль уже может быть создана, если пришел Attach из ConEmuC
+		if (!isVConExists(0) || (m_StartDetached != crb_On))  // Консоль уже может быть создана, если пришел Attach из ConEmuC
 		{
 			// Если надо - подготовить портабельный реестр
 			if (mb_PortableRegExist)
@@ -7131,7 +7144,7 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 
 				lbCreated = TRUE;
 			}
-			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && !mb_StartDetached)
+			else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd,AutoStartTaskName) == 0) && (m_StartDetached != crb_On))
 			{
 				RConStartArgs args;
 				// Was "/dir" specified in the app switches?
@@ -7167,10 +7180,10 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 				lbCreated = TRUE;
 			}
 
-			if (!lbCreated && !mb_StartDetached)
+			if (!lbCreated && (m_StartDetached != crb_On))
 			{
 				RConStartArgs args;
-				args.Detached = mb_StartDetached ? crb_On : crb_Off;
+				args.Detached = crb_Off;
 
 				if (args.Detached != crb_On)
 				{
@@ -7189,8 +7202,8 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			}
 		}
 
-		if (mb_StartDetached)
-			mb_StartDetached = false;  // действует только на первую консоль
+		if (m_StartDetached == crb_On)
+			m_StartDetached = crb_Off;  // действует только на первую консоль
 
 		//// Может быть в настройке указано - всегда показывать иконку в TSA
 		//Icon.SettingsChanged();

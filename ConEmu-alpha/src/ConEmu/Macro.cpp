@@ -192,6 +192,8 @@ namespace ConEmuMacro
 	LPWSTR Print(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Progress(<Type>[,<Value>])
 	LPWSTR Progress(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Recreate(<Action>[,<Confirm>[,<AsAdmin>]]), alias "Create"
+	LPWSTR Recreate(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Rename(<Type>,"<Title>")
 	LPWSTR Rename(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Scroll(<Type>,<Direction>,<Count=1>)
@@ -236,6 +238,11 @@ namespace ConEmuMacro
 	// Установить Zoom для шрифта. 100% и т.п.
 	LPWSTR Zoom(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 
+	typedef DWORD GuiMacroFlags;
+	const GuiMacroFlags
+		gmf_MainThread           = 1,
+		gmf_PostponeWhenActive   = 2,
+		gmf_None                 = 0;
 
 	/* ******************************* */
 	/* ****** Macro enumeration ****** */
@@ -243,11 +250,11 @@ namespace ConEmuMacro
 	struct {
 		MacroFunction pfn;
 		LPCWSTR Alias[5]; // Some function can be called with different names (usability)
-		bool NoThreadSafe;
+		GuiMacroFlags Flags;
 	} Functions[] = {
 		// List all functions
 		{About, {L"About"}},
-		{AffinityPriority, {L"AffinityPriority"}},
+		{AffinityPriority, {L"AffinityPriority"}, gmf_PostponeWhenActive},
 		{Attach, {L"Attach"}},
 		{Break, {L"Break"}},
 		{Close, {L"Close"}},
@@ -267,16 +274,17 @@ namespace ConEmuMacro
 		{IsConEmu, {L"IsConEmu"}},
 		{IsConsoleActive, {L"IsConsoleActive"}},
 		{IsRealVisible, {L"IsRealVisible"}},
-		{Keys, {L"Keys"}},
+		{Keys, {L"Keys"}, gmf_PostponeWhenActive},
 		{Menu, {L"Menu"}},
 		{MsgBox, {L"MsgBox"}},
 		{Palette, {L"Palette"}},
-		{Paste, {L"Paste"}},
-		{PasteFile, {L"PasteFile"}},
-		{PasteExplorerPath, {L"PasteExplorerPath"}},
-		{Pause, {L"Pause"}},
-		{Print, {L"Print"}},
+		{Paste, {L"Paste"}, gmf_PostponeWhenActive},
+		{PasteFile, {L"PasteFile"}, gmf_PostponeWhenActive},
+		{PasteExplorerPath, {L"PasteExplorerPath"}, gmf_PostponeWhenActive},
+		{Pause, {L"Pause"}, gmf_PostponeWhenActive},
+		{Print, {L"Print"}, gmf_PostponeWhenActive},
 		{Progress, {L"Progress"}},
+		{Recreate, {L"Recreate", L"Create"}, gmf_MainThread},
 		{Rename, {L"Rename"}},
 		{Scroll, {L"Scroll"}},
 		{Select, {L"Select"}},
@@ -286,7 +294,7 @@ namespace ConEmuMacro
 		{Shell, {L"Shell", L"ShellExecute"}},
 		{Sleep, {L"Sleep"}},
 		{Split, {L"Split", L"Splitter"}},
-		{Status, {L"Status", L"StatusBar", L"StatusControl"}, true},
+		{Status, {L"Status", L"StatusBar", L"StatusControl"}, gmf_MainThread},
 		{Tab, {L"Tab", L"Tabs", L"TabControl"}},
 		{Task, {L"Task"}},
 		{Transparency, {L"Transparency"}},
@@ -595,7 +603,7 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 
 	// Extract function name
 
-	wchar_t szFunction[64], chTerm = 0;
+	wchar_t szFunction[64] = L"", chTerm = 0;
 	bool lbFuncOk = false;
 
 	for (size_t i = 0; i < (countof(szFunction)-1); i++)
@@ -608,12 +616,14 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 			if (chTerm == 0)
 			{
 				lbFuncOk = (i > 0);
+				szFunction[i] = 0;
 				asString = asString + i;
 			}
 
 			break;
 		}
 
+		// Don't use ‘switch(){}’ here, because of further break-s
 		if (chTerm == L':' || chTerm == L'(' || chTerm == L' ')
 		{
 			// Skip white-spaces
@@ -638,6 +648,14 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 
 			lbFuncOk = true;
 			szFunction[i] = 0;
+			break;
+		}
+		else if (chTerm == L';')
+		{
+			// Function without any args
+			lbFuncOk = (i > 0);
+			szFunction[i] = 0;
+			asString = asString + i;
 			break;
 		}
 	}
@@ -962,7 +980,15 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 	while (p)
 	{
 		LPWSTR pszResult = NULL;
-		LPCWSTR szFunction = p->szFunc;
+		LPCWSTR pszFunction = p->szFunc;
+		_ASSERTE(pszFunction && !wcschr(pszFunction,L';'));
+		// To force execution of that function when RCon sucessfully starts
+		bool bPostpone = false;
+		if (*pszFunction == L'@')
+		{
+			bPostpone = true;
+			pszFunction++;
+		}
 
 		// Поехали
 		MacroFunction pfn = NULL;
@@ -970,9 +996,16 @@ LPWSTR ConEmuMacro::ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFr
 		{
 			for (size_t n = 0; (n < countof(Functions[f].Alias)) && Functions[f].Alias[n]; n++)
 			{
-				if (lstrcmpi(szFunction, Functions[f].Alias[n]) == 0)
+				if (lstrcmpi(pszFunction, Functions[f].Alias[n]) == 0)
 				{
-					if (Functions[f].NoThreadSafe && !bIsMainThread)
+					if ((bPostpone || (Functions[f].Flags & gmf_PostponeWhenActive)) && !pMacroRCon->isConsoleReady())
+					{
+						if (!pMacroRCon)
+							pszResult = lstrdup(L"VConRequired");
+						else
+							pszResult = pMacroRCon->PostponeMacro(p->AsString());
+					}
+					else if ((Functions[f].Flags & gmf_MainThread) && !bIsMainThread)
 					{
 						SyncExecMacroParm parm = {Functions[f].pfn, p, pMacroRCon, abFromPlugin};
 						pszResult = (LPWSTR)gpConEmu->SyncExecMacro(f, (LPARAM)&parm);
@@ -1143,7 +1176,7 @@ LPWSTR ConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bC
 
 	LPCWSTR pszSrc = NULL;
 
-	// C-style строки
+	// C-style strings
 	if (rsArguments[0] == L'"')
 	{
 		rsString = rsArguments+1;
@@ -1152,6 +1185,48 @@ LPWSTR ConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bC
 		while (*pszSrc && (*pszSrc != L'"'))
 		{
 			EscapeChar(false, pszSrc, pszDst);
+		}
+		_ASSERTE((*pszSrc == L'"') || (*pszSrc == 0));
+		rsArguments = (wchar_t*)((*pszSrc == L'"') ? (pszSrc+1) : pszSrc);
+		_ASSERTE(rsArguments>pszDst || (rsArguments==pszDst && *rsArguments==0));
+		*pszDst = 0;
+	}
+	// C-style strings, but quotes are escaped by '\' (may come from ConEmu -GuiMacro "...")
+	else if (rsArguments[0] == L'\\' && rsArguments[1] == L'"')
+	{
+		rsString = rsArguments+2;
+		pszSrc = rsString;
+		LPWSTR pszDst = rsString;
+		wchar_t szTemp[2], *pszTemp;
+		while (*pszSrc && (*pszSrc != L'"'))
+		{
+			if ((pszSrc[0] == L'\\') && pszSrc[1])
+			{
+				if (pszSrc[1] == L'"')
+				{
+					pszSrc++;
+					break;
+				}
+				else if (pszSrc[2])
+				{
+					DEBUGTEST(LPCWSTR pszStart = pszSrc);
+					pszTemp = szTemp;
+					EscapeChar(false, pszSrc, pszTemp);
+					EscapeChar(false, pszSrc, pszTemp);
+					_ASSERTE((pszTemp==(szTemp+2)) && (pszSrc==(pszStart+3) || pszSrc==(pszStart+4)));
+					pszTemp = szTemp;
+					LPCWSTR pszReent = szTemp;
+					EscapeChar(false, pszReent, pszDst);
+				}
+				else
+				{
+					EscapeChar(false, pszSrc, pszTemp);
+				}
+			}
+			else
+			{
+				EscapeChar(false, pszSrc, pszDst);
+			}
 		}
 		_ASSERTE((*pszSrc == L'"') || (*pszSrc == 0));
 		rsArguments = (wchar_t*)((*pszSrc == L'"') ? (pszSrc+1) : pszSrc);
@@ -2466,6 +2541,30 @@ LPWSTR ConEmuMacro::Progress(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugi
 	return lstrdup(L"InvalidArg");
 }
 
+// Recreate(<Action>[,<Confirm>[,<AsAdmin>]]), alias "Create"
+LPWSTR ConEmuMacro::Recreate(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	RecreateActionParm Action = gpSetCls->GetDefaultCreateAction();
+	bool Confirm = gpSet->isMultiNewConfirm;
+	RConBoolArg AsAdmin = crb_Undefined;
+
+	int i = 0;
+	if (p->GetIntArg(0, i))
+	{
+		if ((i >= cra_CreateTab) && (i <= cra_CreateWindow))
+			Action = (RecreateActionParm)i;
+		if (p->GetIntArg(1, i))
+			Confirm = (i != 0);
+		if (p->GetIntArg(2, i))
+			AsAdmin = i ? crb_On : crb_Off;
+	}
+
+	LPWSTR pszRc = gpConEmu->RecreateAction(Action, Confirm, AsAdmin)
+		? lstrdup(L"CREATED")
+		: lstrdup(L"FAILED");
+	return pszRc;
+}
+
 // Rename(<Type>,"<Title>")
 LPWSTR ConEmuMacro::Rename(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
@@ -2891,7 +2990,10 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	bool bDontQuote = false;
 	int nShowCmd = SW_SHOWNORMAL;
 
-	if (p->GetStrArg(0, pszOper))
+	// Without any arguments - just starts default shell
+	p->GetStrArg(0, pszOper);
+
+	// And now, process the action
 	{
 		CVConGuard VCon(apRCon ? apRCon->VCon() : NULL);
 
@@ -2913,14 +3015,14 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			RConStartArgs args; args.pszSpecialCmd = lstrmerge(L"\"-", pszOper, L"\"");
 			args.ProcessNewConArg();
 			// new_console:I
-			bForceDuplicate = (args.ForceInherit == crb_On);
+			bForceDuplicate = (args.ForceInherit == crb_On) && (apRCon != NULL);
 			// RunAs - does not supported in "duplicate"
 			bDontDuplicate = ((args.RunAsAdministrator == crb_On) || (args.RunAsRestricted == crb_On) || args.pszUserName);
 			_ASSERTE(!(bForceDuplicate && bDontDuplicate));
 		}
 
 
-		if ((bForceDuplicate || (!(pszFile && *pszFile) && !(pszParm && *pszParm))) && apRCon)
+		if (apRCon && (bForceDuplicate || (!(pszFile && *pszFile) && !(pszParm && *pszParm))))
 		{
 			LPCWSTR pszCmd;
 
@@ -2956,7 +3058,17 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			pszFile = pszBuf;
 		}
 
-		if ((pszFile && *pszFile) || (pszParm && *pszParm))
+		if (!(pszFile && *pszFile) && !(pszParm && *pszParm))
+		{
+			struct Impl {
+				static LRESULT CallNewConsoleDlg(LPARAM lParam)
+				{
+					return (LRESULT)gpConEmu->RecreateAction(cra_CreateTab, true);
+				};
+			};
+			pszRc = gpConEmu->CallMainThread(true, Impl::CallNewConsoleDlg, 0) ? lstrdup(L"CREATED") : lstrdup(L"FAILED");
+		}
+		else
 		{
 
 			bool bNewTaskGroup = false;
