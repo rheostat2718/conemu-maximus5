@@ -242,6 +242,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	m_Progress.ConsoleProgress = m_Progress.LastConsoleProgress = -1;
 	hPictureView = NULL; mb_PicViewWasHidden = FALSE;
 	mh_MonitorThread = NULL; mn_MonitorThreadID = 0; mb_WasForceTerminated = FALSE;
+	mpsz_PostCreateMacro = NULL;
 	mh_PostMacroThread = NULL; mn_PostMacroThreadID = 0;
 	//mh_InputThread = NULL; mn_InputThreadID = 0;
 	mp_sei = NULL;
@@ -493,6 +494,8 @@ CRealConsole::~CRealConsole()
 	SafeDelete(mp_PriorityDpiAware);
 
 	SafeDelete(mpcs_CurWorkDir);
+
+	SafeFree(mpsz_PostCreateMacro);
 
 	//SafeFree(mpsz_CmdBuffer);
 
@@ -1745,6 +1748,12 @@ bool CRealConsole::PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, i
 	if (!this)
 		return false;
 
+	if (!hConWnd)
+	{
+		_ASSERTE(FALSE && "Must not get here, use mpsz_PostCreateMacro to postpone macroses");
+		return false;
+	}
+
 	INPUT_RECORD r[2] = {{KEY_EVENT},{KEY_EVENT}};
 	TranslateKeyPress(vkKey, dwControlState, wch, ScanCode, r, r+1);
 
@@ -2645,6 +2654,13 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 		//		return 0;
 		//	}
 		//}
+
+		// If postponed macro was not executed (due to multithreading issues)
+		if (mpsz_PostCreateMacro && isConsoleReady())
+		{
+			// Run it now...
+			ProcessPostponedMacro();
+		}
 
 		// Если консоль не должна быть показана - но ее кто-то отобразил
 		if (!isShowConsole && !gpSet->isConVisible)
@@ -5576,6 +5592,9 @@ void CRealConsole::StopSignal()
 
 		// Очистка массива консолей и обновление вкладок
 		CConEmuChild::ProcessVConClosed(mp_VCon);
+
+		// Clear some vars
+		SafeFree(mpsz_PostCreateMacro);
 	}
 }
 
@@ -6569,6 +6588,9 @@ HWND CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 
 	// Само разберется
 	OnConsoleKeyboardLayout(dwKeybLayout);
+
+	// Are there postponed macros? Like print(...) for example
+	ProcessPostponedMacro();
 
 	// Return required info
 	QueryStartStopRet(pRet);
@@ -8478,7 +8500,8 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 	if (ahConWnd && mb_InCreateRoot)
 	{
 		// При запуске "под администратором" mb_InCreateRoot сразу не сбрасывается
-		_ASSERTE(m_Args.RunAsAdministrator == crb_On);
+		// При обычном запуске тоже иногда не успевает
+		// -- _ASSERTE(m_Args.RunAsAdministrator == crb_On);
 		mb_InCreateRoot = FALSE;
 	}
 
@@ -11386,7 +11409,10 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		return;
 
 	if (!hConWnd)
+	{
+		_ASSERTE(FALSE && "Must not get here, use mpsz_PostCreateMacro to postpone macroses");
 		return;
+	}
 
 	WARNING("warning: Хорошо бы слямзить из ClipFixer кусочек по корректировке текста. Настройка?");
 
@@ -11584,6 +11610,8 @@ bool CRealConsole::isConsoleClosing()
 
 bool CRealConsole::isConsoleReady()
 {
+	if (!this)
+		return false;
 	if (hConWnd && mn_MainSrv_PID && mb_MainSrv_Ready)
 		return true;
 	return false;
@@ -14938,6 +14966,44 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	{
 		ShutdownGuiStep(L"PostMacro, done");
 	}
+}
+
+wchar_t* CRealConsole::PostponeMacro(wchar_t* RVAL_REF asMacro)
+{
+	if (!this || !asMacro)
+	{
+		_ASSERTE(this && asMacro);
+		return lstrdup(L"InvalidPointer");
+	}
+
+	lstrmerge(&mpsz_PostCreateMacro, mpsz_PostCreateMacro ? L"; " : NULL, asMacro);
+	free(asMacro);
+
+	return lstrdup(L"Postponed");
+}
+
+void CRealConsole::ProcessPostponedMacro()
+{
+	if (!this)
+		return;
+
+	wchar_t* pszMacro = NULL;
+	wchar_t* pszResult = NULL;
+
+	if (mpsz_PostCreateMacro)
+	{
+		pszMacro = mpsz_PostCreateMacro;
+		mpsz_PostCreateMacro = NULL;
+	}
+
+	if (pszMacro)
+	{
+		CVConGuard VCon(mp_VCon);
+		pszResult = ConEmuMacro::ExecuteMacro(pszMacro, this);
+	}
+
+	SafeFree(pszMacro);
+	SafeFree(pszResult);
 }
 
 void CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= false*/)
