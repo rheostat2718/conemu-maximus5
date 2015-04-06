@@ -30,13 +30,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "AboutDlg.h"
 #include "DynDialog.h"
+#include "HotkeyDlg.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "OptionsFast.h"
 #include "OptionsHelp.h"
+#include "SetCmdTask.h"
+#include "SetColorPalette.h"
+#include "SetDlgLists.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "Update.h"
+#include "../common/CmdArg.h"
 #include "../common/execute.h"
 #include "../common/FarVersion.h"
 #include "../common/WFiles.h"
@@ -53,6 +58,480 @@ static bool bCheckHooks, bCheckUpdate, bCheckIme;
 static bool bVanilla;
 static CDpiForDialog* gp_DpiAware = NULL;
 static CEHelpPopup* gp_FastHelp = NULL;
+static int gn_FirstFarTask = -1;
+static ConEmuHotKey ghk_MinMaxKey = {};
+
+static const ColorPalette* gp_DefaultPalette = NULL;
+static WNDPROC gpfn_DefaultColorBoxProc = NULL;
+static LRESULT CALLBACK Fast_ColorBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT lRc = 0;
+
+	switch (uMsg)
+	{
+		case WM_PAINT:
+		{
+			if (!gp_DefaultPalette)
+			{
+				_ASSERTE(gp_DefaultPalette!=NULL);
+				break;
+			}
+			RECT rcClient = {};
+			PAINTSTRUCT ps = {};
+			if (BeginPaint(hwnd, &ps))
+			{
+				GetClientRect(hwnd, &rcClient);
+				for (int i = 0; i < 16; i++)
+				{
+					int x = (i % 8);
+					int y = (i == x) ? 0 : 1;
+					RECT rc = {(x) * rcClient.right / 8, (y) * rcClient.bottom / 2,
+						(x+1) * rcClient.right / 8, (y+1) * rcClient.bottom / 2};
+					HBRUSH hbr = CreateSolidBrush(gp_DefaultPalette->Colors[i]);
+					FillRect(ps.hdc, &rc, hbr);
+					DeleteObject(hbr);
+				}
+				EndPaint(hwnd, &ps);
+			}
+			goto wrap;
+		} // WM_PAINT
+
+		case UM_PALETTE_FAST_CHG:
+		{
+			CEStr lsValue;
+			if (CSetDlgLists::GetSelectedString(GetParent(hwnd), lbColorSchemeFast, &lsValue.ms_Arg) > 0)
+			{
+				const ColorPalette* pPal = gpSet->PaletteGetByName(lsValue.ms_Arg);
+				if (pPal)
+				{
+					gp_DefaultPalette = pPal;
+					InvalidateRect(hwnd, NULL, FALSE);
+				}
+			}
+			goto wrap;
+		} // UM_PALETTE_FAST_CHG
+	}
+
+	if (gpfn_DefaultColorBoxProc)
+		lRc = CallWindowProc(gpfn_DefaultColorBoxProc, hwnd, uMsg, wParam, lParam);
+	else
+		lRc = ::DefWindowProc(hwnd, uMsg, wParam, lParam);
+wrap:
+	return lRc;
+}
+
+static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
+	SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
+	if (gp_DpiAware)
+	{
+		gp_DpiAware->Attach(hDlg, NULL, CDynDialog::GetDlgClass(hDlg));
+	}
+
+	RECT rect = {};
+	if (GetWindowRect(hDlg, &rect))
+	{
+		CDpiAware::GetCenteredRect(NULL, rect);
+		MoveWindowRect(hDlg, rect);
+	}
+
+	if (lParam)
+	{
+		SetWindowText(hDlg, (LPCWSTR)lParam);
+	}
+	else
+	{
+		wchar_t szTitle[512];
+		wcscpy_c(szTitle, gpConEmu->GetDefaultTitle());
+		wcscat_c(szTitle, L" fast configuration");
+		SetWindowText(hDlg, szTitle);
+	}
+
+
+	// lbStorageLocation
+	SettingsStorage Storage = {}; bool ReadOnly = false;
+	gpSet->GetSettingsType(Storage, ReadOnly);
+
+	// Same priority as in CConEmuMain::ConEmuXml (reverse order)
+	wchar_t* pszSettingsPlaces[] = {
+		lstrdup(L"HKEY_CURRENT_USER\\Software\\ConEmu"),
+		ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"),
+		ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"),
+		ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"),
+		NULL
+	};
+	// Lets find first allowed item
+	int iAllowed = 0;
+	if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_XML) == 0)
+	{
+		iAllowed = 1; // XML is used, registry is not allowed
+		if (Storage.pszFile)
+		{
+			if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[1]) == 0) // %APPDATA%
+				iAllowed = 1; // Any other xml has greater priority
+			else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[2]) == 0) // %ConEmuBaseDir%
+				iAllowed = 2; // Only %ConEmuDir% has greater priority
+			else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[3]) == 0) // %ConEmuDir%
+				iAllowed = 3; // Most prioritized
+			else
+			{
+				// Directly specified with "/LoadCfgFile ..."
+				SafeFree(pszSettingsPlaces[3]);
+				pszSettingsPlaces[3] = lstrdup(Storage.pszFile);
+				iAllowed = 3; // Most prioritized
+			}
+		}
+	}
+	// Index of the default location (relative to listbox, but not a pszSettingsPlaces)
+	// By default - suggest %APPDATA% or, if possible, %ConEmuDir%
+	// Win2k does not have 'msxml3.dll'/'msxml3r.dll' libraries
+	int iDefault = ((iAllowed == 0) && !IsWin2kEql()) ? (CConEmuUpdate::NeedRunElevation() ? 1 : 3) : 0;
+
+	// Populate lbStorageLocation
+	while (pszSettingsPlaces[iAllowed])
+	{
+		SendDlgItemMessage(hDlg, lbStorageLocation, CB_ADDSTRING, 0, (LPARAM)pszSettingsPlaces[iAllowed]);
+		iAllowed++;
+	}
+	SendDlgItemMessage(hDlg, lbStorageLocation, CB_SETCURSEL, iDefault, 0);
+
+	// Release memory
+	for (int i = 0; pszSettingsPlaces[i]; i++)
+	{
+		SafeFree(pszSettingsPlaces[i]);
+	}
+
+
+	// Tasks
+	const CommandTasks* pGrp = NULL;
+	for (int nGroup = 0; (pGrp = gpSet->CmdTaskGet(nGroup)) != NULL; nGroup++)
+	{
+		SendDlgItemMessage(hDlg, lbStartupShellFast, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
+	}
+	// Show startup task or shell command line
+	LPCWSTR pszStartup = (gpSet->nStartType == 2) ? gpSet->psStartTasksName : (gpSet->nStartType == 0) ? gpSet->psStartSingleApp : NULL;
+	if (pszStartup && *pszStartup)
+		CSetDlgLists::SelectStringExact(hDlg, lbStartupShellFast, pszStartup);
+
+
+	// Palettes (console color sets)
+	const ColorPalette* pPal = NULL;
+	for (int nPal = 0; (pPal = gpSet->PaletteGet(nPal)) != NULL; nPal++)
+	{
+		SendDlgItemMessage(hDlg, lbColorSchemeFast, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
+	}
+	// Show active (default) palette
+	gp_DefaultPalette = gpSet->PaletteFindCurrent(true);
+	if (gp_DefaultPalette)
+	{
+		CSetDlgLists::SelectStringExact(hDlg, lbColorSchemeFast, gp_DefaultPalette->pszName);
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Current paletted was not defined?");
+	}
+	// Show its colors in box
+	HWND hChild = GetDlgItem(hDlg, stPalettePreviewFast);
+	if (hChild)
+		gpfn_DefaultColorBoxProc = (WNDPROC)SetWindowLongPtr(hChild, GWLP_WNDPROC, (LONG_PTR)Fast_ColorBoxProc);
+
+
+	// Single instance
+	CheckDlgButton(hDlg, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
+
+
+	// Quake style and show/hide key
+	CheckDlgButton(hDlg, cbQuakeFast, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
+	const ConEmuHotKey* pHK = NULL;
+	if (gpSet->GetHotkeyById(vkMinimizeRestore, &pHK) && pHK)
+	{
+		wchar_t szKey[128] = L"";
+		SetDlgItemText(hDlg, tQuakeKeyFast, pHK->GetHotkeyName(szKey));
+		ghk_MinMaxKey.SetVkMod(pHK->GetVkMod());
+	}
+
+
+	// Keyhooks required for Win+Number, Win+Arrows, etc.
+	CheckDlgButton(hDlg, cbUseKeyboardHooksFast, gpSet->isKeyboardHooks(true));
+
+
+
+	// Debug purposes only. ConEmu.exe switch "/nokeyhooks"
+	#ifdef _DEBUG
+	EnableWindow(GetDlgItem(hDlg, cbUseKeyboardHooksFast), !gpConEmu->DisableKeybHooks);
+	#endif
+
+	// Injects
+	CheckDlgButton(hDlg, cbInjectConEmuHkFast, gpSet->isUseInjects);
+
+	// Autoupdates
+	if (!gpConEmu->isUpdateAllowed())
+	{
+		EnableWindow(GetDlgItem(hDlg, cbEnableAutoUpdateFast), FALSE);
+		EnableWindow(GetDlgItem(hDlg, rbAutoUpdateStableFast), FALSE);
+		EnableWindow(GetDlgItem(hDlg, rbAutoUpdatePreviewFast), FALSE);
+		EnableWindow(GetDlgItem(hDlg, rbAutoUpdateDeveloperFast), FALSE);
+		EnableWindow(GetDlgItem(hDlg, stEnableAutoUpdateFast), FALSE);
+	}
+	else
+	{
+		if (gpSet->UpdSet.isUpdateUseBuilds != 0)
+			CheckDlgButton(hDlg, cbEnableAutoUpdateFast, gpSet->UpdSet.isUpdateCheckOnStartup|gpSet->UpdSet.isUpdateCheckHourly);
+		CheckRadioButton(hDlg, rbAutoUpdateStableFast, rbAutoUpdateDeveloperFast,
+			(gpSet->UpdSet.isUpdateUseBuilds == 1) ? rbAutoUpdateStableFast :
+			(gpSet->UpdSet.isUpdateUseBuilds == 3) ? rbAutoUpdatePreviewFast : rbAutoUpdateDeveloperFast);
+	}
+
+	// Vista - ConIme bugs
+	if (!bCheckIme)
+	{
+		ShowWindow(GetDlgItem(hDlg, gbDisableConImeFast), SW_HIDE);
+		ShowWindow(GetDlgItem(hDlg, cbDisableConImeFast), SW_HIDE);
+		ShowWindow(GetDlgItem(hDlg, stDisableConImeFast1), SW_HIDE);
+		ShowWindow(GetDlgItem(hDlg, stDisableConImeFast2), SW_HIDE);
+		ShowWindow(GetDlgItem(hDlg, stDisableConImeFast3), SW_HIDE);
+		RECT rcGroup, rcBtn, rcWnd;
+		if (GetWindowRect(GetDlgItem(hDlg, gbDisableConImeFast), &rcGroup))
+		{
+			int nShift = (rcGroup.bottom-rcGroup.top);
+
+			HWND h = GetDlgItem(hDlg, IDOK);
+			GetWindowRect(h, &rcBtn); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtn, 2);
+			SetWindowPos(h, NULL, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+
+			h = GetDlgItem(hDlg, IDCANCEL);
+			GetWindowRect(h, &rcBtn); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtn, 2);
+			SetWindowPos(h, NULL, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+
+			h = GetDlgItem(hDlg, stHomePage);
+			GetWindowRect(h, &rcBtn); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtn, 2);
+			SetWindowPos(h, NULL, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+			SetWindowText(h, gsHomePage);
+
+			GetWindowRect(hDlg, &rcWnd);
+			MoveWindow(hDlg, rcWnd.left, rcWnd.top+(nShift>>1), rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top-nShift, FALSE);
+		}
+	}
+
+	// Done
+	SetFocus(GetDlgItem(hDlg, IDOK));
+	return FALSE; // Set focus to OK
+}
+
+static INT_PTR Fast_OnCtlColorStatic(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	if (GetDlgItem(hDlg, stDisableConImeFast1) == (HWND)lParam)
+	{
+		SetTextColor((HDC)wParam, 255);
+		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
+		SetBkMode((HDC)wParam, TRANSPARENT);
+		return (INT_PTR)hBrush;
+	}
+	else if (GetDlgItem(hDlg, stHomePage) == (HWND)lParam)
+	{
+		SetTextColor((HDC)wParam, GetSysColor(COLOR_HOTLIGHT));
+		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
+		SetBkMode((HDC)wParam, TRANSPARENT);
+		return (INT_PTR)hBrush;
+	}
+	else
+	{
+		SetTextColor((HDC)wParam, GetSysColor(COLOR_WINDOWTEXT));
+		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
+		SetBkMode((HDC)wParam, TRANSPARENT);
+		return (INT_PTR)hBrush;
+	}
+
+	return 0;
+}
+
+static INT_PTR Fast_OnSetCursor(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	if (((HWND)wParam) == GetDlgItem(hDlg, stHomePage))
+	{
+		SetCursor(LoadCursor(NULL, IDC_HAND));
+		SetWindowLongPtr(hDlg, DWLP_MSGRESULT, TRUE);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	switch (LOWORD(wParam))
+	{
+		case IDOK:
+		{
+			CEStr lsValue;
+
+			SettingsStorage CurStorage = {}; bool ReadOnly = false;
+			gpSet->GetSettingsType(CurStorage, ReadOnly);
+			LRESULT lSelStorage = SendDlgItemMessage(hDlg, lbStorageLocation, CB_GETCURSEL, 0, 0);
+			if (lSelStorage > 0)
+			{
+				// Значит юзер выбрал "создать настройки" в другом месте
+				wchar_t* pszNewPlace = GetDlgItemTextPtr(hDlg, lbStorageLocation);
+				if (!gpConEmu->SetConfigFile(pszNewPlace, true/*abWriteReq*/, false/*abSpecialPath*/))
+				{
+					// Ошибка уже показана
+					SafeFree(pszNewPlace);
+					return 1;
+				}
+				SafeFree(pszNewPlace);
+			}
+
+			/* Startup task */
+			if (CSetDlgLists::GetSelectedString(hDlg, lbStartupShellFast, &lsValue.ms_Arg) > 0)
+			{
+				if (*lsValue.ms_Arg == TaskBracketLeft)
+				{
+					if (lsValue.ms_Arg[lstrlen(lsValue.ms_Arg)-1] != TaskBracketRight)
+					{
+						_ASSERTE(FALSE && "Doesn't match '{...}'");
+					}
+					else
+					{
+						gpSet->nStartType = 2;
+						SafeFree(gpSet->psStartTasksName);
+						gpSet->psStartTasksName = lstrdup(lsValue.ms_Arg);
+					}
+				}
+				else if (lstrcmp(lsValue.ms_Arg, AutoStartTaskName) == 0)
+				{
+					// Not shown yet in list
+					gpSet->nStartType = 3;
+				}
+				else if (*lsValue.ms_Arg == CmdFilePrefix)
+				{
+					gpSet->nStartType = 1;
+					SafeFree(gpSet->psStartTasksFile);
+					gpSet->psStartTasksFile = lstrdup(lsValue.ms_Arg);
+				}
+				else
+				{
+					gpSet->nStartType = 0;
+					SafeFree(gpSet->psStartSingleApp);
+					gpSet->psStartSingleApp = lstrdup(lsValue.ms_Arg);
+				}
+			}
+
+			/* Default pallette changed? */
+			if (CSetDlgLists::GetSelectedString(hDlg, lbColorSchemeFast, &lsValue.ms_Arg) > 0)
+			{
+				const ColorPalette* pPal = gpSet->PaletteGetByName(lsValue.ms_Arg);
+				if (pPal)
+				{
+					gpSetCls->ChangeCurrentPalette(pPal, false);
+				}
+			}
+
+			/* Force Single instance mode */
+			gpSet->isSingleInstance = IsDlgButtonChecked(hDlg, cbSingleInstance);
+
+			/* Quake mode? */
+			gpSet->isQuakeStyle = IsDlgButtonChecked(hDlg, cbQuakeFast);
+
+			/* Min/Restore key */
+			gpSet->SetHotkeyById(vkMinimizeRestore, ghk_MinMaxKey.GetVkMod());
+
+			/* Install Keyboard hooks */
+			gpSet->m_isKeyboardHooks = IsDlgButtonChecked(hDlg, cbUseKeyboardHooksFast) ? 1 : 2;
+
+			/* Inject ConEmuHk.dll */
+			gpSet->isUseInjects = IsDlgButtonChecked(hDlg, cbInjectConEmuHkFast);
+
+			/* Auto Update settings */
+			gpSet->UpdSet.isUpdateCheckOnStartup = (IsDlgButtonChecked(hDlg, cbEnableAutoUpdateFast) == BST_CHECKED);
+			if (bCheckUpdate)
+			{	// При первом запуске - умолчания параметров
+				gpSet->UpdSet.isUpdateCheckHourly = false;
+				gpSet->UpdSet.isUpdateConfirmDownload = true; // true-Show MessageBox, false-notify via TSA only
+			}
+			gpSet->UpdSet.isUpdateUseBuilds = IsDlgButtonChecked(hDlg, rbAutoUpdateStableFast) ? 1 : IsDlgButtonChecked(hDlg, rbAutoUpdateDeveloperFast) ? 2 : 3;
+
+
+			/* Save settings */
+			SettingsBase* reg = NULL;
+
+			if (!bVanilla)
+			{
+				if ((reg = gpSet->CreateSettings(NULL)) == NULL)
+				{
+					_ASSERTE(reg!=NULL);
+				}
+				else
+				{
+					gpSet->SaveVanilla(reg);
+					delete reg;
+				}
+			}
+
+
+			// Vista & ConIme.exe
+			if (bCheckIme)
+			{
+				if (IsDlgButtonChecked(hDlg, cbDisableConImeFast))
+				{
+					HKEY hk = NULL;
+					if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, L"Console", 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL))
+					{
+						DWORD dwValue = 0, dwType = REG_DWORD, nSize = sizeof(DWORD);
+						RegSetValueEx(hk, L"LoadConIme", 0, dwType, (LPBYTE)&dwValue, nSize);
+						RegCloseKey(hk);
+					}
+				}
+
+				if ((reg = gpSet->CreateSettings(NULL)) != NULL)
+				{
+					// БЕЗ имени конфигурации!
+					if (reg->OpenKey(CONEMU_ROOT_KEY, KEY_WRITE))
+					{
+						long  lbStopWarning = TRUE;
+						reg->Save(_T("StopWarningConIme"), lbStopWarning);
+						reg->CloseKey();
+					}
+					delete reg;
+					reg = NULL;
+				}
+			}
+
+			EndDialog(hDlg, IDOK);
+
+			return 1;
+		} // IDOK
+
+		case IDCANCEL:
+		case IDCLOSE:
+		{
+			if (!gpSet->m_isKeyboardHooks)
+				gpSet->m_isKeyboardHooks = 2; // NO
+
+			EndDialog(hDlg, IDCANCEL);
+			return 1;
+		}
+
+		case stHomePage:
+			ConEmuAbout::OnInfo_HomePage();
+			return 1;
+
+		case cbQuakeKeyFast:
+		{
+			DWORD VkMod = ghk_MinMaxKey.GetVkMod();
+			if (CHotKeyDialog::EditHotKey(hDlg, VkMod))
+			{
+				ghk_MinMaxKey.SetVkMod(VkMod);
+				wchar_t szKey[128] = L"";
+				SetDlgItemText(hDlg, tQuakeKeyFast, ghk_MinMaxKey.GetHotkeyName(szKey));
+			}
+			return 1;
+		}
+	}
+
+	return FALSE;
+}
 
 static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
@@ -63,190 +542,13 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 		break;
 
 	case WM_INITDIALOG:
-		{
-			SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
-			SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+		return Fast_OnInitDialog(hDlg, messg, wParam, lParam);
 
-			if (gp_DpiAware)
-			{
-				gp_DpiAware->Attach(hDlg, NULL, CDynDialog::GetDlgClass(hDlg));
-			}
-
-			RECT rect = {};
-			if (GetWindowRect(hDlg, &rect))
-			{
-				CDpiAware::GetCenteredRect(NULL, rect);
-				MoveWindowRect(hDlg, rect);
-			}
-
-			if (lParam)
-			{
-				SetWindowText(hDlg, (LPCWSTR)lParam);
-			}
-			else
-			{
-				wchar_t szTitle[512];
-				wcscpy_c(szTitle, gpConEmu->GetDefaultTitle());
-				wcscat_c(szTitle, L" fast configuration");
-				SetWindowText(hDlg, szTitle);
-			}
-
-
-			// lbStorageLocation
-			SettingsStorage Storage = {}; bool ReadOnly = false;
-			gpSet->GetSettingsType(Storage, ReadOnly);
-
-			// Same priority as in CConEmuMain::ConEmuXml (reverse order)
-			wchar_t* pszSettingsPlaces[] = {
-				lstrdup(L"HKEY_CURRENT_USER\\Software\\ConEmu"),
-				ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"),
-				ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"),
-				ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"),
-				NULL
-			};
-			// Lets find first allowed item
-			int iAllowed = 0;
-			if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_XML) == 0)
-			{
-				iAllowed = 1; // XML is used, registry is not allowed
-				if (Storage.pszFile)
-				{
-					if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[1]) == 0) // %APPDATA%
-						iAllowed = 1; // Any other xml has greater priority
-					else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[2]) == 0) // %ConEmuBaseDir%
-						iAllowed = 2; // Only %ConEmuDir% has greater priority
-					else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[3]) == 0) // %ConEmuDir%
-						iAllowed = 3; // Most prioritized
-					else
-					{
-						// Directly specified with "/LoadCfgFile ..."
-						SafeFree(pszSettingsPlaces[3]);
-						pszSettingsPlaces[3] = lstrdup(Storage.pszFile);
-						iAllowed = 3; // Most prioritized
-					}
-				}
-			}
-			// Index of the default location (relative to listbox, but not a pszSettingsPlaces)
-			// By default - suggest %APPDATA% or, if possible, %ConEmuDir%
-			// Win2k does not have 'msxml3.dll'/'msxml3r.dll' libraries
-			int iDefault = ((iAllowed == 0) && !IsWin2kEql()) ? (CConEmuUpdate::NeedRunElevation() ? 1 : 3) : 0;
-
-			// Populate lbStorageLocation
-			while (pszSettingsPlaces[iAllowed])
-			{
-				SendDlgItemMessage(hDlg, lbStorageLocation, CB_ADDSTRING, 0, (LPARAM)pszSettingsPlaces[iAllowed]);
-				iAllowed++;
-			}
-			SendDlgItemMessage(hDlg, lbStorageLocation, CB_SETCURSEL, iDefault, 0);
-
-			// Release memory
-			for (int i = 0; pszSettingsPlaces[i]; i++)
-			{
-				SafeFree(pszSettingsPlaces[i]);
-			}
-
-
-			// continue
-			CheckDlgButton(hDlg, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
-
-			CheckDlgButton(hDlg, cbUseKeyboardHooksFast, gpSet->isKeyboardHooks(true));
-
-
-
-			// Debug purposes only. ConEmu.exe switch "/nokeyhooks"
-			#ifdef _DEBUG
-			EnableWindow(GetDlgItem(hDlg, cbUseKeyboardHooksFast), !gpConEmu->DisableKeybHooks);
-			#endif
-
-			CheckDlgButton(hDlg, cbInjectConEmuHkFast, gpSet->isUseInjects);
-
-			if (!gpConEmu->isUpdateAllowed())
-			{
-				EnableWindow(GetDlgItem(hDlg, cbEnableAutoUpdateFast), FALSE);
-				EnableWindow(GetDlgItem(hDlg, rbAutoUpdateStableFast), FALSE);
-				EnableWindow(GetDlgItem(hDlg, rbAutoUpdatePreviewFast), FALSE);
-				EnableWindow(GetDlgItem(hDlg, rbAutoUpdateDeveloperFast), FALSE);
-				EnableWindow(GetDlgItem(hDlg, stEnableAutoUpdateFast), FALSE);
-			}
-			else
-			{
-				if (gpSet->UpdSet.isUpdateUseBuilds != 0)
-					CheckDlgButton(hDlg, cbEnableAutoUpdateFast, gpSet->UpdSet.isUpdateCheckOnStartup|gpSet->UpdSet.isUpdateCheckHourly);
-				CheckRadioButton(hDlg, rbAutoUpdateStableFast, rbAutoUpdateDeveloperFast,
-					(gpSet->UpdSet.isUpdateUseBuilds == 1) ? rbAutoUpdateStableFast :
-					(gpSet->UpdSet.isUpdateUseBuilds == 3) ? rbAutoUpdatePreviewFast : rbAutoUpdateDeveloperFast);
-			}
-
-			if (!bCheckIme)
-			{
-				ShowWindow(GetDlgItem(hDlg, gbDisableConImeFast), SW_HIDE);
-				ShowWindow(GetDlgItem(hDlg, cbDisableConImeFast), SW_HIDE);
-				ShowWindow(GetDlgItem(hDlg, stDisableConImeFast1), SW_HIDE);
-				ShowWindow(GetDlgItem(hDlg, stDisableConImeFast2), SW_HIDE);
-				ShowWindow(GetDlgItem(hDlg, stDisableConImeFast3), SW_HIDE);
-				RECT rcGroup, rcBtn, rcWnd;
-				if (GetWindowRect(GetDlgItem(hDlg, gbDisableConImeFast), &rcGroup))
-				{
-					int nShift = (rcGroup.bottom-rcGroup.top);
-
-					HWND h = GetDlgItem(hDlg, IDOK);
-					GetWindowRect(h, &rcBtn); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtn, 2);
-					SetWindowPos(h, NULL, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-
-					h = GetDlgItem(hDlg, IDCANCEL);
-					GetWindowRect(h, &rcBtn); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtn, 2);
-					SetWindowPos(h, NULL, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-
-					h = GetDlgItem(hDlg, stHomePage);
-					GetWindowRect(h, &rcBtn); MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtn, 2);
-					SetWindowPos(h, NULL, rcBtn.left, rcBtn.top - nShift, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-					SetWindowText(h, gsHomePage);
-
-					GetWindowRect(hDlg, &rcWnd);
-					MoveWindow(hDlg, rcWnd.left, rcWnd.top+(nShift>>1), rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top-nShift, FALSE);
-				}
-			}
-
-			SetFocus(GetDlgItem(hDlg, IDOK));
-			return FALSE; // Set focus to OK
-		}
 	case WM_CTLCOLORSTATIC:
-
-		if (GetDlgItem(hDlg, stDisableConImeFast1) == (HWND)lParam)
-		{
-			SetTextColor((HDC)wParam, 255);
-			HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-			SetBkMode((HDC)wParam, TRANSPARENT);
-			return (INT_PTR)hBrush;
-		}
-		else if (GetDlgItem(hDlg, stHomePage) == (HWND)lParam)
-		{
-			SetTextColor((HDC)wParam, GetSysColor(COLOR_HOTLIGHT));
-			HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-			SetBkMode((HDC)wParam, TRANSPARENT);
-			return (INT_PTR)hBrush;
-		}
-		else
-		{
-			SetTextColor((HDC)wParam, GetSysColor(COLOR_WINDOWTEXT));
-			HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-			SetBkMode((HDC)wParam, TRANSPARENT);
-			return (INT_PTR)hBrush;
-		}
-
-		break;
+		return Fast_OnCtlColorStatic(hDlg, messg, wParam, lParam);
 
 	case WM_SETCURSOR:
-		{
-			if (((HWND)wParam) == GetDlgItem(hDlg, stHomePage))
-			{
-				SetCursor(LoadCursor(NULL, IDC_HAND));
-				SetWindowLongPtr(hDlg, DWLP_MSGRESULT, TRUE);
-				return TRUE;
-			}
-			return FALSE;
-		}
-		break;
+		return Fast_OnSetCursor(hDlg, messg, wParam, lParam);
 
 	case HELP_WM_HELP:
 		break;
@@ -259,111 +561,18 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 		return TRUE;
 
 	case WM_COMMAND:
-
-		if (HIWORD(wParam) == BN_CLICKED)
+		switch (HIWORD(wParam))
 		{
+		case BN_CLICKED:
+			return Fast_OnButtonClicked(hDlg, messg, wParam, lParam);
+		case CBN_SELCHANGE:
 			switch (LOWORD(wParam))
 			{
-			case IDOK:
-				{
-					SettingsStorage CurStorage = {}; bool ReadOnly = false;
-					gpSet->GetSettingsType(CurStorage, ReadOnly);
-					LRESULT lSelStorage = SendDlgItemMessage(hDlg, lbStorageLocation, CB_GETCURSEL, 0, 0);
-					if (lSelStorage > 0)
-					{
-						// Значит юзер выбрал "создать настройки" в другом месте
-						wchar_t* pszNewPlace = GetDlgItemTextPtr(hDlg, lbStorageLocation);
-						if (!gpConEmu->SetConfigFile(pszNewPlace, true/*abWriteReq*/, false/*abSpecialPath*/))
-						{
-							// Ошибка уже показана
-							SafeFree(pszNewPlace);
-							return 1;
-						}
-						SafeFree(pszNewPlace);
-					}
-
-
-					/* Force Single instance mode */
-					gpSet->isSingleInstance = IsDlgButtonChecked(hDlg, cbSingleInstance);
-
-					/* Install Keyboard hooks */
-					gpSet->m_isKeyboardHooks = IsDlgButtonChecked(hDlg, cbUseKeyboardHooksFast) ? 1 : 2;
-
-					/* Inject ConEmuHk.dll */
-					gpSet->isUseInjects = IsDlgButtonChecked(hDlg, cbInjectConEmuHkFast);
-
-					/* Auto Update settings */
-					gpSet->UpdSet.isUpdateCheckOnStartup = (IsDlgButtonChecked(hDlg, cbEnableAutoUpdateFast) == BST_CHECKED);
-					if (bCheckUpdate)
-					{	// При первом запуске - умолчания параметров
-						gpSet->UpdSet.isUpdateCheckHourly = false;
-						gpSet->UpdSet.isUpdateConfirmDownload = true; // true-Show MessageBox, false-notify via TSA only
-					}
-					gpSet->UpdSet.isUpdateUseBuilds = IsDlgButtonChecked(hDlg, rbAutoUpdateStableFast) ? 1 : IsDlgButtonChecked(hDlg, rbAutoUpdateDeveloperFast) ? 2 : 3;
-
-
-					/* Save settings */
-					SettingsBase* reg = NULL;
-
-					if (!bVanilla)
-					{
-						if ((reg = gpSet->CreateSettings(NULL)) == NULL)
-						{
-							_ASSERTE(reg!=NULL);
-						}
-						else
-						{
-							gpSet->SaveVanilla(reg);
-							delete reg;
-						}
-					}
-
-
-					// Vista & ConIme.exe
-					if (bCheckIme)
-					{
-						if (IsDlgButtonChecked(hDlg, cbDisableConImeFast))
-						{
-							HKEY hk = NULL;
-							if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, L"Console", 0, NULL, 0, KEY_WRITE, NULL, &hk, NULL))
-							{
-								DWORD dwValue = 0, dwType = REG_DWORD, nSize = sizeof(DWORD);
-								RegSetValueEx(hk, L"LoadConIme", 0, dwType, (LPBYTE)&dwValue, nSize);
-								RegCloseKey(hk);
-							}
-						}
-
-						if ((reg = gpSet->CreateSettings(NULL)) != NULL)
-						{
-							// БЕЗ имени конфигурации!
-							if (reg->OpenKey(CONEMU_ROOT_KEY, KEY_WRITE))
-							{
-								long  lbStopWarning = TRUE;
-								reg->Save(_T("StopWarningConIme"), lbStopWarning);
-								reg->CloseKey();
-							}
-							delete reg;
-							reg = NULL;
-						}
-					}
-
-					EndDialog(hDlg, IDOK);
-
-					return 1;
-				}
-			case IDCANCEL:
-			case IDCLOSE:
-				{
-					if (!gpSet->m_isKeyboardHooks)
-						gpSet->m_isKeyboardHooks = 2; // NO
-
-					EndDialog(hDlg, IDCANCEL);
-					return 1;
-				}
-			case stHomePage:
-				ConEmuAbout::OnInfo_HomePage();
-				return 1;
+			case lbColorSchemeFast:
+				SendDlgItemMessage(hDlg, stPalettePreviewFast, UM_PALETTE_FAST_CHG, wParam, lParam);
+				break;
 			}
+			break;
 		}
 
 		break;
@@ -451,7 +660,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 	// Tasks and palettes must be created before dialog, to give user opportunity to choose startup task and palette
 
 	// Always check, if task list is empty - fill with defaults
-	CreateDefaultTasks();
+	CreateDefaultTasks(slfFlags);
 
 	// Some other settings, which must be filled with predefined values
 	if (slfFlags & slf_DefaultSettings)
@@ -1129,6 +1338,8 @@ void CreateFarTasks(LPCWSTR asDrive, int& iCreatIdx)
 				*(pszName) = 0; // Cut to slash
 				lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FarHome%\\Plugins\"");
 
+				if (gn_FirstFarTask == -1)
+					gn_FirstFarTask = iCreatIdx;
 				CreateDefaultTask(iCreatIdx, FI.szTaskName, NULL, pszCommand);
 			}
 		}
@@ -1176,13 +1387,14 @@ void CreateTccTasks(LPCWSTR asDrive, int& iCreatIdx)
 	}
 }
 
-void CreateDefaultTasks(bool bForceAdd /*= false*/)
+void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 {
 	int iCreatIdx = 0;
 
-	sbAppendMode = bForceAdd;
+	sbAppendMode = ((slfFlags & slf_AppendTasks) == slf_AppendTasks);
+	gn_FirstFarTask = -1;
 
-	if (!bForceAdd)
+	if (!sbAppendMode)
 	{
 		const CommandTasks* pExist = gpSet->CmdTaskGet(iCreatIdx);
 		if (pExist != NULL)
@@ -1294,4 +1506,29 @@ void CreateDefaultTasks(bool bForceAdd /*= false*/)
 
 	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
 	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)&iCreatIdx);
+
+	// Choose default startup command
+	if (slfFlags & slf_DefaultSettings)
+	{
+		const CommandTasks* pTask = NULL;
+		if (gn_FirstFarTask != -1)
+			pTask = gpSet->CmdTaskGet(gn_FirstFarTask);
+		LPCWSTR DefaultNames[] = {
+			L"Far",
+			L"TCC",
+			L"NYAOS",
+			L"cmd",
+			NULL
+		};
+		for (INT_PTR i = 0; !pTask && DefaultNames[i]; i++)
+		{
+			pTask = gpSet->CmdTaskGetByName(DefaultNames[i]);
+		}
+		if (pTask)
+		{
+			gpSet->nStartType = 2;
+			SafeFree(gpSet->psStartTasksName);
+			gpSet->psStartTasksName = lstrdup(pTask->pszName);
+		}
+	}
 }

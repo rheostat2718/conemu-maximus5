@@ -2412,11 +2412,14 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 		TabHwndIndex nDlgID;
 		bool bEnabled;
 		int nVkIdx;
+		bool bIgnoreInFar;
+		// Service
 		BYTE Vk;
+		HWND hPage;
 	} Keys[] = {
 		{lbCTSBlockSelection, L"Block selection", thi_MarkCopy, gpSet->isCTSSelectBlock, vkCTSVkBlock},
 		{lbCTSTextSelection, L"Text selection", thi_MarkCopy, gpSet->isCTSSelectText, vkCTSVkText},
-		{lbCTSClickPromptPosition, L"Prompt position", thi_KeybMouse, gpSet->AppStd.isCTSClickPromptPosition!=0, vkCTSVkPromptClk},
+		{lbCTSClickPromptPosition, L"Prompt position", thi_KeybMouse, gpSet->AppStd.isCTSClickPromptPosition!=0, vkCTSVkPromptClk, true},
 
 		// Don't check it?
 		// -- {lbFarGotoEditorVk, L"Highlight and goto", ..., gpSet->isFarGotoEditor},
@@ -2430,10 +2433,12 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 
 	for (size_t i = 0; Keys[i].nCtrlID; i++)
 	{
+		Keys[i].hPage = GetPage(Keys[i].nDlgID);
+
 		if (!bIsFar && (Keys[i].nCtrlID == lbLDragKey))
 		{
-			Keys[i].nCtrlID = 0;
-			break;
+			Keys[i].bEnabled = false;
+			continue;
 		}
 
 		//GetListBoxByte(hDlg, nCtrlID[i], SettingsNS::szKeysAct, SettingsNS::nKeysAct, Vk[i]);
@@ -2452,12 +2457,18 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 			if (!Keys[j].bEnabled)
 				continue;
 
-			if (Keys[i].Vk == Keys[j].Vk)
+			if (((Keys[i].nDlgID == thi_Far) && Keys[j].bIgnoreInFar)
+				|| ((Keys[j].nDlgID == thi_Far) && Keys[i].bIgnoreInFar))
+				continue;
+
+			if ((Keys[i].Vk == Keys[j].Vk)
+				&& ((Keys[i].hPage == hWnd2) || (Keys[j].hPage == hWnd2))
+				)
 			{
 				wchar_t szInfo[255];
 				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"You must set different\nmodifiers for\n<%s> and\n<%s>", Keys[i].Descr, Keys[j].Descr);
 				HWND hDlg = hWnd2;
-				WORD nID = (GetPage(Keys[j].nDlgID) == hWnd2) ? Keys[j].nCtrlID : Keys[i].nCtrlID;
+				WORD nID = (Keys[j].hPage == hWnd2) ? Keys[j].nCtrlID : Keys[i].nCtrlID;
 				ShowErrorTip(szInfo, hDlg, nID, gpSetCls->szSelectionModError, countof(gpSetCls->szSelectionModError),
 							 gpSetCls->hwndBalloon, &gpSetCls->tiBalloon, gpSetCls->hwndTip, FAILED_SELMOD_TIMEOUT, true);
 				return;
@@ -2516,6 +2527,8 @@ LRESULT CSettings::OnInitDialog_Far(HWND hWnd2, bool abInitial)
 	SetDlgItemText(hWnd2, tTabViewer, gpSet->szTabViewer);
 	SetDlgItemText(hWnd2, tTabEditor, gpSet->szTabEditor);
 	SetDlgItemText(hWnd2, tTabEditorMod, gpSet->szTabEditorModified);
+
+	CheckSelectionModifiers(hWnd2);
 
 	return 0;
 }
@@ -3041,6 +3054,8 @@ LRESULT CSettings::OnInitDialog_Control(HWND hWnd2, bool abInitial)
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSRBtnAction), CSetDlgLists::eClipAct, gpSet->isCTSRBtnAction, false);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, lbCTSMBtnAction), CSetDlgLists::eClipAct, gpSet->isCTSMBtnAction, false);
 
+	CheckSelectionModifiers(hWnd2);
+
 	return 0;
 }
 
@@ -3236,7 +3251,10 @@ void CSettings::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL Cha
 	gpSet->PaletteSetStdIndexes();
 
 	// Обновить консоли
-	CVConGroup::OnUpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr, apDistinct);
+	if (ghWnd)
+	{
+		CVConGroup::OnUpdateTextColorSettings(ChangeTextAttr, ChangePopupAttr, apDistinct);
+	}
 }
 
 // This is used if user choose palette from dropdown in the Settings dialog
@@ -3290,7 +3308,10 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 		OnInitDialog_Color(hDlg, false);
 	}
 
-	gpConEmu->Update(true);
+	if (ghWnd)
+	{
+		gpConEmu->Update(true);
+	}
 }
 
 LRESULT CSettings::OnInitDialog_Color(HWND hWnd2, bool abInitial)
@@ -11750,7 +11771,9 @@ void CSettings::ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* ps
 		if (hTip) SendMessage(hTip, TTM_ACTIVATE, FALSE, 0);
 
 		SendMessage(hBall, TTM_UPDATETIPTEXT, 0, (LPARAM)pti);
-		RECT rcControl; GetWindowRect(GetDlgItem(hDlg, nCtrlID), &rcControl);
+		RECT rcControl = {};
+		HWND hCtrl = nCtrlID ? GetDlgItem(hDlg, nCtrlID) : NULL;
+		GetWindowRect(hCtrl ? hCtrl : hDlg, &rcControl);
 		int ptx = bLeftAligh ? (rcControl.left + 10) : (rcControl.right - 10);
 		int pty = bLeftAligh ? rcControl.bottom : (rcControl.top + rcControl.bottom) / 2;
 		SendMessage(hBall, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
