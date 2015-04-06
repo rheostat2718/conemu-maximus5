@@ -37,9 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_FONT_STYLES 8  //normal/(bold|italic|underline)
 #define MAX_FONT_GROUPS 20 // Main, Borders, Japan, Cyrillic, ...
 
-#define LONGOUTPUTHEIGHT_MIN 300
-#define LONGOUTPUTHEIGHT_MAX 32766 /* 'magic' 0x7FFE */
-
 #define CURSORSIZE_MIN 5
 #define CURSORSIZE_MAX 100
 #define CURSORSIZEPIX_MIN 1
@@ -253,6 +250,9 @@ struct Settings
 		void LoadAppsSettings(SettingsBase* reg, bool abFromOpDlg = false);
 		void LoadAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/);
 		void SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/);
+
+		void SaveStdColors(SettingsBase* reg);
+		void SaveStartCommands(SettingsBase* reg);
 
 		void FreeApps(int NewAppCount = 0, AppSettings** NewApps = NULL/*, Settings::CEAppColors** NewAppColors = NULL*/);
 
@@ -885,7 +885,7 @@ struct Settings
 		void CheckHotkeyUnique();
 	private:
 		void LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const bool& bSendAltSpace, const bool& bSendAltF9);
-		void SaveHotkeys(SettingsBase* reg);
+		void SaveHotkeys(SettingsBase* reg, int SaveDescrLangID = 0);
 	public:
 
 		/* *** Tab Templates *** */

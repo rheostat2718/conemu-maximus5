@@ -518,6 +518,9 @@ void Settings::InitSettings()
 	}
 	else
 	{
+		// Default palette MUST exists in our list!
+		_ASSERTE(FALSE && "Must not get here");
+
 		SettingsRegistry RegConColors, RegConDef;
 
 		if (RegConColors.OpenKey(L"Console", KEY_READ))
@@ -897,8 +900,17 @@ bool Settings::SaveVanilla(SettingsBase* reg)
 
 	if (reg && reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
 	{
+		/* Start command */
+		SaveStartCommands(reg);
+
+		/* Palette */
+		SaveStdColors(reg);
+
 		/* Force Single instance mode */
 		reg->Save(L"SingleInstance", gpSet->isSingleInstance);
+
+		/* Quake mode? */
+		reg->Save(L"QuakeStyle", isQuakeStyle);
 
 		/* Install Keyboard hooks */
 		reg->Save(L"KeyboardHooks", gpSet->m_isKeyboardHooks);
@@ -921,6 +933,9 @@ bool Settings::SaveVanilla(SettingsBase* reg)
 
 		// Fast configuration done
 		reg->CloseKey();
+
+		// Minimize/Restore key from Fast Settings
+		SaveHotkeys(reg, vkMinimizeRestore);
 
 		bOk = true;
 	}
@@ -3206,6 +3221,26 @@ void Settings::SaveAppsSettings(SettingsBase* reg)
 	}
 }
 
+void Settings::SaveStdColors(SettingsBase* reg)
+{
+	TCHAR ColorName[] = L"ColorTable00";
+
+	for(uint i = 0; i<countof(Colors)/*0x20*/; i++)
+	{
+		ColorName[10] = i/10 + '0';
+		ColorName[11] = i%10 + '0';
+		reg->Save(ColorName, (DWORD)Colors[i]);
+	}
+
+	reg->Save(L"ExtendColors", AppStd.isExtendColors);
+	reg->Save(L"ExtendColorIdx", AppStd.nExtendColorIdx);
+
+	reg->Save(L"TextColorIdx", AppStd.nTextColorIdx);
+	reg->Save(L"BackColorIdx", AppStd.nBackColorIdx);
+	reg->Save(L"PopTextColorIdx", AppStd.nPopTextColorIdx);
+	reg->Save(L"PopBackColorIdx", AppStd.nPopBackColorIdx);
+}
+
 void Settings::SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/)
 {
 	// Для AppStd данные загружаются из основной ветки! В том числе и цвета (RGB[32] а не имя палитры)
@@ -3213,22 +3248,7 @@ void Settings::SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF*
 
 	if (bStd)
 	{
-		TCHAR ColorName[] = L"ColorTable00";
-
-		for(uint i = 0; i<countof(Colors)/*0x20*/; i++)
-		{
-			ColorName[10] = i/10 + '0';
-			ColorName[11] = i%10 + '0';
-			reg->Save(ColorName, (DWORD)Colors[i]);
-		}
-
-		reg->Save(L"ExtendColors", pApp->isExtendColors);
-		reg->Save(L"ExtendColorIdx", pApp->nExtendColorIdx);
-
-		reg->Save(L"TextColorIdx", pApp->nTextColorIdx);
-		reg->Save(L"BackColorIdx", pApp->nBackColorIdx);
-		reg->Save(L"PopTextColorIdx", pApp->nPopTextColorIdx);
-		reg->Save(L"PopBackColorIdx", pApp->nPopBackColorIdx);
+		SaveStdColors(reg);
 	}
 	else
 	{
@@ -3280,6 +3300,16 @@ void Settings::SaveStatusSettings(SettingsBase* reg)
 	}
 }
 
+void Settings::SaveStartCommands(SettingsBase* reg)
+{
+	reg->Save(L"StartType", nStartType);
+	reg->Save(L"CmdLine", psStartSingleApp);
+	reg->Save(L"StartTasksFile", psStartTasksFile);
+	reg->Save(L"StartTasksName", psStartTasksName);
+	reg->Save(L"StartFarFolders", isStartFarFolders);
+	reg->Save(L"StartFarEditors", isStartFarEditors);
+}
+
 BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* apStorage /*= NULL*/)
 {
 	if (!gpConEmu)
@@ -3318,12 +3348,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 			wcscpy_c(Type, reg->m_Storage.szType);
 		}
 
-		reg->Save(L"StartType", nStartType);
-		reg->Save(L"CmdLine", psStartSingleApp);
-		reg->Save(L"StartTasksFile", psStartTasksFile);
-		reg->Save(L"StartTasksName", psStartTasksName);
-		reg->Save(L"StartFarFolders", isStartFarFolders);
-		reg->Save(L"StartFarEditors", isStartFarEditors);
+		SaveStartCommands(reg);
 
 		SaveAppSettings(reg, &AppStd/*, Colors*/);
 
@@ -5599,7 +5624,7 @@ wrap:
 	}
 }
 
-void Settings::SaveHotkeys(SettingsBase* reg)
+void Settings::SaveHotkeys(SettingsBase* reg, int SaveDescrLangID /*= 0*/)
 {
 	if (!reg)
 	{
@@ -5629,11 +5654,14 @@ void Settings::SaveHotkeys(SettingsBase* reg)
 		return;
 	}
 
-	BYTE MacroVersion = GUI_MACRO_VERSION;
-	reg->Save(L"KeyMacroVersion", MacroVersion);
+	if (!SaveDescrLangID)
+	{
+		BYTE MacroVersion = GUI_MACRO_VERSION;
+		reg->Save(L"KeyMacroVersion", MacroVersion);
 
-	reg->Save(L"Multi.Modifier", nHostkeyNumberModifier);
-	reg->Save(L"Multi.ArrowsModifier", nHostkeyArrowModifier);
+		reg->Save(L"Multi.Modifier", nHostkeyNumberModifier);
+		reg->Save(L"Multi.ArrowsModifier", nHostkeyArrowModifier);
+	}
 
 	// Таски сохраняются отдельно
 
@@ -5644,6 +5672,9 @@ void Settings::SaveHotkeys(SettingsBase* reg)
 		ConEmuHotKey *ppHK = &(gpSetCls->m_HotKeys[i]);
 
 		if (!*ppHK->Name)
+			continue;
+
+		if (SaveDescrLangID && (ppHK->DescrLangID != SaveDescrLangID))
 			continue;
 
 		DWORD VkMod = ppHK->GetVkMod();
