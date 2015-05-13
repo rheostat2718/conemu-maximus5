@@ -128,7 +128,6 @@ New versions of this file will be available on [http://conemu.github.io/en/Table
       * [http://conemu.github.io/en/Acknowledgement.html Acknowledgements]
       * [http://conemu.github.io/en/Reviews.html ConEmu Reviews]
       * [http://conemu.github.io/en/RoadMap.html ConEmu Road Map]
-      * [http://conemu.github.io/en/PVSStudio.html PVS-Studio]
       * [http://conemu.github.io/en/DropBox.html DropBox]
       * [http://conemu.github.io/en/NamedPipes.html Named pipes]
       * [http://conemu.github.io/en/ProcessExplorer.html Process Explorer]
