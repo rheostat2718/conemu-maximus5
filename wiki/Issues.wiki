@@ -8,7 +8,7 @@ New versions of this file will be available on [http://conemu.github.io/en/Issue
 
 ==View existing issues==
   * ===[https://github.com/Maximus5/ConEmu/issues]===
-  * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=&sort=-id Old issues (deprecated)]===
+  * ===[https://github.com/Maximus5/conemu-old-issues/issues?utf8=%E2%9C%93&q= Old issues (deprecated)]===
 <wiki:comment>
   * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-id Active issues], [http://code.google.com/p/conemu-maximus5/issues/list?can=2&q=&sort=-modified sorted by date]===
   * ===[http://code.google.com/p/conemu-maximus5/issues/list?can=1&q=&sort=-id All (active + fixed) issues]===
