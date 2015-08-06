@@ -1,11 +1,13 @@
-﻿=<font color="red">This page is obsolete! Please visit new project's website for updated documentation</font>=
+﻿=<font color="red">This page is obsolete!</font>=
+==<font color="red">Please visit new project's website for updated documentation</font>==
 
 http://conemu.github.io/en/KeyboardShortcuts.html
 
-=!ConEmu keyboard shortcuts=
-
 <font color="gray">
-==Please note!==
+
+==!ConEmu keyboard shortcuts==
+
+===Please note!===
 These shortcuts are only defaults!
 You may redefine almost all combinations and define
 up to 32 GuiMacro hotkeys on the [Settings#Keys Keys] page.
@@ -16,7 +18,7 @@ For example, you may choose hotkey
 for ‘Start text selection (like text editors)’, ‘Switch Always on top window mode’
 and so on.
 
-==Non configurable hotkeys==
+===Non configurable hotkeys===
 Win+Alt+A <br> Displays !ConEmu About dialog. Also, you may see there useful information about comand line switches. <br> <br>
 Win+Alt+P <br> Displays !ConEmu [Settings Settings dialog]. <br> <br>
 Win+Alt+Space <br> Pops up !ConEmu [SystemMenu system menu]. <br> <br>
@@ -27,7 +29,7 @@ Ctrl+Left, Ctrl+Right,<br>Ctrl+Up, Ctrl+Down <br> Switch tab to left/right (whil
 Win+Left, Win+Right,<br>Win+Up, Win+Down <br> When ‘Win+Arrows - resize window’ checked - obviously resize !ConEmu window.<br>*Note*, you may change ‘Win’ hostkey to any combination of maximum three modifiers. <br> <br>
 Win+1 … Win+0 <br> [Tabs#Switching_between_consoles Activates consoles] by numbers (1,2,3,4,5,6,7,8,9,0).<br>*Note*, you may change ‘Win’ hostkey to any combination of maximum three modifiers. <br> <br>
 
-==Configurable hotkeys==
+===Configurable hotkeys===
 *Multiconsole* <br> <br>
 Win+W <br> Create new console tab. [Screenshots#Confirmation_of_new_console_creation_(Win-W) Confirmation dialog] will be displayed, when ‘[Settings#Tabs Create confirmation]’ setting is enabled. *W* is default, [Settings#Tabs configurable]. <br> <br>
 Win+Shift+W <br> Create new console tab with [Screenshots#Confirmation_of_new_console_creation_(Win-W) confirmation dialog], regardless of ‘[Settings#Tabs Create confirmation]’ setting. *W* is default, [Settings#Tabs configurable]. <br> <br>
