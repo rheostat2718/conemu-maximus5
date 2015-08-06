@@ -1,5 +1,10 @@
 ﻿=!ConEmu keyboard shortcuts=
 
+<font color="red">This page is obsolete! Please visit new project's website for updated documentation</font>
+
+http://conemu.github.io/en/KeyboardShortcuts.html
+
+<font color="gray">
 ==Please note!==
 These shortcuts are only defaults!
 You may redefine almost all combinations and define
@@ -42,3 +47,4 @@ and so on.
 
 ===Host key===
 Note, *Win* is default ‘[ConEmuTerms#Host_key Host key]’, keys combination is [Settings#Tabs configurable].
+</font>
