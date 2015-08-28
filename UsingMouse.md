@@ -1,0 +1,87 @@
+
+
+# Common #
+## Text selection and clipboard ##
+ConEmu allows marking console blocks and streams, copying marked text to Windows Clipboard, pasting from Clipboard to console. [Read more...](TextSelection.md)
+
+
+## Left click on the tab ##
+ConEmu tries to activate corresponding Far window.
+This may fails when:
+  * Dialog is opens;
+  * Modal editor/viewer is open and ConEmu does not detect this;
+  * Macro is recording/playing.
+
+
+## Right click on the tab ##
+When You right clicking on the Tab:
+  * Tab will be activated;
+  * Popup menu will be shown.
+
+
+## Middle click or Ctrl+Right click on the tab ##
+When You right clicking on the Tab:
+  * Far panels, editor or viewer - ConEmu sends F10 key to console (You may redefine macro);
+  * Other programs - ConEmu shows dialog with Restart/Terminate/Cancel buttons (same pressing Win-~).
+
+
+## Right click on Cross button ##
+Right clicking on the Cross button (window title) will minimize ConEmu window to the taskbar status area (hide window from screen).
+
+
+## Double click on left or right window edges ##
+Stretch the window to the width of the monitor.
+
+
+# Far Manager related #
+## Drag-n-Drop ##
+You may use dragging either with left or right mouse button.
+
+On the [Features](Settings#Features.md) page You may choose modifier (i.e. LeftCtrl or RightAlt)
+for each mouse button, which allows drag starting. Also, You may disable Right or Left (or both)
+button drag.
+
+Right button default behavoiur is to create link, Left button - copy.
+
+Behaviour can be changed holding Ctrl, Shift, or Alt when You drop items to the target.
+
+Drop to command line:
+  * Simple drop: paste full file or folder paths, space separated, autoquoted.
+  * Ctrl: paste with «edit:» prefix
+  * Alt: paste with «goto:» prefix
+  * Shift: paste with «view:» prefix
+
+
+## Right click on Far Manager panels ##
+You may choose right click behaviour:
+
+  * Simple send right click to console;
+  * Show context menu (via EMenu plugin);
+  * Short click means simple right click, long click (depress, wait a while, release) means context menu.
+
+**Note**. _EMenu_ plugin must be installed in Far Manager. No macroses or hotkeys are required, but You may choose different way to display context menu, by specifying the macro in ConEmu settings.
+```
+[HKEY_CURRENT_USER\Software\ConEmu\.Vanilla]
+;; This example assume 'e' hotkey for EMenu plugin
+"RightClickMacro"="@F11 e Enter Enter"
+```
+
+
+## Resizing Far Manager panels with mouse ##
+This is simple now. Drag panels by bottom border, or by left border of the **right** panel.
+Option [Resize panels by mouse](Settings#Features.md) must be checked.
+
+## Hyperlinks and compiler errors ##
+ConEmu can highlight hyperlinks (e.g. `http://www.farmanager.com`) and compiler errors (e.g. `FarCtrl.pas(1002,49) Error: Identifier not found...`).
+
+Turn on checkbox «Highlight and goto» and choose appropriate modifier (e.g. «Left Ctrl») on the [TextSelection](Settings#settings.md) page.
+So, when you hold selected modifier (e.g. «Left Ctrl») ConEmu will underlines hyperlinks/errors detected under mouse cursor.
+LeftClick (with modifier) will open it:
+  * hyperlinks - in the default browser
+  * e-mails - in the default Mail program
+  * compiler errors - in the Far editor, positioned on row and column of the error
+
+## Right click on KeyBar ##
+RClick on KeyBar pop up menu with F-key with possible modifiers. E.g., when you RClick on `7Search` in the Far Editor you can choose Ctrl-F7 to run Replace dialog.
+
+**Note**. When you choose such menu item, ConEmu post «real» keypress to console. So, macro will be executed, when there is one associated with this keypress.
